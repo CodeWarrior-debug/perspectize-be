@@ -9,3 +9,8 @@ GET {{__HostAddress}}/weather/philadelphia
 Accept: application/json
 
 ###
+
+GET {{__HostAddress}}/config/refill-remain
+Accept: application/json
+
+###
