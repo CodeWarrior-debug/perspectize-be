@@ -1,0 +1,6 @@
+@perspectize_be_HostAddress = http://localhost:5118
+
+GET {{perspectize_be_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
