@@ -6,7 +6,6 @@ using Dapper;
 using perspectize_be.DTOs;
 using perspectize_be.Models;
 using perspectize_be.Services;
-using perspectize_be.DTOs.perspectize_be.DTOs;
 
 namespace perspectize_be.Controllers
 {

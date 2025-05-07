@@ -7,12 +7,9 @@ namespace perspectize_be.DTOs
     {
         public string VideoId { get; set; } = string.Empty;
     }
-    namespace perspectize_be.DTOs
-{
+    
     public class VideosRequest
     {
         public List<string> VideoUrls { get; set; } = new List<string>();
     }
-}
-
 }
