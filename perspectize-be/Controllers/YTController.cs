@@ -6,6 +6,7 @@ using perspectize_be.Data;
 using perspectize_be.DTOs;
 using perspectize_be.Models;
 using perspectize_be.Services;
+using perspectize_be.Common;
 using perspectize_be.DTOs.perspectize_be.DTOs;
 
 namespace perspectize_be.Controllers
@@ -118,7 +119,7 @@ namespace perspectize_be.Controllers
                     if (existingContent != null)
                     {
                         existingContent.Length = durationInSeconds.ToString();
-                        existingContent.LengthUnits = "seconds";
+                        existingContent.LengthUnits = Constants.LengthUnits.Seconds.ToString().ToLower();
                         existingContent.Response = JsonDocument.Parse(responseContent);
                         existingContent.Name = title ?? string.Empty;
                         existingContent.UpdatedAt = DateTime.UtcNow;
@@ -139,9 +140,9 @@ namespace perspectize_be.Controllers
                         {
                             Url = url,
                             Length = durationInSeconds.ToString(),
-                            LengthUnits = "seconds",
+                            LengthUnits = Constants.LengthUnits.Seconds.ToString().ToLower(),
                             Response = JsonDocument.Parse(responseContent),
-                            ContentType = "youtube",
+                            ContentType = Constants.ContentType.YouTube.ToString().ToLower(),
                             Name = title ?? string.Empty,
                             CreatedAt = DateTime.UtcNow,
                             UpdatedAt = DateTime.UtcNow
