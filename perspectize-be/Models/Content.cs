@@ -16,7 +16,7 @@ namespace perspectize_be.Models
         public string? Url { get; set; }
 
         [Column("length")]
-        public string? Length { get; set; }
+        public int? Length { get; set; }
 
         [Column("length_units")]
         public string? LengthUnits { get; set; }
