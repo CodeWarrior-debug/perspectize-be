@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using perspectize_be.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
 using perspectize_be.Services;
+using System.Data;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +17,10 @@ builder.Services.AddControllers()
 // Configure DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Register IDbConnection for Dapper
+builder.Services.AddScoped<IDbConnection>(sp => 
+    new NpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Register HttpClient
 builder.Services.AddHttpClient();

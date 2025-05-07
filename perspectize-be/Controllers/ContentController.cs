@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using perspectize_be.Data;
+using Dapper;
+using System.Data;
 using perspectize_be.Models;
 
 namespace perspectize_be.Controllers
@@ -9,31 +9,24 @@ namespace perspectize_be.Controllers
     [ApiController]
     public class ContentController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IDbConnection _dbConnection;
 
-        public ContentController(ApplicationDbContext context)
+        public ContentController(IDbConnection dbConnection)
         {
-            _context = context;
+            _dbConnection = dbConnection;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAllContent(CancellationToken cancellationToken)
         {
-            List<Content> contents = await _context.Contents
-                .ToListAsync(cancellationToken);
-
-            return Ok(contents.Select(c => new
-                {
-                    c.Id,
-                    c.Name,
-                    c.Url,
-                    c.ContentType,
-                    c.Length,
-                    c.LengthUnits,
-                    c.Response,
-                    c.CreatedAt,
-                    c.UpdatedAt
-                }));
+            string query = @"
+                SELECT id AS Id, name AS Name, url AS Url, content_type AS ContentType, 
+                       length AS Length, length_units AS LengthUnits, response AS Response,
+                       created_at AS CreatedAt, updated_at AS UpdatedAt
+                FROM content";
+            
+            IEnumerable<Content> contents = await _dbConnection.QueryAsync<Content>(query);
+            return Ok(contents);
         }
 
         [HttpGet("{name}")]
@@ -44,26 +37,22 @@ namespace perspectize_be.Controllers
                 return BadRequest(new { message = "Name parameter is required" });
             }
 
-            Content? content = await _context.Contents
-                .FirstOrDefaultAsync(c => c.Name == name, cancellationToken);
+            string query = @"
+                SELECT id AS Id, name AS Name, url AS Url, content_type AS ContentType, 
+                       length AS Length, length_units AS LengthUnits, response AS Response,
+                       created_at AS CreatedAt, updated_at AS UpdatedAt
+                FROM content
+                WHERE name = @Name
+                LIMIT 1";
+            
+            Content? content = await _dbConnection.QueryFirstOrDefaultAsync<Content>(query, new { Name = name });
 
             if (content == null)
             {
                 return NotFound(new { message = $"Content with name '{name}' not found" });
             }
 
-            return Ok(new
-            {
-                content.Id,
-                content.Name,
-                content.Url,
-                content.ContentType,
-                content.Length,
-                content.LengthUnits,
-                content.Response,
-                content.CreatedAt,
-                content.UpdatedAt
-            });
+            return Ok(content);
         }
     }
 }

@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using System.Text.Json;
-using perspectize_be.Data;
+using System.Data;
+using Dapper;
 using perspectize_be.DTOs;
 using perspectize_be.Models;
 using perspectize_be.Services;
@@ -15,13 +15,13 @@ namespace perspectize_be.Controllers
     [AllowAnonymous]
     public class YTController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
         private readonly YouTubeService _youtubeService;
+        private readonly IDbConnection _dbConnection;
 
-        public YTController(ApplicationDbContext context, YouTubeService youtubeService)
+        public YTController(YouTubeService youtubeService, IDbConnection dbConnection)
         {
-            _context = context;
             _youtubeService = youtubeService;
+            _dbConnection = dbConnection;
         }
 
         [HttpGet("video")]
@@ -72,7 +72,7 @@ namespace perspectize_be.Controllers
 
             List<object> results = new List<object>();
 
-            foreach (var url in request.VideoUrls)
+            foreach (string url in request.VideoUrls)
             {
                 try
                 {
@@ -95,7 +95,7 @@ namespace perspectize_be.Controllers
                     string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
                     JsonElement videoData = JsonSerializer.Deserialize<JsonElement>(responseContent);
                     
-                    if (!videoData.TryGetProperty("items", out var items) || items.GetArrayLength() == 0)
+                    if (!videoData.TryGetProperty("items", out JsonElement items) || items.GetArrayLength() == 0)
                     {
                         results.Add(new
                         {
@@ -112,49 +112,63 @@ namespace perspectize_be.Controllers
                     string? durationISO = videoItem.GetProperty("contentDetails").GetProperty("duration").GetString();
                     int? durationInSeconds = _youtubeService.ConvertDurationToSeconds(durationISO ?? string.Empty);
                     
-                    Content? existingContent = await _context.Contents
-                        .FirstOrDefaultAsync(c => c.Url == url, cancellationToken);
+                    // Using Dapper to query existing content
+                    string findQuery = "SELECT * FROM content WHERE url = @Url LIMIT 1";
+                    Content? existingContent = await _dbConnection.QueryFirstOrDefaultAsync<Content>(findQuery, new { Url = url });
                     
                     if (existingContent != null)
                     {
-                        existingContent.Length = durationInSeconds.ToString();
-                        existingContent.LengthUnits = "seconds";
-                        existingContent.Response = JsonDocument.Parse(responseContent);
-                        existingContent.Name = title ?? string.Empty;
-                        existingContent.UpdatedAt = DateTime.UtcNow;
+                        // Using Dapper for update
+                        string updateQuery = @"
+                            UPDATE content 
+                            SET length = @Length, 
+                                length_units = @LengthUnits, 
+                                response = @Response::jsonb, 
+                                name = @Name, 
+                                updated_at = @UpdatedAt 
+                            WHERE url = @Url";
                         
-                        _context.Contents.Update(existingContent);
+                        await _dbConnection.ExecuteAsync(updateQuery, new { 
+                            Length = durationInSeconds.ToString(),
+                            LengthUnits = "seconds",
+                            Response = responseContent,
+                            Name = title ?? string.Empty,
+                            UpdatedAt = DateTime.UtcNow,
+                            Url = url
+                        });
                         
                         results.Add(new
                         {
                             status = "updated",
                             videoId,
-                            name = existingContent.Name,
-                            url = existingContent.Url
+                            name = title ?? string.Empty,
+                            url = url
                         });
                     }
                     else
                     {
-                        Content newContent = new Content
-                        {
+                        // Using Dapper for insert
+                        string insertQuery = @"
+                            INSERT INTO content (url, length, length_units, response, content_type, name, created_at, updated_at)
+                            VALUES (@Url, @Length, @LengthUnits, @Response::jsonb, @ContentType, @Name, @CreatedAt, @UpdatedAt)";
+                        
+                        await _dbConnection.ExecuteAsync(insertQuery, new {
                             Url = url,
                             Length = durationInSeconds.ToString(),
                             LengthUnits = "seconds",
-                            Response = JsonDocument.Parse(responseContent),
+                            Response = responseContent,
                             ContentType = "youtube",
                             Name = title ?? string.Empty,
                             CreatedAt = DateTime.UtcNow,
                             UpdatedAt = DateTime.UtcNow
-                        };
-                        
-                        _context.Contents.Add(newContent);
+                        });
                         
                         results.Add(new
                         {
                             status = "created",
                             videoId,
-                            name = newContent.Name,
-                            url = newContent.Url
+                            name = title ?? string.Empty,
+                            url = url
                         });
                     }
                 }
@@ -168,8 +182,6 @@ namespace perspectize_be.Controllers
                     });
                 }
             }
-
-            await _context.SaveChangesAsync(cancellationToken);
             
             return Ok(results);
         }
