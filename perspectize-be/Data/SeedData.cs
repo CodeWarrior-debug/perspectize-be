@@ -90,7 +90,7 @@ namespace perspectize_be.Data
                         Url = url,
                         Length = durationInSeconds.ToString(),
                         LengthUnits = "seconds",
-                        Response = videoData,
+                        Response = JsonDocument.Parse(responseContent),
                         ContentType = "youtube",
                         Name = title ?? string.Empty,
                         CreatedAt = DateTime.UtcNow,

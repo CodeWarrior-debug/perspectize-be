@@ -119,7 +119,7 @@ namespace perspectize_be.Controllers
                     {
                         existingContent.Length = durationInSeconds.ToString();
                         existingContent.LengthUnits = "seconds";
-                        existingContent.Response = videoData;
+                        existingContent.Response = JsonDocument.Parse(responseContent);
                         existingContent.Name = title ?? string.Empty;
                         existingContent.UpdatedAt = DateTime.UtcNow;
                         
@@ -140,7 +140,7 @@ namespace perspectize_be.Controllers
                             Url = url,
                             Length = durationInSeconds.ToString(),
                             LengthUnits = "seconds",
-                            Response = videoData,
+                            Response = JsonDocument.Parse(responseContent),
                             ContentType = "youtube",
                             Name = title ?? string.Empty,
                             CreatedAt = DateTime.UtcNow,

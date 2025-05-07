@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace perspectize_be.Models
@@ -20,20 +21,8 @@ namespace perspectize_be.Models
         [Column("length_units")]
         public string? LengthUnits { get; set; }
 
-        [Column("response")]
-        [JsonIgnore]
-        public string? ResponseJson { get; set; }
-
-        [NotMapped]
-        public object? Response 
-        {
-            get => !string.IsNullOrEmpty(ResponseJson) 
-                ? System.Text.Json.JsonSerializer.Deserialize<object>(ResponseJson) 
-                : null;
-            set => ResponseJson = value != null 
-                ? System.Text.Json.JsonSerializer.Serialize(value) 
-                : null;
-        }
+        [Column("response", TypeName = "jsonb")]
+        public JsonDocument? Response { get; set; }
 
         [Column("content_type")]
         [Required]
