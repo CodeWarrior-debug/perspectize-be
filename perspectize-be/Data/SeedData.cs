@@ -88,7 +88,7 @@ namespace perspectize_be.Data
                     Content newContent = new Content
                     {
                         Url = url,
-                        Length = durationInSeconds.ToString(),
+                        Length = durationInSeconds,
                         LengthUnits = "seconds",
                         Response = JsonDocument.Parse(responseContent),
                         ContentType = "youtube",

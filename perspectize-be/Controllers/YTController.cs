@@ -128,7 +128,7 @@ namespace perspectize_be.Controllers
                             WHERE url = @Url";
                         
                         await _dbConnection.ExecuteAsync(updateQuery, new { 
-                            Length = durationInSeconds.ToString(),
+                            Length = durationInSeconds,
                             LengthUnits = "seconds",
                             Response = responseContent,
                             Name = title ?? string.Empty,
@@ -153,7 +153,7 @@ namespace perspectize_be.Controllers
                         
                         await _dbConnection.ExecuteAsync(insertQuery, new {
                             Url = url,
-                            Length = durationInSeconds.ToString(),
+                            Length = durationInSeconds,
                             LengthUnits = "seconds",
                             Response = responseContent,
                             ContentType = "youtube",
