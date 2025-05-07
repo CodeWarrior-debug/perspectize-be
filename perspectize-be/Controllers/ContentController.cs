@@ -1,4 +1,3 @@
-// Controllers/ContentController.cs
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using perspectize_be.Data;
@@ -17,7 +16,6 @@ namespace perspectize_be.Controllers
             _context = context;
         }
 
-        // Endpoint 1: GET /content - gathers all
         [HttpGet]
         public async Task<IActionResult> GetAllContent(CancellationToken cancellationToken)
         {
@@ -38,7 +36,6 @@ namespace perspectize_be.Controllers
                 }));
         }
 
-        // Endpoint 2: GET /content/{name} - returns by unique name of content
         [HttpGet("{name}")]
         public async Task<IActionResult> GetContentByName(string name, CancellationToken cancellationToken)
         {
