@@ -2,7 +2,6 @@ using System.Text.Json.Serialization;
 
 namespace perspectize_be.DTOs
 {
-    // Request DTOs
     public class VideoRequest
     {
         public string VideoId { get; set; } = string.Empty;
