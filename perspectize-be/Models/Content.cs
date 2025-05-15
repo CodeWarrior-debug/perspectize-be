@@ -27,7 +27,7 @@ namespace perspectize_be.Models
 
         [Column("content_type")]
         [Required]
-        public string ContentType { get; set; } = "youtube"; //TODO: remove default value
+        public string ContentType { get; set; } = string.Empty;
 
         [Column("name")]
         [Required]
