@@ -6,7 +6,7 @@ using Dapper;
 using perspectize_be.DTOs;
 using perspectize_be.Models;
 using perspectize_be.Services;
-
+using perspectize_be.Common;
 namespace perspectize_be.Controllers
 {
     [Route("youtube")]
@@ -52,7 +52,7 @@ namespace perspectize_be.Controllers
             }
         }
         
-        [HttpPost("video")]
+        [HttpPost("video")] // TODO: delete as less complete duplicate of POST /videos - want Don't Repeat Yourself code  
         public IActionResult PostVideo([FromBody] VideoRequest req, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(req.VideoId)) return BadRequest(new { message = "videoId is required" });
@@ -92,9 +92,21 @@ namespace perspectize_be.Controllers
                     }
                     
                     string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                    JsonElement videoData = JsonSerializer.Deserialize<JsonElement>(responseContent);
                     
-                    if (!videoData.TryGetProperty("items", out JsonElement items) || items.GetArrayLength() == 0)
+                    if (!responseContent.StartsWith("{"))
+                    {
+                        results.Add(new
+                        {
+                            status = "error",
+                            url,
+                            message = "Invalid response format"
+                        });
+                        continue;
+                    }
+                    
+                    JsonDocument videoData = JsonDocument.Parse(responseContent);
+                    
+                    if (!videoData.RootElement.TryGetProperty("items", out JsonElement items) || items.GetArrayLength() == 0)
                     {
                         results.Add(new
                         {
@@ -111,13 +123,11 @@ namespace perspectize_be.Controllers
                     string? durationISO = videoItem.GetProperty("contentDetails").GetProperty("duration").GetString();
                     int? durationInSeconds = _youtubeService.ConvertDurationToSeconds(durationISO ?? string.Empty);
                     
-                    // Using Dapper to query existing content
-                    string findQuery = "SELECT * FROM content WHERE url = @Url LIMIT 1";
+                    string findQuery = "SELECT * FROM content WHERE url = @Url LIMIT 1"; //TODO: refactor to ON CONFLICT upsert method (keep existing for now)
                     Content? existingContent = await _dbConnection.QueryFirstOrDefaultAsync<Content>(findQuery, new { Url = url });
                     
                     if (existingContent != null)
                     {
-                        // Using Dapper for update
                         string updateQuery = @"
                             UPDATE content 
                             SET length = @Length, 
@@ -129,7 +139,7 @@ namespace perspectize_be.Controllers
                         
                         await _dbConnection.ExecuteAsync(updateQuery, new { 
                             Length = durationInSeconds,
-                            LengthUnits = "seconds",
+                            LengthUnits = Constants.LengthUnits.Seconds,
                             Response = responseContent,
                             Name = title ?? string.Empty,
                             UpdatedAt = DateTime.UtcNow,
@@ -146,7 +156,6 @@ namespace perspectize_be.Controllers
                     }
                     else
                     {
-                        // Using Dapper for insert
                         string insertQuery = @"
                             INSERT INTO content (url, length, length_units, response, content_type, name, created_at, updated_at)
                             VALUES (@Url, @Length, @LengthUnits, @Response::jsonb, @ContentType, @Name, @CreatedAt, @UpdatedAt)";
@@ -154,9 +163,9 @@ namespace perspectize_be.Controllers
                         await _dbConnection.ExecuteAsync(insertQuery, new {
                             Url = url,
                             Length = durationInSeconds,
-                            LengthUnits = "seconds",
+                            LengthUnits = Constants.LengthUnits.Seconds,
                             Response = responseContent,
-                            ContentType = "youtube",
+                            ContentType = Constants.ContentType.YouTube,
                             Name = title ?? string.Empty,
                             CreatedAt = DateTime.UtcNow,
                             UpdatedAt = DateTime.UtcNow
@@ -185,7 +194,7 @@ namespace perspectize_be.Controllers
             return Ok(results);
         }
 
-        [HttpPut("videos")]
+        [HttpPut("videos")] //TODO: refactor later - this is clever reuse, but uses the more expensive GET then INSERT / UPDATE approach. What we're looking for is just the simple Update on one video here.
         public async Task<IActionResult> PutVideos([FromBody] VideosRequest request, CancellationToken cancellationToken)
         {
             return await PostVideos(request, cancellationToken);

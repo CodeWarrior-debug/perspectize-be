@@ -2,14 +2,14 @@ namespace perspectize_be.Common
 {
     public static class Constants
     {
-        public enum LengthUnits
+        public static class LengthUnits 
         {
-            Seconds
+            public const string Seconds = "seconds";
         }
 
-        public enum ContentType
+        public static class ContentType
         {
-            YouTube
+            public const string YouTube = "youtube";
         }
     }
 } 

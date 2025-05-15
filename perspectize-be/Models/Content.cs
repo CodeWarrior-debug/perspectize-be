@@ -22,11 +22,12 @@ namespace perspectize_be.Models
         public string? LengthUnits { get; set; }
 
         [Column("response", TypeName = "jsonb")]
-        public JsonDocument? Response { get; set; }
+        [JsonIgnore]
+        public string? Response { get; set; }
 
         [Column("content_type")]
         [Required]
-        public string ContentType { get; set; } = "youtube";
+        public string ContentType { get; set; } = "youtube"; //TODO: remove default value
 
         [Column("name")]
         [Required]

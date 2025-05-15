@@ -29,7 +29,7 @@ namespace perspectize_be.Controllers
             return Ok(contents);
         }
 
-        [HttpGet("{name}")]
+        [HttpGet("{name}")] //TODO: later, change to id, names include spaces and can get long
         public async Task<IActionResult> GetContentByName(string name, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(name))
