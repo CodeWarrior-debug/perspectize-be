@@ -52,15 +52,6 @@ namespace perspectize_be.Controllers
             }
         }
         
-        [HttpPost("video")] // TODO: delete as less complete duplicate of POST /videos - want Don't Repeat Yourself code  
-        public IActionResult PostVideo([FromBody] VideoRequest req, CancellationToken cancellationToken)
-        {
-            if (string.IsNullOrEmpty(req.VideoId)) return BadRequest(new { message = "videoId is required" });
-            return Ok(
-                new { message = $"Video '{req.VideoId}' posted successfully" }
-            );
-        }
-
         [HttpPost("videos")]
         public async Task<IActionResult> PostVideos([FromBody] VideosRequest request, CancellationToken cancellationToken)
         {
