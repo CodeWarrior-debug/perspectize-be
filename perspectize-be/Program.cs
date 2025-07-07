@@ -4,6 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL;
 using perspectize_be.Services;
 using System.Data;
 using Npgsql;
+using perspectize_be.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,8 +26,13 @@ builder.Services.AddScoped<IDbConnection>(sp =>
 // Register HttpClient
 builder.Services.AddHttpClient();
 
+// Register repositories
+builder.Services.AddScoped<IPerspectiveRepository, PerspectiveRepository>();
+
 // Register YouTube service
 builder.Services.AddScoped<YouTubeService>();
+builder.Services.AddScoped<IPerspectiveService, PerspectiveService>();
+
 
 var app = builder.Build();
 
