@@ -75,7 +75,11 @@ func (c *ServerConfig) GetAddr() string {
 }
 
 // GetDSN returns the PostgreSQL connection string (Data Source Name)
+// Prefers DATABASE_URL env var if set (for hosted databases like Sevalla)
 func (c *DatabaseConfig) GetDSN() string {
+	if url := os.Getenv("DATABASE_URL"); url != "" {
+		return url
+	}
 	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		c.Host, c.Port, c.User, c.Password, c.Name, c.SSLMode)
 }
