@@ -1,0 +1,59 @@
+---
+alwaysApply: true
+---
+# Coding Conventions
+
+## Rule 1: Balance Brevity with Clarity
+
+Names (functions, variables, etc.) should balance brevity with clarity of description, minimizing the need for comments.
+
+**Good examples:**
+```go
+// ✅ Clear without comments
+func GetPerspectivesByUsername(username string) ([]Perspective, error)
+var maxRetryAttempts = 3
+```
+
+**Bad examples:**
+```go
+// ❌ Too cryptic
+func gpbu(u string) ([]P, error)  // Needs comments to understand
+
+// ❌ Too verbose
+func GetAllPerspectivesFromDatabaseByUsernameParameter(username string) ([]Perspective, error)
+```
+
+## Rule 2: Comments Explain WHY, Not WHAT
+
+### Production Code
+Comments should describe **why** choices were made, not **what** the code does. Use them for clever or non-obvious decisions.
+
+```go
+// ✅ Good - explains WHY
+// Use exponential backoff to avoid overwhelming the YouTube API
+retryDelay := time.Duration(math.Pow(2, float64(attempt))) * time.Second
+
+// ❌ Bad - explains WHAT (obvious from code)
+// Loop through perspectives
+for _, p := range perspectives {
+```
+
+### Learning Projects
+In early learning projects, explanatory comments are acceptable but must be marked for easy removal:
+
+```go
+// *TEMP* - struct tags tell sqlx how to map database columns to fields
+type Content struct {
+    ID   int    `db:"id" json:"id"`
+    Name string `db:"name" json:"name"`
+}
+
+// *TEMP* - defer runs after function returns, ensures cleanup
+defer db.Close()
+```
+
+**Pattern for removal:**
+```bash
+# Remove all learning comments
+grep -v '\*TEMP\*' file.go
+```
