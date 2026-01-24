@@ -1,0 +1,22 @@
+type Content {
+  id: ID!
+  name: String!
+  url: String
+  contentType: String!
+  length: Int
+  lengthUnits: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+input CreateContentFromYouTubeInput {
+  url: String!
+}
+
+type Mutation {
+  createContentFromYouTube(input: CreateContentFromYouTubeInput!): Content!
+}
+
+type Query {
+  content(id: ID!): Content
+}
