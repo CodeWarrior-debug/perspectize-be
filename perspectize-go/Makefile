@@ -16,7 +16,7 @@ run:
 	go run cmd/server/main.go
 
 test:
-	go test -v -cover ./...
+	go test -v -cover -coverpkg=./internal/...,./pkg/... ./...
 
 docker-up:
 	docker-compose up -d
@@ -78,7 +78,7 @@ fmt:
 lint:
 	golangci-lint run ./...
 
-# Test with coverage
+# Test with coverage report
 test-coverage:
-	go test -v -coverprofile=coverage.out ./...
+	go test -v -coverpkg=./internal/...,./pkg/... -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html

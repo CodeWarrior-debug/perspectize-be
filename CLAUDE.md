@@ -81,11 +81,8 @@ make test
 # Run tests with coverage
 make test-coverage
 
-# Run only unit tests (fast, no database)
-go test -short ./...
-
-# Run integration tests (requires database)
-go test -tags=integration ./...
+# Run all tests (integration tests self-skip when DB is unavailable)
+go test ./...
 
 # Run single test
 go test -v -run TestFunctionName ./path/to/package
@@ -264,13 +261,18 @@ GraphQL schema is defined in `schema.graphql` (schema-first approach). After mod
 - Test domain logic in isolation
 - Mock external dependencies (repositories, external APIs)
 - Fast, no database required
-- Run with: `go test -short ./...`
+- Run with: `make test` or `go test ./...`
 
 ### Integration Tests
 - Test adapters against real database
 - Use `testcontainers` or Docker Compose for PostgreSQL
-- Tagged with `//go:build integration`
-- Run with: `go test -tags=integration ./...`
+- Guarded with `t.Skip()` when prerequisites (e.g., database) are unavailable
+- Run with: `make test` (skipped tests are reported automatically)
+
+### Environment Isolation
+- Tests that load config must clear env vars leaked by the Makefile (`DATABASE_URL`, `DATABASE_PASSWORD`, `YOUTUBE_API_KEY`)
+- Use `t.Setenv("KEY", "")` to clear vars — it auto-restores on test cleanup
+- See `clearConfigEnvVars` helper in `test/config/config_test.go` for the pattern
 
 ## Code Style
 
