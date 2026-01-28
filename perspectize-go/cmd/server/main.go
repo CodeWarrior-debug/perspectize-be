@@ -2,11 +2,20 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/joho/godotenv"
+	"github.com/yourorg/perspectize-go/internal/adapters/graphql/generated"
+	"github.com/yourorg/perspectize-go/internal/adapters/graphql/resolvers"
+	"github.com/yourorg/perspectize-go/internal/adapters/repositories/postgres"
+	"github.com/yourorg/perspectize-go/internal/adapters/youtube"
 	"github.com/yourorg/perspectize-go/internal/config"
+	"github.com/yourorg/perspectize-go/internal/core/services"
 	"github.com/yourorg/perspectize-go/pkg/database"
 )
 
@@ -49,4 +58,27 @@ func main() {
 		log.Fatalf("Failed to query database: %v", err)
 	}
 	log.Printf("PostgreSQL version: %s", version)
+
+	// Initialize adapters
+	youtubeClient := youtube.NewClient(cfg.YouTube.APIKey)
+	contentRepo := postgres.NewContentRepository(db)
+
+	// Initialize services
+	contentService := services.NewContentService(contentRepo, youtubeClient)
+
+	// Initialize GraphQL
+	resolver := resolvers.NewResolver(contentService)
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
+
+	// Setup HTTP routes
+	http.Handle("/", playground.Handler("GraphQL Playground", "/graphql"))
+	http.Handle("/graphql", srv)
+
+	// Start server
+	addr := fmt.Sprintf(":%d", cfg.Server.Port)
+	log.Printf("Server running at http://localhost%s", addr)
+	log.Printf("GraphQL Playground available at http://localhost%s/", addr)
+	if err := http.ListenAndServe(addr, nil); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }

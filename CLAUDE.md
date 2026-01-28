@@ -143,6 +143,54 @@ make docker-down
 make docker-logs
 ```
 
+### GitHub & Repository Management
+
+**Always use the `gh` CLI** for all GitHub operations. Do not use MCP plugins or other tools for GitHub interactions.
+
+```bash
+# Pull requests
+gh pr create --title "Title" --body "Description"
+gh pr list
+gh pr view 123
+gh pr merge 123
+
+# Issues
+gh issue create --title "Title" --body "Description"
+gh issue list
+gh issue view 123
+
+# Repository info
+gh repo view
+
+# API access (for anything not covered by commands)
+gh api repos/{owner}/{repo}/pulls/123/comments
+```
+
+### Branch Naming Convention
+
+**Always create branches from an updated `main` branch.**
+
+```bash
+# Before creating a new branch
+git checkout main
+git pull origin main
+git checkout -b <branch-name>
+```
+
+**Branch name format:** `type/initiativePrefix-issueNumber-description-in-kebab-case`
+
+| Component | Values |
+|-----------|--------|
+| **type** | `feature`, `bugfix`, `chore` |
+| **initiativePrefix** | `INI` (Initialization Phase) |
+| **issueNumber** | GitHub issue number (e.g., `16`) |
+| **description** | Brief kebab-case description |
+
+**Examples:**
+- `feature/INI-16-youtube-post-graphql`
+- `bugfix/INI-23-fix-auth-middleware`
+- `chore/INI-8-update-dependencies`
+
 ## Configuration
 
 Configuration is loaded from two sources (in order of precedence):
@@ -242,6 +290,41 @@ When implementing features:
 4. **Add adapters** - Implement infrastructure in `adapters/`
 5. **Wire dependencies** - Connect adapters to core in `cmd/server/main.go`
 
+### Domain Layer (`core/domain/`)
+
+The domain layer contains pure Go structs with **no external dependencies** - no database tags, no framework imports, no HTTP/GraphQL code. You should be able to copy domain files to another project and compile them with only the standard library.
+
+**Core entities for this project:**
+- `Content` - Media that users create perspectives on (YouTube videos, articles)
+- `Perspective` - A user's viewpoint/rating on content (claim, quality, agreement, etc.)
+
+**What belongs in domain:**
+
+| Include | Do NOT Include |
+|---------|----------------|
+| Business entities (structs) | Database tags (`db:"column"`) |
+| Constants/enums (`ContentType`, `Privacy`) | SQL queries |
+| Domain errors (`ErrNotFound`, `ErrInvalidRating`) | HTTP/GraphQL code |
+| Validation methods | External API calls |
+
+**Optional fields pattern:** Use pointers for nullable/optional fields:
+
+```go
+type Perspective struct {
+    Claim   string  // Required - always has a value
+    Quality *int    // Optional - nil means "not provided"
+}
+
+// Check if optional field is set
+if p.Quality != nil {
+    fmt.Println(*p.Quality)  // Dereference to get value
+}
+
+// Set an optional field
+quality := 85
+p.Quality = &quality
+```
+
 **Example flow:**
 ```
 GraphQL Request
@@ -253,15 +336,16 @@ GraphQL Request
 
 ## Workflow Integration
 
-This repository uses Cursor/Claude workflow files (gitignored, local only):
+This repository uses Claude Code for AI-assisted development.
 
-- **Workflow plans:** [.cursor/ai-change-plans/](perspectize-be/.cursor/ai-change-plans/)
-  - Format: `{TICKET-ID}-{description}.md`
+- **Workflow plans:** Use Claude Code's built-in plan mode
+  - Format: `{issueNumber}-{description-kebab-case}.md`
+  - File name must begin with GitHub issue number
   - Create for large changes requiring multiple files
-  - Reference ticket URLs: `https://iralogix.atlassian.net/browse/{TICKET-ID}`
+  - Example: `16-implement-post-youtube.md`
 
-- **Pull requests:** Use standardized template (see CLAUDE.local.md instructions)
-  - Include JIRA link, summary, problem/solution, technical changes, testing notes
+- **Pull requests:** Use standardized template
+  - Include GitHub issue link, summary, problem/solution, technical changes, testing notes
 
 ## Migration from C#
 

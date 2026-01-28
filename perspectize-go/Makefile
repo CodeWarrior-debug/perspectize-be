@@ -1,4 +1,4 @@
-.PHONY: build run test docker-up docker-down clean migrate-up migrate-up-n migrate-down migrate-down-n migrate-create
+.PHONY: build run test docker-up docker-down clean migrate-up migrate-up-n migrate-down migrate-down-n migrate-create graphql-gen fmt lint test-coverage
 
 # Load .env file if it exists
 ifneq (,$(wildcard .env))
@@ -64,3 +64,21 @@ migrate-force:
 clean:
 	rm -rf bin/
 	docker-compose down -v
+
+# GraphQL code generation
+graphql-gen:
+	@echo "Generating GraphQL code..."
+	go run github.com/99designs/gqlgen generate
+
+# Code formatting
+fmt:
+	go fmt ./...
+
+# Linting (requires golangci-lint)
+lint:
+	golangci-lint run ./...
+
+# Test with coverage
+test-coverage:
+	go test -v -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
