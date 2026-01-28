@@ -43,7 +43,10 @@ func (r *queryResolver) Content(ctx context.Context, id string) (*model.Content,
 	content, err := r.ContentService.GetByID(ctx, intID)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			return nil, nil // Return nil for not found (GraphQL nullable)
+			return nil, fmt.Errorf("content not found with ID: %s", id)
+		}
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid content ID: %s", id)
 		}
 		return nil, fmt.Errorf("failed to get content: %w", err)
 	}

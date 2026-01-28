@@ -69,6 +69,10 @@ func (s *ContentService) CreateFromYouTube(ctx context.Context, url string, extr
 
 // GetByID retrieves content by ID
 func (s *ContentService) GetByID(ctx context.Context, id int) (*domain.Content, error) {
+	if id <= 0 {
+		return nil, fmt.Errorf("%w: content id must be a positive integer", domain.ErrInvalidInput)
+	}
+
 	content, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get content: %w", err)

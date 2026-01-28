@@ -9,8 +9,19 @@ import (
 	"github.com/yourorg/perspectize-go/internal/config"
 )
 
+// clearConfigEnvVars ensures config-relevant env vars are empty so tests
+// run against config file values only. t.Setenv restores originals on cleanup.
+func clearConfigEnvVars(t *testing.T) {
+	t.Helper()
+	for _, key := range []string{"DATABASE_URL", "DATABASE_PASSWORD", "YOUTUBE_API_KEY"} {
+		t.Setenv(key, "")
+	}
+}
+
 // TestLoad_RealConfigFile tests loading the actual config.example.json
 func TestLoad_RealConfigFile(t *testing.T) {
+	clearConfigEnvVars(t)
+
 	// Load the ACTUAL config file from the project
 	configPath := "../../config/config.example.json"
 
@@ -33,15 +44,13 @@ func TestLoad_RealConfigFile(t *testing.T) {
 
 // TestLoad_RealConfigWithEnvOverrides tests that env vars override the real config
 func TestLoad_RealConfigWithEnvOverrides(t *testing.T) {
+	clearConfigEnvVars(t)
+
 	configPath := "../../config/config.example.json"
 
-	// Set environment variables
-	os.Setenv("DATABASE_PASSWORD", "secret123")
-	os.Setenv("YOUTUBE_API_KEY", "yt_key_456")
-	defer func() {
-		os.Unsetenv("DATABASE_PASSWORD")
-		os.Unsetenv("YOUTUBE_API_KEY")
-	}()
+	// Set environment variables (t.Setenv auto-restores on cleanup)
+	t.Setenv("DATABASE_PASSWORD", "secret123")
+	t.Setenv("YOUTUBE_API_KEY", "yt_key_456")
 
 	cfg, err := config.Load(configPath)
 	assert.NoError(t, err)
@@ -89,6 +98,8 @@ func TestServerConfig_GetAddr(t *testing.T) {
 
 // TestDatabaseConfig_GetDSN tests the database connection string generation
 func TestDatabaseConfig_GetDSN(t *testing.T) {
+	clearConfigEnvVars(t)
+
 	cfg := &config.DatabaseConfig{
 		Host:     "db.example.com",
 		Port:     5432,
@@ -105,11 +116,12 @@ func TestDatabaseConfig_GetDSN(t *testing.T) {
 
 // TestDatabaseConfig_GetDSN_FromRealConfig tests DSN generation with actual config values
 func TestDatabaseConfig_GetDSN_FromRealConfig(t *testing.T) {
+	clearConfigEnvVars(t)
+
 	configPath := "../../config/config.example.json"
 
 	// Set password via env var (like production)
-	os.Setenv("DATABASE_PASSWORD", "testpass")
-	defer os.Unsetenv("DATABASE_PASSWORD")
+	t.Setenv("DATABASE_PASSWORD", "testpass")
 
 	cfg, err := config.Load(configPath)
 	assert.NoError(t, err)
