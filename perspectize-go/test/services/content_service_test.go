@@ -16,9 +16,10 @@ import (
 
 // mockContentRepository implements repositories.ContentRepository for testing
 type mockContentRepository struct {
-	createFn  func(ctx context.Context, content *domain.Content) (*domain.Content, error)
-	getByIDFn func(ctx context.Context, id int) (*domain.Content, error)
+	createFn   func(ctx context.Context, content *domain.Content) (*domain.Content, error)
+	getByIDFn  func(ctx context.Context, id int) (*domain.Content, error)
 	getByURLFn func(ctx context.Context, url string) (*domain.Content, error)
+	listFn     func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
 }
 
 func (m *mockContentRepository) Create(ctx context.Context, content *domain.Content) (*domain.Content, error) {
@@ -40,6 +41,13 @@ func (m *mockContentRepository) GetByURL(ctx context.Context, url string) (*doma
 		return m.getByURLFn(ctx, url)
 	}
 	return nil, domain.ErrNotFound
+}
+
+func (m *mockContentRepository) List(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
+	if m.listFn != nil {
+		return m.listFn(ctx, params)
+	}
+	return &domain.PaginatedContent{Items: []*domain.Content{}}, nil
 }
 
 // mockYouTubeClient implements services.YouTubeClient for testing

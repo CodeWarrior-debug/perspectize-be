@@ -40,12 +40,17 @@ type YouTubeAPIResponse struct {
 		ContentDetails struct {
 			Duration string `json:"duration"`
 		} `json:"contentDetails"`
+		Statistics struct {
+			ViewCount    string `json:"viewCount"`
+			LikeCount    string `json:"likeCount"`
+			CommentCount string `json:"commentCount"`
+		} `json:"statistics"`
 	} `json:"items"`
 }
 
 // GetVideoMetadata fetches video metadata from YouTube Data API
 func (c *Client) GetVideoMetadata(ctx context.Context, videoID string) (*services.VideoMetadata, error) {
-	endpoint := fmt.Sprintf("%s/videos?part=snippet,contentDetails&id=%s&key=%s",
+	endpoint := fmt.Sprintf("%s/videos?part=snippet,statistics,contentDetails&id=%s&key=%s",
 		c.baseURL,
 		url.QueryEscape(videoID),
 		url.QueryEscape(c.apiKey),

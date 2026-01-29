@@ -2,15 +2,32 @@
 
 package model
 
+import (
+	"bytes"
+	"fmt"
+	"io"
+	"strconv"
+)
+
 type Content struct {
-	ID          string  `json:"id"`
-	Name        string  `json:"name"`
-	URL         *string `json:"url,omitempty"`
-	ContentType string  `json:"contentType"`
-	Length      *int    `json:"length,omitempty"`
-	LengthUnits *string `json:"lengthUnits,omitempty"`
-	CreatedAt   string  `json:"createdAt"`
-	UpdatedAt   string  `json:"updatedAt"`
+	ID           string         `json:"id"`
+	Name         string         `json:"name"`
+	URL          *string        `json:"url,omitempty"`
+	ContentType  string         `json:"contentType"`
+	Length       *int           `json:"length,omitempty"`
+	LengthUnits  *string        `json:"lengthUnits,omitempty"`
+	ViewCount    *int           `json:"viewCount,omitempty"`
+	LikeCount    *int           `json:"likeCount,omitempty"`
+	CommentCount *int           `json:"commentCount,omitempty"`
+	Response     map[string]any `json:"response,omitempty"`
+	CreatedAt    string         `json:"createdAt"`
+	UpdatedAt    string         `json:"updatedAt"`
+}
+
+type ContentFilter struct {
+	ContentType      *ContentType `json:"contentType,omitempty"`
+	MinLengthSeconds *int         `json:"minLengthSeconds,omitempty"`
+	MaxLengthSeconds *int         `json:"maxLengthSeconds,omitempty"`
 }
 
 type CreateContentFromYouTubeInput struct {
@@ -20,5 +37,183 @@ type CreateContentFromYouTubeInput struct {
 type Mutation struct {
 }
 
+type PageInfo struct {
+	HasNextPage     bool    `json:"hasNextPage"`
+	HasPreviousPage bool    `json:"hasPreviousPage"`
+	StartCursor     *string `json:"startCursor,omitempty"`
+	EndCursor       *string `json:"endCursor,omitempty"`
+}
+
+type PaginatedContent struct {
+	Items      []*Content `json:"items"`
+	PageInfo   *PageInfo  `json:"pageInfo"`
+	TotalCount *int       `json:"totalCount,omitempty"`
+}
+
 type Query struct {
+}
+
+type ContentSortBy string
+
+const (
+	ContentSortByCreatedAt ContentSortBy = "CREATED_AT"
+	ContentSortByUpdatedAt ContentSortBy = "UPDATED_AT"
+	ContentSortByName      ContentSortBy = "NAME"
+)
+
+var AllContentSortBy = []ContentSortBy{
+	ContentSortByCreatedAt,
+	ContentSortByUpdatedAt,
+	ContentSortByName,
+}
+
+func (e ContentSortBy) IsValid() bool {
+	switch e {
+	case ContentSortByCreatedAt, ContentSortByUpdatedAt, ContentSortByName:
+		return true
+	}
+	return false
+}
+
+func (e ContentSortBy) String() string {
+	return string(e)
+}
+
+func (e *ContentSortBy) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ContentSortBy(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ContentSortBy", str)
+	}
+	return nil
+}
+
+func (e ContentSortBy) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ContentSortBy) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ContentSortBy) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ContentType string
+
+const (
+	ContentTypeYoutube ContentType = "YOUTUBE"
+)
+
+var AllContentType = []ContentType{
+	ContentTypeYoutube,
+}
+
+func (e ContentType) IsValid() bool {
+	switch e {
+	case ContentTypeYoutube:
+		return true
+	}
+	return false
+}
+
+func (e ContentType) String() string {
+	return string(e)
+}
+
+func (e *ContentType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ContentType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ContentType", str)
+	}
+	return nil
+}
+
+func (e ContentType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ContentType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ContentType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SortOrder string
+
+const (
+	SortOrderAsc  SortOrder = "ASC"
+	SortOrderDesc SortOrder = "DESC"
+)
+
+var AllSortOrder = []SortOrder{
+	SortOrderAsc,
+	SortOrderDesc,
+}
+
+func (e SortOrder) IsValid() bool {
+	switch e {
+	case SortOrderAsc, SortOrderDesc:
+		return true
+	}
+	return false
+}
+
+func (e SortOrder) String() string {
+	return string(e)
+}
+
+func (e *SortOrder) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SortOrder(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SortOrder", str)
+	}
+	return nil
+}
+
+func (e SortOrder) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SortOrder) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SortOrder) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }

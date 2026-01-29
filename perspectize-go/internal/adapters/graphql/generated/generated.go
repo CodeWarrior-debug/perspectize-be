@@ -47,22 +47,40 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Content struct {
-		ContentType func(childComplexity int) int
-		CreatedAt   func(childComplexity int) int
-		ID          func(childComplexity int) int
-		Length      func(childComplexity int) int
-		LengthUnits func(childComplexity int) int
-		Name        func(childComplexity int) int
-		URL         func(childComplexity int) int
-		UpdatedAt   func(childComplexity int) int
+		CommentCount func(childComplexity int) int
+		ContentType  func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Length       func(childComplexity int) int
+		LengthUnits  func(childComplexity int) int
+		LikeCount    func(childComplexity int) int
+		Name         func(childComplexity int) int
+		Response     func(childComplexity int) int
+		URL          func(childComplexity int) int
+		UpdatedAt    func(childComplexity int) int
+		ViewCount    func(childComplexity int) int
 	}
 
 	Mutation struct {
 		CreateContentFromYouTube func(childComplexity int, input model.CreateContentFromYouTubeInput) int
 	}
 
+	PageInfo struct {
+		EndCursor       func(childComplexity int) int
+		HasNextPage     func(childComplexity int) int
+		HasPreviousPage func(childComplexity int) int
+		StartCursor     func(childComplexity int) int
+	}
+
+	PaginatedContent struct {
+		Items      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
 	Query struct {
-		Content func(childComplexity int, id string) int
+		Content     func(childComplexity int, first *int, after *string, last *int, before *string, sortBy *model.ContentSortBy, sortOrder *model.SortOrder, includeTotalCount *bool, filter *model.ContentFilter) int
+		ContentByID func(childComplexity int, id string) int
 	}
 }
 
@@ -70,7 +88,8 @@ type MutationResolver interface {
 	CreateContentFromYouTube(ctx context.Context, input model.CreateContentFromYouTubeInput) (*model.Content, error)
 }
 type QueryResolver interface {
-	Content(ctx context.Context, id string) (*model.Content, error)
+	ContentByID(ctx context.Context, id string) (*model.Content, error)
+	Content(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *model.ContentSortBy, sortOrder *model.SortOrder, includeTotalCount *bool, filter *model.ContentFilter) (*model.PaginatedContent, error)
 }
 
 type executableSchema struct {
@@ -92,6 +111,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	_ = ec
 	switch typeName + "." + field {
 
+	case "Content.commentCount":
+		if e.complexity.Content.CommentCount == nil {
+			break
+		}
+
+		return e.complexity.Content.CommentCount(childComplexity), true
 	case "Content.contentType":
 		if e.complexity.Content.ContentType == nil {
 			break
@@ -122,12 +147,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Content.LengthUnits(childComplexity), true
+	case "Content.likeCount":
+		if e.complexity.Content.LikeCount == nil {
+			break
+		}
+
+		return e.complexity.Content.LikeCount(childComplexity), true
 	case "Content.name":
 		if e.complexity.Content.Name == nil {
 			break
 		}
 
 		return e.complexity.Content.Name(childComplexity), true
+	case "Content.response":
+		if e.complexity.Content.Response == nil {
+			break
+		}
+
+		return e.complexity.Content.Response(childComplexity), true
 	case "Content.url":
 		if e.complexity.Content.URL == nil {
 			break
@@ -140,6 +177,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Content.UpdatedAt(childComplexity), true
+	case "Content.viewCount":
+		if e.complexity.Content.ViewCount == nil {
+			break
+		}
+
+		return e.complexity.Content.ViewCount(childComplexity), true
 
 	case "Mutation.createContentFromYouTube":
 		if e.complexity.Mutation.CreateContentFromYouTube == nil {
@@ -153,6 +196,50 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.CreateContentFromYouTube(childComplexity, args["input"].(model.CreateContentFromYouTubeInput)), true
 
+	case "PageInfo.endCursor":
+		if e.complexity.PageInfo.EndCursor == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.EndCursor(childComplexity), true
+	case "PageInfo.hasNextPage":
+		if e.complexity.PageInfo.HasNextPage == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.HasNextPage(childComplexity), true
+	case "PageInfo.hasPreviousPage":
+		if e.complexity.PageInfo.HasPreviousPage == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.HasPreviousPage(childComplexity), true
+	case "PageInfo.startCursor":
+		if e.complexity.PageInfo.StartCursor == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.StartCursor(childComplexity), true
+
+	case "PaginatedContent.items":
+		if e.complexity.PaginatedContent.Items == nil {
+			break
+		}
+
+		return e.complexity.PaginatedContent.Items(childComplexity), true
+	case "PaginatedContent.pageInfo":
+		if e.complexity.PaginatedContent.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.PaginatedContent.PageInfo(childComplexity), true
+	case "PaginatedContent.totalCount":
+		if e.complexity.PaginatedContent.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.PaginatedContent.TotalCount(childComplexity), true
+
 	case "Query.content":
 		if e.complexity.Query.Content == nil {
 			break
@@ -163,7 +250,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Content(childComplexity, args["id"].(string)), true
+		return e.complexity.Query.Content(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["sortBy"].(*model.ContentSortBy), args["sortOrder"].(*model.SortOrder), args["includeTotalCount"].(*bool), args["filter"].(*model.ContentFilter)), true
+	case "Query.contentByID":
+		if e.complexity.Query.ContentByID == nil {
+			break
+		}
+
+		args, err := ec.field_Query_contentByID_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ContentByID(childComplexity, args["id"].(string)), true
 
 	}
 	return 0, false
@@ -173,6 +271,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputContentFilter,
 		ec.unmarshalInputCreateContentFromYouTubeInput,
 	)
 	first := true
@@ -271,19 +370,62 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../../../../schema.graphql", Input: `type Content {
+	{Name: "../../../../schema.graphql", Input: `scalar JSON
+
+type Content {
   id: ID!
   name: String!
   url: String
   contentType: String!
   length: Int
   lengthUnits: String
+  viewCount: Int
+  likeCount: Int
+  commentCount: Int
+  response: JSON
   createdAt: String!
   updatedAt: String!
 }
 
+# Pagination types
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type PaginatedContent {
+  items: [Content!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+# Sorting enums
+enum ContentSortBy {
+  CREATED_AT
+  UPDATED_AT
+  NAME
+}
+
+enum SortOrder {
+  ASC
+  DESC
+}
+
+enum ContentType {
+  YOUTUBE
+}
+
+# Inputs
 input CreateContentFromYouTubeInput {
   url: String!
+}
+
+input ContentFilter {
+  contentType: ContentType
+  minLengthSeconds: Int
+  maxLengthSeconds: Int
 }
 
 type Mutation {
@@ -291,7 +433,20 @@ type Mutation {
 }
 
 type Query {
-  content(id: ID!): Content
+  # Get single content by ID
+  contentByID(id: ID!): Content
+
+  # Paginated content list with optional filtering
+  content(
+    first: Int = 10
+    after: String
+    last: Int
+    before: String
+    sortBy: ContentSortBy = CREATED_AT
+    sortOrder: SortOrder = DESC
+    includeTotalCount: Boolean = false
+    filter: ContentFilter
+  ): PaginatedContent!
 }
 `, BuiltIn: false},
 }
@@ -323,7 +478,7 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_content_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Query_contentByID_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
@@ -331,6 +486,52 @@ func (ec *executionContext) field_Query_content_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_content_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOContentSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentSortBy)
+	if err != nil {
+		return nil, err
+	}
+	args["sortBy"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐSortOrder)
+	if err != nil {
+		return nil, err
+	}
+	args["sortOrder"] = arg5
+	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "includeTotalCount", ec.unmarshalOBoolean2ᚖbool)
+	if err != nil {
+		return nil, err
+	}
+	args["includeTotalCount"] = arg6
+	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOContentFilter2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentFilter)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg7
 	return args, nil
 }
 
@@ -560,6 +761,122 @@ func (ec *executionContext) fieldContext_Content_lengthUnits(_ context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Content_viewCount(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Content_viewCount,
+		func(ctx context.Context) (any, error) {
+			return obj.ViewCount, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Content_viewCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Content",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Content_likeCount(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Content_likeCount,
+		func(ctx context.Context) (any, error) {
+			return obj.LikeCount, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Content_likeCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Content",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Content_commentCount(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Content_commentCount,
+		func(ctx context.Context) (any, error) {
+			return obj.CommentCount, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Content_commentCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Content",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Content_response(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Content_response,
+		func(ctx context.Context) (any, error) {
+			return obj.Response, nil
+		},
+		nil,
+		ec.marshalOJSON2map,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Content_response(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Content",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type JSON does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Content_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -655,6 +972,14 @@ func (ec *executionContext) fieldContext_Mutation_createContentFromYouTube(ctx c
 				return ec.fieldContext_Content_length(ctx, field)
 			case "lengthUnits":
 				return ec.fieldContext_Content_lengthUnits(ctx, field)
+			case "viewCount":
+				return ec.fieldContext_Content_viewCount(ctx, field)
+			case "likeCount":
+				return ec.fieldContext_Content_likeCount(ctx, field)
+			case "commentCount":
+				return ec.fieldContext_Content_commentCount(ctx, field)
+			case "response":
+				return ec.fieldContext_Content_response(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Content_createdAt(ctx, field)
 			case "updatedAt":
@@ -677,15 +1002,254 @@ func (ec *executionContext) fieldContext_Mutation_createContentFromYouTube(ctx c
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_content(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Query_content,
+		ec.fieldContext_PageInfo_hasNextPage,
+		func(ctx context.Context) (any, error) {
+			return obj.HasNextPage, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_hasNextPage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_hasPreviousPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PageInfo_hasPreviousPage,
+		func(ctx context.Context) (any, error) {
+			return obj.HasPreviousPage, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_hasPreviousPage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_startCursor(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PageInfo_startCursor,
+		func(ctx context.Context) (any, error) {
+			return obj.StartCursor, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_startCursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PageInfo_endCursor,
+		func(ctx context.Context) (any, error) {
+			return obj.EndCursor, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_endCursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PaginatedContent_items(ctx context.Context, field graphql.CollectedField, obj *model.PaginatedContent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PaginatedContent_items,
+		func(ctx context.Context) (any, error) {
+			return obj.Items, nil
+		},
+		nil,
+		ec.marshalNContent2ᚕᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PaginatedContent_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PaginatedContent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Content_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Content_name(ctx, field)
+			case "url":
+				return ec.fieldContext_Content_url(ctx, field)
+			case "contentType":
+				return ec.fieldContext_Content_contentType(ctx, field)
+			case "length":
+				return ec.fieldContext_Content_length(ctx, field)
+			case "lengthUnits":
+				return ec.fieldContext_Content_lengthUnits(ctx, field)
+			case "viewCount":
+				return ec.fieldContext_Content_viewCount(ctx, field)
+			case "likeCount":
+				return ec.fieldContext_Content_likeCount(ctx, field)
+			case "commentCount":
+				return ec.fieldContext_Content_commentCount(ctx, field)
+			case "response":
+				return ec.fieldContext_Content_response(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Content_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Content_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Content", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PaginatedContent_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.PaginatedContent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PaginatedContent_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PaginatedContent_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PaginatedContent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PaginatedContent_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.PaginatedContent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PaginatedContent_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_PaginatedContent_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PaginatedContent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_contentByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_contentByID,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Content(ctx, fc.Args["id"].(string))
+			return ec.resolvers.Query().ContentByID(ctx, fc.Args["id"].(string))
 		},
 		nil,
 		ec.marshalOContent2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent,
@@ -694,7 +1258,7 @@ func (ec *executionContext) _Query_content(ctx context.Context, field graphql.Co
 	)
 }
 
-func (ec *executionContext) fieldContext_Query_content(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_contentByID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -714,12 +1278,69 @@ func (ec *executionContext) fieldContext_Query_content(ctx context.Context, fiel
 				return ec.fieldContext_Content_length(ctx, field)
 			case "lengthUnits":
 				return ec.fieldContext_Content_lengthUnits(ctx, field)
+			case "viewCount":
+				return ec.fieldContext_Content_viewCount(ctx, field)
+			case "likeCount":
+				return ec.fieldContext_Content_likeCount(ctx, field)
+			case "commentCount":
+				return ec.fieldContext_Content_commentCount(ctx, field)
+			case "response":
+				return ec.fieldContext_Content_response(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Content_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Content_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Content", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_contentByID_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_content(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_content,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().Content(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["sortBy"].(*model.ContentSortBy), fc.Args["sortOrder"].(*model.SortOrder), fc.Args["includeTotalCount"].(*bool), fc.Args["filter"].(*model.ContentFilter))
+		},
+		nil,
+		ec.marshalNPaginatedContent2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedContent,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_content(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "items":
+				return ec.fieldContext_PaginatedContent_items(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_PaginatedContent_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_PaginatedContent_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PaginatedContent", field.Name)
 		},
 	}
 	defer func() {
@@ -2290,6 +2911,47 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputContentFilter(ctx context.Context, obj any) (model.ContentFilter, error) {
+	var it model.ContentFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"contentType", "minLengthSeconds", "maxLengthSeconds"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "contentType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contentType"))
+			data, err := ec.unmarshalOContentType2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ContentType = data
+		case "minLengthSeconds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minLengthSeconds"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MinLengthSeconds = data
+		case "maxLengthSeconds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxLengthSeconds"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxLengthSeconds = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateContentFromYouTubeInput(ctx context.Context, obj any) (model.CreateContentFromYouTubeInput, error) {
 	var it model.CreateContentFromYouTubeInput
 	asMap := map[string]any{}
@@ -2357,6 +3019,14 @@ func (ec *executionContext) _Content(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Content_length(ctx, field, obj)
 		case "lengthUnits":
 			out.Values[i] = ec._Content_lengthUnits(ctx, field, obj)
+		case "viewCount":
+			out.Values[i] = ec._Content_viewCount(ctx, field, obj)
+		case "likeCount":
+			out.Values[i] = ec._Content_likeCount(ctx, field, obj)
+		case "commentCount":
+			out.Values[i] = ec._Content_commentCount(ctx, field, obj)
+		case "response":
+			out.Values[i] = ec._Content_response(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._Content_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -2439,6 +3109,100 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	return out
 }
 
+var pageInfoImplementors = []string{"PageInfo"}
+
+func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet, obj *model.PageInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, pageInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PageInfo")
+		case "hasNextPage":
+			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hasPreviousPage":
+			out.Values[i] = ec._PageInfo_hasPreviousPage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "startCursor":
+			out.Values[i] = ec._PageInfo_startCursor(ctx, field, obj)
+		case "endCursor":
+			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var paginatedContentImplementors = []string{"PaginatedContent"}
+
+func (ec *executionContext) _PaginatedContent(ctx context.Context, sel ast.SelectionSet, obj *model.PaginatedContent) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, paginatedContentImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PaginatedContent")
+		case "items":
+			out.Values[i] = ec._PaginatedContent_items(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._PaginatedContent_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._PaginatedContent_totalCount(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -2458,7 +3222,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "content":
+		case "contentByID":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -2467,7 +3231,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
+				res = ec._Query_contentByID(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "content":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
 				res = ec._Query_content(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -2863,6 +3649,50 @@ func (ec *executionContext) marshalNContent2githubᚗcomᚋyourorgᚋperspectize
 	return ec._Content(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNContent2ᚕᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Content) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNContent2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNContent2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx context.Context, sel ast.SelectionSet, v *model.Content) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -2892,6 +3722,30 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PageInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPaginatedContent2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedContent(ctx context.Context, sel ast.SelectionSet, v model.PaginatedContent) graphql.Marshaler {
+	return ec._PaginatedContent(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPaginatedContent2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedContent(ctx context.Context, sel ast.SelectionSet, v *model.PaginatedContent) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PaginatedContent(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
@@ -3200,6 +4054,46 @@ func (ec *executionContext) marshalOContent2ᚖgithubᚗcomᚋyourorgᚋperspect
 	return ec._Content(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOContentFilter2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentFilter(ctx context.Context, v any) (*model.ContentFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputContentFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOContentSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentSortBy(ctx context.Context, v any) (*model.ContentSortBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.ContentSortBy)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOContentSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentSortBy(ctx context.Context, sel ast.SelectionSet, v *model.ContentSortBy) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
+func (ec *executionContext) unmarshalOContentType2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentType(ctx context.Context, v any) (*model.ContentType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.ContentType)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOContentType2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentType(ctx context.Context, sel ast.SelectionSet, v *model.ContentType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v any) (*int, error) {
 	if v == nil {
 		return nil, nil
@@ -3216,6 +4110,40 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	_ = ctx
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOJSON2map(ctx context.Context, v any) (map[string]any, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalMap(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOJSON2map(ctx context.Context, sel ast.SelectionSet, v map[string]any) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalMap(v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐSortOrder(ctx context.Context, v any) (*model.SortOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.SortOrder)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v *model.SortOrder) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {

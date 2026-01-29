@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/yourorg/perspectize-go/internal/adapters/graphql/generated"
 	"github.com/yourorg/perspectize-go/internal/adapters/graphql/model"
@@ -33,8 +34,8 @@ func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input m
 	return domainToModel(content), nil
 }
 
-// Content is the resolver for the content field.
-func (r *queryResolver) Content(ctx context.Context, id string) (*model.Content, error) {
+// ContentByID is the resolver for the contentByID field.
+func (r *queryResolver) ContentByID(ctx context.Context, id string) (*model.Content, error) {
 	intID, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, fmt.Errorf("invalid content ID: %s", id)
@@ -54,18 +55,82 @@ func (r *queryResolver) Content(ctx context.Context, id string) (*model.Content,
 	return domainToModel(content), nil
 }
 
-// domainToModel converts a domain Content to a GraphQL model Content
-func domainToModel(c *domain.Content) *model.Content {
-	return &model.Content{
-		ID:          strconv.Itoa(c.ID),
-		Name:        c.Name,
-		URL:         c.URL,
-		ContentType: string(c.ContentType),
-		Length:      c.Length,
-		LengthUnits: c.LengthUnits,
-		CreatedAt:   c.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:   c.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+// Content is the resolver for the content field.
+func (r *queryResolver) Content(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *model.ContentSortBy, sortOrder *model.SortOrder, includeTotalCount *bool, filter *model.ContentFilter) (*model.PaginatedContent, error) {
+	params := domain.ContentListParams{
+		First:  first,
+		After:  after,
+		Last:   last,
+		Before: before,
 	}
+
+	// Map GraphQL enums to domain enums
+	if sortBy != nil {
+		switch *sortBy {
+		case model.ContentSortByUpdatedAt:
+			params.SortBy = domain.ContentSortByUpdatedAt
+		case model.ContentSortByName:
+			params.SortBy = domain.ContentSortByName
+		default:
+			params.SortBy = domain.ContentSortByCreatedAt
+		}
+	} else {
+		params.SortBy = domain.ContentSortByCreatedAt
+	}
+
+	if sortOrder != nil {
+		switch *sortOrder {
+		case model.SortOrderAsc:
+			params.SortOrder = domain.SortOrderAsc
+		default:
+			params.SortOrder = domain.SortOrderDesc
+		}
+	} else {
+		params.SortOrder = domain.SortOrderDesc
+	}
+
+	if includeTotalCount != nil {
+		params.IncludeTotalCount = *includeTotalCount
+	}
+
+	// Map filter
+	if filter != nil {
+		params.Filter = &domain.ContentFilter{}
+		if filter.ContentType != nil {
+			// GraphQL enum is uppercase (YOUTUBE), domain is lowercase (youtube)
+			ct := domain.ContentType(strings.ToLower(string(*filter.ContentType)))
+			params.Filter.ContentType = &ct
+		}
+		params.Filter.MinLengthSeconds = filter.MinLengthSeconds
+		params.Filter.MaxLengthSeconds = filter.MaxLengthSeconds
+	}
+
+	result, err := r.ContentService.ListContent(ctx, params)
+	if err != nil {
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid pagination parameters: %w", err)
+		}
+		return nil, fmt.Errorf("failed to list content: %w", err)
+	}
+
+	// Map domain result to GraphQL model
+	items := make([]*model.Content, len(result.Items))
+	for i, item := range result.Items {
+		items[i] = domainToModel(item)
+	}
+
+	conn := &model.PaginatedContent{
+		Items: items,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     result.HasNext,
+			HasPreviousPage: result.HasPrev,
+			StartCursor:     result.StartCursor,
+			EndCursor:       result.EndCursor,
+		},
+		TotalCount: result.TotalCount,
+	}
+
+	return conn, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

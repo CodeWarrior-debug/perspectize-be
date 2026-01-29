@@ -24,6 +24,7 @@ type mockContentRepository struct {
 	createFn   func(ctx context.Context, content *domain.Content) (*domain.Content, error)
 	getByIDFn  func(ctx context.Context, id int) (*domain.Content, error)
 	getByURLFn func(ctx context.Context, url string) (*domain.Content, error)
+	listFn     func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
 }
 
 func (m *mockContentRepository) Create(ctx context.Context, content *domain.Content) (*domain.Content, error) {
@@ -45,6 +46,13 @@ func (m *mockContentRepository) GetByURL(ctx context.Context, url string) (*doma
 		return m.getByURLFn(ctx, url)
 	}
 	return nil, domain.ErrNotFound
+}
+
+func (m *mockContentRepository) List(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
+	if m.listFn != nil {
+		return m.listFn(ctx, params)
+	}
+	return &domain.PaginatedContent{Items: []*domain.Content{}}, nil
 }
 
 // mockYouTubeClient implements services.YouTubeClient for testing
@@ -115,25 +123,25 @@ func TestContentQuery_Success(t *testing.T) {
 	server := setupTestServer(repo, &mockYouTubeClient{})
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `{ content(id: "1") { id name contentType url } }`)
+	result := executeGraphQL(t, server, `{ contentByID(id: "1") { id name contentType url } }`)
 
 	assert.Empty(t, result.Errors)
 
 	var data struct {
-		Content struct {
+		ContentByID struct {
 			ID          string `json:"id"`
 			Name        string `json:"name"`
 			ContentType string `json:"contentType"`
 			URL         string `json:"url"`
-		} `json:"content"`
+		} `json:"contentByID"`
 	}
 	err := json.Unmarshal(result.Data, &data)
 	require.NoError(t, err)
 
-	assert.Equal(t, "1", data.Content.ID)
-	assert.Equal(t, "Test Video", data.Content.Name)
-	assert.Equal(t, "youtube", data.Content.ContentType)
-	assert.Equal(t, url, data.Content.URL)
+	assert.Equal(t, "1", data.ContentByID.ID)
+	assert.Equal(t, "Test Video", data.ContentByID.Name)
+	assert.Equal(t, "youtube", data.ContentByID.ContentType)
+	assert.Equal(t, url, data.ContentByID.URL)
 }
 
 func TestContentQuery_NotFound_ReturnsError(t *testing.T) {
@@ -146,7 +154,7 @@ func TestContentQuery_NotFound_ReturnsError(t *testing.T) {
 	server := setupTestServer(repo, &mockYouTubeClient{})
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `{ content(id: "999") { id name } }`)
+	result := executeGraphQL(t, server, `{ contentByID(id: "999") { id name } }`)
 
 	// Issue #18 fix: should return an error, not a silent null
 	require.NotEmpty(t, result.Errors, "Expected an error when content is not found")
@@ -159,7 +167,7 @@ func TestContentQuery_InvalidID_NonNumeric(t *testing.T) {
 	server := setupTestServer(repo, &mockYouTubeClient{})
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `{ content(id: "abc") { id name } }`)
+	result := executeGraphQL(t, server, `{ contentByID(id: "abc") { id name } }`)
 
 	require.NotEmpty(t, result.Errors)
 	assert.Contains(t, result.Errors[0].Message, "invalid content ID")
@@ -171,7 +179,7 @@ func TestContentQuery_InvalidID_Zero(t *testing.T) {
 	server := setupTestServer(repo, &mockYouTubeClient{})
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `{ content(id: "0") { id name } }`)
+	result := executeGraphQL(t, server, `{ contentByID(id: "0") { id name } }`)
 
 	require.NotEmpty(t, result.Errors)
 	assert.Contains(t, result.Errors[0].Message, "invalid content ID")
@@ -183,7 +191,7 @@ func TestContentQuery_InvalidID_Negative(t *testing.T) {
 	server := setupTestServer(repo, &mockYouTubeClient{})
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `{ content(id: "-1") { id name } }`)
+	result := executeGraphQL(t, server, `{ contentByID(id: "-1") { id name } }`)
 
 	require.NotEmpty(t, result.Errors)
 	assert.Contains(t, result.Errors[0].Message, "invalid content ID")
@@ -199,7 +207,7 @@ func TestContentQuery_DatabaseError(t *testing.T) {
 	server := setupTestServer(repo, &mockYouTubeClient{})
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `{ content(id: "1") { id name } }`)
+	result := executeGraphQL(t, server, `{ contentByID(id: "1") { id name } }`)
 
 	require.NotEmpty(t, result.Errors)
 	assert.Contains(t, result.Errors[0].Message, "failed to get content")
@@ -285,6 +293,481 @@ func TestCreateContentFromYouTube_InvalidURL(t *testing.T) {
 
 	require.NotEmpty(t, result.Errors)
 	assert.Contains(t, result.Errors[0].Message, "invalid YouTube URL")
+}
+
+// --- Paginated Content Query Tests ---
+
+func TestPaginatedContentQuery_DefaultPagination(t *testing.T) {
+	repo := &mockContentRepository{
+		listFn: func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
+			// Verify default values - GraphQL passes the schema default (10), not nil
+			require.NotNil(t, params.First)
+			assert.Equal(t, 10, *params.First)
+			assert.Equal(t, domain.ContentSortByCreatedAt, params.SortBy)
+			assert.Equal(t, domain.SortOrderDesc, params.SortOrder)
+			assert.False(t, params.IncludeTotalCount)
+
+			url := "https://youtube.com/watch?v=abc123"
+			return &domain.PaginatedContent{
+				Items: []*domain.Content{
+					{ID: 1, Name: "Video 1", URL: &url, ContentType: domain.ContentTypeYouTube},
+					{ID: 2, Name: "Video 2", URL: &url, ContentType: domain.ContentTypeYouTube},
+				},
+				HasNext: false,
+				HasPrev: false,
+			}, nil
+		},
+	}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `{ content { items { id name } pageInfo { hasNextPage hasPreviousPage } } }`)
+
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		Content struct {
+			Items []struct {
+				ID   string `json:"id"`
+				Name string `json:"name"`
+			} `json:"items"`
+			PageInfo struct {
+				HasNextPage     bool `json:"hasNextPage"`
+				HasPreviousPage bool `json:"hasPreviousPage"`
+			} `json:"pageInfo"`
+		} `json:"content"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+
+	assert.Len(t, data.Content.Items, 2)
+	assert.Equal(t, "1", data.Content.Items[0].ID)
+	assert.Equal(t, "Video 1", data.Content.Items[0].Name)
+	assert.False(t, data.Content.PageInfo.HasNextPage)
+	assert.False(t, data.Content.PageInfo.HasPreviousPage)
+}
+
+func TestPaginatedContentQuery_WithFirstParameter(t *testing.T) {
+	repo := &mockContentRepository{
+		listFn: func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
+			require.NotNil(t, params.First)
+			assert.Equal(t, 5, *params.First)
+
+			url := "https://youtube.com/watch?v=abc123"
+			items := make([]*domain.Content, 5)
+			for i := 0; i < 5; i++ {
+				items[i] = &domain.Content{ID: i + 1, Name: fmt.Sprintf("Video %d", i+1), URL: &url, ContentType: domain.ContentTypeYouTube}
+			}
+			endCursor := "cursor123"
+			return &domain.PaginatedContent{
+				Items:     items,
+				HasNext:   true,
+				HasPrev:   false,
+				EndCursor: &endCursor,
+			}, nil
+		},
+	}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `{ content(first: 5) { items { id } pageInfo { hasNextPage endCursor } } }`)
+
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		Content struct {
+			Items []struct {
+				ID string `json:"id"`
+			} `json:"items"`
+			PageInfo struct {
+				HasNextPage bool    `json:"hasNextPage"`
+				EndCursor   *string `json:"endCursor"`
+			} `json:"pageInfo"`
+		} `json:"content"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+
+	assert.Len(t, data.Content.Items, 5)
+	assert.True(t, data.Content.PageInfo.HasNextPage)
+	assert.NotNil(t, data.Content.PageInfo.EndCursor)
+}
+
+func TestPaginatedContentQuery_WithTotalCount(t *testing.T) {
+	repo := &mockContentRepository{
+		listFn: func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
+			assert.True(t, params.IncludeTotalCount)
+
+			totalCount := 42
+			return &domain.PaginatedContent{
+				Items:      []*domain.Content{},
+				HasNext:    false,
+				HasPrev:    false,
+				TotalCount: &totalCount,
+			}, nil
+		},
+	}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `{ content(includeTotalCount: true) { totalCount items { id } } }`)
+
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		Content struct {
+			TotalCount *int `json:"totalCount"`
+			Items      []struct {
+				ID string `json:"id"`
+			} `json:"items"`
+		} `json:"content"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+
+	require.NotNil(t, data.Content.TotalCount)
+	assert.Equal(t, 42, *data.Content.TotalCount)
+}
+
+func TestPaginatedContentQuery_WithSorting(t *testing.T) {
+	repo := &mockContentRepository{
+		listFn: func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
+			assert.Equal(t, domain.ContentSortByName, params.SortBy)
+			assert.Equal(t, domain.SortOrderAsc, params.SortOrder)
+
+			return &domain.PaginatedContent{
+				Items:   []*domain.Content{},
+				HasNext: false,
+				HasPrev: false,
+			}, nil
+		},
+	}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `{ content(sortBy: NAME, sortOrder: ASC) { items { id } } }`)
+
+	assert.Empty(t, result.Errors)
+}
+
+func TestPaginatedContentQuery_WithAfterCursor(t *testing.T) {
+	repo := &mockContentRepository{
+		listFn: func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
+			require.NotNil(t, params.After)
+			assert.Equal(t, "someCursor123", *params.After)
+
+			url := "https://youtube.com/watch?v=abc123"
+			return &domain.PaginatedContent{
+				Items: []*domain.Content{
+					{ID: 11, Name: "Video 11", URL: &url, ContentType: domain.ContentTypeYouTube},
+				},
+				HasNext: false,
+				HasPrev: true,
+			}, nil
+		},
+	}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `{ content(after: "someCursor123") { items { id } pageInfo { hasPreviousPage } } }`)
+
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		Content struct {
+			Items []struct {
+				ID string `json:"id"`
+			} `json:"items"`
+			PageInfo struct {
+				HasPreviousPage bool `json:"hasPreviousPage"`
+			} `json:"pageInfo"`
+		} `json:"content"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+
+	assert.Len(t, data.Content.Items, 1)
+	assert.Equal(t, "11", data.Content.Items[0].ID)
+	assert.True(t, data.Content.PageInfo.HasPreviousPage)
+}
+
+func TestPaginatedContentQuery_InvalidFirstParameter(t *testing.T) {
+	repo := &mockContentRepository{}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	// first: 0 is invalid (must be 1-100)
+	result := executeGraphQL(t, server, `{ content(first: 0) { items { id } } }`)
+
+	require.NotEmpty(t, result.Errors)
+	assert.Contains(t, result.Errors[0].Message, "invalid pagination parameters")
+}
+
+func TestPaginatedContentQuery_FirstTooLarge(t *testing.T) {
+	repo := &mockContentRepository{}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	// first: 101 exceeds max of 100
+	result := executeGraphQL(t, server, `{ content(first: 101) { items { id } } }`)
+
+	require.NotEmpty(t, result.Errors)
+	assert.Contains(t, result.Errors[0].Message, "invalid pagination parameters")
+}
+
+func TestPaginatedContentQuery_RepositoryError(t *testing.T) {
+	repo := &mockContentRepository{
+		listFn: func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
+			return nil, fmt.Errorf("database connection failed")
+		},
+	}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `{ content { items { id } } }`)
+
+	require.NotEmpty(t, result.Errors)
+	assert.Contains(t, result.Errors[0].Message, "failed to list content")
+}
+
+func TestPaginatedContentQuery_WithContentTypeFilter(t *testing.T) {
+	repo := &mockContentRepository{
+		listFn: func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
+			require.NotNil(t, params.Filter)
+			require.NotNil(t, params.Filter.ContentType)
+			assert.Equal(t, domain.ContentTypeYouTube, *params.Filter.ContentType)
+
+			url := "https://youtube.com/watch?v=abc123"
+			return &domain.PaginatedContent{
+				Items: []*domain.Content{
+					{ID: 1, Name: "YouTube Video", URL: &url, ContentType: domain.ContentTypeYouTube},
+				},
+				HasNext: false,
+				HasPrev: false,
+			}, nil
+		},
+	}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `{ content(filter: { contentType: YOUTUBE }) { items { id name contentType } } }`)
+
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		Content struct {
+			Items []struct {
+				ID          string `json:"id"`
+				Name        string `json:"name"`
+				ContentType string `json:"contentType"`
+			} `json:"items"`
+		} `json:"content"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+
+	assert.Len(t, data.Content.Items, 1)
+	assert.Equal(t, "YouTube Video", data.Content.Items[0].Name)
+	assert.Equal(t, "youtube", data.Content.Items[0].ContentType)
+}
+
+func TestPaginatedContentQuery_WithFilterAndTotalCount(t *testing.T) {
+	repo := &mockContentRepository{
+		listFn: func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
+			require.NotNil(t, params.Filter)
+			require.NotNil(t, params.Filter.ContentType)
+			assert.True(t, params.IncludeTotalCount)
+
+			totalCount := 5
+			return &domain.PaginatedContent{
+				Items:      []*domain.Content{},
+				HasNext:    false,
+				HasPrev:    false,
+				TotalCount: &totalCount,
+			}, nil
+		},
+	}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `{ content(filter: { contentType: YOUTUBE }, includeTotalCount: true) { totalCount items { id } } }`)
+
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		Content struct {
+			TotalCount *int `json:"totalCount"`
+			Items      []struct {
+				ID string `json:"id"`
+			} `json:"items"`
+		} `json:"content"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+
+	require.NotNil(t, data.Content.TotalCount)
+	assert.Equal(t, 5, *data.Content.TotalCount)
+}
+
+func TestPaginatedContentQuery_NoFilter(t *testing.T) {
+	repo := &mockContentRepository{
+		listFn: func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
+			assert.Nil(t, params.Filter)
+
+			return &domain.PaginatedContent{
+				Items:   []*domain.Content{},
+				HasNext: false,
+				HasPrev: false,
+			}, nil
+		},
+	}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `{ content { items { id } } }`)
+
+	assert.Empty(t, result.Errors)
+}
+
+func TestPaginatedContentQuery_WithMinLengthFilter(t *testing.T) {
+	repo := &mockContentRepository{
+		listFn: func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
+			require.NotNil(t, params.Filter)
+			require.NotNil(t, params.Filter.MinLengthSeconds)
+			assert.Equal(t, 300, *params.Filter.MinLengthSeconds)
+			assert.Nil(t, params.Filter.MaxLengthSeconds)
+
+			url := "https://youtube.com/watch?v=abc123"
+			length := 600
+			return &domain.PaginatedContent{
+				Items: []*domain.Content{
+					{ID: 1, Name: "Long Video", URL: &url, ContentType: domain.ContentTypeYouTube, Length: &length},
+				},
+				HasNext: false,
+				HasPrev: false,
+			}, nil
+		},
+	}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `{ content(filter: { minLengthSeconds: 300 }) { items { id name length } } }`)
+
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		Content struct {
+			Items []struct {
+				ID     string `json:"id"`
+				Name   string `json:"name"`
+				Length *int   `json:"length"`
+			} `json:"items"`
+		} `json:"content"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+
+	assert.Len(t, data.Content.Items, 1)
+	require.NotNil(t, data.Content.Items[0].Length)
+	assert.Equal(t, 600, *data.Content.Items[0].Length)
+}
+
+func TestPaginatedContentQuery_WithMaxLengthFilter(t *testing.T) {
+	repo := &mockContentRepository{
+		listFn: func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
+			require.NotNil(t, params.Filter)
+			require.NotNil(t, params.Filter.MaxLengthSeconds)
+			assert.Equal(t, 180, *params.Filter.MaxLengthSeconds)
+			assert.Nil(t, params.Filter.MinLengthSeconds)
+
+			url := "https://youtube.com/watch?v=abc123"
+			length := 120
+			return &domain.PaginatedContent{
+				Items: []*domain.Content{
+					{ID: 1, Name: "Short Video", URL: &url, ContentType: domain.ContentTypeYouTube, Length: &length},
+				},
+				HasNext: false,
+				HasPrev: false,
+			}, nil
+		},
+	}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `{ content(filter: { maxLengthSeconds: 180 }) { items { id name length } } }`)
+
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		Content struct {
+			Items []struct {
+				ID     string `json:"id"`
+				Name   string `json:"name"`
+				Length *int   `json:"length"`
+			} `json:"items"`
+		} `json:"content"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+
+	assert.Len(t, data.Content.Items, 1)
+	require.NotNil(t, data.Content.Items[0].Length)
+	assert.Equal(t, 120, *data.Content.Items[0].Length)
+}
+
+func TestPaginatedContentQuery_WithMinMaxLengthFilter(t *testing.T) {
+	repo := &mockContentRepository{
+		listFn: func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
+			require.NotNil(t, params.Filter)
+			require.NotNil(t, params.Filter.MinLengthSeconds)
+			require.NotNil(t, params.Filter.MaxLengthSeconds)
+			assert.Equal(t, 120, *params.Filter.MinLengthSeconds)
+			assert.Equal(t, 300, *params.Filter.MaxLengthSeconds)
+
+			url := "https://youtube.com/watch?v=abc123"
+			length := 200
+			return &domain.PaginatedContent{
+				Items: []*domain.Content{
+					{ID: 1, Name: "Medium Video", URL: &url, ContentType: domain.ContentTypeYouTube, Length: &length},
+				},
+				HasNext: false,
+				HasPrev: false,
+			}, nil
+		},
+	}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `{ content(filter: { minLengthSeconds: 120, maxLengthSeconds: 300 }) { items { id length } } }`)
+
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		Content struct {
+			Items []struct {
+				ID     string `json:"id"`
+				Length *int   `json:"length"`
+			} `json:"items"`
+		} `json:"content"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+
+	assert.Len(t, data.Content.Items, 1)
 }
 
 // --- NewResolver Tests ---

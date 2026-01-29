@@ -1,3 +1,5 @@
+scalar JSON
+
 type Content {
   id: ID!
   name: String!
@@ -5,12 +7,54 @@ type Content {
   contentType: String!
   length: Int
   lengthUnits: String
+  viewCount: Int
+  likeCount: Int
+  commentCount: Int
+  response: JSON
   createdAt: String!
   updatedAt: String!
 }
 
+# Pagination types
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type PaginatedContent {
+  items: [Content!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+# Sorting enums
+enum ContentSortBy {
+  CREATED_AT
+  UPDATED_AT
+  NAME
+}
+
+enum SortOrder {
+  ASC
+  DESC
+}
+
+enum ContentType {
+  YOUTUBE
+}
+
+# Inputs
 input CreateContentFromYouTubeInput {
   url: String!
+}
+
+# TODO: Add additional filters (e.g., dateRange, search) or make filters dynamic
+input ContentFilter {
+  contentType: ContentType
+  minLengthSeconds: Int
+  maxLengthSeconds: Int
 }
 
 type Mutation {
@@ -18,5 +62,18 @@ type Mutation {
 }
 
 type Query {
-  content(id: ID!): Content
+  # Get single content by ID
+  contentByID(id: ID!): Content
+
+  # Paginated content list with optional filtering
+  content(
+    first: Int = 10
+    after: String
+    last: Int
+    before: String
+    sortBy: ContentSortBy = CREATED_AT
+    sortOrder: SortOrder = DESC
+    includeTotalCount: Boolean = false
+    filter: ContentFilter
+  ): PaginatedContent!
 }

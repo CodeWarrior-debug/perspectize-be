@@ -1,4 +1,4 @@
-.PHONY: build run test docker-up docker-down clean migrate-up migrate-up-n migrate-down migrate-down-n migrate-create graphql-gen fmt lint test-coverage
+.PHONY: build run dev test docker-up docker-down clean migrate-up migrate-up-n migrate-down migrate-down-n migrate-create graphql-gen fmt lint test-coverage
 
 # Load .env file if it exists
 ifneq (,$(wildcard .env))
@@ -14,6 +14,9 @@ build:
 
 run:
 	go run cmd/server/main.go
+
+dev:
+	go tool air
 
 test:
 	go test -v -cover -coverpkg=./internal/...,./pkg/... ./...
