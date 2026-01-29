@@ -154,6 +154,9 @@ gh pr list
 gh pr view 123
 gh pr merge 123
 
+# Edit PR (use REST API - gh pr edit may fail with Projects Classic deprecation error)
+gh api repos/{owner}/{repo}/pulls/123 -X PATCH -f body="New description"
+
 # Issues
 gh issue create --title "Title" --body "Description"
 gh issue list
