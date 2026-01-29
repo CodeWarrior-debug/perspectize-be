@@ -83,6 +83,9 @@ make test
 
 # Run tests with coverage
 make test-coverage
+# Generates coverage.out and coverage.html
+# Open the HTML report in browser:
+open coverage.html   # macOS
 
 # Run all tests (integration tests self-skip when DB is unavailable)
 go test ./...
