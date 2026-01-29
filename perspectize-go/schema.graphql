@@ -9,6 +9,33 @@ type Content {
   updatedAt: String!
 }
 
+# Pagination types
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type ContentConnection {
+  items: [Content!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+# Sorting enums
+enum ContentSortBy {
+  CREATED_AT
+  UPDATED_AT
+  NAME
+}
+
+enum SortOrder {
+  ASC
+  DESC
+}
+
+# Inputs
 input CreateContentFromYouTubeInput {
   url: String!
 }
@@ -18,5 +45,18 @@ type Mutation {
 }
 
 type Query {
-  content(id: ID!): Content
+  # Get single content by ID
+  contentByID(id: ID!): Content
+
+  # Paginated content list
+  # TODO: Add filtering support (e.g., contentType, dateRange)
+  content(
+    first: Int = 10
+    after: String
+    last: Int
+    before: String
+    sortBy: ContentSortBy = CREATED_AT
+    sortOrder: SortOrder = DESC
+    includeTotalCount: Boolean = false
+  ): ContentConnection!
 }
