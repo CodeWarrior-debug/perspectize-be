@@ -1,0 +1,25 @@
+version: '3.8'
+
+# Root docker-compose for full-stack development
+# Individual services can be started independently via apps/*/docker-compose.yml
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: perspectize-postgres
+    environment:
+      POSTGRES_DB: testdb
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testuser -d testdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

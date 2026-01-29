@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Perspectize Backend Server",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/apps/backend/cmd/server",
+      "envFile": "${workspaceFolder}/apps/backend/.env",
+      "cwd": "${workspaceFolder}/apps/backend"
+    },
+    {
+      "name": "Perspectize Debug Current Test",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${fileDirname}",
+      "cwd": "${workspaceFolder}/apps/backend"
+    },
+    {
+      "name": "Perspectize Debug All Tests",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${workspaceFolder}/apps/backend/...",
+      "cwd": "${workspaceFolder}/apps/backend"
+    }
+  ]
+}
