@@ -1,3 +1,5 @@
+scalar JSON
+
 type Content {
   id: ID!
   name: String!
@@ -8,6 +10,7 @@ type Content {
   viewCount: Int
   likeCount: Int
   commentCount: Int
+  response: JSON
   createdAt: String!
   updatedAt: String!
 }
@@ -20,7 +23,7 @@ type PageInfo {
   endCursor: String
 }
 
-type ContentConnection {
+type PaginatedContent {
   items: [Content!]!
   pageInfo: PageInfo!
   totalCount: Int
@@ -61,5 +64,5 @@ type Query {
     sortBy: ContentSortBy = CREATED_AT
     sortOrder: SortOrder = DESC
     includeTotalCount: Boolean = false
-  ): ContentConnection!
+  ): PaginatedContent!
 }

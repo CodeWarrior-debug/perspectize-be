@@ -21,8 +21,14 @@ func domainToModel(c *domain.Content) *model.Content {
 		UpdatedAt:   c.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
 
-	// Parse statistics from the stored raw YouTube API response
+	// Parse the raw response JSON into a map for GraphQL
 	if len(c.Response) > 0 {
+		var responseMap map[string]interface{}
+		if err := json.Unmarshal(c.Response, &responseMap); err == nil {
+			m.Response = responseMap
+		}
+
+		// Also extract statistics from the YouTube API response
 		var resp struct {
 			Items []struct {
 				Statistics struct {
