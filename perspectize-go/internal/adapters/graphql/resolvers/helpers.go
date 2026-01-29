@@ -65,3 +65,101 @@ func domainToModel(c *domain.Content) *model.Content {
 
 	return m
 }
+
+// perspectiveDomainToModel converts a domain Perspective to a GraphQL model Perspective
+func perspectiveDomainToModel(p *domain.Perspective) *model.Perspective {
+	m := &model.Perspective{
+		ID:          strconv.Itoa(p.ID),
+		Claim:       p.Claim,
+		UserID:      strconv.Itoa(p.UserID),
+		Quality:     p.Quality,
+		Agreement:   p.Agreement,
+		Importance:  p.Importance,
+		Confidence:  p.Confidence,
+		Like:        p.Like,
+		Privacy:     privacyDomainToModel(p.Privacy),
+		Description: p.Description,
+		Category:    p.Category,
+		Parts:       p.Parts,
+		Labels:      p.Labels,
+		CreatedAt:   p.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:   p.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	if p.ContentID != nil {
+		contentID := strconv.Itoa(*p.ContentID)
+		m.ContentID = &contentID
+	}
+
+	if p.ReviewStatus != nil {
+		status := reviewStatusDomainToModel(*p.ReviewStatus)
+		m.ReviewStatus = &status
+	}
+
+	// Convert categorized ratings
+	if len(p.CategorizedRatings) > 0 {
+		m.CategorizedRatings = make([]*model.CategorizedRating, len(p.CategorizedRatings))
+		for i, cr := range p.CategorizedRatings {
+			m.CategorizedRatings[i] = &model.CategorizedRating{
+				Category: cr.Category,
+				Rating:   cr.Rating,
+			}
+		}
+	}
+
+	return m
+}
+
+// privacyDomainToModel converts domain Privacy to GraphQL model Privacy
+func privacyDomainToModel(p domain.Privacy) model.Privacy {
+	switch p {
+	case domain.PrivacyPrivate:
+		return model.PrivacyPrivate
+	default:
+		return model.PrivacyPublic
+	}
+}
+
+// privacyModelToDomain converts GraphQL model Privacy to domain Privacy
+func privacyModelToDomain(p *model.Privacy) *domain.Privacy {
+	if p == nil {
+		return nil
+	}
+	var dp domain.Privacy
+	switch *p {
+	case model.PrivacyPrivate:
+		dp = domain.PrivacyPrivate
+	default:
+		dp = domain.PrivacyPublic
+	}
+	return &dp
+}
+
+// reviewStatusDomainToModel converts domain ReviewStatus to GraphQL model ReviewStatus
+func reviewStatusDomainToModel(s domain.ReviewStatus) model.ReviewStatus {
+	switch s {
+	case domain.ReviewStatusApproved:
+		return model.ReviewStatusApproved
+	case domain.ReviewStatusRejected:
+		return model.ReviewStatusRejected
+	default:
+		return model.ReviewStatusPending
+	}
+}
+
+// reviewStatusModelToDomain converts GraphQL model ReviewStatus to domain ReviewStatus
+func reviewStatusModelToDomain(s *model.ReviewStatus) *domain.ReviewStatus {
+	if s == nil {
+		return nil
+	}
+	var ds domain.ReviewStatus
+	switch *s {
+	case model.ReviewStatusApproved:
+		ds = domain.ReviewStatusApproved
+	case model.ReviewStatusRejected:
+		ds = domain.ReviewStatusRejected
+	default:
+		ds = domain.ReviewStatusPending
+	}
+	return &ds
+}

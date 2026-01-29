@@ -16,6 +16,7 @@ import (
 	"github.com/yourorg/perspectize-go/internal/adapters/graphql/model"
 	"github.com/yourorg/perspectize-go/internal/adapters/youtube"
 	"github.com/yourorg/perspectize-go/internal/core/domain"
+	"github.com/yourorg/perspectize-go/internal/core/services"
 )
 
 // CreateContentFromYouTube is the resolver for the createContentFromYouTube field.
@@ -48,6 +49,150 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 	}
 
 	return userDomainToModel(user), nil
+}
+
+// CreatePerspective is the resolver for the createPerspective field.
+func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.CreatePerspectiveInput) (*model.Perspective, error) {
+	userID, err := strconv.Atoi(input.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID: %s", input.UserID)
+	}
+
+	serviceInput := services.CreatePerspectiveInput{
+		Claim:       input.Claim,
+		UserID:      userID,
+		Quality:     input.Quality,
+		Agreement:   input.Agreement,
+		Importance:  input.Importance,
+		Confidence:  input.Confidence,
+		Like:        input.Like,
+		Privacy:     privacyModelToDomain(input.Privacy),
+		Description: input.Description,
+		Category:    input.Category,
+		Parts:       input.Parts,
+		Labels:      input.Labels,
+	}
+
+	if input.ContentID != nil {
+		contentID, err := strconv.Atoi(*input.ContentID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid content ID: %s", *input.ContentID)
+		}
+		serviceInput.ContentID = &contentID
+	}
+
+	// Convert categorized ratings
+	if len(input.CategorizedRatings) > 0 {
+		serviceInput.CategorizedRatings = make([]domain.CategorizedRating, len(input.CategorizedRatings))
+		for i, cr := range input.CategorizedRatings {
+			serviceInput.CategorizedRatings[i] = domain.CategorizedRating{
+				Category: cr.Category,
+				Rating:   cr.Rating,
+			}
+		}
+	}
+
+	perspective, err := r.PerspectiveService.Create(ctx, serviceInput)
+	if err != nil {
+		if errors.Is(err, domain.ErrDuplicateClaim) {
+			return nil, fmt.Errorf("duplicate claim: %w", err)
+		}
+		if errors.Is(err, domain.ErrInvalidRating) {
+			return nil, fmt.Errorf("invalid rating: %w", err)
+		}
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("user not found: %w", err)
+		}
+		return nil, fmt.Errorf("failed to create perspective: %w", err)
+	}
+
+	return perspectiveDomainToModel(perspective), nil
+}
+
+// UpdatePerspective is the resolver for the updatePerspective field.
+func (r *mutationResolver) UpdatePerspective(ctx context.Context, input model.UpdatePerspectiveInput) (*model.Perspective, error) {
+	id, err := strconv.Atoi(input.ID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid perspective ID: %s", input.ID)
+	}
+
+	serviceInput := services.UpdatePerspectiveInput{
+		ID:           id,
+		Claim:        input.Claim,
+		Quality:      input.Quality,
+		Agreement:    input.Agreement,
+		Importance:   input.Importance,
+		Confidence:   input.Confidence,
+		Like:         input.Like,
+		Privacy:      privacyModelToDomain(input.Privacy),
+		Description:  input.Description,
+		Category:     input.Category,
+		ReviewStatus: reviewStatusModelToDomain(input.ReviewStatus),
+		Parts:        input.Parts,
+		Labels:       input.Labels,
+	}
+
+	if input.ContentID != nil {
+		contentID, err := strconv.Atoi(*input.ContentID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid content ID: %s", *input.ContentID)
+		}
+		serviceInput.ContentID = &contentID
+	}
+
+	// Convert categorized ratings
+	if len(input.CategorizedRatings) > 0 {
+		serviceInput.CategorizedRatings = make([]domain.CategorizedRating, len(input.CategorizedRatings))
+		for i, cr := range input.CategorizedRatings {
+			serviceInput.CategorizedRatings[i] = domain.CategorizedRating{
+				Category: cr.Category,
+				Rating:   cr.Rating,
+			}
+		}
+	}
+
+	perspective, err := r.PerspectiveService.Update(ctx, serviceInput)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("perspective not found")
+		}
+		if errors.Is(err, domain.ErrDuplicateClaim) {
+			return nil, fmt.Errorf("duplicate claim: %w", err)
+		}
+		if errors.Is(err, domain.ErrInvalidRating) {
+			return nil, fmt.Errorf("invalid rating: %w", err)
+		}
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		return nil, fmt.Errorf("failed to update perspective: %w", err)
+	}
+
+	return perspectiveDomainToModel(perspective), nil
+}
+
+// DeletePerspective is the resolver for the deletePerspective field.
+func (r *mutationResolver) DeletePerspective(ctx context.Context, id string) (bool, error) {
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		return false, fmt.Errorf("invalid perspective ID: %s", id)
+	}
+
+	err = r.PerspectiveService.Delete(ctx, intID)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return false, fmt.Errorf("perspective not found")
+		}
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return false, fmt.Errorf("invalid perspective ID")
+		}
+		return false, fmt.Errorf("failed to delete perspective: %w", err)
+	}
+
+	return true, nil
 }
 
 // ContentByID is the resolver for the contentByID field.
@@ -184,6 +329,116 @@ func (r *queryResolver) UserByUsername(ctx context.Context, username string) (*m
 	}
 
 	return userDomainToModel(user), nil
+}
+
+// PerspectiveByID is the resolver for the perspectiveByID field.
+func (r *queryResolver) PerspectiveByID(ctx context.Context, id string) (*model.Perspective, error) {
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid perspective ID: %s", id)
+	}
+
+	perspective, err := r.PerspectiveService.GetByID(ctx, intID)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, nil // Return null for not found (GraphQL convention)
+		}
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid perspective ID: %s", id)
+		}
+		return nil, fmt.Errorf("failed to get perspective: %w", err)
+	}
+
+	return perspectiveDomainToModel(perspective), nil
+}
+
+// Perspectives is the resolver for the perspectives field.
+func (r *queryResolver) Perspectives(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *model.PerspectiveSortBy, sortOrder *model.SortOrder, includeTotalCount *bool, filter *model.PerspectiveFilter) (*model.PaginatedPerspectives, error) {
+	params := domain.PerspectiveListParams{
+		First:  first,
+		After:  after,
+		Last:   last,
+		Before: before,
+	}
+
+	// Map GraphQL enums to domain enums
+	if sortBy != nil {
+		switch *sortBy {
+		case model.PerspectiveSortByUpdatedAt:
+			params.SortBy = domain.PerspectiveSortByUpdatedAt
+		case model.PerspectiveSortByClaim:
+			params.SortBy = domain.PerspectiveSortByClaim
+		default:
+			params.SortBy = domain.PerspectiveSortByCreatedAt
+		}
+	} else {
+		params.SortBy = domain.PerspectiveSortByCreatedAt
+	}
+
+	if sortOrder != nil {
+		switch *sortOrder {
+		case model.SortOrderAsc:
+			params.SortOrder = domain.SortOrderAsc
+		default:
+			params.SortOrder = domain.SortOrderDesc
+		}
+	} else {
+		params.SortOrder = domain.SortOrderDesc
+	}
+
+	if includeTotalCount != nil {
+		params.IncludeTotalCount = *includeTotalCount
+	}
+
+	// Map filter
+	if filter != nil {
+		params.Filter = &domain.PerspectiveFilter{}
+		if filter.UserID != nil {
+			userID, err := strconv.Atoi(*filter.UserID)
+			if err != nil {
+				return nil, fmt.Errorf("invalid user ID in filter: %s", *filter.UserID)
+			}
+			params.Filter.UserID = &userID
+		}
+		if filter.ContentID != nil {
+			contentID, err := strconv.Atoi(*filter.ContentID)
+			if err != nil {
+				return nil, fmt.Errorf("invalid content ID in filter: %s", *filter.ContentID)
+			}
+			params.Filter.ContentID = &contentID
+		}
+		if filter.Privacy != nil {
+			privacy := domain.Privacy(strings.ToLower(string(*filter.Privacy)))
+			params.Filter.Privacy = &privacy
+		}
+	}
+
+	result, err := r.PerspectiveService.ListPerspectives(ctx, params)
+	if err != nil {
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid pagination parameters: %w", err)
+		}
+		return nil, fmt.Errorf("failed to list perspectives: %w", err)
+	}
+
+	// Map domain result to GraphQL model
+	items := make([]*model.Perspective, len(result.Items))
+	for i, item := range result.Items {
+		items[i] = perspectiveDomainToModel(item)
+	}
+
+	conn := &model.PaginatedPerspectives{
+		Items: items,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     result.HasNext,
+			HasPreviousPage: result.HasPrev,
+			StartCursor:     result.StartCursor,
+			EndCursor:       result.EndCursor,
+		},
+		TotalCount: result.TotalCount,
+	}
+
+	return conn, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

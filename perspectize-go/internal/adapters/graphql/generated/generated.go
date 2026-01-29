@@ -46,6 +46,11 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	CategorizedRating struct {
+		Category func(childComplexity int) int
+		Rating   func(childComplexity int) int
+	}
+
 	Content struct {
 		CommentCount func(childComplexity int) int
 		ContentType  func(childComplexity int) int
@@ -63,7 +68,10 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		CreateContentFromYouTube func(childComplexity int, input model.CreateContentFromYouTubeInput) int
+		CreatePerspective        func(childComplexity int, input model.CreatePerspectiveInput) int
 		CreateUser               func(childComplexity int, input model.CreateUserInput) int
+		DeletePerspective        func(childComplexity int, id string) int
+		UpdatePerspective        func(childComplexity int, input model.UpdatePerspectiveInput) int
 	}
 
 	PageInfo struct {
@@ -79,11 +87,42 @@ type ComplexityRoot struct {
 		TotalCount func(childComplexity int) int
 	}
 
+	PaginatedPerspectives struct {
+		Items      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	Perspective struct {
+		Agreement          func(childComplexity int) int
+		CategorizedRatings func(childComplexity int) int
+		Category           func(childComplexity int) int
+		Claim              func(childComplexity int) int
+		Confidence         func(childComplexity int) int
+		Content            func(childComplexity int) int
+		ContentID          func(childComplexity int) int
+		CreatedAt          func(childComplexity int) int
+		Description        func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		Importance         func(childComplexity int) int
+		Labels             func(childComplexity int) int
+		Like               func(childComplexity int) int
+		Parts              func(childComplexity int) int
+		Privacy            func(childComplexity int) int
+		Quality            func(childComplexity int) int
+		ReviewStatus       func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
+		User               func(childComplexity int) int
+		UserID             func(childComplexity int) int
+	}
+
 	Query struct {
-		Content        func(childComplexity int, first *int, after *string, last *int, before *string, sortBy *model.ContentSortBy, sortOrder *model.SortOrder, includeTotalCount *bool, filter *model.ContentFilter) int
-		ContentByID    func(childComplexity int, id string) int
-		UserByID       func(childComplexity int, id string) int
-		UserByUsername func(childComplexity int, username string) int
+		Content         func(childComplexity int, first *int, after *string, last *int, before *string, sortBy *model.ContentSortBy, sortOrder *model.SortOrder, includeTotalCount *bool, filter *model.ContentFilter) int
+		ContentByID     func(childComplexity int, id string) int
+		PerspectiveByID func(childComplexity int, id string) int
+		Perspectives    func(childComplexity int, first *int, after *string, last *int, before *string, sortBy *model.PerspectiveSortBy, sortOrder *model.SortOrder, includeTotalCount *bool, filter *model.PerspectiveFilter) int
+		UserByID        func(childComplexity int, id string) int
+		UserByUsername  func(childComplexity int, username string) int
 	}
 
 	User struct {
@@ -98,12 +137,17 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateContentFromYouTube(ctx context.Context, input model.CreateContentFromYouTubeInput) (*model.Content, error)
 	CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error)
+	CreatePerspective(ctx context.Context, input model.CreatePerspectiveInput) (*model.Perspective, error)
+	UpdatePerspective(ctx context.Context, input model.UpdatePerspectiveInput) (*model.Perspective, error)
+	DeletePerspective(ctx context.Context, id string) (bool, error)
 }
 type QueryResolver interface {
 	ContentByID(ctx context.Context, id string) (*model.Content, error)
 	Content(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *model.ContentSortBy, sortOrder *model.SortOrder, includeTotalCount *bool, filter *model.ContentFilter) (*model.PaginatedContent, error)
 	UserByID(ctx context.Context, id string) (*model.User, error)
 	UserByUsername(ctx context.Context, username string) (*model.User, error)
+	PerspectiveByID(ctx context.Context, id string) (*model.Perspective, error)
+	Perspectives(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *model.PerspectiveSortBy, sortOrder *model.SortOrder, includeTotalCount *bool, filter *model.PerspectiveFilter) (*model.PaginatedPerspectives, error)
 }
 
 type executableSchema struct {
@@ -124,6 +168,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "CategorizedRating.category":
+		if e.complexity.CategorizedRating.Category == nil {
+			break
+		}
+
+		return e.complexity.CategorizedRating.Category(childComplexity), true
+	case "CategorizedRating.rating":
+		if e.complexity.CategorizedRating.Rating == nil {
+			break
+		}
+
+		return e.complexity.CategorizedRating.Rating(childComplexity), true
 
 	case "Content.commentCount":
 		if e.complexity.Content.CommentCount == nil {
@@ -209,6 +266,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateContentFromYouTube(childComplexity, args["input"].(model.CreateContentFromYouTubeInput)), true
+	case "Mutation.createPerspective":
+		if e.complexity.Mutation.CreatePerspective == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createPerspective_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreatePerspective(childComplexity, args["input"].(model.CreatePerspectiveInput)), true
 	case "Mutation.createUser":
 		if e.complexity.Mutation.CreateUser == nil {
 			break
@@ -220,6 +288,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateUser(childComplexity, args["input"].(model.CreateUserInput)), true
+	case "Mutation.deletePerspective":
+		if e.complexity.Mutation.DeletePerspective == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deletePerspective_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeletePerspective(childComplexity, args["id"].(string)), true
+	case "Mutation.updatePerspective":
+		if e.complexity.Mutation.UpdatePerspective == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updatePerspective_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdatePerspective(childComplexity, args["input"].(model.UpdatePerspectiveInput)), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -265,6 +355,146 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.PaginatedContent.TotalCount(childComplexity), true
 
+	case "PaginatedPerspectives.items":
+		if e.complexity.PaginatedPerspectives.Items == nil {
+			break
+		}
+
+		return e.complexity.PaginatedPerspectives.Items(childComplexity), true
+	case "PaginatedPerspectives.pageInfo":
+		if e.complexity.PaginatedPerspectives.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.PaginatedPerspectives.PageInfo(childComplexity), true
+	case "PaginatedPerspectives.totalCount":
+		if e.complexity.PaginatedPerspectives.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.PaginatedPerspectives.TotalCount(childComplexity), true
+
+	case "Perspective.agreement":
+		if e.complexity.Perspective.Agreement == nil {
+			break
+		}
+
+		return e.complexity.Perspective.Agreement(childComplexity), true
+	case "Perspective.categorizedRatings":
+		if e.complexity.Perspective.CategorizedRatings == nil {
+			break
+		}
+
+		return e.complexity.Perspective.CategorizedRatings(childComplexity), true
+	case "Perspective.category":
+		if e.complexity.Perspective.Category == nil {
+			break
+		}
+
+		return e.complexity.Perspective.Category(childComplexity), true
+	case "Perspective.claim":
+		if e.complexity.Perspective.Claim == nil {
+			break
+		}
+
+		return e.complexity.Perspective.Claim(childComplexity), true
+	case "Perspective.confidence":
+		if e.complexity.Perspective.Confidence == nil {
+			break
+		}
+
+		return e.complexity.Perspective.Confidence(childComplexity), true
+	case "Perspective.content":
+		if e.complexity.Perspective.Content == nil {
+			break
+		}
+
+		return e.complexity.Perspective.Content(childComplexity), true
+	case "Perspective.contentID":
+		if e.complexity.Perspective.ContentID == nil {
+			break
+		}
+
+		return e.complexity.Perspective.ContentID(childComplexity), true
+	case "Perspective.createdAt":
+		if e.complexity.Perspective.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Perspective.CreatedAt(childComplexity), true
+	case "Perspective.description":
+		if e.complexity.Perspective.Description == nil {
+			break
+		}
+
+		return e.complexity.Perspective.Description(childComplexity), true
+	case "Perspective.id":
+		if e.complexity.Perspective.ID == nil {
+			break
+		}
+
+		return e.complexity.Perspective.ID(childComplexity), true
+	case "Perspective.importance":
+		if e.complexity.Perspective.Importance == nil {
+			break
+		}
+
+		return e.complexity.Perspective.Importance(childComplexity), true
+	case "Perspective.labels":
+		if e.complexity.Perspective.Labels == nil {
+			break
+		}
+
+		return e.complexity.Perspective.Labels(childComplexity), true
+	case "Perspective.like":
+		if e.complexity.Perspective.Like == nil {
+			break
+		}
+
+		return e.complexity.Perspective.Like(childComplexity), true
+	case "Perspective.parts":
+		if e.complexity.Perspective.Parts == nil {
+			break
+		}
+
+		return e.complexity.Perspective.Parts(childComplexity), true
+	case "Perspective.privacy":
+		if e.complexity.Perspective.Privacy == nil {
+			break
+		}
+
+		return e.complexity.Perspective.Privacy(childComplexity), true
+	case "Perspective.quality":
+		if e.complexity.Perspective.Quality == nil {
+			break
+		}
+
+		return e.complexity.Perspective.Quality(childComplexity), true
+	case "Perspective.reviewStatus":
+		if e.complexity.Perspective.ReviewStatus == nil {
+			break
+		}
+
+		return e.complexity.Perspective.ReviewStatus(childComplexity), true
+	case "Perspective.updatedAt":
+		if e.complexity.Perspective.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.Perspective.UpdatedAt(childComplexity), true
+	case "Perspective.user":
+		if e.complexity.Perspective.User == nil {
+			break
+		}
+
+		return e.complexity.Perspective.User(childComplexity), true
+	case "Perspective.userID":
+		if e.complexity.Perspective.UserID == nil {
+			break
+		}
+
+		return e.complexity.Perspective.UserID(childComplexity), true
+
 	case "Query.content":
 		if e.complexity.Query.Content == nil {
 			break
@@ -287,6 +517,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.ContentByID(childComplexity, args["id"].(string)), true
+	case "Query.perspectiveByID":
+		if e.complexity.Query.PerspectiveByID == nil {
+			break
+		}
+
+		args, err := ec.field_Query_perspectiveByID_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.PerspectiveByID(childComplexity, args["id"].(string)), true
+	case "Query.perspectives":
+		if e.complexity.Query.Perspectives == nil {
+			break
+		}
+
+		args, err := ec.field_Query_perspectives_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Perspectives(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["sortBy"].(*model.PerspectiveSortBy), args["sortOrder"].(*model.SortOrder), args["includeTotalCount"].(*bool), args["filter"].(*model.PerspectiveFilter)), true
 	case "Query.userByID":
 		if e.complexity.Query.UserByID == nil {
 			break
@@ -349,9 +601,13 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputCategorizedRatingInput,
 		ec.unmarshalInputContentFilter,
 		ec.unmarshalInputCreateContentFromYouTubeInput,
+		ec.unmarshalInputCreatePerspectiveInput,
 		ec.unmarshalInputCreateUserInput,
+		ec.unmarshalInputPerspectiveFilter,
+		ec.unmarshalInputUpdatePerspectiveInput,
 	)
 	first := true
 
@@ -460,6 +716,59 @@ type User {
   updatedAt: String!
 }
 
+# Perspective enums
+enum Privacy {
+  PUBLIC
+  PRIVATE
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PerspectiveSortBy {
+  CREATED_AT
+  UPDATED_AT
+  CLAIM
+}
+
+# Perspective type
+type CategorizedRating {
+  category: String!
+  rating: Int!
+}
+
+type Perspective {
+  id: ID!
+  claim: String!
+  userID: ID!
+  user: User
+  contentID: ID
+  content: Content
+  quality: Int
+  agreement: Int
+  importance: Int
+  confidence: Int
+  like: String
+  privacy: Privacy!
+  description: String
+  category: String
+  reviewStatus: ReviewStatus
+  parts: [Int!]
+  labels: [String!]
+  categorizedRatings: [CategorizedRating!]
+  createdAt: String!
+  updatedAt: String!
+}
+
+type PaginatedPerspectives {
+  items: [Perspective!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
 type Content {
   id: ID!
   name: String!
@@ -523,11 +832,63 @@ input CreateUserInput {
   email: String!
 }
 
+# Perspective inputs
+input CategorizedRatingInput {
+  category: String!
+  rating: Int!
+}
+
+input CreatePerspectiveInput {
+  claim: String!
+  userID: ID!
+  contentID: ID
+  quality: Int
+  agreement: Int
+  importance: Int
+  confidence: Int
+  like: String
+  privacy: Privacy
+  description: String
+  category: String
+  parts: [Int!]
+  labels: [String!]
+  categorizedRatings: [CategorizedRatingInput!]
+}
+
+input UpdatePerspectiveInput {
+  id: ID!
+  claim: String
+  contentID: ID
+  quality: Int
+  agreement: Int
+  importance: Int
+  confidence: Int
+  like: String
+  privacy: Privacy
+  description: String
+  category: String
+  reviewStatus: ReviewStatus
+  parts: [Int!]
+  labels: [String!]
+  categorizedRatings: [CategorizedRatingInput!]
+}
+
+input PerspectiveFilter {
+  userID: ID
+  contentID: ID
+  privacy: Privacy
+}
+
 type Mutation {
   createContentFromYouTube(input: CreateContentFromYouTubeInput!): Content!
 
   # User mutations
   createUser(input: CreateUserInput!): User!
+
+  # Perspective mutations
+  createPerspective(input: CreatePerspectiveInput!): Perspective!
+  updatePerspective(input: UpdatePerspectiveInput!): Perspective!
+  deletePerspective(id: ID!): Boolean!
 }
 
 type Query {
@@ -549,6 +910,19 @@ type Query {
   # User queries
   userByID(id: ID!): User
   userByUsername(username: String!): User
+
+  # Perspective queries
+  perspectiveByID(id: ID!): Perspective
+  perspectives(
+    first: Int = 10
+    after: String
+    last: Int
+    before: String
+    sortBy: PerspectiveSortBy = CREATED_AT
+    sortOrder: SortOrder = DESC
+    includeTotalCount: Boolean = false
+    filter: PerspectiveFilter
+  ): PaginatedPerspectives!
 }
 `, BuiltIn: false},
 }
@@ -569,10 +943,43 @@ func (ec *executionContext) field_Mutation_createContentFromYouTube_args(ctx con
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createPerspective_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreatePerspectiveInput2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreatePerspectiveInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateUserInput2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateUserInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deletePerspective_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updatePerspective_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdatePerspectiveInput2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUpdatePerspectiveInput)
 	if err != nil {
 		return nil, err
 	}
@@ -641,6 +1048,63 @@ func (ec *executionContext) field_Query_content_args(ctx context.Context, rawArg
 	}
 	args["includeTotalCount"] = arg6
 	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOContentFilter2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentFilter)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg7
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_perspectiveByID_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_perspectives_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOPerspectiveSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveSortBy)
+	if err != nil {
+		return nil, err
+	}
+	args["sortBy"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐSortOrder)
+	if err != nil {
+		return nil, err
+	}
+	args["sortOrder"] = arg5
+	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "includeTotalCount", ec.unmarshalOBoolean2ᚖbool)
+	if err != nil {
+		return nil, err
+	}
+	args["includeTotalCount"] = arg6
+	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOPerspectiveFilter2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -721,6 +1185,64 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _CategorizedRating_category(ctx context.Context, field graphql.CollectedField, obj *model.CategorizedRating) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CategorizedRating_category,
+		func(ctx context.Context) (any, error) {
+			return obj.Category, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CategorizedRating_category(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CategorizedRating",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CategorizedRating_rating(ctx context.Context, field graphql.CollectedField, obj *model.CategorizedRating) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CategorizedRating_rating,
+		func(ctx context.Context) (any, error) {
+			return obj.Rating, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CategorizedRating_rating(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CategorizedRating",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _Content_id(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
@@ -1190,6 +1712,213 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createPerspective(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createPerspective,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().CreatePerspective(ctx, fc.Args["input"].(model.CreatePerspectiveInput))
+		},
+		nil,
+		ec.marshalNPerspective2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createPerspective(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Perspective_id(ctx, field)
+			case "claim":
+				return ec.fieldContext_Perspective_claim(ctx, field)
+			case "userID":
+				return ec.fieldContext_Perspective_userID(ctx, field)
+			case "user":
+				return ec.fieldContext_Perspective_user(ctx, field)
+			case "contentID":
+				return ec.fieldContext_Perspective_contentID(ctx, field)
+			case "content":
+				return ec.fieldContext_Perspective_content(ctx, field)
+			case "quality":
+				return ec.fieldContext_Perspective_quality(ctx, field)
+			case "agreement":
+				return ec.fieldContext_Perspective_agreement(ctx, field)
+			case "importance":
+				return ec.fieldContext_Perspective_importance(ctx, field)
+			case "confidence":
+				return ec.fieldContext_Perspective_confidence(ctx, field)
+			case "like":
+				return ec.fieldContext_Perspective_like(ctx, field)
+			case "privacy":
+				return ec.fieldContext_Perspective_privacy(ctx, field)
+			case "description":
+				return ec.fieldContext_Perspective_description(ctx, field)
+			case "category":
+				return ec.fieldContext_Perspective_category(ctx, field)
+			case "reviewStatus":
+				return ec.fieldContext_Perspective_reviewStatus(ctx, field)
+			case "parts":
+				return ec.fieldContext_Perspective_parts(ctx, field)
+			case "labels":
+				return ec.fieldContext_Perspective_labels(ctx, field)
+			case "categorizedRatings":
+				return ec.fieldContext_Perspective_categorizedRatings(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Perspective_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Perspective_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Perspective", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createPerspective_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updatePerspective(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updatePerspective,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdatePerspective(ctx, fc.Args["input"].(model.UpdatePerspectiveInput))
+		},
+		nil,
+		ec.marshalNPerspective2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updatePerspective(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Perspective_id(ctx, field)
+			case "claim":
+				return ec.fieldContext_Perspective_claim(ctx, field)
+			case "userID":
+				return ec.fieldContext_Perspective_userID(ctx, field)
+			case "user":
+				return ec.fieldContext_Perspective_user(ctx, field)
+			case "contentID":
+				return ec.fieldContext_Perspective_contentID(ctx, field)
+			case "content":
+				return ec.fieldContext_Perspective_content(ctx, field)
+			case "quality":
+				return ec.fieldContext_Perspective_quality(ctx, field)
+			case "agreement":
+				return ec.fieldContext_Perspective_agreement(ctx, field)
+			case "importance":
+				return ec.fieldContext_Perspective_importance(ctx, field)
+			case "confidence":
+				return ec.fieldContext_Perspective_confidence(ctx, field)
+			case "like":
+				return ec.fieldContext_Perspective_like(ctx, field)
+			case "privacy":
+				return ec.fieldContext_Perspective_privacy(ctx, field)
+			case "description":
+				return ec.fieldContext_Perspective_description(ctx, field)
+			case "category":
+				return ec.fieldContext_Perspective_category(ctx, field)
+			case "reviewStatus":
+				return ec.fieldContext_Perspective_reviewStatus(ctx, field)
+			case "parts":
+				return ec.fieldContext_Perspective_parts(ctx, field)
+			case "labels":
+				return ec.fieldContext_Perspective_labels(ctx, field)
+			case "categorizedRatings":
+				return ec.fieldContext_Perspective_categorizedRatings(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Perspective_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Perspective_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Perspective", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updatePerspective_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deletePerspective(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deletePerspective,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeletePerspective(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deletePerspective(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deletePerspective_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1429,6 +2158,769 @@ func (ec *executionContext) fieldContext_PaginatedContent_totalCount(_ context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _PaginatedPerspectives_items(ctx context.Context, field graphql.CollectedField, obj *model.PaginatedPerspectives) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PaginatedPerspectives_items,
+		func(ctx context.Context) (any, error) {
+			return obj.Items, nil
+		},
+		nil,
+		ec.marshalNPerspective2ᚕᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PaginatedPerspectives_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PaginatedPerspectives",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Perspective_id(ctx, field)
+			case "claim":
+				return ec.fieldContext_Perspective_claim(ctx, field)
+			case "userID":
+				return ec.fieldContext_Perspective_userID(ctx, field)
+			case "user":
+				return ec.fieldContext_Perspective_user(ctx, field)
+			case "contentID":
+				return ec.fieldContext_Perspective_contentID(ctx, field)
+			case "content":
+				return ec.fieldContext_Perspective_content(ctx, field)
+			case "quality":
+				return ec.fieldContext_Perspective_quality(ctx, field)
+			case "agreement":
+				return ec.fieldContext_Perspective_agreement(ctx, field)
+			case "importance":
+				return ec.fieldContext_Perspective_importance(ctx, field)
+			case "confidence":
+				return ec.fieldContext_Perspective_confidence(ctx, field)
+			case "like":
+				return ec.fieldContext_Perspective_like(ctx, field)
+			case "privacy":
+				return ec.fieldContext_Perspective_privacy(ctx, field)
+			case "description":
+				return ec.fieldContext_Perspective_description(ctx, field)
+			case "category":
+				return ec.fieldContext_Perspective_category(ctx, field)
+			case "reviewStatus":
+				return ec.fieldContext_Perspective_reviewStatus(ctx, field)
+			case "parts":
+				return ec.fieldContext_Perspective_parts(ctx, field)
+			case "labels":
+				return ec.fieldContext_Perspective_labels(ctx, field)
+			case "categorizedRatings":
+				return ec.fieldContext_Perspective_categorizedRatings(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Perspective_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Perspective_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Perspective", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PaginatedPerspectives_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.PaginatedPerspectives) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PaginatedPerspectives_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PaginatedPerspectives_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PaginatedPerspectives",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PaginatedPerspectives_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.PaginatedPerspectives) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PaginatedPerspectives_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_PaginatedPerspectives_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PaginatedPerspectives",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_id(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_claim(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_claim,
+		func(ctx context.Context) (any, error) {
+			return obj.Claim, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_claim(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_userID(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_userID,
+		func(ctx context.Context) (any, error) {
+			return obj.UserID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_userID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_user(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_user,
+		func(ctx context.Context) (any, error) {
+			return obj.User, nil
+		},
+		nil,
+		ec.marshalOUser2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_User_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_User_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_contentID(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_contentID,
+		func(ctx context.Context) (any, error) {
+			return obj.ContentID, nil
+		},
+		nil,
+		ec.marshalOID2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_contentID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_content(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_content,
+		func(ctx context.Context) (any, error) {
+			return obj.Content, nil
+		},
+		nil,
+		ec.marshalOContent2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Content_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Content_name(ctx, field)
+			case "url":
+				return ec.fieldContext_Content_url(ctx, field)
+			case "contentType":
+				return ec.fieldContext_Content_contentType(ctx, field)
+			case "length":
+				return ec.fieldContext_Content_length(ctx, field)
+			case "lengthUnits":
+				return ec.fieldContext_Content_lengthUnits(ctx, field)
+			case "viewCount":
+				return ec.fieldContext_Content_viewCount(ctx, field)
+			case "likeCount":
+				return ec.fieldContext_Content_likeCount(ctx, field)
+			case "commentCount":
+				return ec.fieldContext_Content_commentCount(ctx, field)
+			case "response":
+				return ec.fieldContext_Content_response(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Content_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Content_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Content", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_quality(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_quality,
+		func(ctx context.Context) (any, error) {
+			return obj.Quality, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_quality(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_agreement(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_agreement,
+		func(ctx context.Context) (any, error) {
+			return obj.Agreement, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_agreement(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_importance(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_importance,
+		func(ctx context.Context) (any, error) {
+			return obj.Importance, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_importance(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_confidence(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_confidence,
+		func(ctx context.Context) (any, error) {
+			return obj.Confidence, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_confidence(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_like(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_like,
+		func(ctx context.Context) (any, error) {
+			return obj.Like, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_like(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_privacy(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_privacy,
+		func(ctx context.Context) (any, error) {
+			return obj.Privacy, nil
+		},
+		nil,
+		ec.marshalNPrivacy2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPrivacy,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_privacy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Privacy does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_description(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_description,
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_category(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_category,
+		func(ctx context.Context) (any, error) {
+			return obj.Category, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_category(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_reviewStatus(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_reviewStatus,
+		func(ctx context.Context) (any, error) {
+			return obj.ReviewStatus, nil
+		},
+		nil,
+		ec.marshalOReviewStatus2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐReviewStatus,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_reviewStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ReviewStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_parts(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_parts,
+		func(ctx context.Context) (any, error) {
+			return obj.Parts, nil
+		},
+		nil,
+		ec.marshalOInt2ᚕintᚄ,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_parts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_labels(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_labels,
+		func(ctx context.Context) (any, error) {
+			return obj.Labels, nil
+		},
+		nil,
+		ec.marshalOString2ᚕstringᚄ,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_labels(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_categorizedRatings(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_categorizedRatings,
+		func(ctx context.Context) (any, error) {
+			return obj.CategorizedRatings, nil
+		},
+		nil,
+		ec.marshalOCategorizedRating2ᚕᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingᚄ,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_categorizedRatings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "category":
+				return ec.fieldContext_CategorizedRating_category(ctx, field)
+			case "rating":
+				return ec.fieldContext_CategorizedRating_rating(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CategorizedRating", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_contentByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1645,6 +3137,138 @@ func (ec *executionContext) fieldContext_Query_userByUsername(ctx context.Contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_userByUsername_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_perspectiveByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_perspectiveByID,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().PerspectiveByID(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		ec.marshalOPerspective2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_perspectiveByID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Perspective_id(ctx, field)
+			case "claim":
+				return ec.fieldContext_Perspective_claim(ctx, field)
+			case "userID":
+				return ec.fieldContext_Perspective_userID(ctx, field)
+			case "user":
+				return ec.fieldContext_Perspective_user(ctx, field)
+			case "contentID":
+				return ec.fieldContext_Perspective_contentID(ctx, field)
+			case "content":
+				return ec.fieldContext_Perspective_content(ctx, field)
+			case "quality":
+				return ec.fieldContext_Perspective_quality(ctx, field)
+			case "agreement":
+				return ec.fieldContext_Perspective_agreement(ctx, field)
+			case "importance":
+				return ec.fieldContext_Perspective_importance(ctx, field)
+			case "confidence":
+				return ec.fieldContext_Perspective_confidence(ctx, field)
+			case "like":
+				return ec.fieldContext_Perspective_like(ctx, field)
+			case "privacy":
+				return ec.fieldContext_Perspective_privacy(ctx, field)
+			case "description":
+				return ec.fieldContext_Perspective_description(ctx, field)
+			case "category":
+				return ec.fieldContext_Perspective_category(ctx, field)
+			case "reviewStatus":
+				return ec.fieldContext_Perspective_reviewStatus(ctx, field)
+			case "parts":
+				return ec.fieldContext_Perspective_parts(ctx, field)
+			case "labels":
+				return ec.fieldContext_Perspective_labels(ctx, field)
+			case "categorizedRatings":
+				return ec.fieldContext_Perspective_categorizedRatings(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Perspective_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Perspective_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Perspective", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_perspectiveByID_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_perspectives(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_perspectives,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().Perspectives(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["sortBy"].(*model.PerspectiveSortBy), fc.Args["sortOrder"].(*model.SortOrder), fc.Args["includeTotalCount"].(*bool), fc.Args["filter"].(*model.PerspectiveFilter))
+		},
+		nil,
+		ec.marshalNPaginatedPerspectives2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedPerspectives,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_perspectives(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "items":
+				return ec.fieldContext_PaginatedPerspectives_items(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_PaginatedPerspectives_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_PaginatedPerspectives_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PaginatedPerspectives", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_perspectives_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3350,6 +4974,40 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputCategorizedRatingInput(ctx context.Context, obj any) (model.CategorizedRatingInput, error) {
+	var it model.CategorizedRatingInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"category", "rating"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "category":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Category = data
+		case "rating":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rating"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Rating = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputContentFilter(ctx context.Context, obj any) (model.ContentFilter, error) {
 	var it model.ContentFilter
 	asMap := map[string]any{}
@@ -3418,6 +5076,124 @@ func (ec *executionContext) unmarshalInputCreateContentFromYouTubeInput(ctx cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreatePerspectiveInput(ctx context.Context, obj any) (model.CreatePerspectiveInput, error) {
+	var it model.CreatePerspectiveInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"claim", "userID", "contentID", "quality", "agreement", "importance", "confidence", "like", "privacy", "description", "category", "parts", "labels", "categorizedRatings"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "claim":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("claim"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Claim = data
+		case "userID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userID"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UserID = data
+		case "contentID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contentID"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ContentID = data
+		case "quality":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quality"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Quality = data
+		case "agreement":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("agreement"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Agreement = data
+		case "importance":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("importance"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Importance = data
+		case "confidence":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("confidence"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Confidence = data
+		case "like":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("like"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Like = data
+		case "privacy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("privacy"))
+			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPrivacy(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Privacy = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "category":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Category = data
+		case "parts":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parts"))
+			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Parts = data
+		case "labels":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labels"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Labels = data
+		case "categorizedRatings":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("categorizedRatings"))
+			data, err := ec.unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CategorizedRatings = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, obj any) (model.CreateUserInput, error) {
 	var it model.CreateUserInput
 	asMap := map[string]any{}
@@ -3452,6 +5228,172 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputPerspectiveFilter(ctx context.Context, obj any) (model.PerspectiveFilter, error) {
+	var it model.PerspectiveFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"userID", "contentID", "privacy"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "userID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userID"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UserID = data
+		case "contentID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contentID"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ContentID = data
+		case "privacy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("privacy"))
+			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPrivacy(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Privacy = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Context, obj any) (model.UpdatePerspectiveInput, error) {
+	var it model.UpdatePerspectiveInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "claim", "contentID", "quality", "agreement", "importance", "confidence", "like", "privacy", "description", "category", "reviewStatus", "parts", "labels", "categorizedRatings"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "claim":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("claim"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Claim = data
+		case "contentID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contentID"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ContentID = data
+		case "quality":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quality"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Quality = data
+		case "agreement":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("agreement"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Agreement = data
+		case "importance":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("importance"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Importance = data
+		case "confidence":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("confidence"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Confidence = data
+		case "like":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("like"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Like = data
+		case "privacy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("privacy"))
+			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPrivacy(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Privacy = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "category":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Category = data
+		case "reviewStatus":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reviewStatus"))
+			data, err := ec.unmarshalOReviewStatus2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐReviewStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReviewStatus = data
+		case "parts":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parts"))
+			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Parts = data
+		case "labels":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labels"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Labels = data
+		case "categorizedRatings":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("categorizedRatings"))
+			data, err := ec.unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CategorizedRatings = data
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -3459,6 +5401,50 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var categorizedRatingImplementors = []string{"CategorizedRating"}
+
+func (ec *executionContext) _CategorizedRating(ctx context.Context, sel ast.SelectionSet, obj *model.CategorizedRating) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, categorizedRatingImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CategorizedRating")
+		case "category":
+			out.Values[i] = ec._CategorizedRating_category(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "rating":
+			out.Values[i] = ec._CategorizedRating_rating(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
 
 var contentImplementors = []string{"Content"}
 
@@ -3562,6 +5548,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "createUser":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createUser(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createPerspective":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createPerspective(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatePerspective":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updatePerspective(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deletePerspective":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deletePerspective(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -3683,6 +5690,144 @@ func (ec *executionContext) _PaginatedContent(ctx context.Context, sel ast.Selec
 	return out
 }
 
+var paginatedPerspectivesImplementors = []string{"PaginatedPerspectives"}
+
+func (ec *executionContext) _PaginatedPerspectives(ctx context.Context, sel ast.SelectionSet, obj *model.PaginatedPerspectives) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, paginatedPerspectivesImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PaginatedPerspectives")
+		case "items":
+			out.Values[i] = ec._PaginatedPerspectives_items(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._PaginatedPerspectives_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._PaginatedPerspectives_totalCount(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var perspectiveImplementors = []string{"Perspective"}
+
+func (ec *executionContext) _Perspective(ctx context.Context, sel ast.SelectionSet, obj *model.Perspective) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, perspectiveImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Perspective")
+		case "id":
+			out.Values[i] = ec._Perspective_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "claim":
+			out.Values[i] = ec._Perspective_claim(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "userID":
+			out.Values[i] = ec._Perspective_userID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "user":
+			out.Values[i] = ec._Perspective_user(ctx, field, obj)
+		case "contentID":
+			out.Values[i] = ec._Perspective_contentID(ctx, field, obj)
+		case "content":
+			out.Values[i] = ec._Perspective_content(ctx, field, obj)
+		case "quality":
+			out.Values[i] = ec._Perspective_quality(ctx, field, obj)
+		case "agreement":
+			out.Values[i] = ec._Perspective_agreement(ctx, field, obj)
+		case "importance":
+			out.Values[i] = ec._Perspective_importance(ctx, field, obj)
+		case "confidence":
+			out.Values[i] = ec._Perspective_confidence(ctx, field, obj)
+		case "like":
+			out.Values[i] = ec._Perspective_like(ctx, field, obj)
+		case "privacy":
+			out.Values[i] = ec._Perspective_privacy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._Perspective_description(ctx, field, obj)
+		case "category":
+			out.Values[i] = ec._Perspective_category(ctx, field, obj)
+		case "reviewStatus":
+			out.Values[i] = ec._Perspective_reviewStatus(ctx, field, obj)
+		case "parts":
+			out.Values[i] = ec._Perspective_parts(ctx, field, obj)
+		case "labels":
+			out.Values[i] = ec._Perspective_labels(ctx, field, obj)
+		case "categorizedRatings":
+			out.Values[i] = ec._Perspective_categorizedRatings(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._Perspective_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._Perspective_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -3772,6 +5917,47 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_userByUsername(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "perspectiveByID":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_perspectiveByID(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "perspectives":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_perspectives(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -4222,6 +6408,21 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNCategorizedRating2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRating(ctx context.Context, sel ast.SelectionSet, v *model.CategorizedRating) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CategorizedRating(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCategorizedRatingInput2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInput(ctx context.Context, v any) (*model.CategorizedRatingInput, error) {
+	res, err := ec.unmarshalInputCategorizedRatingInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNContent2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx context.Context, sel ast.SelectionSet, v model.Content) graphql.Marshaler {
 	return ec._Content(ctx, sel, &v)
 }
@@ -4285,6 +6486,11 @@ func (ec *executionContext) unmarshalNCreateContentFromYouTubeInput2githubᚗcom
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNCreatePerspectiveInput2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreatePerspectiveInput(ctx context.Context, v any) (model.CreatePerspectiveInput, error) {
+	res, err := ec.unmarshalInputCreatePerspectiveInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateUserInput(ctx context.Context, v any) (model.CreateUserInput, error) {
 	res, err := ec.unmarshalInputCreateUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4298,6 +6504,22 @@ func (ec *executionContext) unmarshalNID2string(ctx context.Context, v any) (str
 func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
 	_ = sel
 	res := graphql.MarshalID(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -4330,6 +6552,88 @@ func (ec *executionContext) marshalNPaginatedContent2ᚖgithubᚗcomᚋyourorg�
 	return ec._PaginatedContent(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNPaginatedPerspectives2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedPerspectives(ctx context.Context, sel ast.SelectionSet, v model.PaginatedPerspectives) graphql.Marshaler {
+	return ec._PaginatedPerspectives(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPaginatedPerspectives2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedPerspectives(ctx context.Context, sel ast.SelectionSet, v *model.PaginatedPerspectives) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PaginatedPerspectives(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPerspective2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx context.Context, sel ast.SelectionSet, v model.Perspective) graphql.Marshaler {
+	return ec._Perspective(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPerspective2ᚕᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Perspective) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPerspective2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNPerspective2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx context.Context, sel ast.SelectionSet, v *model.Perspective) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Perspective(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNPrivacy2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPrivacy(ctx context.Context, v any) (model.Privacy, error) {
+	var res model.Privacy
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNPrivacy2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPrivacy(ctx context.Context, sel ast.SelectionSet, v model.Privacy) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4344,6 +6648,11 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNUpdatePerspectiveInput2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUpdatePerspectiveInput(ctx context.Context, v any) (model.UpdatePerspectiveInput, error) {
+	res, err := ec.unmarshalInputUpdatePerspectiveInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNUser2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
@@ -4643,6 +6952,71 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) marshalOCategorizedRating2ᚕᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CategorizedRating) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCategorizedRating2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRating(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInputᚄ(ctx context.Context, v any) ([]*model.CategorizedRatingInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]*model.CategorizedRatingInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNCategorizedRatingInput2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
 func (ec *executionContext) marshalOContent2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx context.Context, sel ast.SelectionSet, v *model.Content) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -4690,6 +7064,60 @@ func (ec *executionContext) marshalOContentType2ᚖgithubᚗcomᚋyourorgᚋpers
 	return v
 }
 
+func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalID(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOInt2ᚕintᚄ(ctx context.Context, v any) ([]int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]int, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNInt2int(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOInt2ᚕintᚄ(ctx context.Context, sel ast.SelectionSet, v []int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNInt2int(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v any) (*int, error) {
 	if v == nil {
 		return nil, nil
@@ -4726,6 +7154,69 @@ func (ec *executionContext) marshalOJSON2map(ctx context.Context, sel ast.Select
 	return res
 }
 
+func (ec *executionContext) marshalOPerspective2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx context.Context, sel ast.SelectionSet, v *model.Perspective) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Perspective(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOPerspectiveFilter2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveFilter(ctx context.Context, v any) (*model.PerspectiveFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputPerspectiveFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOPerspectiveSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveSortBy(ctx context.Context, v any) (*model.PerspectiveSortBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.PerspectiveSortBy)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOPerspectiveSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveSortBy(ctx context.Context, sel ast.SelectionSet, v *model.PerspectiveSortBy) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
+func (ec *executionContext) unmarshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPrivacy(ctx context.Context, v any) (*model.Privacy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.Privacy)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPrivacy(ctx context.Context, sel ast.SelectionSet, v *model.Privacy) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
+func (ec *executionContext) unmarshalOReviewStatus2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐReviewStatus(ctx context.Context, v any) (*model.ReviewStatus, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.ReviewStatus)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOReviewStatus2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐReviewStatus(ctx context.Context, sel ast.SelectionSet, v *model.ReviewStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
 func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐSortOrder(ctx context.Context, v any) (*model.SortOrder, error) {
 	if v == nil {
 		return nil, nil
@@ -4740,6 +7231,42 @@ func (ec *executionContext) marshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋperspe
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {
