@@ -430,6 +430,20 @@ if err := tx.Commit(); err != nil {
 - Cold starts ~10-50ms (important for serverless/Fly.io)
 - Database is typically the bottleneck, not application code
 
+## Patterns & Gotchas
+
+### GraphQL Schema Defaults
+When a GraphQL field has a default value (e.g., `first: Int = 10`), gqlgen passes the default to the resolver as a non-nil pointer, not `nil`. Tests should expect the default value, not nil.
+
+### JSON Scalar Type
+For exposing JSONB data via GraphQL, use gqlgen's built-in `graphql.Map` scalar (configured in `gqlgen.yml` as `JSON`). This avoids string serialization overhead compared to exposing as `String`.
+
+### Cursor-Based Pagination
+- Cursors are opaque base64-encoded strings (format: `cursor:<id>`)
+- Use keyset pagination in SQL for performance (not OFFSET)
+- Fetch `limit+1` rows to determine `hasNextPage` without extra query
+- Whitelist sort columns to prevent SQL injection
+
 ## Resources
 
 - [gqlgen Documentation](https://gqlgen.com/)
