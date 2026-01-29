@@ -11,11 +11,13 @@ import (
 
 type Resolver struct {
 	ContentService *services.ContentService
+	UserService    *services.UserService
 }
 
 // NewResolver creates a new resolver with dependencies
-func NewResolver(contentService *services.ContentService) *Resolver {
+func NewResolver(contentService *services.ContentService, userService *services.UserService) *Resolver {
 	return &Resolver{
 		ContentService: contentService,
+		UserService:    userService,
 	}
 }
