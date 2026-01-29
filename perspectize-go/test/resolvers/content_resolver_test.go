@@ -24,6 +24,7 @@ type mockContentRepository struct {
 	createFn   func(ctx context.Context, content *domain.Content) (*domain.Content, error)
 	getByIDFn  func(ctx context.Context, id int) (*domain.Content, error)
 	getByURLFn func(ctx context.Context, url string) (*domain.Content, error)
+	listFn     func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
 }
 
 func (m *mockContentRepository) Create(ctx context.Context, content *domain.Content) (*domain.Content, error) {
@@ -45,6 +46,13 @@ func (m *mockContentRepository) GetByURL(ctx context.Context, url string) (*doma
 		return m.getByURLFn(ctx, url)
 	}
 	return nil, domain.ErrNotFound
+}
+
+func (m *mockContentRepository) List(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
+	if m.listFn != nil {
+		return m.listFn(ctx, params)
+	}
+	return &domain.PaginatedContent{Items: []*domain.Content{}}, nil
 }
 
 // mockYouTubeClient implements services.YouTubeClient for testing
@@ -115,25 +123,25 @@ func TestContentQuery_Success(t *testing.T) {
 	server := setupTestServer(repo, &mockYouTubeClient{})
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `{ content(id: "1") { id name contentType url } }`)
+	result := executeGraphQL(t, server, `{ contentByID(id: "1") { id name contentType url } }`)
 
 	assert.Empty(t, result.Errors)
 
 	var data struct {
-		Content struct {
+		ContentByID struct {
 			ID          string `json:"id"`
 			Name        string `json:"name"`
 			ContentType string `json:"contentType"`
 			URL         string `json:"url"`
-		} `json:"content"`
+		} `json:"contentByID"`
 	}
 	err := json.Unmarshal(result.Data, &data)
 	require.NoError(t, err)
 
-	assert.Equal(t, "1", data.Content.ID)
-	assert.Equal(t, "Test Video", data.Content.Name)
-	assert.Equal(t, "youtube", data.Content.ContentType)
-	assert.Equal(t, url, data.Content.URL)
+	assert.Equal(t, "1", data.ContentByID.ID)
+	assert.Equal(t, "Test Video", data.ContentByID.Name)
+	assert.Equal(t, "youtube", data.ContentByID.ContentType)
+	assert.Equal(t, url, data.ContentByID.URL)
 }
 
 func TestContentQuery_NotFound_ReturnsError(t *testing.T) {
@@ -146,7 +154,7 @@ func TestContentQuery_NotFound_ReturnsError(t *testing.T) {
 	server := setupTestServer(repo, &mockYouTubeClient{})
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `{ content(id: "999") { id name } }`)
+	result := executeGraphQL(t, server, `{ contentByID(id: "999") { id name } }`)
 
 	// Issue #18 fix: should return an error, not a silent null
 	require.NotEmpty(t, result.Errors, "Expected an error when content is not found")
@@ -159,7 +167,7 @@ func TestContentQuery_InvalidID_NonNumeric(t *testing.T) {
 	server := setupTestServer(repo, &mockYouTubeClient{})
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `{ content(id: "abc") { id name } }`)
+	result := executeGraphQL(t, server, `{ contentByID(id: "abc") { id name } }`)
 
 	require.NotEmpty(t, result.Errors)
 	assert.Contains(t, result.Errors[0].Message, "invalid content ID")
@@ -171,7 +179,7 @@ func TestContentQuery_InvalidID_Zero(t *testing.T) {
 	server := setupTestServer(repo, &mockYouTubeClient{})
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `{ content(id: "0") { id name } }`)
+	result := executeGraphQL(t, server, `{ contentByID(id: "0") { id name } }`)
 
 	require.NotEmpty(t, result.Errors)
 	assert.Contains(t, result.Errors[0].Message, "invalid content ID")
@@ -183,7 +191,7 @@ func TestContentQuery_InvalidID_Negative(t *testing.T) {
 	server := setupTestServer(repo, &mockYouTubeClient{})
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `{ content(id: "-1") { id name } }`)
+	result := executeGraphQL(t, server, `{ contentByID(id: "-1") { id name } }`)
 
 	require.NotEmpty(t, result.Errors)
 	assert.Contains(t, result.Errors[0].Message, "invalid content ID")
@@ -199,7 +207,7 @@ func TestContentQuery_DatabaseError(t *testing.T) {
 	server := setupTestServer(repo, &mockYouTubeClient{})
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `{ content(id: "1") { id name } }`)
+	result := executeGraphQL(t, server, `{ contentByID(id: "1") { id name } }`)
 
 	require.NotEmpty(t, result.Errors)
 	assert.Contains(t, result.Errors[0].Message, "failed to get content")

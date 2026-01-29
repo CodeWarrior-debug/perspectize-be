@@ -79,3 +79,24 @@ func (s *ContentService) GetByID(ctx context.Context, id int) (*domain.Content, 
 	}
 	return content, nil
 }
+
+// ListContent retrieves a paginated list of content
+func (s *ContentService) ListContent(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
+	if params.First != nil {
+		if *params.First < 1 || *params.First > 100 {
+			return nil, fmt.Errorf("%w: first must be between 1 and 100", domain.ErrInvalidInput)
+		}
+	}
+	if params.Last != nil {
+		if *params.Last < 1 || *params.Last > 100 {
+			return nil, fmt.Errorf("%w: last must be between 1 and 100", domain.ErrInvalidInput)
+		}
+	}
+
+	result, err := s.repo.List(ctx, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list content: %w", err)
+	}
+
+	return result, nil
+}

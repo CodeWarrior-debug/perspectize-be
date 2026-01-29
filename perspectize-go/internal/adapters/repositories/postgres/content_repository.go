@@ -3,8 +3,11 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/yourorg/perspectize-go/internal/core/domain"
@@ -144,4 +147,132 @@ func toNullInt64(i *int) sql.NullInt64 {
 		return sql.NullInt64{}
 	}
 	return sql.NullInt64{Int64: int64(*i), Valid: true}
+}
+
+// encodeCursor encodes a content ID as an opaque base64 cursor
+func encodeCursor(id int) string {
+	return base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("cursor:%d", id)))
+}
+
+// decodeCursor decodes an opaque base64 cursor back to a content ID
+func decodeCursor(cursor string) (int, error) {
+	decoded, err := base64.StdEncoding.DecodeString(cursor)
+	if err != nil {
+		return 0, fmt.Errorf("invalid cursor: %w", err)
+	}
+	parts := strings.SplitN(string(decoded), ":", 2)
+	if len(parts) != 2 || parts[0] != "cursor" {
+		return 0, fmt.Errorf("invalid cursor format")
+	}
+	id, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return 0, fmt.Errorf("invalid cursor id: %w", err)
+	}
+	return id, nil
+}
+
+// sortColumnName maps a domain sort field to a safe SQL column name
+func sortColumnName(sortBy domain.ContentSortBy) string {
+	switch sortBy {
+	case domain.ContentSortByUpdatedAt:
+		return "updated_at"
+	case domain.ContentSortByName:
+		return "name"
+	default:
+		return "created_at"
+	}
+}
+
+// sortDirection returns a safe SQL sort direction string
+func sortDirection(order domain.SortOrder) string {
+	if order == domain.SortOrderAsc {
+		return "ASC"
+	}
+	return "DESC"
+}
+
+// List retrieves a paginated list of content using cursor-based pagination
+func (r *ContentRepository) List(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
+	limit := 10
+	if params.First != nil {
+		limit = *params.First
+	}
+
+	col := sortColumnName(params.SortBy)
+	dir := sortDirection(params.SortOrder)
+
+	// Build query
+	var conditions []string
+	var args []interface{}
+	argIdx := 1
+
+	if params.After != nil {
+		cursorID, err := decodeCursor(*params.After)
+		if err != nil {
+			return nil, fmt.Errorf("invalid after cursor: %w", err)
+		}
+		if dir == "DESC" {
+			conditions = append(conditions, fmt.Sprintf("id < $%d", argIdx))
+		} else {
+			conditions = append(conditions, fmt.Sprintf("id > $%d", argIdx))
+		}
+		args = append(args, cursorID)
+		argIdx++
+	}
+
+	whereClause := ""
+	if len(conditions) > 0 {
+		whereClause = "WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	// Fetch limit+1 to determine hasNextPage
+	query := fmt.Sprintf(
+		`SELECT id, name, url, content_type, length, length_units, response, created_at, updated_at
+		FROM content %s
+		ORDER BY %s %s, id %s
+		LIMIT $%d`,
+		whereClause, col, dir, dir, argIdx,
+	)
+	args = append(args, limit+1)
+
+	var rows []contentRow
+	if err := r.db.SelectContext(ctx, &rows, query, args...); err != nil {
+		return nil, fmt.Errorf("failed to list content: %w", err)
+	}
+
+	hasNext := len(rows) > limit
+	if hasNext {
+		rows = rows[:limit]
+	}
+
+	hasPrev := params.After != nil
+
+	items := make([]*domain.Content, len(rows))
+	for i := range rows {
+		items[i] = rowToDomain(&rows[i])
+	}
+
+	conn := &domain.PaginatedContent{
+		Items:   items,
+		HasNext: hasNext,
+		HasPrev: hasPrev,
+	}
+
+	if len(items) > 0 {
+		start := encodeCursor(items[0].ID)
+		end := encodeCursor(items[len(items)-1].ID)
+		conn.StartCursor = &start
+		conn.EndCursor = &end
+	}
+
+	// Optional total count
+	if params.IncludeTotalCount {
+		var count int
+		if err := r.db.GetContext(ctx, &count, "SELECT COUNT(*) FROM content"); err != nil {
+			return nil, fmt.Errorf("failed to count content: %w", err)
+		}
+		conn.TotalCount = &count
+	}
+
+	return conn, nil
 }

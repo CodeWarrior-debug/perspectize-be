@@ -33,8 +33,8 @@ func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input m
 	return domainToModel(content), nil
 }
 
-// Content is the resolver for the content field.
-func (r *queryResolver) Content(ctx context.Context, id string) (*model.Content, error) {
+// ContentByID is the resolver for the contentByID field.
+func (r *queryResolver) ContentByID(ctx context.Context, id string) (*model.Content, error) {
 	intID, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, fmt.Errorf("invalid content ID: %s", id)
@@ -52,6 +52,72 @@ func (r *queryResolver) Content(ctx context.Context, id string) (*model.Content,
 	}
 
 	return domainToModel(content), nil
+}
+
+// Content is the resolver for the content field.
+func (r *queryResolver) Content(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *model.ContentSortBy, sortOrder *model.SortOrder, includeTotalCount *bool) (*model.PaginatedContent, error) {
+	params := domain.ContentListParams{
+		First:  first,
+		After:  after,
+		Last:   last,
+		Before: before,
+	}
+
+	// Map GraphQL enums to domain enums
+	if sortBy != nil {
+		switch *sortBy {
+		case model.ContentSortByUpdatedAt:
+			params.SortBy = domain.ContentSortByUpdatedAt
+		case model.ContentSortByName:
+			params.SortBy = domain.ContentSortByName
+		default:
+			params.SortBy = domain.ContentSortByCreatedAt
+		}
+	} else {
+		params.SortBy = domain.ContentSortByCreatedAt
+	}
+
+	if sortOrder != nil {
+		switch *sortOrder {
+		case model.SortOrderAsc:
+			params.SortOrder = domain.SortOrderAsc
+		default:
+			params.SortOrder = domain.SortOrderDesc
+		}
+	} else {
+		params.SortOrder = domain.SortOrderDesc
+	}
+
+	if includeTotalCount != nil {
+		params.IncludeTotalCount = *includeTotalCount
+	}
+
+	result, err := r.ContentService.ListContent(ctx, params)
+	if err != nil {
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid pagination parameters: %w", err)
+		}
+		return nil, fmt.Errorf("failed to list content: %w", err)
+	}
+
+	// Map domain result to GraphQL model
+	items := make([]*model.Content, len(result.Items))
+	for i, item := range result.Items {
+		items[i] = domainToModel(item)
+	}
+
+	conn := &model.PaginatedContent{
+		Items: items,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     result.HasNext,
+			HasPreviousPage: result.HasPrev,
+			StartCursor:     result.StartCursor,
+			EndCursor:       result.EndCursor,
+		},
+		TotalCount: result.TotalCount,
+	}
+
+	return conn, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.
