@@ -3,14 +3,17 @@
 package model
 
 type Content struct {
-	ID          string  `json:"id"`
-	Name        string  `json:"name"`
-	URL         *string `json:"url,omitempty"`
-	ContentType string  `json:"contentType"`
-	Length      *int    `json:"length,omitempty"`
-	LengthUnits *string `json:"lengthUnits,omitempty"`
-	CreatedAt   string  `json:"createdAt"`
-	UpdatedAt   string  `json:"updatedAt"`
+	ID           string  `json:"id"`
+	Name         string  `json:"name"`
+	URL          *string `json:"url,omitempty"`
+	ContentType  string  `json:"contentType"`
+	Length       *int    `json:"length,omitempty"`
+	LengthUnits  *string `json:"lengthUnits,omitempty"`
+	ViewCount    *int    `json:"viewCount,omitempty"`
+	LikeCount    *int    `json:"likeCount,omitempty"`
+	CommentCount *int    `json:"commentCount,omitempty"`
+	CreatedAt    string  `json:"createdAt"`
+	UpdatedAt    string  `json:"updatedAt"`
 }
 
 type CreateContentFromYouTubeInput struct {

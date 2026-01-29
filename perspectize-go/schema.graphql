@@ -5,6 +5,9 @@ type Content {
   contentType: String!
   length: Int
   lengthUnits: String
+  viewCount: Int
+  likeCount: Int
+  commentCount: Int
   createdAt: String!
   updatedAt: String!
 }

@@ -54,20 +54,6 @@ func (r *queryResolver) Content(ctx context.Context, id string) (*model.Content,
 	return domainToModel(content), nil
 }
 
-// domainToModel converts a domain Content to a GraphQL model Content
-func domainToModel(c *domain.Content) *model.Content {
-	return &model.Content{
-		ID:          strconv.Itoa(c.ID),
-		Name:        c.Name,
-		URL:         c.URL,
-		ContentType: string(c.ContentType),
-		Length:      c.Length,
-		LengthUnits: c.LengthUnits,
-		CreatedAt:   c.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:   c.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
-	}
-}
-
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 

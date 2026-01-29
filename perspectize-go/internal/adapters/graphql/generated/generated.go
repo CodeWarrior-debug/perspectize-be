@@ -47,14 +47,17 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Content struct {
-		ContentType func(childComplexity int) int
-		CreatedAt   func(childComplexity int) int
-		ID          func(childComplexity int) int
-		Length      func(childComplexity int) int
-		LengthUnits func(childComplexity int) int
-		Name        func(childComplexity int) int
-		URL         func(childComplexity int) int
-		UpdatedAt   func(childComplexity int) int
+		CommentCount func(childComplexity int) int
+		ContentType  func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Length       func(childComplexity int) int
+		LengthUnits  func(childComplexity int) int
+		LikeCount    func(childComplexity int) int
+		Name         func(childComplexity int) int
+		URL          func(childComplexity int) int
+		UpdatedAt    func(childComplexity int) int
+		ViewCount    func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -92,6 +95,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	_ = ec
 	switch typeName + "." + field {
 
+	case "Content.commentCount":
+		if e.complexity.Content.CommentCount == nil {
+			break
+		}
+
+		return e.complexity.Content.CommentCount(childComplexity), true
 	case "Content.contentType":
 		if e.complexity.Content.ContentType == nil {
 			break
@@ -122,6 +131,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Content.LengthUnits(childComplexity), true
+	case "Content.likeCount":
+		if e.complexity.Content.LikeCount == nil {
+			break
+		}
+
+		return e.complexity.Content.LikeCount(childComplexity), true
 	case "Content.name":
 		if e.complexity.Content.Name == nil {
 			break
@@ -140,6 +155,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Content.UpdatedAt(childComplexity), true
+	case "Content.viewCount":
+		if e.complexity.Content.ViewCount == nil {
+			break
+		}
+
+		return e.complexity.Content.ViewCount(childComplexity), true
 
 	case "Mutation.createContentFromYouTube":
 		if e.complexity.Mutation.CreateContentFromYouTube == nil {
@@ -278,6 +299,9 @@ var sources = []*ast.Source{
   contentType: String!
   length: Int
   lengthUnits: String
+  viewCount: Int
+  likeCount: Int
+  commentCount: Int
   createdAt: String!
   updatedAt: String!
 }
@@ -560,6 +584,93 @@ func (ec *executionContext) fieldContext_Content_lengthUnits(_ context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Content_viewCount(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Content_viewCount,
+		func(ctx context.Context) (any, error) {
+			return obj.ViewCount, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Content_viewCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Content",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Content_likeCount(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Content_likeCount,
+		func(ctx context.Context) (any, error) {
+			return obj.LikeCount, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Content_likeCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Content",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Content_commentCount(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Content_commentCount,
+		func(ctx context.Context) (any, error) {
+			return obj.CommentCount, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Content_commentCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Content",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Content_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -655,6 +766,12 @@ func (ec *executionContext) fieldContext_Mutation_createContentFromYouTube(ctx c
 				return ec.fieldContext_Content_length(ctx, field)
 			case "lengthUnits":
 				return ec.fieldContext_Content_lengthUnits(ctx, field)
+			case "viewCount":
+				return ec.fieldContext_Content_viewCount(ctx, field)
+			case "likeCount":
+				return ec.fieldContext_Content_likeCount(ctx, field)
+			case "commentCount":
+				return ec.fieldContext_Content_commentCount(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Content_createdAt(ctx, field)
 			case "updatedAt":
@@ -714,6 +831,12 @@ func (ec *executionContext) fieldContext_Query_content(ctx context.Context, fiel
 				return ec.fieldContext_Content_length(ctx, field)
 			case "lengthUnits":
 				return ec.fieldContext_Content_lengthUnits(ctx, field)
+			case "viewCount":
+				return ec.fieldContext_Content_viewCount(ctx, field)
+			case "likeCount":
+				return ec.fieldContext_Content_likeCount(ctx, field)
+			case "commentCount":
+				return ec.fieldContext_Content_commentCount(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Content_createdAt(ctx, field)
 			case "updatedAt":
@@ -2357,6 +2480,12 @@ func (ec *executionContext) _Content(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Content_length(ctx, field, obj)
 		case "lengthUnits":
 			out.Values[i] = ec._Content_lengthUnits(ctx, field, obj)
+		case "viewCount":
+			out.Values[i] = ec._Content_viewCount(ctx, field, obj)
+		case "likeCount":
+			out.Values[i] = ec._Content_likeCount(ctx, field, obj)
+		case "commentCount":
+			out.Values[i] = ec._Content_commentCount(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._Content_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
