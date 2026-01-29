@@ -75,6 +75,9 @@ cp .env.example .env
 make run
 # Server runs on http://localhost:8080
 
+# Run with hot-reload (uses air, auto-restarts on file changes)
+make dev
+
 # Run all tests
 make test
 
