@@ -8,6 +8,17 @@ import (
 	"github.com/yourorg/perspectize-go/internal/core/domain"
 )
 
+// userDomainToModel converts a domain User to a GraphQL model User
+func userDomainToModel(u *domain.User) *model.User {
+	return &model.User{
+		ID:        strconv.Itoa(u.ID),
+		Username:  u.Username,
+		Email:     u.Email,
+		CreatedAt: u.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt: u.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+}
+
 // domainToModel converts a domain Content to a GraphQL model Content
 func domainToModel(c *domain.Content) *model.Content {
 	m := &model.Content{

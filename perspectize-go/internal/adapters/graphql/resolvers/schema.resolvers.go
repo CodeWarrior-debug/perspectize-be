@@ -34,6 +34,22 @@ func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input m
 	return domainToModel(content), nil
 }
 
+// CreateUser is the resolver for the createUser field.
+func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error) {
+	user, err := r.UserService.Create(ctx, input.Username, input.Email)
+	if err != nil {
+		if errors.Is(err, domain.ErrAlreadyExists) {
+			return nil, fmt.Errorf("user already exists: %w", err)
+		}
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		return nil, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	return userDomainToModel(user), nil
+}
+
 // ContentByID is the resolver for the contentByID field.
 func (r *queryResolver) ContentByID(ctx context.Context, id string) (*model.Content, error) {
 	intID, err := strconv.Atoi(id)
@@ -131,6 +147,43 @@ func (r *queryResolver) Content(ctx context.Context, first *int, after *string, 
 	}
 
 	return conn, nil
+}
+
+// UserByID is the resolver for the userByID field.
+func (r *queryResolver) UserByID(ctx context.Context, id string) (*model.User, error) {
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID: %s", id)
+	}
+
+	user, err := r.UserService.GetByID(ctx, intID)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, nil // Return null for not found (GraphQL convention)
+		}
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid user ID: %s", id)
+		}
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	return userDomainToModel(user), nil
+}
+
+// UserByUsername is the resolver for the userByUsername field.
+func (r *queryResolver) UserByUsername(ctx context.Context, username string) (*model.User, error) {
+	user, err := r.UserService.GetByUsername(ctx, username)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, nil // Return null for not found (GraphQL convention)
+		}
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid username")
+		}
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	return userDomainToModel(user), nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

@@ -1,5 +1,14 @@
 scalar JSON
 
+# User type
+type User {
+  id: ID!
+  username: String!
+  email: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
 type Content {
   id: ID!
   name: String!
@@ -57,8 +66,17 @@ input ContentFilter {
   maxLengthSeconds: Int
 }
 
+# User inputs
+input CreateUserInput {
+  username: String!
+  email: String!
+}
+
 type Mutation {
   createContentFromYouTube(input: CreateContentFromYouTubeInput!): Content!
+
+  # User mutations
+  createUser(input: CreateUserInput!): User!
 }
 
 type Query {
@@ -76,4 +94,8 @@ type Query {
     includeTotalCount: Boolean = false
     filter: ContentFilter
   ): PaginatedContent!
+
+  # User queries
+  userByID(id: ID!): User
+  userByUsername(username: String!): User
 }
