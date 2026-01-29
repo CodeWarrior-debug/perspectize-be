@@ -9,6 +9,16 @@ import (
 	"strconv"
 )
 
+type CategorizedRating struct {
+	Category string `json:"category"`
+	Rating   int    `json:"rating"`
+}
+
+type CategorizedRatingInput struct {
+	Category string `json:"category"`
+	Rating   int    `json:"rating"`
+}
+
 type Content struct {
 	ID           string         `json:"id"`
 	Name         string         `json:"name"`
@@ -34,6 +44,23 @@ type CreateContentFromYouTubeInput struct {
 	URL string `json:"url"`
 }
 
+type CreatePerspectiveInput struct {
+	Claim              string                    `json:"claim"`
+	UserID             string                    `json:"userID"`
+	ContentID          *string                   `json:"contentID,omitempty"`
+	Quality            *int                      `json:"quality,omitempty"`
+	Agreement          *int                      `json:"agreement,omitempty"`
+	Importance         *int                      `json:"importance,omitempty"`
+	Confidence         *int                      `json:"confidence,omitempty"`
+	Like               *string                   `json:"like,omitempty"`
+	Privacy            *Privacy                  `json:"privacy,omitempty"`
+	Description        *string                   `json:"description,omitempty"`
+	Category           *string                   `json:"category,omitempty"`
+	Parts              []int                     `json:"parts,omitempty"`
+	Labels             []string                  `json:"labels,omitempty"`
+	CategorizedRatings []*CategorizedRatingInput `json:"categorizedRatings,omitempty"`
+}
+
 type CreateUserInput struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
@@ -55,7 +82,60 @@ type PaginatedContent struct {
 	TotalCount *int       `json:"totalCount,omitempty"`
 }
 
+type PaginatedPerspectives struct {
+	Items      []*Perspective `json:"items"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
+	TotalCount *int           `json:"totalCount,omitempty"`
+}
+
+type Perspective struct {
+	ID                 string               `json:"id"`
+	Claim              string               `json:"claim"`
+	UserID             string               `json:"userID"`
+	User               *User                `json:"user,omitempty"`
+	ContentID          *string              `json:"contentID,omitempty"`
+	Content            *Content             `json:"content,omitempty"`
+	Quality            *int                 `json:"quality,omitempty"`
+	Agreement          *int                 `json:"agreement,omitempty"`
+	Importance         *int                 `json:"importance,omitempty"`
+	Confidence         *int                 `json:"confidence,omitempty"`
+	Like               *string              `json:"like,omitempty"`
+	Privacy            Privacy              `json:"privacy"`
+	Description        *string              `json:"description,omitempty"`
+	Category           *string              `json:"category,omitempty"`
+	ReviewStatus       *ReviewStatus        `json:"reviewStatus,omitempty"`
+	Parts              []int                `json:"parts,omitempty"`
+	Labels             []string             `json:"labels,omitempty"`
+	CategorizedRatings []*CategorizedRating `json:"categorizedRatings,omitempty"`
+	CreatedAt          string               `json:"createdAt"`
+	UpdatedAt          string               `json:"updatedAt"`
+}
+
+type PerspectiveFilter struct {
+	UserID    *string  `json:"userID,omitempty"`
+	ContentID *string  `json:"contentID,omitempty"`
+	Privacy   *Privacy `json:"privacy,omitempty"`
+}
+
 type Query struct {
+}
+
+type UpdatePerspectiveInput struct {
+	ID                 string                    `json:"id"`
+	Claim              *string                   `json:"claim,omitempty"`
+	ContentID          *string                   `json:"contentID,omitempty"`
+	Quality            *int                      `json:"quality,omitempty"`
+	Agreement          *int                      `json:"agreement,omitempty"`
+	Importance         *int                      `json:"importance,omitempty"`
+	Confidence         *int                      `json:"confidence,omitempty"`
+	Like               *string                   `json:"like,omitempty"`
+	Privacy            *Privacy                  `json:"privacy,omitempty"`
+	Description        *string                   `json:"description,omitempty"`
+	Category           *string                   `json:"category,omitempty"`
+	ReviewStatus       *ReviewStatus             `json:"reviewStatus,omitempty"`
+	Parts              []int                     `json:"parts,omitempty"`
+	Labels             []string                  `json:"labels,omitempty"`
+	CategorizedRatings []*CategorizedRatingInput `json:"categorizedRatings,omitempty"`
 }
 
 type User struct {
@@ -171,6 +251,175 @@ func (e *ContentType) UnmarshalJSON(b []byte) error {
 }
 
 func (e ContentType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type PerspectiveSortBy string
+
+const (
+	PerspectiveSortByCreatedAt PerspectiveSortBy = "CREATED_AT"
+	PerspectiveSortByUpdatedAt PerspectiveSortBy = "UPDATED_AT"
+	PerspectiveSortByClaim     PerspectiveSortBy = "CLAIM"
+)
+
+var AllPerspectiveSortBy = []PerspectiveSortBy{
+	PerspectiveSortByCreatedAt,
+	PerspectiveSortByUpdatedAt,
+	PerspectiveSortByClaim,
+}
+
+func (e PerspectiveSortBy) IsValid() bool {
+	switch e {
+	case PerspectiveSortByCreatedAt, PerspectiveSortByUpdatedAt, PerspectiveSortByClaim:
+		return true
+	}
+	return false
+}
+
+func (e PerspectiveSortBy) String() string {
+	return string(e)
+}
+
+func (e *PerspectiveSortBy) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PerspectiveSortBy(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PerspectiveSortBy", str)
+	}
+	return nil
+}
+
+func (e PerspectiveSortBy) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PerspectiveSortBy) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PerspectiveSortBy) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type Privacy string
+
+const (
+	PrivacyPublic  Privacy = "PUBLIC"
+	PrivacyPrivate Privacy = "PRIVATE"
+)
+
+var AllPrivacy = []Privacy{
+	PrivacyPublic,
+	PrivacyPrivate,
+}
+
+func (e Privacy) IsValid() bool {
+	switch e {
+	case PrivacyPublic, PrivacyPrivate:
+		return true
+	}
+	return false
+}
+
+func (e Privacy) String() string {
+	return string(e)
+}
+
+func (e *Privacy) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = Privacy(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Privacy", str)
+	}
+	return nil
+}
+
+func (e Privacy) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *Privacy) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e Privacy) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ReviewStatus string
+
+const (
+	ReviewStatusPending  ReviewStatus = "PENDING"
+	ReviewStatusApproved ReviewStatus = "APPROVED"
+	ReviewStatusRejected ReviewStatus = "REJECTED"
+)
+
+var AllReviewStatus = []ReviewStatus{
+	ReviewStatusPending,
+	ReviewStatusApproved,
+	ReviewStatusRejected,
+}
+
+func (e ReviewStatus) IsValid() bool {
+	switch e {
+	case ReviewStatusPending, ReviewStatusApproved, ReviewStatusRejected:
+		return true
+	}
+	return false
+}
+
+func (e ReviewStatus) String() string {
+	return string(e)
+}
+
+func (e *ReviewStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ReviewStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ReviewStatus", str)
+	}
+	return nil
+}
+
+func (e ReviewStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ReviewStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ReviewStatus) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil
