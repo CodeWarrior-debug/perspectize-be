@@ -220,6 +220,25 @@ func (r *ContentRepository) List(ctx context.Context, params domain.ContentListP
 		argIdx++
 	}
 
+	// Apply filters
+	if params.Filter != nil {
+		if params.Filter.ContentType != nil {
+			conditions = append(conditions, fmt.Sprintf("content_type = $%d", argIdx))
+			args = append(args, string(*params.Filter.ContentType))
+			argIdx++
+		}
+		if params.Filter.MinLengthSeconds != nil {
+			conditions = append(conditions, fmt.Sprintf("length >= $%d", argIdx))
+			args = append(args, *params.Filter.MinLengthSeconds)
+			argIdx++
+		}
+		if params.Filter.MaxLengthSeconds != nil {
+			conditions = append(conditions, fmt.Sprintf("length <= $%d", argIdx))
+			args = append(args, *params.Filter.MaxLengthSeconds)
+			argIdx++
+		}
+	}
+
 	whereClause := ""
 	if len(conditions) > 0 {
 		whereClause = "WHERE " + strings.Join(conditions, " AND ")
@@ -265,10 +284,37 @@ func (r *ContentRepository) List(ctx context.Context, params domain.ContentListP
 		conn.EndCursor = &end
 	}
 
-	// Optional total count
+	// Optional total count (respects filters but not cursor pagination)
 	if params.IncludeTotalCount {
+		var countConditions []string
+		var countArgs []interface{}
+		countArgIdx := 1
+
+		if params.Filter != nil {
+			if params.Filter.ContentType != nil {
+				countConditions = append(countConditions, fmt.Sprintf("content_type = $%d", countArgIdx))
+				countArgs = append(countArgs, string(*params.Filter.ContentType))
+				countArgIdx++
+			}
+			if params.Filter.MinLengthSeconds != nil {
+				countConditions = append(countConditions, fmt.Sprintf("length >= $%d", countArgIdx))
+				countArgs = append(countArgs, *params.Filter.MinLengthSeconds)
+				countArgIdx++
+			}
+			if params.Filter.MaxLengthSeconds != nil {
+				countConditions = append(countConditions, fmt.Sprintf("length <= $%d", countArgIdx))
+				countArgs = append(countArgs, *params.Filter.MaxLengthSeconds)
+				countArgIdx++
+			}
+		}
+
+		countQuery := "SELECT COUNT(*) FROM content"
+		if len(countConditions) > 0 {
+			countQuery += " WHERE " + strings.Join(countConditions, " AND ")
+		}
+
 		var count int
-		if err := r.db.GetContext(ctx, &count, "SELECT COUNT(*) FROM content"); err != nil {
+		if err := r.db.GetContext(ctx, &count, countQuery, countArgs...); err != nil {
 			return nil, fmt.Errorf("failed to count content: %w", err)
 		}
 		conn.TotalCount = &count

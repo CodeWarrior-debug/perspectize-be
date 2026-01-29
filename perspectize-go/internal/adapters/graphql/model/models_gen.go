@@ -24,6 +24,12 @@ type Content struct {
 	UpdatedAt    string         `json:"updatedAt"`
 }
 
+type ContentFilter struct {
+	ContentType      *ContentType `json:"contentType,omitempty"`
+	MinLengthSeconds *int         `json:"minLengthSeconds,omitempty"`
+	MaxLengthSeconds *int         `json:"maxLengthSeconds,omitempty"`
+}
+
 type CreateContentFromYouTubeInput struct {
 	URL string `json:"url"`
 }
@@ -99,6 +105,59 @@ func (e *ContentSortBy) UnmarshalJSON(b []byte) error {
 }
 
 func (e ContentSortBy) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ContentType string
+
+const (
+	ContentTypeYoutube ContentType = "YOUTUBE"
+)
+
+var AllContentType = []ContentType{
+	ContentTypeYoutube,
+}
+
+func (e ContentType) IsValid() bool {
+	switch e {
+	case ContentTypeYoutube:
+		return true
+	}
+	return false
+}
+
+func (e ContentType) String() string {
+	return string(e)
+}
+
+func (e *ContentType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ContentType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ContentType", str)
+	}
+	return nil
+}
+
+func (e ContentType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ContentType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ContentType) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

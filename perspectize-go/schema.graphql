@@ -41,9 +41,20 @@ enum SortOrder {
   DESC
 }
 
+enum ContentType {
+  YOUTUBE
+}
+
 # Inputs
 input CreateContentFromYouTubeInput {
   url: String!
+}
+
+# TODO: Add additional filters (e.g., dateRange, search) or make filters dynamic
+input ContentFilter {
+  contentType: ContentType
+  minLengthSeconds: Int
+  maxLengthSeconds: Int
 }
 
 type Mutation {
@@ -54,8 +65,7 @@ type Query {
   # Get single content by ID
   contentByID(id: ID!): Content
 
-  # Paginated content list
-  # TODO: Add filtering support (e.g., contentType, dateRange)
+  # Paginated content list with optional filtering
   content(
     first: Int = 10
     after: String
@@ -64,5 +74,6 @@ type Query {
     sortBy: ContentSortBy = CREATED_AT
     sortOrder: SortOrder = DESC
     includeTotalCount: Boolean = false
+    filter: ContentFilter
   ): PaginatedContent!
 }

@@ -79,7 +79,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Content     func(childComplexity int, first *int, after *string, last *int, before *string, sortBy *model.ContentSortBy, sortOrder *model.SortOrder, includeTotalCount *bool) int
+		Content     func(childComplexity int, first *int, after *string, last *int, before *string, sortBy *model.ContentSortBy, sortOrder *model.SortOrder, includeTotalCount *bool, filter *model.ContentFilter) int
 		ContentByID func(childComplexity int, id string) int
 	}
 }
@@ -89,7 +89,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	ContentByID(ctx context.Context, id string) (*model.Content, error)
-	Content(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *model.ContentSortBy, sortOrder *model.SortOrder, includeTotalCount *bool) (*model.PaginatedContent, error)
+	Content(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *model.ContentSortBy, sortOrder *model.SortOrder, includeTotalCount *bool, filter *model.ContentFilter) (*model.PaginatedContent, error)
 }
 
 type executableSchema struct {
@@ -250,7 +250,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Content(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["sortBy"].(*model.ContentSortBy), args["sortOrder"].(*model.SortOrder), args["includeTotalCount"].(*bool)), true
+		return e.complexity.Query.Content(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["sortBy"].(*model.ContentSortBy), args["sortOrder"].(*model.SortOrder), args["includeTotalCount"].(*bool), args["filter"].(*model.ContentFilter)), true
 	case "Query.contentByID":
 		if e.complexity.Query.ContentByID == nil {
 			break
@@ -271,6 +271,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputContentFilter,
 		ec.unmarshalInputCreateContentFromYouTubeInput,
 	)
 	first := true
@@ -412,9 +413,19 @@ enum SortOrder {
   DESC
 }
 
+enum ContentType {
+  YOUTUBE
+}
+
 # Inputs
 input CreateContentFromYouTubeInput {
   url: String!
+}
+
+input ContentFilter {
+  contentType: ContentType
+  minLengthSeconds: Int
+  maxLengthSeconds: Int
 }
 
 type Mutation {
@@ -425,8 +436,7 @@ type Query {
   # Get single content by ID
   contentByID(id: ID!): Content
 
-  # Paginated content list
-  # TODO: Add filtering support (e.g., contentType, dateRange)
+  # Paginated content list with optional filtering
   content(
     first: Int = 10
     after: String
@@ -435,6 +445,7 @@ type Query {
     sortBy: ContentSortBy = CREATED_AT
     sortOrder: SortOrder = DESC
     includeTotalCount: Boolean = false
+    filter: ContentFilter
   ): PaginatedContent!
 }
 `, BuiltIn: false},
@@ -516,6 +527,11 @@ func (ec *executionContext) field_Query_content_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["includeTotalCount"] = arg6
+	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOContentFilter2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentFilter)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg7
 	return args, nil
 }
 
@@ -1300,7 +1316,7 @@ func (ec *executionContext) _Query_content(ctx context.Context, field graphql.Co
 		ec.fieldContext_Query_content,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Content(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["sortBy"].(*model.ContentSortBy), fc.Args["sortOrder"].(*model.SortOrder), fc.Args["includeTotalCount"].(*bool))
+			return ec.resolvers.Query().Content(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["sortBy"].(*model.ContentSortBy), fc.Args["sortOrder"].(*model.SortOrder), fc.Args["includeTotalCount"].(*bool), fc.Args["filter"].(*model.ContentFilter))
 		},
 		nil,
 		ec.marshalNPaginatedContent2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedContent,
@@ -2895,6 +2911,47 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputContentFilter(ctx context.Context, obj any) (model.ContentFilter, error) {
+	var it model.ContentFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"contentType", "minLengthSeconds", "maxLengthSeconds"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "contentType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contentType"))
+			data, err := ec.unmarshalOContentType2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ContentType = data
+		case "minLengthSeconds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minLengthSeconds"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MinLengthSeconds = data
+		case "maxLengthSeconds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxLengthSeconds"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxLengthSeconds = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateContentFromYouTubeInput(ctx context.Context, obj any) (model.CreateContentFromYouTubeInput, error) {
 	var it model.CreateContentFromYouTubeInput
 	asMap := map[string]any{}
@@ -3997,6 +4054,14 @@ func (ec *executionContext) marshalOContent2ᚖgithubᚗcomᚋyourorgᚋperspect
 	return ec._Content(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOContentFilter2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentFilter(ctx context.Context, v any) (*model.ContentFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputContentFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOContentSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentSortBy(ctx context.Context, v any) (*model.ContentSortBy, error) {
 	if v == nil {
 		return nil, nil
@@ -4007,6 +4072,22 @@ func (ec *executionContext) unmarshalOContentSortBy2ᚖgithubᚗcomᚋyourorgᚋ
 }
 
 func (ec *executionContext) marshalOContentSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentSortBy(ctx context.Context, sel ast.SelectionSet, v *model.ContentSortBy) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
+func (ec *executionContext) unmarshalOContentType2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentType(ctx context.Context, v any) (*model.ContentType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.ContentType)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOContentType2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentType(ctx context.Context, sel ast.SelectionSet, v *model.ContentType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

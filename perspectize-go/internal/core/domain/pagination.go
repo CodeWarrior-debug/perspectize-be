@@ -17,6 +17,13 @@ const (
 	SortOrderDesc SortOrder = "DESC"
 )
 
+// ContentFilter contains filter criteria for content queries
+type ContentFilter struct {
+	ContentType      *ContentType
+	MinLengthSeconds *int
+	MaxLengthSeconds *int
+}
+
 // ContentListParams contains parameters for paginated content queries
 type ContentListParams struct {
 	First             *int
@@ -26,6 +33,7 @@ type ContentListParams struct {
 	SortBy            ContentSortBy
 	SortOrder         SortOrder
 	IncludeTotalCount bool
+	Filter            *ContentFilter
 }
 
 // PaginatedContent represents a paginated list of content

@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/yourorg/perspectize-go/internal/adapters/graphql/generated"
 	"github.com/yourorg/perspectize-go/internal/adapters/graphql/model"
@@ -55,7 +56,7 @@ func (r *queryResolver) ContentByID(ctx context.Context, id string) (*model.Cont
 }
 
 // Content is the resolver for the content field.
-func (r *queryResolver) Content(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *model.ContentSortBy, sortOrder *model.SortOrder, includeTotalCount *bool) (*model.PaginatedContent, error) {
+func (r *queryResolver) Content(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *model.ContentSortBy, sortOrder *model.SortOrder, includeTotalCount *bool, filter *model.ContentFilter) (*model.PaginatedContent, error) {
 	params := domain.ContentListParams{
 		First:  first,
 		After:  after,
@@ -90,6 +91,18 @@ func (r *queryResolver) Content(ctx context.Context, first *int, after *string, 
 
 	if includeTotalCount != nil {
 		params.IncludeTotalCount = *includeTotalCount
+	}
+
+	// Map filter
+	if filter != nil {
+		params.Filter = &domain.ContentFilter{}
+		if filter.ContentType != nil {
+			// GraphQL enum is uppercase (YOUTUBE), domain is lowercase (youtube)
+			ct := domain.ContentType(strings.ToLower(string(*filter.ContentType)))
+			params.Filter.ContentType = &ct
+		}
+		params.Filter.MinLengthSeconds = filter.MinLengthSeconds
+		params.Filter.MaxLengthSeconds = filter.MaxLengthSeconds
 	}
 
 	result, err := r.ContentService.ListContent(ctx, params)
