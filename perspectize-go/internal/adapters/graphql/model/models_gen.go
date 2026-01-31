@@ -34,6 +34,11 @@ type CreateContentFromYouTubeInput struct {
 	URL string `json:"url"`
 }
 
+type CreateUserInput struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+}
+
 type Mutation struct {
 }
 
@@ -51,6 +56,14 @@ type PaginatedContent struct {
 }
 
 type Query struct {
+}
+
+type User struct {
+	ID        string `json:"id"`
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	CreatedAt string `json:"createdAt"`
+	UpdatedAt string `json:"updatedAt"`
 }
 
 type ContentSortBy string

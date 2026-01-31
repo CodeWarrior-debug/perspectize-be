@@ -485,3 +485,6 @@ $RECYCLE.BIN/
 
 # vscode tasks
 .vscode/
+
+# Other generated
+coverage.out

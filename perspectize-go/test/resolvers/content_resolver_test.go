@@ -67,6 +67,43 @@ func (m *mockYouTubeClient) GetVideoMetadata(ctx context.Context, videoID string
 	return nil, fmt.Errorf("not implemented")
 }
 
+// mockUserRepository implements repositories.UserRepository for testing
+type mockUserRepository struct {
+	createFn        func(ctx context.Context, user *domain.User) (*domain.User, error)
+	getByIDFn       func(ctx context.Context, id int) (*domain.User, error)
+	getByUsernameFn func(ctx context.Context, username string) (*domain.User, error)
+	getByEmailFn    func(ctx context.Context, email string) (*domain.User, error)
+}
+
+func (m *mockUserRepository) Create(ctx context.Context, user *domain.User) (*domain.User, error) {
+	if m.createFn != nil {
+		return m.createFn(ctx, user)
+	}
+	user.ID = 1
+	return user, nil
+}
+
+func (m *mockUserRepository) GetByID(ctx context.Context, id int) (*domain.User, error) {
+	if m.getByIDFn != nil {
+		return m.getByIDFn(ctx, id)
+	}
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockUserRepository) GetByUsername(ctx context.Context, username string) (*domain.User, error) {
+	if m.getByUsernameFn != nil {
+		return m.getByUsernameFn(ctx, username)
+	}
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockUserRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
+	if m.getByEmailFn != nil {
+		return m.getByEmailFn(ctx, email)
+	}
+	return nil, domain.ErrNotFound
+}
+
 // graphqlResponse represents a generic GraphQL JSON response
 type graphqlResponse struct {
 	Data   json.RawMessage `json:"data"`
@@ -78,7 +115,8 @@ type graphqlResponse struct {
 // setupTestServer creates a test GraphQL server with the given mock dependencies
 func setupTestServer(repo *mockContentRepository, ytClient *mockYouTubeClient) *httptest.Server {
 	contentService := services.NewContentService(repo, ytClient)
-	resolver := resolvers.NewResolver(contentService)
+	userService := services.NewUserService(&mockUserRepository{})
+	resolver := resolvers.NewResolver(contentService, userService)
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 	return httptest.NewServer(srv)
 }
@@ -776,9 +814,11 @@ func TestNewResolver(t *testing.T) {
 	repo := &mockContentRepository{}
 	ytClient := &mockYouTubeClient{}
 	contentService := services.NewContentService(repo, ytClient)
+	userService := services.NewUserService(&mockUserRepository{})
 
-	resolver := resolvers.NewResolver(contentService)
+	resolver := resolvers.NewResolver(contentService, userService)
 
 	assert.NotNil(t, resolver)
 	assert.Equal(t, contentService, resolver.ContentService)
+	assert.Equal(t, userService, resolver.UserService)
 }
