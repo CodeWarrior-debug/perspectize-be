@@ -258,7 +258,7 @@ Claude should auto-invoke these when relevant:
 - `backend-development` - Full-stack backend patterns
 - `api-scaffolding:graphql-architect` - Schema design, resolver patterns, DataLoader
 - `devops-tools:databases` - PostgreSQL queries, indexing, migrations
-- `perspectize-conventions` - Project-specific patterns (`.claude/skills/`)
+- `project-conventions` - Project-specific patterns (`.claude/skills/`)
 
 ## Database
 
