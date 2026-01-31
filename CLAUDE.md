@@ -240,6 +240,26 @@ Use `DATABASE_URL` with external endpoint from hosting provider. Note: Sevalla c
 - **Logging:** log/slog (structured logging)
 - **Environment:** godotenv (.env file loading)
 
+## Agent Delegation Strategy
+
+| Task Type | Model | Subagent | Rationale |
+|-----------|-------|----------|-----------|
+| Architecture decisions | Opus | - | Complex multi-file reasoning |
+| Go implementation | Sonnet | `go-backend` | Balanced quality/cost |
+| GraphQL schema design | Sonnet | `graphql-designer` | Schema patterns |
+| Database migrations | Sonnet | `db-migration` | SQL generation |
+| Code review | Haiku | `code-reviewer` | Fast pattern matching |
+| Test generation | Haiku | `test-writer` | Boilerplate generation |
+
+## Available Skills
+
+Claude should auto-invoke these when relevant:
+
+- `backend-development` - Full-stack backend patterns
+- `api-scaffolding:graphql-architect` - Schema design, resolver patterns, DataLoader
+- `devops-tools:databases` - PostgreSQL queries, indexing, migrations
+- `perspectize-conventions` - Project-specific patterns (`.claude/skills/`)
+
 ## Database
 
 PostgreSQL 18 with advanced features:
@@ -452,6 +472,12 @@ For exposing JSONB data via GraphQL, use gqlgen's built-in `graphql.Map` scalar 
 
 ## Resources
 
+**Project Documentation:**
+- [Architecture](docs/ARCHITECTURE.md) - System design and hexagonal architecture
+- [Local Development](docs/LOCAL_DEVELOPMENT.md) - Setup guide
+- [Agent Routing](docs/AGENTS.md) - AI agent navigation guide
+
+**External References:**
 - [gqlgen Documentation](https://gqlgen.com/)
 - [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/)
 - [Effective Go](https://go.dev/doc/effective_go)
