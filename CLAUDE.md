@@ -251,6 +251,51 @@ Use `DATABASE_URL` with external endpoint from hosting provider. Note: Sevalla c
 | Code review | Haiku | `code-reviewer` | Fast pattern matching |
 | Test generation | Haiku | `test-writer` | Boilerplate generation |
 
+## Agent Orchestration Patterns
+
+When facing multiple tasks with mixed dependencies, use **unified agent swarming** to parallelize independent work:
+
+### Pattern: Coordinator-Driven DAG Execution
+
+1. **Identify task graph** - Map tasks and their dependencies (which tasks block which)
+2. **Batch by specialty** - Group similar tasks for specialist agents (tests → test-writer, migrations → db-migration, etc.)
+3. **Partition independent work** - Find batches that can execute in parallel (no shared state/dependencies)
+4. **Invoke orchestration approach** - Choose based on scope and complexity
+
+### Orchestration Approaches (Complementary)
+
+**For immediate parallel execution in current session:**
+- Use **`superpowers:dispatching-parallel-agents`** skill
+- Best for: 2-5 independent tasks that finish quickly (e.g., parallel code reviews, multiple test files)
+- Provides: Task coordination, result aggregation, dependency validation
+- Example: Run schema design + domain model definition + GraphQL boilerplate in parallel
+
+**For multi-agent session work with task management:**
+- Use **`superpowers:subagent-driven-development`** skill
+- Best for: 3-8 independent tasks within a single session with state tracking
+- Provides: Task list management, progress tracking, inter-task communication
+- Example: Feature branch with domain + adapters + tests + migrations all tracked together
+
+**For large-scale workflow orchestration:**
+- Use **Conductor system** (setup with `conductor:new-track`, implement with `conductor:implement`)
+- Best for: Complex features/refactors spanning multiple sessions, checkpoints, and reviews
+- Provides: Spec → Phase-based planning → TDD workflow → verification gates
+- Example: Full feature implementation from spec through PR (INI-16-youtube-post-graphql)
+
+### When to Proactively Invoke
+
+- **Dispatching Parallel Agents**: User provides 2+ independent tasks explicitly → organize by dependency → invoke skill
+- **Subagent-Driven Development**: Implementation plan with 3+ parallel work streams in single session → invoke skill
+- **Conductor System**: Large initiative, multi-phase work, cross-functional concerns → invoke `conductor:new-track`
+
+### Dependency Validation
+
+Before invoking any orchestration approach:
+- ✅ Parallel tasks have **no shared state** (don't modify same files/functions)
+- ✅ Parallel tasks have **no sequential dependencies** (task B doesn't require output of task A)
+- ✅ Each batch has a **single specialist agent** (avoid task context thrashing)
+- ❌ Skip parallelization if: shared mutable state, sequential DB migrations, or coordination overhead > speedup
+
 ## Available Skills
 
 Claude should auto-invoke these when relevant:
@@ -259,6 +304,20 @@ Claude should auto-invoke these when relevant:
 - `api-scaffolding:graphql-architect` - Schema design, resolver patterns, DataLoader
 - `devops-tools:databases` - PostgreSQL queries, indexing, migrations
 - `project-conventions` - Project-specific patterns (`.claude/skills/`)
+
+## Claude Code Plugins
+
+**Installed:** `claude-plugins-official`
+
+This plugin provides professional tools for backend development workflows:
+
+- **devops-tools:databases** - PostgreSQL administration, query optimization, migrations
+- **devops-tools:devops** - Container orchestration (Docker, Kubernetes, GCP, Cloudflare)
+- **devops-tools:chrome-devtools** - Browser automation and performance profiling (rarely needed for backend)
+
+See plugin documentation for complete tool listings. Use these tools when:
+- **databases**: Writing complex SQL, debugging query performance, planning migrations
+- **devops**: Deploying to production, configuring CI/CD, infrastructure setup
 
 ## Database
 
