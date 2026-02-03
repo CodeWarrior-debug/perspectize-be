@@ -14,25 +14,33 @@ import (
 	"github.com/yourorg/perspectize-go/internal/core/domain"
 )
 
-// NullBytesArray is a [][]byte that properly handles NULL values from the database.
-// Unlike raw [][]byte, this type implements sql.Scanner to handle NULL gracefully.
-type NullBytesArray [][]byte
+// JSONBArray is a custom type for PostgreSQL jsonb[] columns.
+// It stores JSON data as strings and properly handles NULL values.
+type JSONBArray []string
 
-// Scan implements the sql.Scanner interface
-func (a *NullBytesArray) Scan(src interface{}) error {
+// Scan implements the sql.Scanner interface for reading jsonb[] from PostgreSQL
+func (a *JSONBArray) Scan(src interface{}) error {
 	if src == nil {
 		*a = nil
 		return nil
 	}
-	return pq.Array((*[][]byte)(a)).Scan(src)
+
+	// PostgreSQL returns jsonb[] as []byte containing array of bytea
+	// We need to scan through pq.StringArray
+	var strArray pq.StringArray
+	if err := strArray.Scan(src); err != nil {
+		return err
+	}
+	*a = JSONBArray(strArray)
+	return nil
 }
 
-// Value implements the driver.Valuer interface
-func (a NullBytesArray) Value() (driver.Value, error) {
-	if a == nil {
+// Value implements the driver.Valuer interface for writing jsonb[] to PostgreSQL
+func (a JSONBArray) Value() (driver.Value, error) {
+	if len(a) == 0 {
 		return nil, nil
 	}
-	return pq.Array([][]byte(a)).Value()
+	return pq.StringArray(a).Value()
 }
 
 // PerspectiveRepository implements the PerspectiveRepository interface using PostgreSQL
@@ -57,7 +65,7 @@ type perspectiveRow struct {
 	Labels             pq.StringArray `db:"labels"`
 	Description        sql.NullString `db:"description"`
 	ReviewStatus       sql.NullString `db:"review_status"`
-	CategorizedRatings NullBytesArray `db:"categorized_ratings"`
+	CategorizedRatings JSONBArray     `db:"categorized_ratings"`
 	CreatedAt          sql.NullTime   `db:"created_at"`
 	UpdatedAt          sql.NullTime   `db:"updated_at"`
 }
@@ -69,16 +77,16 @@ func NewPerspectiveRepository(db *sqlx.DB) *PerspectiveRepository {
 
 // Create inserts a new perspective record into the database
 func (r *PerspectiveRepository) Create(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error) {
-	// Marshal categorized ratings
-	var categorizedRatings [][]byte
+	// Marshal categorized ratings to JSON strings for jsonb[] column
+	var categorizedRatings JSONBArray
 	if len(p.CategorizedRatings) > 0 {
-		categorizedRatings = make([][]byte, len(p.CategorizedRatings))
+		categorizedRatings = make(JSONBArray, len(p.CategorizedRatings))
 		for i, cr := range p.CategorizedRatings {
 			data, err := json.Marshal(cr)
 			if err != nil {
 				return nil, fmt.Errorf("failed to marshal categorized rating: %w", err)
 			}
-			categorizedRatings[i] = data
+			categorizedRatings[i] = string(data)
 		}
 	}
 
@@ -87,7 +95,7 @@ func (r *PerspectiveRepository) Create(ctx context.Context, p *domain.Perspectiv
 			claim, user_id, content_id, "like", quality, agreement, importance, confidence,
 			privacy, parts, category, labels, description, review_status, categorized_ratings
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15::jsonb[]
 		) RETURNING id`
 
 	var id int
@@ -106,7 +114,7 @@ func (r *PerspectiveRepository) Create(ctx context.Context, p *domain.Perspectiv
 		pq.Array(p.Labels),
 		toNullString(p.Description),
 		toNullStringFromReviewStatus(p.ReviewStatus),
-		pq.Array(categorizedRatings),
+		categorizedRatings,
 	).Scan(&id)
 
 	if err != nil {
@@ -156,16 +164,16 @@ func (r *PerspectiveRepository) GetByUserAndClaim(ctx context.Context, userID in
 
 // Update updates an existing perspective
 func (r *PerspectiveRepository) Update(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error) {
-	// Marshal categorized ratings
-	var categorizedRatings [][]byte
+	// Marshal categorized ratings to JSON strings for jsonb[] column
+	var categorizedRatings JSONBArray
 	if len(p.CategorizedRatings) > 0 {
-		categorizedRatings = make([][]byte, len(p.CategorizedRatings))
+		categorizedRatings = make(JSONBArray, len(p.CategorizedRatings))
 		for i, cr := range p.CategorizedRatings {
 			data, err := json.Marshal(cr)
 			if err != nil {
 				return nil, fmt.Errorf("failed to marshal categorized rating: %w", err)
 			}
-			categorizedRatings[i] = data
+			categorizedRatings[i] = string(data)
 		}
 	}
 
@@ -173,7 +181,7 @@ func (r *PerspectiveRepository) Update(ctx context.Context, p *domain.Perspectiv
 		UPDATE perspectives SET
 			claim = $1, content_id = $2, "like" = $3, quality = $4, agreement = $5,
 			importance = $6, confidence = $7, privacy = $8, parts = $9, category = $10,
-			labels = $11, description = $12, review_status = $13, categorized_ratings = $14
+			labels = $11, description = $12, review_status = $13, categorized_ratings = $14::jsonb[]
 		WHERE id = $15`
 
 	_, err := r.db.ExecContext(ctx, query,
@@ -190,7 +198,7 @@ func (r *PerspectiveRepository) Update(ctx context.Context, p *domain.Perspectiv
 		pq.Array(p.Labels),
 		toNullString(p.Description),
 		toNullStringFromReviewStatus(p.ReviewStatus),
-		pq.Array(categorizedRatings),
+		categorizedRatings,
 		p.ID,
 	)
 
@@ -410,12 +418,12 @@ func perspectiveRowToDomain(row *perspectiveRow) *domain.Perspective {
 		p.Labels = row.Labels
 	}
 
-	// Parse categorized ratings
+	// Parse categorized ratings from JSON strings
 	if len(row.CategorizedRatings) > 0 {
 		p.CategorizedRatings = make([]domain.CategorizedRating, 0, len(row.CategorizedRatings))
-		for _, data := range row.CategorizedRatings {
+		for _, jsonStr := range row.CategorizedRatings {
 			var cr domain.CategorizedRating
-			if err := json.Unmarshal(data, &cr); err == nil {
+			if err := json.Unmarshal([]byte(jsonStr), &cr); err == nil {
 				p.CategorizedRatings = append(p.CategorizedRatings, cr)
 			}
 		}
