@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,6 +13,27 @@ import (
 	"github.com/lib/pq"
 	"github.com/yourorg/perspectize-go/internal/core/domain"
 )
+
+// NullBytesArray is a [][]byte that properly handles NULL values from the database.
+// Unlike raw [][]byte, this type implements sql.Scanner to handle NULL gracefully.
+type NullBytesArray [][]byte
+
+// Scan implements the sql.Scanner interface
+func (a *NullBytesArray) Scan(src interface{}) error {
+	if src == nil {
+		*a = nil
+		return nil
+	}
+	return pq.Array((*[][]byte)(a)).Scan(src)
+}
+
+// Value implements the driver.Valuer interface
+func (a NullBytesArray) Value() (driver.Value, error) {
+	if a == nil {
+		return nil, nil
+	}
+	return pq.Array([][]byte(a)).Value()
+}
 
 // PerspectiveRepository implements the PerspectiveRepository interface using PostgreSQL
 type PerspectiveRepository struct {
@@ -35,7 +57,7 @@ type perspectiveRow struct {
 	Labels             pq.StringArray `db:"labels"`
 	Description        sql.NullString `db:"description"`
 	ReviewStatus       sql.NullString `db:"review_status"`
-	CategorizedRatings [][]byte       `db:"categorized_ratings"`
+	CategorizedRatings NullBytesArray `db:"categorized_ratings"`
 	CreatedAt          sql.NullTime   `db:"created_at"`
 	UpdatedAt          sql.NullTime   `db:"updated_at"`
 }
