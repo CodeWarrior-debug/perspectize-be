@@ -29,7 +29,8 @@ perspectize-go/
 │   ├── config/              # Configuration loading
 │   └── middleware/          # HTTP middleware
 ├── pkg/                     # Shared packages
-│   └── database/            # Database connection utilities
+│   ├── database/            # Database connection utilities
+│   └── graphql/             # Custom GraphQL scalars (IntID)
 └── migrations/              # SQL migration files
 ```
 
@@ -528,6 +529,62 @@ For exposing JSONB data via GraphQL, use gqlgen's built-in `graphql.Map` scalar 
 - Use keyset pagination in SQL for performance (not OFFSET)
 - Fetch `limit+1` rows to determine `hasNextPage` without extra query
 - Whitelist sort columns to prevent SQL injection
+
+### GraphQL Enum & ID Handling (REQUIRED)
+
+**Always use gqlgen model binding** to eliminate manual enum mapping code. Never write switch statements to convert between GraphQL and domain enums.
+
+**For enums (SortOrder, Privacy, ContentType, etc.):**
+1. Define domain enums with UPPERCASE values to match GraphQL conventions:
+   ```go
+   // internal/core/domain/pagination.go
+   type SortOrder string
+   const (
+       SortOrderASC  SortOrder = "ASC"
+       SortOrderDESC SortOrder = "DESC"
+   )
+   ```
+
+2. Bind in `gqlgen.yml`:
+   ```yaml
+   models:
+     SortOrder:
+       model:
+         - github.com/yourorg/perspectize-go/internal/core/domain.SortOrder
+   ```
+
+3. For DB-stored enums (Privacy, ContentType, ReviewStatus), add repository converters:
+   ```go
+   func privacyToDBValue(p domain.Privacy) string {
+       return strings.ToLower(string(p))
+   }
+   func privacyFromDBValue(s string) domain.Privacy {
+       return domain.Privacy(strings.ToUpper(s))
+   }
+   ```
+
+**For ID fields in filters/inputs:**
+Use the `IntID` custom scalar (`pkg/graphql/intid.go`) instead of `ID` with manual `strconv.Atoi`:
+```graphql
+# schema.graphql
+scalar IntID
+
+input PerspectiveFilter {
+  userID: IntID      # Auto-converts string to int
+  contentID: IntID
+}
+```
+
+**What this eliminates:**
+- ❌ No switch statements mapping GraphQL enums to domain enums
+- ❌ No `strconv.Atoi` calls for ID filters
+- ❌ No duplicate enum definitions in model and domain
+
+**When adding new enums:**
+1. Add UPPERCASE constants in `internal/core/domain/`
+2. Add binding in `gqlgen.yml`
+3. Add DB converter if stored in PostgreSQL
+4. Run `make graphql-gen`
 
 ## Resources
 
