@@ -9,7 +9,7 @@ import (
 type ContentType string
 
 const (
-	ContentTypeYouTube ContentType = "youtube"
+	ContentTypeYouTube ContentType = "YOUTUBE"
 )
 
 // Content represents a media item that users create perspectives on

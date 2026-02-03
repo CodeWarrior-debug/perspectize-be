@@ -10,7 +10,7 @@ import (
 )
 
 func TestContentType_YouTube(t *testing.T) {
-	assert.Equal(t, domain.ContentType("youtube"), domain.ContentTypeYouTube)
+	assert.Equal(t, domain.ContentType("YOUTUBE"), domain.ContentTypeYouTube)
 }
 
 func TestContent_RequiredFields(t *testing.T) {

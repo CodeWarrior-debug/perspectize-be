@@ -4,9 +4,9 @@ package domain
 type ContentSortBy string
 
 const (
-	ContentSortByCreatedAt ContentSortBy = "created_at"
-	ContentSortByUpdatedAt ContentSortBy = "updated_at"
-	ContentSortByName      ContentSortBy = "name"
+	ContentSortByCreatedAt ContentSortBy = "CREATED_AT"
+	ContentSortByUpdatedAt ContentSortBy = "UPDATED_AT"
+	ContentSortByName      ContentSortBy = "NAME"
 )
 
 // SortOrder represents ascending or descending sort direction
