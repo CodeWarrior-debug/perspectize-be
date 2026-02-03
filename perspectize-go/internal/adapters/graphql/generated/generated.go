@@ -16,6 +16,8 @@ import (
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 	"github.com/yourorg/perspectize-go/internal/adapters/graphql/model"
+	"github.com/yourorg/perspectize-go/internal/core/domain"
+	graphql1 "github.com/yourorg/perspectize-go/pkg/graphql"
 )
 
 // region    ************************** generated!.gotpl **************************
@@ -117,10 +119,10 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Content         func(childComplexity int, first *int, after *string, last *int, before *string, sortBy *model.ContentSortBy, sortOrder *model.SortOrder, includeTotalCount *bool, filter *model.ContentFilter) int
+		Content         func(childComplexity int, first *int, after *string, last *int, before *string, sortBy *domain.ContentSortBy, sortOrder *domain.SortOrder, includeTotalCount *bool, filter *model.ContentFilter) int
 		ContentByID     func(childComplexity int, id string) int
 		PerspectiveByID func(childComplexity int, id string) int
-		Perspectives    func(childComplexity int, first *int, after *string, last *int, before *string, sortBy *model.PerspectiveSortBy, sortOrder *model.SortOrder, includeTotalCount *bool, filter *model.PerspectiveFilter) int
+		Perspectives    func(childComplexity int, first *int, after *string, last *int, before *string, sortBy *domain.PerspectiveSortBy, sortOrder *domain.SortOrder, includeTotalCount *bool, filter *model.PerspectiveFilter) int
 		UserByID        func(childComplexity int, id string) int
 		UserByUsername  func(childComplexity int, username string) int
 	}
@@ -143,11 +145,11 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	ContentByID(ctx context.Context, id string) (*model.Content, error)
-	Content(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *model.ContentSortBy, sortOrder *model.SortOrder, includeTotalCount *bool, filter *model.ContentFilter) (*model.PaginatedContent, error)
+	Content(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *domain.ContentSortBy, sortOrder *domain.SortOrder, includeTotalCount *bool, filter *model.ContentFilter) (*model.PaginatedContent, error)
 	UserByID(ctx context.Context, id string) (*model.User, error)
 	UserByUsername(ctx context.Context, username string) (*model.User, error)
 	PerspectiveByID(ctx context.Context, id string) (*model.Perspective, error)
-	Perspectives(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *model.PerspectiveSortBy, sortOrder *model.SortOrder, includeTotalCount *bool, filter *model.PerspectiveFilter) (*model.PaginatedPerspectives, error)
+	Perspectives(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *domain.PerspectiveSortBy, sortOrder *domain.SortOrder, includeTotalCount *bool, filter *model.PerspectiveFilter) (*model.PaginatedPerspectives, error)
 }
 
 type executableSchema struct {
@@ -505,7 +507,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Content(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["sortBy"].(*model.ContentSortBy), args["sortOrder"].(*model.SortOrder), args["includeTotalCount"].(*bool), args["filter"].(*model.ContentFilter)), true
+		return e.complexity.Query.Content(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["sortBy"].(*domain.ContentSortBy), args["sortOrder"].(*domain.SortOrder), args["includeTotalCount"].(*bool), args["filter"].(*model.ContentFilter)), true
 	case "Query.contentByID":
 		if e.complexity.Query.ContentByID == nil {
 			break
@@ -538,7 +540,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Perspectives(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["sortBy"].(*model.PerspectiveSortBy), args["sortOrder"].(*model.SortOrder), args["includeTotalCount"].(*bool), args["filter"].(*model.PerspectiveFilter)), true
+		return e.complexity.Query.Perspectives(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string), args["sortBy"].(*domain.PerspectiveSortBy), args["sortOrder"].(*domain.SortOrder), args["includeTotalCount"].(*bool), args["filter"].(*model.PerspectiveFilter)), true
 	case "Query.userByID":
 		if e.complexity.Query.UserByID == nil {
 			break
@@ -706,6 +708,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "../../../../schema.graphql", Input: `scalar JSON
+scalar IntID
 
 # User type
 type User {
@@ -840,8 +843,8 @@ input CategorizedRatingInput {
 
 input CreatePerspectiveInput {
   claim: String!
-  userID: ID!
-  contentID: ID
+  userID: IntID!
+  contentID: IntID
   quality: Int
   agreement: Int
   importance: Int
@@ -856,9 +859,9 @@ input CreatePerspectiveInput {
 }
 
 input UpdatePerspectiveInput {
-  id: ID!
+  id: IntID!
   claim: String
-  contentID: ID
+  contentID: IntID
   quality: Int
   agreement: Int
   importance: Int
@@ -874,8 +877,8 @@ input UpdatePerspectiveInput {
 }
 
 input PerspectiveFilter {
-  userID: ID
-  contentID: ID
+  userID: IntID
+  contentID: IntID
   privacy: Privacy
 }
 
@@ -1032,12 +1035,12 @@ func (ec *executionContext) field_Query_content_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOContentSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentSortBy)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOContentSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentSortBy)
 	if err != nil {
 		return nil, err
 	}
 	args["sortBy"] = arg4
-	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐSortOrder)
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐSortOrder)
 	if err != nil {
 		return nil, err
 	}
@@ -1089,12 +1092,12 @@ func (ec *executionContext) field_Query_perspectives_args(ctx context.Context, r
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOPerspectiveSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveSortBy)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOPerspectiveSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPerspectiveSortBy)
 	if err != nil {
 		return nil, err
 	}
 	args["sortBy"] = arg4
-	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐSortOrder)
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐSortOrder)
 	if err != nil {
 		return nil, err
 	}
@@ -2664,7 +2667,7 @@ func (ec *executionContext) _Perspective_privacy(ctx context.Context, field grap
 			return obj.Privacy, nil
 		},
 		nil,
-		ec.marshalNPrivacy2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPrivacy,
+		ec.marshalNPrivacy2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy,
 		true,
 		true,
 	)
@@ -2751,7 +2754,7 @@ func (ec *executionContext) _Perspective_reviewStatus(ctx context.Context, field
 			return obj.ReviewStatus, nil
 		},
 		nil,
-		ec.marshalOReviewStatus2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐReviewStatus,
+		ec.marshalOReviewStatus2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐReviewStatus,
 		true,
 		false,
 	)
@@ -2996,7 +2999,7 @@ func (ec *executionContext) _Query_content(ctx context.Context, field graphql.Co
 		ec.fieldContext_Query_content,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Content(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["sortBy"].(*model.ContentSortBy), fc.Args["sortOrder"].(*model.SortOrder), fc.Args["includeTotalCount"].(*bool), fc.Args["filter"].(*model.ContentFilter))
+			return ec.resolvers.Query().Content(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["sortBy"].(*domain.ContentSortBy), fc.Args["sortOrder"].(*domain.SortOrder), fc.Args["includeTotalCount"].(*bool), fc.Args["filter"].(*model.ContentFilter))
 		},
 		nil,
 		ec.marshalNPaginatedContent2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedContent,
@@ -3234,7 +3237,7 @@ func (ec *executionContext) _Query_perspectives(ctx context.Context, field graph
 		ec.fieldContext_Query_perspectives,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Perspectives(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["sortBy"].(*model.PerspectiveSortBy), fc.Args["sortOrder"].(*model.SortOrder), fc.Args["includeTotalCount"].(*bool), fc.Args["filter"].(*model.PerspectiveFilter))
+			return ec.resolvers.Query().Perspectives(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["sortBy"].(*domain.PerspectiveSortBy), fc.Args["sortOrder"].(*domain.SortOrder), fc.Args["includeTotalCount"].(*bool), fc.Args["filter"].(*model.PerspectiveFilter))
 		},
 		nil,
 		ec.marshalNPaginatedPerspectives2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedPerspectives,
@@ -5024,7 +5027,7 @@ func (ec *executionContext) unmarshalInputContentFilter(ctx context.Context, obj
 		switch k {
 		case "contentType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contentType"))
-			data, err := ec.unmarshalOContentType2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentType(ctx, v)
+			data, err := ec.unmarshalOContentType2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5099,14 +5102,14 @@ func (ec *executionContext) unmarshalInputCreatePerspectiveInput(ctx context.Con
 			it.Claim = data
 		case "userID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userID"))
-			data, err := ec.unmarshalNID2string(ctx, v)
+			data, err := ec.unmarshalNIntID2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.UserID = data
 		case "contentID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contentID"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOIntID2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5148,7 +5151,7 @@ func (ec *executionContext) unmarshalInputCreatePerspectiveInput(ctx context.Con
 			it.Like = data
 		case "privacy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("privacy"))
-			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPrivacy(ctx, v)
+			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5244,21 +5247,21 @@ func (ec *executionContext) unmarshalInputPerspectiveFilter(ctx context.Context,
 		switch k {
 		case "userID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userID"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOIntID2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.UserID = data
 		case "contentID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contentID"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOIntID2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ContentID = data
 		case "privacy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("privacy"))
-			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPrivacy(ctx, v)
+			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5285,7 +5288,7 @@ func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Con
 		switch k {
 		case "id":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNID2string(ctx, v)
+			data, err := ec.unmarshalNIntID2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5299,7 +5302,7 @@ func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Con
 			it.Claim = data
 		case "contentID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contentID"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOIntID2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5341,7 +5344,7 @@ func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Con
 			it.Like = data
 		case "privacy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("privacy"))
-			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPrivacy(ctx, v)
+			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5362,7 +5365,7 @@ func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Con
 			it.Category = data
 		case "reviewStatus":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reviewStatus"))
-			data, err := ec.unmarshalOReviewStatus2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐReviewStatus(ctx, v)
+			data, err := ec.unmarshalOReviewStatus2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐReviewStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6528,6 +6531,22 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) unmarshalNIntID2int(ctx context.Context, v any) (int, error) {
+	res, err := graphql1.UnmarshalIntID(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNIntID2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	_ = sel
+	res := graphql1.MarshalIntID(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -6624,14 +6643,21 @@ func (ec *executionContext) marshalNPerspective2ᚖgithubᚗcomᚋyourorgᚋpers
 	return ec._Perspective(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPrivacy2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPrivacy(ctx context.Context, v any) (model.Privacy, error) {
-	var res model.Privacy
-	err := res.UnmarshalGQL(v)
+func (ec *executionContext) unmarshalNPrivacy2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, v any) (domain.Privacy, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.Privacy(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPrivacy2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPrivacy(ctx context.Context, sel ast.SelectionSet, v model.Privacy) graphql.Marshaler {
-	return v
+func (ec *executionContext) marshalNPrivacy2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, sel ast.SelectionSet, v domain.Privacy) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
@@ -7032,36 +7058,42 @@ func (ec *executionContext) unmarshalOContentFilter2ᚖgithubᚗcomᚋyourorgᚋ
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOContentSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentSortBy(ctx context.Context, v any) (*model.ContentSortBy, error) {
+func (ec *executionContext) unmarshalOContentSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentSortBy(ctx context.Context, v any) (*domain.ContentSortBy, error) {
 	if v == nil {
 		return nil, nil
 	}
-	var res = new(model.ContentSortBy)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.ContentSortBy(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOContentSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentSortBy(ctx context.Context, sel ast.SelectionSet, v *model.ContentSortBy) graphql.Marshaler {
+func (ec *executionContext) marshalOContentSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentSortBy(ctx context.Context, sel ast.SelectionSet, v *domain.ContentSortBy) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return v
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
-func (ec *executionContext) unmarshalOContentType2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentType(ctx context.Context, v any) (*model.ContentType, error) {
+func (ec *executionContext) unmarshalOContentType2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentType(ctx context.Context, v any) (*domain.ContentType, error) {
 	if v == nil {
 		return nil, nil
 	}
-	var res = new(model.ContentType)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.ContentType(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOContentType2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentType(ctx context.Context, sel ast.SelectionSet, v *model.ContentType) graphql.Marshaler {
+func (ec *executionContext) marshalOContentType2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentType(ctx context.Context, sel ast.SelectionSet, v *domain.ContentType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return v
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
 func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v any) (*string, error) {
@@ -7136,6 +7168,24 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
+func (ec *executionContext) unmarshalOIntID2ᚖint(ctx context.Context, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql1.UnmarshalIntID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOIntID2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql1.MarshalIntID(*v)
+	return res
+}
+
 func (ec *executionContext) unmarshalOJSON2map(ctx context.Context, v any) (map[string]any, error) {
 	if v == nil {
 		return nil, nil
@@ -7169,68 +7219,80 @@ func (ec *executionContext) unmarshalOPerspectiveFilter2ᚖgithubᚗcomᚋyouror
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOPerspectiveSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveSortBy(ctx context.Context, v any) (*model.PerspectiveSortBy, error) {
+func (ec *executionContext) unmarshalOPerspectiveSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPerspectiveSortBy(ctx context.Context, v any) (*domain.PerspectiveSortBy, error) {
 	if v == nil {
 		return nil, nil
 	}
-	var res = new(model.PerspectiveSortBy)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.PerspectiveSortBy(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOPerspectiveSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveSortBy(ctx context.Context, sel ast.SelectionSet, v *model.PerspectiveSortBy) graphql.Marshaler {
+func (ec *executionContext) marshalOPerspectiveSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPerspectiveSortBy(ctx context.Context, sel ast.SelectionSet, v *domain.PerspectiveSortBy) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return v
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
-func (ec *executionContext) unmarshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPrivacy(ctx context.Context, v any) (*model.Privacy, error) {
+func (ec *executionContext) unmarshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, v any) (*domain.Privacy, error) {
 	if v == nil {
 		return nil, nil
 	}
-	var res = new(model.Privacy)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.Privacy(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPrivacy(ctx context.Context, sel ast.SelectionSet, v *model.Privacy) graphql.Marshaler {
+func (ec *executionContext) marshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, sel ast.SelectionSet, v *domain.Privacy) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return v
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
-func (ec *executionContext) unmarshalOReviewStatus2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐReviewStatus(ctx context.Context, v any) (*model.ReviewStatus, error) {
+func (ec *executionContext) unmarshalOReviewStatus2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐReviewStatus(ctx context.Context, v any) (*domain.ReviewStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	var res = new(model.ReviewStatus)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.ReviewStatus(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOReviewStatus2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐReviewStatus(ctx context.Context, sel ast.SelectionSet, v *model.ReviewStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOReviewStatus2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐReviewStatus(ctx context.Context, sel ast.SelectionSet, v *domain.ReviewStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return v
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
-func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐSortOrder(ctx context.Context, v any) (*model.SortOrder, error) {
+func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐSortOrder(ctx context.Context, v any) (*domain.SortOrder, error) {
 	if v == nil {
 		return nil, nil
 	}
-	var res = new(model.SortOrder)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.SortOrder(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v *model.SortOrder) graphql.Marshaler {
+func (ec *executionContext) marshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v *domain.SortOrder) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return v
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
 func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {

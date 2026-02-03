@@ -55,14 +55,14 @@ func TestPerspectiveZeroValue(t *testing.T) {
 }
 
 func TestPrivacyConstants(t *testing.T) {
-	assert.Equal(t, domain.Privacy("public"), domain.PrivacyPublic)
-	assert.Equal(t, domain.Privacy("private"), domain.PrivacyPrivate)
+	assert.Equal(t, domain.Privacy("PUBLIC"), domain.PrivacyPublic)
+	assert.Equal(t, domain.Privacy("PRIVATE"), domain.PrivacyPrivate)
 }
 
 func TestReviewStatusConstants(t *testing.T) {
-	assert.Equal(t, domain.ReviewStatus("pending"), domain.ReviewStatusPending)
-	assert.Equal(t, domain.ReviewStatus("approved"), domain.ReviewStatusApproved)
-	assert.Equal(t, domain.ReviewStatus("rejected"), domain.ReviewStatusRejected)
+	assert.Equal(t, domain.ReviewStatus("PENDING"), domain.ReviewStatusPending)
+	assert.Equal(t, domain.ReviewStatus("APPROVED"), domain.ReviewStatusApproved)
+	assert.Equal(t, domain.ReviewStatus("REJECTED"), domain.ReviewStatusRejected)
 }
 
 func TestRatingConstants(t *testing.T) {
@@ -81,9 +81,9 @@ func TestCategorizedRating(t *testing.T) {
 }
 
 func TestPerspectiveSortByConstants(t *testing.T) {
-	assert.Equal(t, domain.PerspectiveSortBy("created_at"), domain.PerspectiveSortByCreatedAt)
-	assert.Equal(t, domain.PerspectiveSortBy("updated_at"), domain.PerspectiveSortByUpdatedAt)
-	assert.Equal(t, domain.PerspectiveSortBy("claim"), domain.PerspectiveSortByClaim)
+	assert.Equal(t, domain.PerspectiveSortBy("CREATED_AT"), domain.PerspectiveSortByCreatedAt)
+	assert.Equal(t, domain.PerspectiveSortBy("UPDATED_AT"), domain.PerspectiveSortByUpdatedAt)
+	assert.Equal(t, domain.PerspectiveSortBy("CLAIM"), domain.PerspectiveSortByClaim)
 }
 
 func TestPerspectiveWithCategorizedRatings(t *testing.T) {

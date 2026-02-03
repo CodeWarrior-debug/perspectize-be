@@ -9,17 +9,17 @@ import (
 type Privacy string
 
 const (
-	PrivacyPublic  Privacy = "public"
-	PrivacyPrivate Privacy = "private"
+	PrivacyPublic  Privacy = "PUBLIC"
+	PrivacyPrivate Privacy = "PRIVATE"
 )
 
 // ReviewStatus represents the review state of a perspective
 type ReviewStatus string
 
 const (
-	ReviewStatusPending  ReviewStatus = "pending"
-	ReviewStatusApproved ReviewStatus = "approved"
-	ReviewStatusRejected ReviewStatus = "rejected"
+	ReviewStatusPending  ReviewStatus = "PENDING"
+	ReviewStatusApproved ReviewStatus = "APPROVED"
+	ReviewStatusRejected ReviewStatus = "REJECTED"
 )
 
 // CategorizedRating represents a rating with a category label
@@ -78,9 +78,9 @@ func ValidateRating(rating *int) bool {
 type PerspectiveSortBy string
 
 const (
-	PerspectiveSortByCreatedAt PerspectiveSortBy = "created_at"
-	PerspectiveSortByUpdatedAt PerspectiveSortBy = "updated_at"
-	PerspectiveSortByClaim     PerspectiveSortBy = "claim"
+	PerspectiveSortByCreatedAt PerspectiveSortBy = "CREATED_AT"
+	PerspectiveSortByUpdatedAt PerspectiveSortBy = "UPDATED_AT"
+	PerspectiveSortByClaim     PerspectiveSortBy = "CLAIM"
 )
 
 // PerspectiveFilter contains filter criteria for perspective queries

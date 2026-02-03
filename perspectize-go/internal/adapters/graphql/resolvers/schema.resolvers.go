@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/yourorg/perspectize-go/internal/adapters/graphql/generated"
 	"github.com/yourorg/perspectize-go/internal/adapters/graphql/model"
@@ -53,20 +52,15 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 
 // CreatePerspective is the resolver for the createPerspective field.
 func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.CreatePerspectiveInput) (*model.Perspective, error) {
-	userID, err := strconv.Atoi(input.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid user ID: %s", input.UserID)
-	}
-
 	serviceInput := services.CreatePerspectiveInput{
 		Claim:       input.Claim,
-		UserID:      userID,
+		UserID:      input.UserID,
 		Quality:     input.Quality,
 		Agreement:   input.Agreement,
 		Importance:  input.Importance,
 		Confidence:  input.Confidence,
 		Like:        input.Like,
-		Privacy:     privacyModelToDomain(input.Privacy),
+		Privacy:     input.Privacy,
 		Description: input.Description,
 		Category:    input.Category,
 		Parts:       input.Parts,
@@ -74,11 +68,7 @@ func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.Cr
 	}
 
 	if input.ContentID != nil {
-		contentID, err := strconv.Atoi(*input.ContentID)
-		if err != nil {
-			return nil, fmt.Errorf("invalid content ID: %s", *input.ContentID)
-		}
-		serviceInput.ContentID = &contentID
+		serviceInput.ContentID = input.ContentID
 	}
 
 	// Convert categorized ratings
@@ -114,33 +104,24 @@ func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.Cr
 
 // UpdatePerspective is the resolver for the updatePerspective field.
 func (r *mutationResolver) UpdatePerspective(ctx context.Context, input model.UpdatePerspectiveInput) (*model.Perspective, error) {
-	id, err := strconv.Atoi(input.ID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid perspective ID: %s", input.ID)
-	}
-
 	serviceInput := services.UpdatePerspectiveInput{
-		ID:           id,
+		ID:           input.ID,
 		Claim:        input.Claim,
 		Quality:      input.Quality,
 		Agreement:    input.Agreement,
 		Importance:   input.Importance,
 		Confidence:   input.Confidence,
 		Like:         input.Like,
-		Privacy:      privacyModelToDomain(input.Privacy),
+		Privacy:      input.Privacy,
 		Description:  input.Description,
 		Category:     input.Category,
-		ReviewStatus: reviewStatusModelToDomain(input.ReviewStatus),
+		ReviewStatus: input.ReviewStatus,
 		Parts:        input.Parts,
 		Labels:       input.Labels,
 	}
 
 	if input.ContentID != nil {
-		contentID, err := strconv.Atoi(*input.ContentID)
-		if err != nil {
-			return nil, fmt.Errorf("invalid content ID: %s", *input.ContentID)
-		}
-		serviceInput.ContentID = &contentID
+		serviceInput.ContentID = input.ContentID
 	}
 
 	// Convert categorized ratings
@@ -217,7 +198,7 @@ func (r *queryResolver) ContentByID(ctx context.Context, id string) (*model.Cont
 }
 
 // Content is the resolver for the content field.
-func (r *queryResolver) Content(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *model.ContentSortBy, sortOrder *model.SortOrder, includeTotalCount *bool, filter *model.ContentFilter) (*model.PaginatedContent, error) {
+func (r *queryResolver) Content(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *domain.ContentSortBy, sortOrder *domain.SortOrder, includeTotalCount *bool, filter *model.ContentFilter) (*model.PaginatedContent, error) {
 	params := domain.ContentListParams{
 		First:  first,
 		After:  after,
@@ -227,25 +208,13 @@ func (r *queryResolver) Content(ctx context.Context, first *int, after *string, 
 
 	// Map GraphQL enums to domain enums
 	if sortBy != nil {
-		switch *sortBy {
-		case model.ContentSortByUpdatedAt:
-			params.SortBy = domain.ContentSortByUpdatedAt
-		case model.ContentSortByName:
-			params.SortBy = domain.ContentSortByName
-		default:
-			params.SortBy = domain.ContentSortByCreatedAt
-		}
+		params.SortBy = *sortBy
 	} else {
 		params.SortBy = domain.ContentSortByCreatedAt
 	}
 
 	if sortOrder != nil {
-		switch *sortOrder {
-		case model.SortOrderAsc:
-			params.SortOrder = domain.SortOrderAsc
-		default:
-			params.SortOrder = domain.SortOrderDesc
-		}
+		params.SortOrder = *sortOrder
 	} else {
 		params.SortOrder = domain.SortOrderDesc
 	}
@@ -258,9 +227,7 @@ func (r *queryResolver) Content(ctx context.Context, first *int, after *string, 
 	if filter != nil {
 		params.Filter = &domain.ContentFilter{}
 		if filter.ContentType != nil {
-			// GraphQL enum is uppercase (YOUTUBE), domain is lowercase (youtube)
-			ct := domain.ContentType(strings.ToLower(string(*filter.ContentType)))
-			params.Filter.ContentType = &ct
+			params.Filter.ContentType = filter.ContentType
 		}
 		params.Filter.MinLengthSeconds = filter.MinLengthSeconds
 		params.Filter.MaxLengthSeconds = filter.MaxLengthSeconds
@@ -353,7 +320,7 @@ func (r *queryResolver) PerspectiveByID(ctx context.Context, id string) (*model.
 }
 
 // Perspectives is the resolver for the perspectives field.
-func (r *queryResolver) Perspectives(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *model.PerspectiveSortBy, sortOrder *model.SortOrder, includeTotalCount *bool, filter *model.PerspectiveFilter) (*model.PaginatedPerspectives, error) {
+func (r *queryResolver) Perspectives(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *domain.PerspectiveSortBy, sortOrder *domain.SortOrder, includeTotalCount *bool, filter *model.PerspectiveFilter) (*model.PaginatedPerspectives, error) {
 	params := domain.PerspectiveListParams{
 		First:  first,
 		After:  after,
@@ -363,25 +330,13 @@ func (r *queryResolver) Perspectives(ctx context.Context, first *int, after *str
 
 	// Map GraphQL enums to domain enums
 	if sortBy != nil {
-		switch *sortBy {
-		case model.PerspectiveSortByUpdatedAt:
-			params.SortBy = domain.PerspectiveSortByUpdatedAt
-		case model.PerspectiveSortByClaim:
-			params.SortBy = domain.PerspectiveSortByClaim
-		default:
-			params.SortBy = domain.PerspectiveSortByCreatedAt
-		}
+		params.SortBy = *sortBy
 	} else {
 		params.SortBy = domain.PerspectiveSortByCreatedAt
 	}
 
 	if sortOrder != nil {
-		switch *sortOrder {
-		case model.SortOrderAsc:
-			params.SortOrder = domain.SortOrderAsc
-		default:
-			params.SortOrder = domain.SortOrderDesc
-		}
+		params.SortOrder = *sortOrder
 	} else {
 		params.SortOrder = domain.SortOrderDesc
 	}
@@ -394,22 +349,13 @@ func (r *queryResolver) Perspectives(ctx context.Context, first *int, after *str
 	if filter != nil {
 		params.Filter = &domain.PerspectiveFilter{}
 		if filter.UserID != nil {
-			userID, err := strconv.Atoi(*filter.UserID)
-			if err != nil {
-				return nil, fmt.Errorf("invalid user ID in filter: %s", *filter.UserID)
-			}
-			params.Filter.UserID = &userID
+			params.Filter.UserID = filter.UserID
 		}
 		if filter.ContentID != nil {
-			contentID, err := strconv.Atoi(*filter.ContentID)
-			if err != nil {
-				return nil, fmt.Errorf("invalid content ID in filter: %s", *filter.ContentID)
-			}
-			params.Filter.ContentID = &contentID
+			params.Filter.ContentID = filter.ContentID
 		}
 		if filter.Privacy != nil {
-			privacy := domain.Privacy(strings.ToLower(string(*filter.Privacy)))
-			params.Filter.Privacy = &privacy
+			params.Filter.Privacy = filter.Privacy
 		}
 	}
 

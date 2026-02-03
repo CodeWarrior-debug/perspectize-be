@@ -108,12 +108,12 @@ func (r *PerspectiveRepository) Create(ctx context.Context, p *domain.Perspectiv
 		toNullInt64FromIntPtr(p.Agreement),
 		toNullInt64FromIntPtr(p.Importance),
 		toNullInt64FromIntPtr(p.Confidence),
-		string(p.Privacy),
+		privacyToDBValue(p.Privacy),
 		pq.Array(p.Parts),
 		toNullString(p.Category),
 		pq.Array(p.Labels),
 		toNullString(p.Description),
-		toNullStringFromReviewStatus(p.ReviewStatus),
+		reviewStatusToDBValue(p.ReviewStatus),
 		categorizedRatings,
 	).Scan(&id)
 
@@ -192,12 +192,12 @@ func (r *PerspectiveRepository) Update(ctx context.Context, p *domain.Perspectiv
 		toNullInt64FromIntPtr(p.Agreement),
 		toNullInt64FromIntPtr(p.Importance),
 		toNullInt64FromIntPtr(p.Confidence),
-		string(p.Privacy),
+		privacyToDBValue(p.Privacy),
 		pq.Array(p.Parts),
 		toNullString(p.Category),
 		pq.Array(p.Labels),
 		toNullString(p.Description),
-		toNullStringFromReviewStatus(p.ReviewStatus),
+		reviewStatusToDBValue(p.ReviewStatus),
 		categorizedRatings,
 		p.ID,
 	)
@@ -271,7 +271,7 @@ func (r *PerspectiveRepository) List(ctx context.Context, params domain.Perspect
 		}
 		if params.Filter.Privacy != nil {
 			conditions = append(conditions, fmt.Sprintf("privacy = $%d", argIdx))
-			args = append(args, string(*params.Filter.Privacy))
+			args = append(args, privacyToDBValue(*params.Filter.Privacy))
 			argIdx++
 		}
 	}
@@ -341,7 +341,7 @@ func (r *PerspectiveRepository) List(ctx context.Context, params domain.Perspect
 			}
 			if params.Filter.Privacy != nil {
 				countConditions = append(countConditions, fmt.Sprintf("privacy = $%d", countArgIdx))
-				countArgs = append(countArgs, string(*params.Filter.Privacy))
+				countArgs = append(countArgs, privacyToDBValue(*params.Filter.Privacy))
 				countArgIdx++
 			}
 		}
@@ -394,7 +394,7 @@ func perspectiveRowToDomain(row *perspectiveRow) *domain.Perspective {
 		p.Confidence = &confidence
 	}
 	if row.Privacy.Valid {
-		p.Privacy = domain.Privacy(row.Privacy.String)
+		p.Privacy = privacyFromDBValue(row.Privacy.String)
 	}
 	if row.Category.Valid {
 		p.Category = &row.Category.String
@@ -402,10 +402,7 @@ func perspectiveRowToDomain(row *perspectiveRow) *domain.Perspective {
 	if row.Description.Valid {
 		p.Description = &row.Description.String
 	}
-	if row.ReviewStatus.Valid {
-		status := domain.ReviewStatus(row.ReviewStatus.String)
-		p.ReviewStatus = &status
-	}
+	p.ReviewStatus = reviewStatusFromDBValue(row.ReviewStatus)
 
 	// Convert arrays
 	if len(row.Parts) > 0 {
@@ -447,12 +444,37 @@ func toNullInt64FromIntPtr(i *int) sql.NullInt64 {
 	return sql.NullInt64{Int64: int64(*i), Valid: true}
 }
 
-// toNullStringFromReviewStatus converts a ReviewStatus pointer to sql.NullString
-func toNullStringFromReviewStatus(s *domain.ReviewStatus) sql.NullString {
-	if s == nil {
+// privacyToDBValue converts domain Privacy to lowercase for database storage
+func privacyToDBValue(p domain.Privacy) string {
+	return strings.ToLower(string(p))
+}
+
+// privacyFromDBValue converts lowercase database value to domain Privacy
+func privacyFromDBValue(s string) domain.Privacy {
+	return domain.Privacy(strings.ToUpper(s))
+}
+
+// reviewStatusToDBValue converts domain ReviewStatus to lowercase for database storage
+func reviewStatusToDBValue(rs *domain.ReviewStatus) sql.NullString {
+	if rs == nil {
 		return sql.NullString{}
 	}
-	return sql.NullString{String: string(*s), Valid: true}
+	return sql.NullString{String: strings.ToLower(string(*rs)), Valid: true}
+}
+
+// reviewStatusFromDBValue converts lowercase database value to domain ReviewStatus
+func reviewStatusFromDBValue(s sql.NullString) *domain.ReviewStatus {
+	if !s.Valid {
+		return nil
+	}
+	rs := domain.ReviewStatus(strings.ToUpper(s.String))
+	return &rs
+}
+
+// toNullStringFromReviewStatus converts a ReviewStatus pointer to sql.NullString
+// Deprecated: Use reviewStatusToDBValue instead
+func toNullStringFromReviewStatus(s *domain.ReviewStatus) sql.NullString {
+	return reviewStatusToDBValue(s)
 }
 
 // perspectiveSortColumnName maps a domain sort field to a safe SQL column name
@@ -462,6 +484,8 @@ func perspectiveSortColumnName(sortBy domain.PerspectiveSortBy) string {
 		return "updated_at"
 	case domain.PerspectiveSortByClaim:
 		return "claim"
+	case domain.PerspectiveSortByCreatedAt:
+		return "created_at"
 	default:
 		return "created_at"
 	}

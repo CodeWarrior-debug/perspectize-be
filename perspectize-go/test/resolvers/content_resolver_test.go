@@ -233,7 +233,7 @@ func TestContentQuery_Success(t *testing.T) {
 
 	assert.Equal(t, "1", data.ContentByID.ID)
 	assert.Equal(t, "Test Video", data.ContentByID.Name)
-	assert.Equal(t, "youtube", data.ContentByID.ContentType)
+	assert.Equal(t, "YOUTUBE", data.ContentByID.ContentType)
 	assert.Equal(t, url, data.ContentByID.URL)
 }
 
@@ -352,7 +352,7 @@ func TestCreateContentFromYouTube_Success(t *testing.T) {
 
 	assert.Equal(t, "42", data.CreateContentFromYouTube.ID)
 	assert.Equal(t, "Amazing Video", data.CreateContentFromYouTube.Name)
-	assert.Equal(t, "youtube", data.CreateContentFromYouTube.ContentType)
+	assert.Equal(t, "YOUTUBE", data.CreateContentFromYouTube.ContentType)
 }
 
 func TestCreateContentFromYouTube_AlreadyExists(t *testing.T) {
@@ -670,7 +670,7 @@ func TestPaginatedContentQuery_WithContentTypeFilter(t *testing.T) {
 
 	assert.Len(t, data.Content.Items, 1)
 	assert.Equal(t, "YouTube Video", data.Content.Items[0].Name)
-	assert.Equal(t, "youtube", data.Content.Items[0].ContentType)
+	assert.Equal(t, "YOUTUBE", data.Content.Items[0].ContentType)
 }
 
 func TestPaginatedContentQuery_WithFilterAndTotalCount(t *testing.T) {
