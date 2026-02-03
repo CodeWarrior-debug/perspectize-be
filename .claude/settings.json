@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "enabledPlugins": {
+    "backend-development@claude-code-workflows": true,
+    "devops-tools@claudekit-skills": true,
+    "database-design@claude-code-workflows": true,
+    "code-review-ai@claude-code-workflows": true,
+    "agent-orchestration@claude-code-workflows": true,
+    "api-scaffolding@claude-code-workflows": true,
+    "code-documentation@claude-code-workflows": true,
+    "conductor@claude-code-workflows": true,
+    "comprehensive-review@claude-code-workflows": true,
+    "database-migrations@claude-code-workflows": true,
+    "full-stack-orchestration@claude-code-workflows": true,
+    "developer-essentials@claude-code-workflows": true,
+    "documentation-generation@claude-code-workflows": true,
+    "unit-testing@claude-code-workflows": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "figma@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true
+  }
+}
