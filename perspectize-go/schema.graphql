@@ -9,6 +9,59 @@ type User {
   updatedAt: String!
 }
 
+# Perspective enums
+enum Privacy {
+  PUBLIC
+  PRIVATE
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PerspectiveSortBy {
+  CREATED_AT
+  UPDATED_AT
+  CLAIM
+}
+
+# Perspective type
+type CategorizedRating {
+  category: String!
+  rating: Int!
+}
+
+type Perspective {
+  id: ID!
+  claim: String!
+  userID: ID!
+  user: User
+  contentID: ID
+  content: Content
+  quality: Int
+  agreement: Int
+  importance: Int
+  confidence: Int
+  like: String
+  privacy: Privacy!
+  description: String
+  category: String
+  reviewStatus: ReviewStatus
+  parts: [Int!]
+  labels: [String!]
+  categorizedRatings: [CategorizedRating!]
+  createdAt: String!
+  updatedAt: String!
+}
+
+type PaginatedPerspectives {
+  items: [Perspective!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
 type Content {
   id: ID!
   name: String!
@@ -72,11 +125,63 @@ input CreateUserInput {
   email: String!
 }
 
+# Perspective inputs
+input CategorizedRatingInput {
+  category: String!
+  rating: Int!
+}
+
+input CreatePerspectiveInput {
+  claim: String!
+  userID: ID!
+  contentID: ID
+  quality: Int
+  agreement: Int
+  importance: Int
+  confidence: Int
+  like: String
+  privacy: Privacy
+  description: String
+  category: String
+  parts: [Int!]
+  labels: [String!]
+  categorizedRatings: [CategorizedRatingInput!]
+}
+
+input UpdatePerspectiveInput {
+  id: ID!
+  claim: String
+  contentID: ID
+  quality: Int
+  agreement: Int
+  importance: Int
+  confidence: Int
+  like: String
+  privacy: Privacy
+  description: String
+  category: String
+  reviewStatus: ReviewStatus
+  parts: [Int!]
+  labels: [String!]
+  categorizedRatings: [CategorizedRatingInput!]
+}
+
+input PerspectiveFilter {
+  userID: ID
+  contentID: ID
+  privacy: Privacy
+}
+
 type Mutation {
   createContentFromYouTube(input: CreateContentFromYouTubeInput!): Content!
 
   # User mutations
   createUser(input: CreateUserInput!): User!
+
+  # Perspective mutations
+  createPerspective(input: CreatePerspectiveInput!): Perspective!
+  updatePerspective(input: UpdatePerspectiveInput!): Perspective!
+  deletePerspective(id: ID!): Boolean!
 }
 
 type Query {
@@ -98,4 +203,17 @@ type Query {
   # User queries
   userByID(id: ID!): User
   userByUsername(username: String!): User
+
+  # Perspective queries
+  perspectiveByID(id: ID!): Perspective
+  perspectives(
+    first: Int = 10
+    after: String
+    last: Int
+    before: String
+    sortBy: PerspectiveSortBy = CREATED_AT
+    sortOrder: SortOrder = DESC
+    includeTotalCount: Boolean = false
+    filter: PerspectiveFilter
+  ): PaginatedPerspectives!
 }

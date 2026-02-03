@@ -63,13 +63,15 @@ func main() {
 	youtubeClient := youtube.NewClient(cfg.YouTube.APIKey)
 	contentRepo := postgres.NewContentRepository(db)
 	userRepo := postgres.NewUserRepository(db)
+	perspectiveRepo := postgres.NewPerspectiveRepository(db)
 
 	// Initialize services
 	contentService := services.NewContentService(contentRepo, youtubeClient)
 	userService := services.NewUserService(userRepo)
+	perspectiveService := services.NewPerspectiveService(perspectiveRepo, userRepo)
 
 	// Initialize GraphQL
-	resolver := resolvers.NewResolver(contentService, userService)
+	resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 
 	// Setup HTTP routes
