@@ -161,10 +161,10 @@ gh pr merge 123
 # Edit PR (use REST API - gh pr edit may fail with Projects Classic deprecation error)
 gh api repos/{owner}/{repo}/pulls/123 -X PATCH -f body="New description"
 
-# Issues
+# Issues (use API - gh issue view fails with Projects Classic deprecation error)
 gh issue create --title "Title" --body "Description"
 gh issue list
-gh issue view 123
+gh api repos/{owner}/{repo}/issues/123 --jq '.title, .html_url'
 
 # Repository info
 gh repo view
@@ -172,6 +172,27 @@ gh repo view
 # API access (for anything not covered by commands)
 gh api repos/{owner}/{repo}/pulls/123/comments
 ```
+
+### GitHub Projects (v2)
+
+The `gh project` command may not be available. Use GraphQL API directly:
+
+```bash
+# List user's projects
+gh api graphql -f query='{ viewer { projectsV2(first: 10) { nodes { id title number } } } }'
+
+# Get issue node ID
+gh api graphql -f query='query { repository(owner: "OWNER", name: "REPO") { issue(number: 35) { id } } }'
+
+# Add issue to project
+gh api graphql -f query='mutation { addProjectV2ItemById(input: { projectId: "PROJECT_ID", contentId: "ISSUE_NODE_ID" }) { item { id } } }'
+```
+
+**Token scopes:** If you get "INSUFFICIENT_SCOPES" errors for project operations, refresh auth:
+```bash
+gh auth refresh -h github.com -s read:project -s project
+```
+This opens a browser flow to authorize additional scopes.
 
 ### Branch Naming Convention
 
@@ -251,74 +272,6 @@ Use `DATABASE_URL` with external endpoint from hosting provider. Note: Sevalla c
 | Database migrations | Sonnet | `db-migration` | SQL generation |
 | Code review | Haiku | `code-reviewer` | Fast pattern matching |
 | Test generation | Haiku | `test-writer` | Boilerplate generation |
-
-## Agent Orchestration Patterns
-
-When facing multiple tasks with mixed dependencies, use **unified agent swarming** to parallelize independent work:
-
-### Pattern: Coordinator-Driven DAG Execution
-
-1. **Identify task graph** - Map tasks and their dependencies (which tasks block which)
-2. **Batch by specialty** - Group similar tasks for specialist agents (tests → test-writer, migrations → db-migration, etc.)
-3. **Partition independent work** - Find batches that can execute in parallel (no shared state/dependencies)
-4. **Invoke orchestration approach** - Choose based on scope and complexity
-
-### Orchestration Approaches (Complementary)
-
-**For immediate parallel execution in current session:**
-- Use **`superpowers:dispatching-parallel-agents`** skill
-- Best for: 2-5 independent tasks that finish quickly (e.g., parallel code reviews, multiple test files)
-- Provides: Task coordination, result aggregation, dependency validation
-- Example: Run schema design + domain model definition + GraphQL boilerplate in parallel
-
-**For multi-agent session work with task management:**
-- Use **`superpowers:subagent-driven-development`** skill
-- Best for: 3-8 independent tasks within a single session with state tracking
-- Provides: Task list management, progress tracking, inter-task communication
-- Example: Feature branch with domain + adapters + tests + migrations all tracked together
-
-**For large-scale workflow orchestration:**
-- Use **Conductor system** (setup with `conductor:new-track`, implement with `conductor:implement`)
-- Best for: Complex features/refactors spanning multiple sessions, checkpoints, and reviews
-- Provides: Spec → Phase-based planning → TDD workflow → verification gates
-- Example: Full feature implementation from spec through PR (INI-16-youtube-post-graphql)
-
-### When to Proactively Invoke
-
-- **Dispatching Parallel Agents**: User provides 2+ independent tasks explicitly → organize by dependency → invoke skill
-- **Subagent-Driven Development**: Implementation plan with 3+ parallel work streams in single session → invoke skill
-- **Conductor System**: Large initiative, multi-phase work, cross-functional concerns → invoke `conductor:new-track`
-
-### Dependency Validation
-
-Before invoking any orchestration approach:
-- ✅ Parallel tasks have **no shared state** (don't modify same files/functions)
-- ✅ Parallel tasks have **no sequential dependencies** (task B doesn't require output of task A)
-- ✅ Each batch has a **single specialist agent** (avoid task context thrashing)
-- ❌ Skip parallelization if: shared mutable state, sequential DB migrations, or coordination overhead > speedup
-
-## Available Skills
-
-Claude should auto-invoke these when relevant:
-
-- `backend-development` - Full-stack backend patterns
-- `api-scaffolding:graphql-architect` - Schema design, resolver patterns, DataLoader
-- `devops-tools:databases` - PostgreSQL queries, indexing, migrations
-- `project-conventions` - Project-specific patterns (`.claude/skills/`)
-
-## Claude Code Plugins
-
-**Installed:** `claude-plugins-official`
-
-This plugin provides professional tools for backend development workflows:
-
-- **devops-tools:databases** - PostgreSQL administration, query optimization, migrations
-- **devops-tools:devops** - Container orchestration (Docker, Kubernetes, GCP, Cloudflare)
-- **devops-tools:chrome-devtools** - Browser automation and performance profiling (rarely needed for backend)
-
-See plugin documentation for complete tool listings. Use these tools when:
-- **databases**: Writing complex SQL, debugging query performance, planning migrations
-- **devops**: Deploying to production, configuring CI/CD, infrastructure setup
 
 ## Database
 
@@ -427,30 +380,15 @@ GraphQL Request
 
 ## Workflow Integration
 
-This repository uses Claude Code for AI-assisted development.
+This project uses **GSD workflow** for planning and execution. See `.planning/` for:
+- `PROJECT.md` - Project definition and requirements
+- `ROADMAP.md` - Phase-based milestone planning
+- `STATE.md` - Current position and accumulated context
+- `phases/` - Detailed execution plans
 
-- **Workflow plans:** Use Claude Code's built-in plan mode
-  - Format: `{issueNumber}-{description-kebab-case}.md`
-  - File name must begin with GitHub issue number
-  - Create for large changes requiring multiple files
-  - Example: `16-implement-post-youtube.md`
+## Legacy C# Code
 
-- **Pull requests:** Use standardized template
-  - Include GitHub issue link, summary, problem/solution, technical changes, testing notes
-
-## Migration from C#
-
-The [perspectize-be/](perspectize-be/) directory contains the legacy C# ASP.NET Core implementation. Key differences:
-
-| C# Approach | Go Approach |
-|-------------|-------------|
-| Entity Framework ORM | Direct SQL with sqlx |
-| DI Container | Manual dependency injection via constructors |
-| Exceptions | Explicit error returns |
-| REST API | GraphQL API (gqlgen) |
-| Layered architecture | Hexagonal architecture |
-
-**Do not modify C# code.** All development occurs in [perspectize-go/](perspectize-go/).
+The `perspectize-be/` directory contains legacy C# ASP.NET Core code. **Do not modify, except to delete.** All development is in `perspectize-go/`.
 
 ## Common Patterns
 
@@ -507,14 +445,6 @@ if err := tx.Commit(); err != nil {
     return err
 }
 ```
-
-## Performance Considerations
-
-- Go's compiled nature provides 3-6x performance vs Node.js
-- Goroutines enable true parallel resolver execution
-- Low memory footprint (~20-50MB vs ~100-300MB for Node)
-- Cold starts ~10-50ms (important for serverless/Fly.io)
-- Database is typically the bottleneck, not application code
 
 ## Patterns & Gotchas
 
