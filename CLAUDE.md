@@ -219,6 +219,16 @@ git checkout -b <branch-name>
 - `bugfix/INI-23-fix-auth-middleware`
 - `chore/INI-8-update-dependencies`
 
+### GitHub Issues with GSD Plans
+
+When creating issues that correspond to GSD plans, include:
+
+1. **GSD Plan Reference** section with path: `.planning/phases/{phase}/{plan}-PLAN.md`
+2. **Acceptance criteria** matching the plan's `must_haves.truths`
+3. **Dependencies** section if the plan has `depends_on`
+
+This links GitHub tracking to the detailed execution plans in `.planning/`.
+
 ## Configuration
 
 Configuration is loaded from two sources (in order of precedence):
@@ -385,6 +395,57 @@ This project uses **GSD workflow** for planning and execution. See `.planning/` 
 - `ROADMAP.md` - Phase-based milestone planning
 - `STATE.md` - Current position and accumulated context
 - `phases/` - Detailed execution plans
+
+## Self-Verification Workflow
+
+Before marking any work complete, run interactive verification:
+
+### 1. Start Services
+```bash
+# Terminal 1: Backend
+cd perspectize-go && make run
+
+# Terminal 2: Frontend
+cd perspectize-fe && pnpm run dev
+```
+
+### 2. Verify Backend
+```bash
+curl -X POST http://localhost:8080/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ __typename }"}'
+# Expect: {"data":{"__typename":"Query"}}
+```
+
+### 3. Verify Frontend (Chrome DevTools MCP)
+
+| Step | MCP Tool | Purpose |
+|------|----------|---------|
+| Navigate | `mcp__chrome-devtools__navigate_page` | Load frontend URL |
+| Screenshot | `mcp__chrome-devtools__take_screenshot` | Visual verification |
+| Snapshot | `mcp__chrome-devtools__take_snapshot` | DOM/component structure |
+| Resize | `mcp__chrome-devtools__resize_page` | Responsive check (375px, 768px, 1024px) |
+| Console | `mcp__chrome-devtools__list_console_messages` | Check for JS errors |
+| Interact | `mcp__chrome-devtools__click` | Test buttons, toasts, navigation |
+
+### 4. GSD Plan Verification
+
+For each plan's `must_haves`:
+
+| Check | Command |
+|-------|---------|
+| `truths` | Run actual command, verify output |
+| `artifacts.path` | `test -f {path} && echo "exists"` |
+| `artifacts.contains` | `grep -q "{pattern}" {path}` |
+| `artifacts.min_lines` | `wc -l < {path}` ≥ N |
+| `key_links.pattern` | `grep -q "{pattern}" {from}` |
+
+### 5. Evidence Capture
+
+Before creating PR:
+- Screenshot at mobile (375px), tablet (768px), desktop (1024px+)
+- Console output showing no errors
+- Verification commands output
 
 ## Legacy C# Code
 
