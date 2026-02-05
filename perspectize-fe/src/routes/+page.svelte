@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { toast } from 'svelte-sonner';
 	import { Button } from '$lib/components/ui/button';
 	import PageWrapper from '$lib/components/PageWrapper.svelte';
 
@@ -28,6 +29,21 @@
 		<Button variant="secondary">Secondary</Button>
 		<Button variant="outline">Outline</Button>
 		<Button variant="ghost">Ghost</Button>
+	</div>
+
+	<div class="mb-8">
+		<h2 class="text-xl font-semibold mb-4">Toast Tests</h2>
+		<div class="space-x-4">
+			<Button variant="outline" onclick={() => toast.success('Success! This will dismiss in 2s')}>
+				Success Toast
+			</Button>
+			<Button variant="outline" onclick={() => toast.error('Error occurred!')}>
+				Error Toast
+			</Button>
+			<Button variant="outline" onclick={() => toast.info('Information message')}>
+				Info Toast
+			</Button>
+		</div>
 	</div>
 
 	<div class="mt-8 p-6 bg-primary text-primary-foreground rounded-lg shadow-md">
