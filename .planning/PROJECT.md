@@ -93,16 +93,31 @@ Users can easily submit their perspective on a YouTube video and browse others' 
 - **Mobile-First**: Responsive design starting from mobile layouts, scaling up to desktop — need clear breakpoint strategy
 - **Deployment**: SvelteKit with static adapter (no SSR) to enable cheap/free static hosting
 
+## Current Milestone: v1.0 Frontend MVP
+
+**Goal:** Build a functional SvelteKit frontend that lets users discover videos, add new videos, and submit perspectives.
+
+**Target features:**
+- Discover page with AG Grid data table (search, filter, sort)
+- Add Video flow (paste YouTube URL → auto-fetch metadata)
+- Add Perspective flow (multi-step form with dynamic fields)
+- User selector dropdown (no auth for v1)
+- shadcn-svelte design system matching Figma tokens
+
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
 | SvelteKit for frontend | Modern, lightweight, good DX, Svelte mobile path later | — Pending |
+| TanStack Query for data fetching | Official Svelte support, caching, GraphQL integration | — Pending |
+| TanStack Form for forms | Multi-step support, dynamic fields, data-type picker needs | — Pending |
+| AG Grid for data table | Feature-rich grid, handles sorting/filtering/pagination | — Pending |
 | shadcn-svelte for components | Direct mapping from Radix 3.0 Figma design system, avoids rework | — Pending |
+| Tailwind CSS for styling | Utility-first, pairs with shadcn-svelte | — Pending |
 | Static adapter (no SSR) | Enables GitHub Pages hosting, all data via GraphQL client-side | — Pending |
 | User dropdown instead of auth | Simplifies v1, leverages existing users in DB | — Pending |
 | Mobile-first responsive | Figma design system TBD on mobile, need breakpoint strategy | — Pending |
 | Monorepo (frontend in same repo) | Frontend and backend co-located for easier development | — Pending |
 
 ---
-*Last updated: 2026-02-04 after initialization*
+*Last updated: 2026-02-04 after milestone v1.0 scope confirmed*
