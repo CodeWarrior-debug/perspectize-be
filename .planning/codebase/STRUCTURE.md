@@ -1,0 +1,312 @@
+# Codebase Structure
+
+**Analysis Date:** 2026-02-04
+
+## Directory Layout
+
+```
+perspectize-go/
+├── cmd/                        # Application entry points
+│   └── server/
+│       └── main.go             # HTTP server startup, dependency wiring
+├── internal/                   # Private application code (not importable)
+│   ├── core/                   # Hexagonal core (domain layer)
+│   │   ├── domain/             # Domain models, enums, errors, types
+│   │   ├── ports/              # Port interfaces (contracts)
+│   │   │   ├── repositories/   # Repository port interfaces
+│   │   │   └── services/       # External service port interfaces
+│   │   └── services/           # Business logic implementations
+│   ├── adapters/               # Infrastructure adapters
+│   │   ├── graphql/            # PRIMARY adapter: GraphQL API
+│   │   │   ├── generated/      # gqlgen auto-generated code
+│   │   │   ├── model/          # GraphQL model types
+│   │   │   └── resolvers/      # Query/Mutation resolver implementations
+│   │   ├── repositories/       # SECONDARY adapter: Database
+│   │   │   └── postgres/       # PostgreSQL implementations
+│   │   └── youtube/            # SECONDARY adapter: YouTube API
+│   ├── config/                 # Configuration loading
+│   └── middleware/             # HTTP middleware (empty, future use)
+├── pkg/                        # Shared packages (public)
+│   ├── database/               # Database connection utilities
+│   └── graphql/                # Custom GraphQL scalars
+├── test/                       # Test files (non-standard location)
+│   ├── config/                 # Config tests
+│   ├── database/               # Database integration tests
+│   ├── domain/                 # Domain model tests
+│   ├── resolvers/              # GraphQL resolver tests
+│   ├── services/               # Service logic tests
+│   └── youtube/                # YouTube adapter tests
+├── migrations/                 # SQL database migration files
+├── config/                     # Configuration files
+│   └── config.example.json     # Configuration template
+├── schema.graphql              # GraphQL schema definition
+├── gqlgen.yml                  # gqlgen code generation config
+├── go.mod                      # Go module definition
+├── go.sum                      # Go dependency lock file
+├── Makefile                    # Build and dev commands
+├── .env.example                # Environment variables template
+└── .gitignore                  # Git ignore rules
+```
+
+## Directory Purposes
+
+**`cmd/server/`**
+- Purpose: Application entry point
+- Contains: `main.go` - server initialization, dependency injection, HTTP route setup
+- Key responsibilities:
+  - Load config and environment
+  - Initialize database connection
+  - Wire all adapters and services
+  - Create GraphQL handler
+  - Start HTTP listener
+
+**`internal/core/domain/`**
+- Purpose: Pure domain models with zero external dependencies
+- Contains:
+  - `content.go` - `Content` struct with ID, Name, URL, ContentType, Length, Response (JSONB), timestamps
+  - `user.go` - `User` struct with ID, Username, Email, timestamps
+  - `perspective.go` - `Perspective` struct with ratings (Quality, Agreement, Importance, Confidence), optional fields, arrays (Parts, Labels), JSONB field (CategorizedRatings), Review status, Privacy setting
+  - `pagination.go` - Pagination types: `ContentSortBy`, `SortOrder`, `ContentFilter`, `ContentListParams`, `PaginatedContent`
+  - `errors.go` - Domain-specific error constants (ErrNotFound, ErrAlreadyExists, ErrInvalidInput, etc.)
+- Key pattern: No framework imports, no database tags, compile-able with stdlib only
+
+**`internal/core/ports/repositories/`**
+- Purpose: Define repository interface contracts
+- Contains:
+  - `content_repository.go` - `ContentRepository` interface: Create, GetByID, GetByURL, List
+  - `user_repository.go` - `UserRepository` interface: Create, GetByID, GetByUsername, GetByEmail
+  - `perspective_repository.go` - `PerspectiveRepository` interface: Create, GetByID, GetByUserAndClaim, Update, Delete, List
+
+**`internal/core/ports/services/`**
+- Purpose: Define external service port interfaces
+- Contains:
+  - `youtube_client.go` - `YouTubeClient` interface: GetVideoMetadata(ctx, videoID)
+
+**`internal/core/services/`**
+- Purpose: Business logic implementations using dependency injection
+- Contains:
+  - `content_service.go` - ContentService: CreateFromYouTube, GetByID, ListContent
+  - `user_service.go` - UserService: Create, GetByID, GetByUsername
+  - `perspective_service.go` - PerspectiveService: Create, GetByID, Update, Delete, ListPerspectives
+- Pattern: Each service receives port interfaces in constructor, calls methods via interfaces
+
+**`internal/adapters/graphql/`**
+- Purpose: GraphQL API implementation (primary adapter)
+- Contains:
+  - `resolvers/resolver.go` - Dependency injection container holding service references
+  - `resolvers/schema.resolvers.go` - Query/Mutation resolver implementations (auto-regenerated by gqlgen)
+  - `resolvers/helpers.go` - Type conversion functions (domainToModel, userDomainToModel)
+  - `generated/generated.go` - Auto-generated GraphQL execution code (do not edit)
+  - `model/` - Auto-generated GraphQL model types (do not edit)
+
+**`internal/adapters/repositories/postgres/`**
+- Purpose: PostgreSQL database implementations (secondary adapter)
+- Contains:
+  - `content_repository.go` - ContentRepository implementation with cursor pagination, filtering, sorting
+  - `user_repository.go` - UserRepository implementation with lookups
+  - `perspective_repository.go` - PerspectiveRepository implementation with complex JSONB array handling
+- Key patterns:
+  - `*Row` structs map database columns with `db:"column"` tags
+  - Conversion functions (e.g., `rowToDomain()`, `contentTypeToDBValue()`)
+  - Cursor encoding/decoding: base64 format "cursor:{id}"
+  - Null type handling: sql.NullString, sql.NullInt64, pq.StringArray, JSONBArray
+
+**`internal/adapters/youtube/`**
+- Purpose: YouTube Data API integration (secondary adapter)
+- Contains:
+  - `client.go` - YouTube API client: HTTP requests, metadata extraction, error handling
+  - `parser.go` - Utility functions: ExtractVideoID (regex patterns), ParseISO8601Duration (PT duration format)
+
+**`internal/config/`**
+- Purpose: Configuration management
+- Contains:
+  - `config.go` - Config struct, Load function, GetDSN/GetAddr methods
+- Behavior:
+  - Reads JSON config file
+  - Overrides with environment variables (DATABASE_PASSWORD, YOUTUBE_API_KEY, DATABASE_URL)
+  - GetDSN prioritizes DATABASE_URL env var for hosted databases
+
+**`pkg/database/`**
+- Purpose: Shared database utilities
+- Contains:
+  - `postgres.go` - Connect (creates sqlx.DB with pool config), Ping (health check)
+
+**`pkg/graphql/`**
+- Purpose: Custom GraphQL scalars and utilities
+- Contains:
+  - `intid.go` - IntID scalar: string<->int conversion for GraphQL ID fields
+
+**`test/`**
+- Purpose: Test suite (parallel to main code, not in _test.go files)
+- Contains:
+  - `config/` - Config loading tests
+  - `database/` - PostgreSQL integration tests
+  - `domain/` - Domain model and validation tests
+  - `resolvers/` - GraphQL resolver tests
+  - `services/` - Service business logic tests
+  - `youtube/` - YouTube adapter tests
+- Pattern: Tests use `*_test.go` naming within these directories
+
+**`migrations/`**
+- Purpose: Database schema migrations
+- Contains: SQL files named `{sequence}_{description}.{up|down}.sql`
+- Example: `000001_create_users_table.up.sql`, `000001_create_users_table.down.sql`
+
+**`config/`**
+- Purpose: Configuration files
+- Contains:
+  - `config.example.json` - Template with Server (port, host), Database (host, port, name, user, sslmode), YouTube (api_key), Logging (level, format)
+
+## Key File Locations
+
+**Entry Points:**
+- `cmd/server/main.go` - Application startup, dependency wiring
+
+**Configuration:**
+- `internal/config/config.go` - Config loading and environment override logic
+- `config/config.example.json` - Configuration template
+- `.env.example` - Environment variables template
+
+**Core Logic:**
+- `internal/core/domain/*.go` - Domain models and enums
+- `internal/core/services/*.go` - Business logic
+- `internal/core/ports/repositories/*.go` - Repository contracts
+- `internal/core/ports/services/*.go` - External service contracts
+
+**Data Access:**
+- `internal/adapters/repositories/postgres/*.go` - SQL implementations
+- `pkg/database/postgres.go` - Connection pooling
+
+**API Layer:**
+- `schema.graphql` - GraphQL schema definition
+- `internal/adapters/graphql/resolvers/*.go` - Resolver implementations
+- `internal/adapters/graphql/generated/generated.go` - Auto-generated gqlgen code
+- `pkg/graphql/intid.go` - Custom ID scalar
+
+**External Integrations:**
+- `internal/adapters/youtube/client.go` - YouTube API HTTP client
+- `internal/adapters/youtube/parser.go` - URL and duration parsing utilities
+
+**Testing:**
+- `test/services/*_test.go` - Service unit tests
+- `test/resolvers/*_test.go` - Resolver tests
+- `test/domain/*_test.go` - Domain model tests
+- `test/database/*_test.go` - Repository integration tests
+
+## Naming Conventions
+
+**Files:**
+- Domain models: `{entity}.go` (e.g., `content.go`, `perspective.go`)
+- Services: `{entity}_service.go` (e.g., `content_service.go`)
+- Repositories: `{entity}_repository.go` (e.g., `content_repository.go`)
+- Tests: `{unit}_test.go` (e.g., `content_service_test.go`)
+- Adapters: `client.go`, `parser.go` (functional naming)
+
+**Functions:**
+- Services: PascalCase methods on type (e.g., `ContentService.CreateFromYouTube()`, `UserService.GetByUsername()`)
+- Repositories: PascalCase methods on type (e.g., `ContentRepository.GetByID()`, `PerspectiveRepository.List()`)
+- Utilities: Descriptive PascalCase (e.g., `ExtractVideoID()`, `ParseISO8601Duration()`)
+- Converters: `{source}To{dest}` (e.g., `domainToModel()`, `contentTypeToDBValue()`)
+- SQL row mappers: `{source}ToCurrent` (e.g., `rowToDomain()`)
+
+**Types:**
+- Domain entities: PascalCase (e.g., `Content`, `Perspective`, `User`)
+- Enums: PascalCase with constants (e.g., `ContentType`, `SortOrder`, `Privacy`)
+- Interface types: PascalCase ending with suffix (e.g., `*Repository`, `*Client`)
+- Input/helper types: PascalCase (e.g., `CreatePerspectiveInput`, `PerspectiveFilter`)
+- Database row structs: snake_case with `Row` suffix (e.g., `contentRow`, `perspectiveRow`)
+
+**Database columns:**
+- Snake_case: `created_at`, `updated_at`, `user_id`, `content_id`
+- Enum columns: lowercase (e.g., `privacy` stores "public"/"private")
+- Arrays: `parts`, `labels` (plural)
+- JSON: `response`, `categorized_ratings`
+
+## Where to Add New Code
+
+**New Feature (e.g., adding "Ratings" CRUD):**
+
+1. **Domain model** → `internal/core/domain/ratings.go`
+   - Define struct with required/optional fields using pointers for nullable
+   - Add domain-specific enums if needed
+   - Add validation functions
+
+2. **Port interface** → `internal/core/ports/repositories/ratings_repository.go`
+   - Define interface with needed methods (Create, GetByID, List, etc.)
+
+3. **Business logic** → `internal/core/services/ratings_service.go`
+   - Create service with port dependencies
+   - Add validation, business rules, error handling
+   - Use `fmt.Errorf("%w: ...", domain.ErrXxx)` for error propagation
+
+4. **Repository implementation** → `internal/adapters/repositories/postgres/ratings_repository.go`
+   - Define `ratingsRow` struct with `db:"column"` tags
+   - Implement interface methods
+   - Add helper functions for type conversion
+
+5. **GraphQL schema** → `schema.graphql`
+   - Add `type Rating`, input types, queries/mutations
+   - Add enum bindings if needed
+
+6. **Generate GraphQL code** → Run `make graphql-gen`
+   - Regenerates resolvers skeleton and models
+
+7. **GraphQL resolvers** → `internal/adapters/graphql/resolvers/schema.resolvers.go`
+   - Implement resolver methods (auto-added by gqlgen)
+   - Call service methods, convert domain→model using helpers
+
+8. **Wire in main** → `cmd/server/main.go`
+   - Create repository: `ratingsRepo := postgres.NewRatingsRepository(db)`
+   - Create service: `ratingsService := services.NewRatingsService(ratingsRepo)`
+   - Add to resolver: `resolver := resolvers.NewResolver(..., ratingsService)`
+
+9. **Tests** → `test/services/ratings_service_test.go`, `test/resolvers/ratings_resolver_test.go`
+   - Unit tests for business logic
+   - Integration tests for resolvers
+
+**New Component/Module (e.g., authentication):**
+- If new primary adapter: Create `internal/adapters/auth/` directory with implementation
+- If new secondary adapter: Create `internal/adapters/{service}/` with client implementation
+- If new port: Create in `internal/core/ports/{category}/` with interface definition
+- If new domain concept: Create in `internal/core/domain/{concept}.go` with types
+
+**Utilities/Helpers:**
+- Shared helpers across packages: `pkg/{utility}/` (public)
+- Internal helpers within package: `{package}/helpers.go` or `{package}_helpers.go`
+- Conversion functions: Co-locate with usage (usually in adapters near models)
+
+## Special Directories
+
+**`internal/adapters/graphql/generated/`**
+- Purpose: gqlgen auto-generated code
+- Generated: Yes (run `make graphql-gen` after schema changes)
+- Committed: Yes (regenerated code checked in)
+- Manual edits: Never; all changes via schema.graphql + gqlgen config
+
+**`internal/adapters/graphql/model/`**
+- Purpose: GraphQL model types (auto-generated from schema)
+- Generated: Yes (run `make graphql-gen`)
+- Committed: Yes
+- Manual edits: Never; use gqlgen directives for customization
+
+**`migrations/`**
+- Purpose: SQL migration files
+- Generated: No (manually created)
+- Committed: Yes
+- Execution: Via `make migrate-up` (golang-migrate)
+
+**`test/`**
+- Purpose: Test files (alternative to colocated *_test.go)
+- Generated: No
+- Committed: Yes
+- Pattern: Tests organized by layer (services, resolvers, domain) with integration tests in database/
+
+**`.planning/`**
+- Purpose: Planning and documentation (ignored by git)
+- Generated: No (manual CLI creation with `/gsd:map-codebase`)
+- Committed: No (in .gitignore)
+- Contains: ARCHITECTURE.md, STRUCTURE.md, CONVENTIONS.md, TESTING.md, CONCERNS.md
+
+---
+
+*Structure analysis: 2026-02-04*
