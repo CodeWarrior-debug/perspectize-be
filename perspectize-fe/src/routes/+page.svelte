@@ -1,8 +1,23 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { Button } from '$lib/components/ui/button';
+	import PageWrapper from '$lib/components/PageWrapper.svelte';
+
+	let width = $state(0);
+
+	$effect(() => {
+		if (browser) {
+			width = window.innerWidth;
+			const handleResize = () => {
+				width = window.innerWidth;
+			};
+			window.addEventListener('resize', handleResize);
+			return () => window.removeEventListener('resize', handleResize);
+		}
+	});
 </script>
 
-<main class="p-8 max-w-4xl mx-auto">
+<PageWrapper>
 	<h1 class="text-4xl font-bold mb-4 text-foreground">Perspectize</h1>
 	<p class="mb-6 text-lg text-muted-foreground">
 		This text should be in Inter font. Check DevTools to verify font-family.
@@ -48,4 +63,9 @@
 			<div class="w-12 h-12 bg-yellow-500 rounded"></div>
 		</div>
 	</div>
-</main>
+
+	<!-- Viewport width debug display -->
+	<div class="fixed bottom-4 right-4 bg-muted px-2 py-1 rounded text-sm">
+		{width}px
+	</div>
+</PageWrapper>
