@@ -25,13 +25,12 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Depends on**: Nothing (first phase)
 **Requirements**: SETUP-01, SETUP-02, SETUP-03, SETUP-04, SETUP-05, SETUP-06, SETUP-07, SETUP-08, SETUP-09, NAV-01, NAV-02, NAV-03, NAV-04, NAV-05, API-01, TEST-01, TEST-02
 **Success Criteria** (what must be TRUE):
-  1. User can navigate between Activity and Add Video pages via header navigation
+  1. Activity page has "Add Video" button in header (modal placeholder — full modal in Phase 3)
   2. Application loads with custom navy theme (#1a365d) and Inter font applied
   3. Toast notifications appear in top-right and auto-dismiss after 2 seconds
   4. AG Grid renders a test table (validation that wrapper works with Svelte 5)
   5. Layout works on iPhone SE (375px) and scales up to desktop
   6. Folder structure documented with example files in each folder
-  7. Responsive breakpoints (sm/md/lg/xl) documented with layout behavior
 **Plans**: 4 plans in 3 waves
 
 Plans:

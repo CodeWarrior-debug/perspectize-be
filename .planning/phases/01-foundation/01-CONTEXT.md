@@ -19,6 +19,11 @@ Establish SvelteKit project scaffolding with all core libraries, mobile-first de
 - Centralized `/queries/` folder for all GraphQL queries and mutations
 - PascalCase component naming: `Button.svelte`, `DataTable.svelte`, `UserSelector.svelte`
 
+### Navigation & Page Structure
+- **Add Video is a modal dialog**, not a separate page — button on Activity page opens modal overlay
+- Activity page is the single main page (default landing)
+- Responsive breakpoints (sm/md/lg/xl) are negotiable — document if helpful, don't over-engineer
+
 ### Design Token Application
 - Tokens as reference — use Figma tokens for key brand elements (colors, fonts), Tailwind defaults elsewhere
 - shadcn defaults for CSS custom property naming (`--primary`, `--secondary`, `--background`, etc.)
