@@ -7,10 +7,27 @@
 	font-display: swap;
 }
 
+/* AG Grid base styles */
+@import 'ag-grid-community/styles/ag-grid.css';
+@import 'ag-grid-community/styles/ag-theme-quartz.css';
+
 @theme {
 	--default-font-family: 'Inter', system-ui, -apple-system, sans-serif;
 
 	/* Custom navy primary color */
 	--color-primary: oklch(0.216 0.006 56.043); /* #1a365d */
 	--color-primary-foreground: oklch(0.985 0.001 106.423);
+}
+
+/* Custom AG Grid theme to match shadcn */
+.ag-theme-quartz {
+	--ag-foreground-color: var(--foreground);
+	--ag-background-color: var(--background);
+	--ag-header-background-color: var(--secondary);
+	--ag-odd-row-background-color: oklch(0.98 0 0);
+	--ag-border-color: var(--border);
+	--ag-font-family: 'Inter', sans-serif;
+	--ag-font-size: 14px;
+	--ag-row-hover-color: var(--accent);
+	--ag-selected-row-background-color: oklch(0.95 0.01 250);
 }
