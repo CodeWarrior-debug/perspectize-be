@@ -3,7 +3,7 @@ package repositories
 import (
 	"context"
 
-	"github.com/yourorg/perspectize-go/internal/core/domain"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
 )
 
 // PerspectiveRepository defines the contract for perspective persistence

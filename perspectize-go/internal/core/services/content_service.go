@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/yourorg/perspectize-go/internal/core/domain"
-	"github.com/yourorg/perspectize-go/internal/core/ports/repositories"
-	portservices "github.com/yourorg/perspectize-go/internal/core/ports/services"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/ports/repositories"
+	portservices "github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/ports/services"
 )
 
 // ContentService implements business logic for content operations

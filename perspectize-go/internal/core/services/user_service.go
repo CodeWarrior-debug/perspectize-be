@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/yourorg/perspectize-go/internal/core/domain"
-	"github.com/yourorg/perspectize-go/internal/core/ports/repositories"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/ports/repositories"
 )
 
 // UserService implements business logic for user operations

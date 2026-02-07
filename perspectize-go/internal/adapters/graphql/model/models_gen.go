@@ -3,7 +3,7 @@
 package model
 
 import (
-	"github.com/yourorg/perspectize-go/internal/core/domain"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
 )
 
 type CategorizedRating struct {

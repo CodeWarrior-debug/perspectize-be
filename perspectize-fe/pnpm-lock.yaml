@@ -8,12 +8,24 @@ importers:
 
   .:
     dependencies:
+      '@ag-grid-community/client-side-row-model':
+        specifier: 32.2.1
+        version: 32.2.1
+      '@ag-grid-community/core':
+        specifier: 32.2.1
+        version: 32.2.1
+      '@ag-grid-community/theming':
+        specifier: 32.2.0
+        version: 32.2.0
       '@tanstack/svelte-form':
         specifier: ^1.28.0
         version: 1.28.0(svelte@5.49.2)
       '@tanstack/svelte-query':
         specifier: ^6.0.18
         version: 6.0.18(svelte@5.49.2)
+      ag-grid-svelte5:
+        specifier: ^1.0.3
+        version: 1.0.3
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -86,6 +98,27 @@ packages:
 
   '@adobe/css-tools@4.4.4':
     resolution: {integrity: sha512-Elp+iwUx5rN5+Y8xLt5/GRoG20WGoDCQ/1Fb+1LiGtvwbDavuSk0jhD/eZdckHAuzcDzccnkv+rEjyWfRx18gg==}
+
+  '@ag-grid-community/client-side-row-model@32.2.1':
+    resolution: {integrity: sha512-FXM0wlDhRN+6vZ9GjswqpTEyZ/5zStTt0OtuKeNKwxZKodjHFJ8tNxImLqPnFTwreSBZjup4LU5PuwXABHYRig==}
+
+  '@ag-grid-community/core@32.2.0':
+    resolution: {integrity: sha512-ng7qhDfF91ecT5TldQsb5lhJ6M1ZhSIB2c1hSSmY0kqQHxn0uAJo6lpjz7SIUqyy4PFupsOoPs98CsW0Dl9dHA==}
+
+  '@ag-grid-community/core@32.2.1':
+    resolution: {integrity: sha512-60tz1DfCd3B/U9BkzOWwpaGZEQwvZIvwpf5n/GDP0yzxjNhCcUusQhllqqA3fmGKKke9O1anUdSQot4PfTTrOQ==}
+
+  '@ag-grid-community/core@32.3.9':
+    resolution: {integrity: sha512-oZeAEPgaJVMzfKqbAPCyadcN5+iy+tjvhRLqEYJdBxtLgW/s2s0qXcXQvnrz7eUMD3Z7h3BQRVt2h/p0T6Ox/w==}
+
+  '@ag-grid-community/theming@32.2.0':
+    resolution: {integrity: sha512-MnJUsPZGwXtX+XL5J8uScF93h55drJTlYqEnLKVWZbBOgPjIe4oKlfsgXgK7mubiqqKDa5dME+coVLW9OFPfMQ==}
+
+  '@ag-grid-enterprise/core@32.3.9':
+    resolution: {integrity: sha512-1iqtkoOdg/idVWLa8Dq6lfJOjajSkw8Z/MWFmDQTYgfhf2D/IZ9ECEo0BmU3fv42yjc7xIB8eLUIJsQ/UzZHXw==}
+
+  '@ag-grid-enterprise/row-grouping@32.3.9':
+    resolution: {integrity: sha512-uvjuXp/B5jHTAf5v2y/v7R+/yZ8g8Y0YUaxOnapIAqRfqn7PdHqSk1RQySsz0pfLSWzNDWdag494VKRdO/3J+A==}
 
   '@asamuzakjp/css-color@4.1.1':
     resolution: {integrity: sha512-B0Hv6G3gWGMn0xKJ0txEi/jM5iFpT3MfDxmhZFb4W047GvytCf1DHQ1D69W3zHI4yWe2aTZAA0JnbMZ7Xc8DuQ==}
@@ -743,6 +776,15 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
+  ag-charts-types@10.2.0:
+    resolution: {integrity: sha512-PUqH1QtugpYLnlbMdeSZVf5PpT1XZVsP69qN1JXhetLtQpVC28zaj7ikwu9CMA9N9b+dBboA9QcjUQUJZVUokQ==}
+
+  ag-charts-types@10.3.9:
+    resolution: {integrity: sha512-drcRiJVencliC8LnRwk4MmeQDNNBg5GzmOoLFihO3/k0CUK0VF/N+2nc7iFozwaNG0btSB9vAhYuJLjqHMtRrQ==}
+
+  ag-grid-svelte5@1.0.3:
+    resolution: {integrity: sha512-bSvw59DBW8/0zH50zueJ5AWUQA0BH3y6AW9adoRWuMwO2KKjIl05WuPXd25zCTkqizbPmB4xfnXF83AXj2e1Gw==}
+
   agent-base@7.1.4:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
     engines: {node: '>= 14'}
@@ -1319,6 +1361,9 @@ packages:
     resolution: {integrity: sha512-bLVMLPtstlZ4iMQHpFHTR7GAGj2jxi8Dg0s2h2MafAE4uSWF98FC/3MomU51iQAMf8/qDUbKWf5GxuvvVcXEhw==}
     engines: {node: '>=20'}
 
+  tslib@2.8.1:
+    resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
+
   typescript@5.9.3:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
     engines: {node: '>=14.17'}
@@ -1446,6 +1491,40 @@ snapshots:
   '@acemir/cssom@0.9.31': {}
 
   '@adobe/css-tools@4.4.4': {}
+
+  '@ag-grid-community/client-side-row-model@32.2.1':
+    dependencies:
+      '@ag-grid-community/core': 32.2.1
+      tslib: 2.8.1
+
+  '@ag-grid-community/core@32.2.0':
+    dependencies:
+      ag-charts-types: 10.2.0
+      tslib: 2.8.1
+
+  '@ag-grid-community/core@32.2.1':
+    dependencies:
+      ag-charts-types: 10.2.0
+      tslib: 2.8.1
+
+  '@ag-grid-community/core@32.3.9':
+    dependencies:
+      ag-charts-types: 10.3.9
+      tslib: 2.8.1
+
+  '@ag-grid-community/theming@32.2.0':
+    dependencies:
+      '@ag-grid-community/core': 32.2.0
+      tslib: 2.8.1
+
+  '@ag-grid-enterprise/core@32.3.9':
+    dependencies:
+      '@ag-grid-community/core': 32.3.9
+
+  '@ag-grid-enterprise/row-grouping@32.3.9':
+    dependencies:
+      '@ag-grid-community/core': 32.3.9
+      '@ag-grid-enterprise/core': 32.3.9
 
   '@asamuzakjp/css-color@4.1.1':
     dependencies:
@@ -1940,6 +2019,18 @@ snapshots:
       tinyrainbow: 3.0.3
 
   acorn@8.15.0: {}
+
+  ag-charts-types@10.2.0: {}
+
+  ag-charts-types@10.3.9: {}
+
+  ag-grid-svelte5@1.0.3:
+    dependencies:
+      '@ag-grid-community/client-side-row-model': 32.2.1
+      '@ag-grid-community/core': 32.2.1
+      '@ag-grid-community/theming': 32.2.0
+      '@ag-grid-enterprise/row-grouping': 32.3.9
+      svelte: 5.49.2
 
   agent-base@7.1.4: {}
 
@@ -2474,6 +2565,8 @@ snapshots:
   tr46@6.0.0:
     dependencies:
       punycode: 2.3.1
+
+  tslib@2.8.1: {}
 
   typescript@5.9.3: {}
 

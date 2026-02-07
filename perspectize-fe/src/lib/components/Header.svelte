@@ -1,15 +1,22 @@
 <script lang="ts">
-	// Navigation slot will be added in Plan 04
+	import { toast } from 'svelte-sonner';
+	import { Button } from '$lib/components/shadcn';
+
+	function handleAddVideo() {
+		// Placeholder - modal will be implemented in Phase 3
+		toast.info('Add Video modal coming in Phase 3');
+	}
 </script>
 
-<header class="h-16 border-b border-border bg-background">
+<header class="h-16 border-b border-border bg-background sticky top-0 z-50">
 	<div
 		class="h-full px-4 md:px-6 lg:px-8 max-w-screen-xl mx-auto flex items-center justify-between"
 	>
-		<div class="font-bold text-xl text-foreground">Perspectize</div>
-		<nav class="flex items-center gap-4">
-			<!-- Navigation links added in Plan 04 -->
-			<slot name="nav" />
-		</nav>
+		<a href="/" class="font-bold text-xl text-foreground hover:text-primary transition-colors">
+			Perspectize
+		</a>
+		<div class="flex items-center gap-4">
+			<Button onclick={handleAddVideo}>Add Video</Button>
+		</div>
 	</div>
 </header>

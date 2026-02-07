@@ -10,13 +10,13 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/joho/godotenv"
-	"github.com/yourorg/perspectize-go/internal/adapters/graphql/generated"
-	"github.com/yourorg/perspectize-go/internal/adapters/graphql/resolvers"
-	"github.com/yourorg/perspectize-go/internal/adapters/repositories/postgres"
-	"github.com/yourorg/perspectize-go/internal/adapters/youtube"
-	"github.com/yourorg/perspectize-go/internal/config"
-	"github.com/yourorg/perspectize-go/internal/core/services"
-	"github.com/yourorg/perspectize-go/pkg/database"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/graphql/generated"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/graphql/resolvers"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/repositories/postgres"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/youtube"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/config"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/services"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/pkg/database"
 )
 
 func main() {
