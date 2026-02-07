@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { LIST_CONTENT, GET_CONTENT } from '$lib/queries/content';
+import { LIST_CONTENT, GET_CONTENT, CREATE_CONTENT_FROM_YOUTUBE } from '$lib/queries/content';
 
 describe('GraphQL query definitions', () => {
 	describe('LIST_CONTENT', () => {
@@ -75,6 +75,51 @@ describe('GraphQL query definitions', () => {
 			expect(GET_CONTENT).toContain('likeCount');
 			expect(GET_CONTENT).toContain('commentCount');
 			expect(GET_CONTENT).toContain('response');
+		});
+	});
+
+	describe('CREATE_CONTENT_FROM_YOUTUBE', () => {
+		it('is defined and is a string', () => {
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toBeDefined();
+			expect(typeof CREATE_CONTENT_FROM_YOUTUBE).toBe('string');
+		});
+
+		it('contains the CreateContentFromYouTube operation name', () => {
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('CreateContentFromYouTube');
+		});
+
+		it('is a mutation operation', () => {
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('mutation');
+		});
+
+		it('takes CreateContentFromYouTubeInput input type', () => {
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('$input: CreateContentFromYouTubeInput!');
+		});
+
+		it('calls createContentFromYouTube mutation', () => {
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('createContentFromYouTube(input: $input)');
+		});
+
+		it('requests essential content fields', () => {
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('id');
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('name');
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('url');
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('contentType');
+		});
+
+		it('requests YouTube-specific metadata fields', () => {
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('viewCount');
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('likeCount');
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('commentCount');
+		});
+
+		it('requests length fields', () => {
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('length');
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('lengthUnits');
+		});
+
+		it('requests createdAt timestamp', () => {
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('createdAt');
 		});
 	});
 });

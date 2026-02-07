@@ -52,3 +52,20 @@ export const GET_CONTENT = gql`
 		}
 	}
 `;
+
+export const CREATE_CONTENT_FROM_YOUTUBE = gql`
+	mutation CreateContentFromYouTube($input: CreateContentFromYouTubeInput!) {
+		createContentFromYouTube(input: $input) {
+			id
+			name
+			url
+			contentType
+			length
+			lengthUnits
+			viewCount
+			likeCount
+			commentCount
+			createdAt
+		}
+	}
+`;
