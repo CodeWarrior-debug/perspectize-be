@@ -1,8 +1,20 @@
 <script lang="ts">
-	import AgGridSvelte from 'ag-grid-svelte5';
+	import AgGridSvelte5Component from 'ag-grid-svelte5';
+	import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
+	import { themeQuartz } from '@ag-grid-community/theming';
+	import type { GridOptions } from '@ag-grid-community/core';
+
+	// Define row data type
+	interface VideoRow {
+		id: number;
+		title: string;
+		duration: string;
+		rating: number;
+		published: string;
+	}
 
 	// Test data simulating video content
-	let rowData = $state([
+	let rowData = $state<VideoRow[]>([
 		{ id: 1, title: 'Introduction to Svelte 5', duration: '15:42', rating: 92, published: '2026-01-15' },
 		{ id: 2, title: 'Building with SvelteKit', duration: '23:18', rating: 87, published: '2026-01-20' },
 		{ id: 3, title: 'Tailwind CSS Deep Dive', duration: '31:05', rating: 95, published: '2026-01-25' },
@@ -17,15 +29,24 @@
 		{ id: 12, title: 'API Design Principles', duration: '24:07', rating: 86, published: '2026-02-20' },
 	]);
 
-	let gridOptions = $state({
+	// AG Grid modules (required)
+	const modules = [ClientSideRowModelModule];
+
+	// Custom theme to match shadcn
+	const theme = themeQuartz.withParams({
+		fontFamily: 'Inter, sans-serif',
+		fontSize: 14,
+		headerFontSize: 14,
+	});
+
+	let gridOptions: GridOptions<VideoRow> = $state({
 		columnDefs: [
 			{ field: 'id', headerName: 'ID', width: 80, sortable: true },
-			{ field: 'title', headerName: 'Title', flex: 2, filter: 'agTextColumnFilter', sortable: true },
+			{ field: 'title', headerName: 'Title', flex: 2, filter: true, sortable: true },
 			{ field: 'duration', headerName: 'Duration', width: 120, sortable: true },
 			{ field: 'rating', headerName: 'Rating', width: 100, filter: 'agNumberColumnFilter', sortable: true },
-			{ field: 'published', headerName: 'Published', width: 130, filter: 'agDateColumnFilter', sortable: true },
+			{ field: 'published', headerName: 'Published', width: 130, sortable: true },
 		],
-		rowData,
 		pagination: true,
 		paginationPageSize: 5,
 		paginationPageSizeSelector: [5, 10, 25],
@@ -33,17 +54,8 @@
 		defaultColDef: {
 			resizable: true,
 		},
-		getRowId: (params: { data: { id: number } }) => String(params.data.id),
-	});
-
-	// Track validation results
-	let validationResults = $state<Record<string, boolean | null>>({
-		sorting: null,
-		filtering: null,
-		pagination: null,
-		columnResize: null,
-		rowSelection: null,
-		reactivity: null,
+		getRowId: (params) => String(params.data!.id),
+		domLayout: 'autoHeight',
 	});
 
 	function addRow() {
@@ -55,7 +67,6 @@
 			rating: 80,
 			published: new Date().toISOString().split('T')[0],
 		}];
-		gridOptions.rowData = rowData;
 	}
 </script>
 
@@ -81,7 +92,7 @@
 		Add Row (Test Reactivity)
 	</button>
 
-	<div class="ag-theme-quartz" style="height: 400px; width: 100%;">
-		<AgGridSvelte {gridOptions} />
+	<div style="width: 100%;">
+		<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
 	</div>
 </div>
