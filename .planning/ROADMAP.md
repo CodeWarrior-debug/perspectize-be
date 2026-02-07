@@ -31,13 +31,15 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. AG Grid renders a test table (validation that wrapper works with Svelte 5)
   5. Layout works on iPhone SE (375px) and scales up to desktop
   6. Folder structure documented with example files in each folder
-**Plans**: 4 plans in 3 waves
+  7. Test coverage >80% on all foundation source files with enforced thresholds
+**Plans**: 5 plans in 3 waves
 
 Plans:
 - [ ] 01-01-PLAN.md - SvelteKit + Tailwind + shadcn + Inter font + folder structure docs
 - [ ] 01-02-PLAN.md - Mobile-first layout system (Header, PageWrapper, breakpoints)
 - [ ] 01-03-PLAN.md - TanStack Query + GraphQL client + Toast + Vitest
 - [ ] 01-04-PLAN.md - Navigation + AG Grid validation (checkpoint)
+- [ ] 01-05-PLAN.md - Comprehensive test coverage (>80%) with testing conventions
 
 ### Phase 2: Data Layer + Activity
 **Goal**: Users can view recently updated content in an AG Grid table (Activity page, default landing)
@@ -112,7 +114,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/4 | Planned | - |
+| 1. Foundation | 0/5 | Planned | - |
 | 2. Data Layer + Activity | 0/3 | Not started | - |
 | 3. Add Video Flow | 0/2 | Not started | - |
 | 4. Add Perspective Flow | 0/3 | Not started | - |
