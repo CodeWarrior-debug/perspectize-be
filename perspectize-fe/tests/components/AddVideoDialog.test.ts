@@ -50,17 +50,6 @@ vi.mock('$lib/utils/youtube', () => ({
 	validateYouTubeUrl: (...args: any[]) => mockValidate(...args),
 }));
 
-vi.mock('$lib/components/shadcn', () => ({
-	Dialog: vi.fn(() => ({ $$: {}, $set: vi.fn(), $on: vi.fn(), $destroy: vi.fn() })),
-	DialogContent: vi.fn(() => ({ $$: {}, $set: vi.fn(), $on: vi.fn(), $destroy: vi.fn() })),
-	DialogHeader: vi.fn(() => ({ $$: {}, $set: vi.fn(), $on: vi.fn(), $destroy: vi.fn() })),
-	DialogTitle: vi.fn(() => ({ $$: {}, $set: vi.fn(), $on: vi.fn(), $destroy: vi.fn() })),
-	DialogDescription: vi.fn(() => ({ $$: {}, $set: vi.fn(), $on: vi.fn(), $destroy: vi.fn() })),
-	DialogFooter: vi.fn(() => ({ $$: {}, $set: vi.fn(), $on: vi.fn(), $destroy: vi.fn() })),
-	Button: vi.fn(() => ({ $$: {}, $set: vi.fn(), $on: vi.fn(), $destroy: vi.fn() })),
-	Input: vi.fn(() => ({ $$: {}, $set: vi.fn(), $on: vi.fn(), $destroy: vi.fn() })),
-	Label: vi.fn(() => ({ $$: {}, $set: vi.fn(), $on: vi.fn(), $destroy: vi.fn() })),
-}));
 
 describe('AddVideoDialog component', () => {
 	beforeEach(() => {
@@ -168,5 +157,16 @@ describe('AddVideoDialog mutation callbacks', () => {
 		expect(capturedMutationOptions).toBeDefined();
 		expect(capturedMutationOptions.mutationFn).toBeDefined();
 		expect(typeof capturedMutationOptions.mutationFn).toBe('function');
+	});
+
+	it('mutationFn calls graphqlClient.request with correct args', async () => {
+		expect(capturedMutationOptions).toBeDefined();
+		const { graphqlClient } = await import('$lib/queries/client');
+		(graphqlClient.request as any).mockResolvedValue({ createContentFromYouTube: { name: 'Test' } });
+		await capturedMutationOptions.mutationFn('https://youtube.com/watch?v=abc123');
+		expect(graphqlClient.request).toHaveBeenCalledWith(
+			expect.anything(),
+			{ input: { url: 'https://youtube.com/watch?v=abc123' } }
+		);
 	});
 });

@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/svelte';
 import ActivityTable from '$lib/components/ActivityTable.svelte';
 
-// Mock AG Grid component
 vi.mock('ag-grid-svelte5', () => ({
 	default: vi.fn(() => ({
 		$$: {},
@@ -33,42 +32,36 @@ describe('ActivityTable', () => {
 				updatedAt: '2026-01-02T00:00:00Z',
 			}
 		];
-
-		const { container } = render(ActivityTable, {
-			props: { rowData }
-		});
-
+		const { container } = render(ActivityTable, { props: { rowData } });
 		expect(container).toBeTruthy();
 	});
 
 	it('accepts searchText prop', () => {
 		const { container } = render(ActivityTable, {
-			props: {
-				rowData: [],
-				searchText: 'test search'
-			}
+			props: { rowData: [], searchText: 'test search' }
 		});
-
 		expect(container).toBeTruthy();
 	});
 
 	it('accepts loading prop', () => {
 		const { container } = render(ActivityTable, {
-			props: {
-				rowData: [],
-				loading: true
-			}
+			props: { rowData: [], loading: true }
 		});
-
 		expect(container).toBeTruthy();
 	});
 
-	it('renders wrapper div with overflow-x-auto for mobile scrolling', () => {
+	it('renders wrapper div with overflow-x-auto', () => {
 		const { container } = render(ActivityTable, {
 			props: { rowData: [] }
 		});
-
 		const wrapper = container.querySelector('.overflow-x-auto');
 		expect(wrapper).toBeTruthy();
+	});
+
+	it('renders with default props', () => {
+		const { container } = render(ActivityTable, {
+			props: { rowData: [] }
+		});
+		expect(container.querySelector('div')).toBeTruthy();
 	});
 });

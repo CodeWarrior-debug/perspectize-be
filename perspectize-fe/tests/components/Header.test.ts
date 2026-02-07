@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, fireEvent } from '@testing-library/svelte';
 import Header from '$lib/components/Header.svelte';
 
 // Mock UserSelector component
@@ -93,5 +93,14 @@ describe('Header component', () => {
 		const button = screen.getByRole('button', { name: /add video/i });
 		const rightContainer = button.parentElement;
 		expect(rightContainer?.className).toContain('shrink-0');
+	});
+
+	it('Add Video button is clickable', async () => {
+		render(Header);
+		const button = screen.getByRole('button', { name: /add video/i });
+		await fireEvent.click(button);
+		// Button click sets dialogOpen = true, which is internal state
+		// Verify button is still accessible after click
+		expect(button).toBeInTheDocument();
 	});
 });
