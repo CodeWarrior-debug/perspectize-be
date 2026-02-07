@@ -9,7 +9,7 @@
 	}
 </script>
 
-<header class="h-16 border-b border-border bg-background sticky top-0 z-50">
+<header class="h-16 border-b border-border bg-white sticky top-0 z-50">
 	<div
 		class="h-full px-4 md:px-6 lg:px-8 max-w-screen-xl mx-auto flex items-center justify-between"
 	>
