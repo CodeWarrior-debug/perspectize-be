@@ -11,6 +11,6 @@
 	--default-font-family: 'Inter', system-ui, -apple-system, sans-serif;
 
 	/* Custom navy primary color */
-	--color-primary: oklch(0.216 0.006 56.043); /* #1a365d */
-	--color-primary-foreground: oklch(0.985 0.001 106.423);
+	--color-primary: oklch(0.333 0.077 257.109); /* #1a365d */
+	--color-primary-foreground: oklch(0.983 0.004 236.862);
 }
