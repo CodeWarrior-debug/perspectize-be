@@ -485,3 +485,8 @@ $RECYCLE.BIN/
 
 # vscode tasks
 .vscode/
+
+# SvelteKit / frontend build artifacts
+.svelte-kit/
+build/
+coverage/
