@@ -132,21 +132,21 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SETUP-01 | Phase 1 | Pending |
-| SETUP-02 | Phase 1 | Pending |
-| SETUP-03 | Phase 1 | Pending |
-| SETUP-04 | Phase 1 | Pending |
-| SETUP-05 | Phase 1 | Pending |
-| SETUP-06 | Phase 1 | Pending |
-| SETUP-07 | Phase 1 | Pending |
-| SETUP-08 | Phase 1 | Pending |
-| NAV-01 | Phase 1 | Pending |
-| NAV-02 | Phase 1 | Pending |
-| NAV-03 | Phase 1 | Pending |
-| NAV-04 | Phase 1 | Pending |
-| NAV-05 | Phase 1 | Pending |
-| SETUP-09 | Phase 1 | Pending |
-| API-01 | Phase 1 | Pending |
+| SETUP-01 | Phase 1 | Complete |
+| SETUP-02 | Phase 1 | Complete |
+| SETUP-03 | Phase 1 | Complete |
+| SETUP-04 | Phase 1 | Complete |
+| SETUP-05 | Phase 1 | Complete |
+| SETUP-06 | Phase 1 | Complete |
+| SETUP-07 | Phase 1 | Complete |
+| SETUP-08 | Phase 1 | Complete |
+| NAV-01 | Phase 1 | Complete |
+| NAV-02 | Phase 1 | Complete |
+| NAV-03 | Phase 1 | Complete |
+| NAV-04 | Phase 1 | Complete |
+| NAV-05 | Phase 1 | Complete |
+| SETUP-09 | Phase 1 | Complete |
+| API-01 | Phase 1 | Complete |
 | ACT-01 | Phase 2 | Pending |
 | ACT-02 | Phase 2 | Pending |
 | ACT-03 | Phase 2 | Pending |
@@ -171,8 +171,8 @@
 | PERSP-08 | Phase 4 | Pending |
 | PERSP-09 | Phase 4 | Pending |
 | USER-03 | Phase 4 | Pending |
-| TEST-01 | Phase 1 | Pending |
-| TEST-02 | Phase 1 | Pending |
+| TEST-01 | Phase 1 | Complete |
+| TEST-02 | Phase 1 | Complete |
 | TEST-03 | Phase 2 | Pending |
 | TEST-04 | Phase 3 | Pending |
 | TEST-05 | Phase 4 | Pending |
