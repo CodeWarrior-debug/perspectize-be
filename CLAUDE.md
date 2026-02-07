@@ -416,6 +416,7 @@ curl -X POST http://localhost:8080/graphql \
   -d '{"query": "{ __typename }"}'
 # Expect: {"data":{"__typename":"Query"}}
 ```
+Also test any frontend GraphQL queries (`src/lib/queries/*.ts`) against the live backend to catch schema drift.
 
 ### 3. Verify Frontend (Chrome DevTools MCP)
 
