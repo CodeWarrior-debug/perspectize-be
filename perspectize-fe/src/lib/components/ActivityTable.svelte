@@ -76,6 +76,7 @@
 				sortable: true,
 			},
 			{
+				colId: 'duration',
 				headerName: 'Duration',
 				width: 120,
 				sortable: false,
@@ -116,8 +117,34 @@
 		suppressCellFocus: true,
 		onGridReady: (params) => {
 			gridApi = params.api;
+			updateColumnVisibility();
+		},
+		onGridSizeChanged: () => {
+			updateColumnVisibility();
 		}
 	};
+
+	function updateColumnVisibility() {
+		if (!gridApi) return;
+
+		const container = document.querySelector('.ag-root-wrapper');
+		if (!container) return;
+
+		const gridWidth = (container as HTMLElement).offsetWidth;
+
+		// Progressive column hiding based on width
+		// < 640px (mobile): Title only
+		// 640-767px (small tablet): Title + Type + Duration
+		// 768px+ (tablet/desktop): All columns
+		if (gridWidth < 640) {
+			gridApi.setColumnsVisible(['contentType', 'duration', 'createdAt', 'updatedAt'], false);
+		} else if (gridWidth < 768) {
+			gridApi.setColumnsVisible(['contentType', 'duration'], true);
+			gridApi.setColumnsVisible(['createdAt', 'updatedAt'], false);
+		} else {
+			gridApi.setColumnsVisible(['contentType', 'duration', 'createdAt', 'updatedAt'], true);
+		}
+	}
 
 	// Update loading state reactively
 	$effect(() => {
