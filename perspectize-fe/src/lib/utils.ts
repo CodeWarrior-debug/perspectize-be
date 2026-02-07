@@ -10,3 +10,5 @@ export type WithElementRef<T> = T & {
 	class?: string;
 	children?: any;
 };
+
+export type WithoutChildrenOrChild<T> = Omit<T, 'children' | 'child'>;
