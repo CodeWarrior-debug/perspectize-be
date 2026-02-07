@@ -20,170 +20,116 @@ Full structure: [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)
 
 **Dependency Rule:** Dependencies point inward. Domain never depends on adapters. Adapters depend on domain ports.
 
-### Hexagonal Architecture Guidelines
+### Hexagonal Architecture
 
-When implementing features:
+1. **Domain** — Models in `core/domain/` (pure Go, no external deps)
+2. **Ports** — Interfaces in `core/ports/`
+3. **Services** — Business logic in `core/services/`
+4. **Adapters** — Infrastructure in `adapters/`
+5. **Wiring** — Connect in `cmd/server/main.go`
 
-1. **Start with domain** - Define models in `core/domain/`
-2. **Define ports** - Create interfaces in `core/ports/`
-3. **Implement business logic** - Write services in `core/services/`
-4. **Add adapters** - Implement infrastructure in `adapters/`
-5. **Wire dependencies** - Connect adapters to core in `cmd/server/main.go`
+Domain layer rules: [docs/DOMAIN_GUIDE.md](../docs/DOMAIN_GUIDE.md)
 
-**Domain layer (`core/domain/`)** contains pure Go structs with no external dependencies. See [docs/DOMAIN_GUIDE.md](../docs/DOMAIN_GUIDE.md) for domain rules, entity details, and optional fields pattern.
+## Stack
 
-## Technology Stack
+Go 1.25+ · gqlgen (schema-first) · PostgreSQL 18 (sqlx + pgx/v5) · golang-migrate · go-playground/validator · testify + sqlmock · log/slog · godotenv
 
-- **Language:** Go 1.25+
-- **GraphQL:** gqlgen (code generation, schema-first)
-- **Database:** PostgreSQL 18 with sqlx + pgx/v5 driver
-- **Migrations:** golang-migrate
-- **Validation:** go-playground/validator
-- **Testing:** testing + testify + sqlmock
-- **Logging:** log/slog (structured logging)
-- **Environment:** godotenv (.env file loading)
-
-## Development Commands
-
-### Initial Setup
+## Commands
 
 ```bash
-go mod download
-make docker-up
-make migrate-up
-cp .env.example .env
-```
+# Setup
+go mod download && make docker-up && make migrate-up && cp .env.example .env
 
-### Daily Development
+# Daily
+make run              # Server on :8080
+make dev              # Hot-reload (air)
+make test             # All tests
+make test-coverage    # Coverage → coverage.html
+make fmt && make lint # Format + lint
+make graphql-gen      # Regen after schema changes
 
-```bash
-make run          # Server on http://localhost:8080
-make dev          # Hot-reload with air
-make test         # Run all tests
-make test-coverage # Coverage report → coverage.html
-make fmt          # Format code
-make lint         # Lint code
-make graphql-gen  # Regenerate GraphQL after schema changes
-```
+# Migrations
+make migrate-up       # Apply pending
+make migrate-down     # Rollback last
+make migrate-create   # New migration (prompts for name)
+make migrate-version  # Current version
+make migrate-force    # Force version (recovery)
 
-### Database Migrations
-
-```bash
-make migrate-up       # Apply pending migrations
-make migrate-down     # Rollback last migration
-make migrate-create   # Create new migration (prompts for name)
-make migrate-version  # Check current version
-make migrate-force    # Force to specific version (recovery)
-```
-
-### Docker
-
-```bash
-make docker-up    # Start PostgreSQL
-make docker-down  # Stop and remove
-make docker-logs  # View PostgreSQL logs
+# Docker (PostgreSQL)
+make docker-up / make docker-down / make docker-logs
 ```
 
 ## Configuration
 
-Loaded from two sources (in order of precedence):
-1. **Environment variables** (highest priority) - `DATABASE_URL`, `YOUTUBE_API_KEY`
-2. **config/config.json** - non-secret configuration
+Two sources (precedence order): **env vars** > `config/config.json`.
+Required: `DATABASE_URL`. Optional: `YOUTUBE_API_KEY`, `DATABASE_PASSWORD`.
+See `.env.example`. Production note: Sevalla may require `?sslmode=disable`.
 
-Required: `DATABASE_URL` (e.g., `postgres://testuser:testpass@localhost:5432/testdb?sslmode=disable`)
-Optional: `YOUTUBE_API_KEY`, `DATABASE_PASSWORD`
+## GraphQL
 
-See `.env.example` for details.
-
-**Production (Sevalla/Fly.io):** Sevalla connections may require `?sslmode=disable` and may succeed on second attempt.
-
-## Database
-
-PostgreSQL 18 features used: JSONB columns, array types, custom domains, triggers (auto timestamps).
-
-Migration files in `migrations/`: `{sequence}_{description}.{up|down}.sql`
-
-## GraphQL Schema
-
-Schema-first approach in `schema.graphql`. After modifying:
-1. Run `make graphql-gen`
-2. Implement resolver logic in `internal/adapters/graphql/resolvers/`
-3. Wire resolvers to domain services
+Schema-first in `schema.graphql`. After changes: `make graphql-gen` → implement resolvers in `internal/adapters/graphql/resolvers/` → wire to services.
 
 ## Testing
 
-- **Unit tests:** Mock external dependencies, no DB required. Run with `make test`.
-- **Integration tests:** Guarded with `t.Skip()` when DB unavailable. Auto-skip.
-- **Environment isolation:** Tests loading config must clear env vars (`DATABASE_URL`, `DATABASE_PASSWORD`, `YOUTUBE_API_KEY`) via `t.Setenv("KEY", "")`. See `clearConfigEnvVars` in `test/config/config_test.go`.
+- **Unit:** Mock deps, no DB. `make test`.
+- **Integration:** Auto-skip when DB unavailable (`t.Skip()`).
+- **Env isolation:** Tests loading config must clear env vars via `t.Setenv("KEY", "")`. See `clearConfigEnvVars` in `test/config/config_test.go`.
 
 ## Code Style
 
-- Follow [Effective Go](https://go.dev/doc/effective_go)
-- `gofmt` formatting (enforced by `make fmt`)
-- Explicit error handling, structured logging with `slog`
-- Dependency injection via interfaces (ports)
+`gofmt` formatting · explicit error handling · structured logging (`slog`) · dependency injection via ports. See [Effective Go](https://go.dev/doc/effective_go).
+
+Error handling & DB query patterns: [docs/GO_PATTERNS.md](../docs/GO_PATTERNS.md)
 
 ## Adding a New Feature
 
-1. Define domain model: `internal/core/domain/feature.go`
-2. Define repository port: `internal/core/ports/repositories/feature_repository.go`
-3. Implement service: `internal/core/services/feature_service.go`
-4. Implement repository: `internal/adapters/repositories/postgres/feature_repository.go`
-5. Update schema: `schema.graphql` → `make graphql-gen`
-6. Implement resolver: `internal/adapters/graphql/resolvers/feature_resolver.go`
-7. Wire in `cmd/server/main.go`
-8. Write tests: `test/services/`, `test/repositories/`
-
-## Error Handling & Database Queries
-
-See [docs/GO_PATTERNS.md](../docs/GO_PATTERNS.md) for error wrapping pattern (domain → service → resolver) and sqlx query/transaction examples.
+1. Domain model: `internal/core/domain/feature.go`
+2. Repository port: `internal/core/ports/repositories/feature_repository.go`
+3. Service: `internal/core/services/feature_service.go`
+4. Repository impl: `internal/adapters/repositories/postgres/feature_repository.go`
+5. Schema: `schema.graphql` → `make graphql-gen`
+6. Resolver: `internal/adapters/graphql/resolvers/feature_resolver.go`
+7. Wire: `cmd/server/main.go`
+8. Tests: `test/services/`, `test/repositories/`
 
 ## Gotchas
 
-### GraphQL Schema Defaults
-gqlgen passes default values (e.g., `first: Int = 10`) as non-nil pointers, not `nil`. Tests should expect the default value.
+**GraphQL defaults:** gqlgen passes `first: Int = 10` as non-nil pointer (value `10`), not `nil`. Tests must expect the default value.
 
-### JSON Scalar Type
-Use gqlgen's built-in `graphql.Map` scalar (configured in `gqlgen.yml` as `JSON`) for JSONB data.
+**JSON scalar:** Use `graphql.Map` (configured as `JSON` in `gqlgen.yml`) for JSONB data.
 
-### Cursor-Based Pagination
-- Cursors are opaque base64 strings (format: `cursor:<id>`)
-- Use keyset pagination (not OFFSET)
-- Fetch `limit+1` rows to determine `hasNextPage`
-- Whitelist sort columns to prevent SQL injection
+**Cursor pagination:** Opaque base64 (`cursor:<id>`), keyset (not OFFSET), fetch `limit+1` for `hasNextPage`, whitelist sort columns (SQL injection prevention).
 
-### GraphQL Enum & ID Handling (REQUIRED)
+### Enum & ID Handling (REQUIRED)
 
 **Always use gqlgen model binding** — never write switch statements for enum conversion.
 
-1. Define domain enums with UPPERCASE values:
-   ```go
-   type SortOrder string
-   const (
-       SortOrderASC  SortOrder = "ASC"
-       SortOrderDESC SortOrder = "DESC"
-   )
-   ```
+```go
+// 1. Domain enums with UPPERCASE values
+type SortOrder string
+const (
+    SortOrderASC  SortOrder = "ASC"
+    SortOrderDESC SortOrder = "DESC"
+)
+```
 
-2. Bind in `gqlgen.yml`:
-   ```yaml
-   models:
-     SortOrder:
-       model:
-         - github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain.SortOrder
-   ```
+```yaml
+# 2. Bind in gqlgen.yml
+models:
+  SortOrder:
+    model:
+      - github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain.SortOrder
+```
 
-3. For DB-stored enums, add repository converters (lowercase ↔ UPPERCASE).
+3. DB-stored enums: add repository converters (lowercase ↔ UPPERCASE).
+4. Use `IntID` scalar (`pkg/graphql/intid.go`) instead of `ID` with `strconv.Atoi`.
 
-4. Use the `IntID` custom scalar (`pkg/graphql/intid.go`) instead of `ID` with manual `strconv.Atoi`.
-
-**When adding new enums:** Add UPPERCASE constants → bind in `gqlgen.yml` → add DB converter if stored → `make graphql-gen`
+**New enum checklist:** UPPERCASE constants → bind in `gqlgen.yml` → DB converter if stored → `make graphql-gen`
 
 ## Self-Verification
 
 ```bash
-curl -X POST http://localhost:8080/graphql \
+curl -s -X POST http://localhost:8080/graphql \
   -H "Content-Type: application/json" \
-  -d '{"query": "{ __typename }"}'
-# Expect: {"data":{"__typename":"Query"}}
+  -d '{"query": "{ __typename }"}' | grep -q '"Query"' && echo "OK" || echo "FAIL"
 ```

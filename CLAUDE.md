@@ -4,17 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Perspectize** - Platform for storing, refining, and sharing perspectives on content (initially YouTube videos).
+**Perspectize** — Platform for storing, refining, and sharing perspectives on content (initially YouTube videos).
 
-This is a monorepo with two stacks:
-- **Backend:** `perspectize-go/` - Go GraphQL API (see `perspectize-go/CLAUDE.md` for backend-specific instructions)
-- **Frontend:** `perspectize-fe/` - SvelteKit web app (see `perspectize-fe/CLAUDE.md` for frontend-specific instructions)
+Monorepo with two stacks:
+- **Backend:** `perspectize-go/` — Go GraphQL API (see `perspectize-go/CLAUDE.md`)
+- **Frontend:** `perspectize-fe/` — SvelteKit web app (see `perspectize-fe/CLAUDE.md`)
 
-**Important:** The `perspectize-be/` directory contains legacy C# ASP.NET Core code. **Do not modify, except to delete.** All backend development happens in `perspectize-go/`.
+**Important:** `perspectize-be/` contains legacy C# code. **Do not modify, except to delete.** All backend work happens in `perspectize-go/`.
+
+**CLAUDE.md structure:** Root file (this) contains shared concerns. Package-level files contain stack-specific instructions. Claude loads root + the relevant package file per session.
 
 ## GitHub & Repository Management
 
-**Always use the `gh` CLI** for all GitHub operations. Do not use MCP plugins or other tools for GitHub interactions.
+**Always use `gh` CLI** for GitHub operations. Do not use MCP plugins.
 
 ```bash
 # Pull requests
@@ -23,150 +25,82 @@ gh pr list
 gh pr view 123
 gh pr merge 123
 
-# Edit PR (use REST API - gh pr edit may fail with Projects Classic deprecation error)
+# Edit PR (use API — gh pr edit fails with Projects Classic deprecation)
 gh api repos/CodeWarrior-debug/perspectize-be/pulls/123 -X PATCH -f body="New description"
 
-# Issues (use API - gh issue view fails with Projects Classic deprecation error)
+# Issues (use API — gh issue view fails with Projects Classic deprecation)
 gh issue create --title "Title" --body "Description"
 gh issue list
 gh api repos/CodeWarrior-debug/perspectize-be/issues/123 --jq '.title, .html_url'
 
-# Repository info
-gh repo view
-
-# API access (for anything not covered by commands)
+# API access
 gh api repos/CodeWarrior-debug/perspectize-be/pulls/123/comments
 ```
 
-### GitHub Projects (v2)
+GitHub Projects v2: See [docs/GITHUB_PROJECTS.md](docs/GITHUB_PROJECTS.md).
 
-See [docs/GITHUB_PROJECTS.md](docs/GITHUB_PROJECTS.md) for GraphQL API queries and token scope setup.
+## Branch Naming
 
-## Branch Naming Convention
+**Always branch from updated `main`:** `git checkout main && git pull origin main && git checkout -b <name>`
 
-**Always create branches from an updated `main` branch.**
-
-```bash
-git checkout main
-git pull origin main
-git checkout -b <branch-name>
-```
-
-**Branch name format:** `type/initiativePrefix-issueNumber-description-in-kebab-case`
+**Format:** `type/initiativePrefix-issueNumber-description-in-kebab-case`
 
 | Component | Values |
 |-----------|--------|
 | **type** | `feature`, `bugfix`, `chore` |
 | **initiativePrefix** | `INI` (Initialization Phase) |
-| **issueNumber** | GitHub issue number (e.g., `16`) |
-| **description** | Brief kebab-case description |
+| **issueNumber** | GitHub issue number |
 
-**Examples:**
-- `feature/INI-16-youtube-post-graphql`
-- `bugfix/INI-23-fix-auth-middleware`
-- `chore/INI-8-update-dependencies`
+Example: `feature/INI-16-youtube-post-graphql`
 
 ### GitHub Issues with GSD Plans
 
-When creating issues that correspond to GSD plans, include:
+Include: GSD Plan Reference (`.planning/phases/{phase}/{plan}-PLAN.md`), acceptance criteria from `must_haves.truths`, dependencies if present.
 
-1. **GSD Plan Reference** section with path: `.planning/phases/{phase}/{plan}-PLAN.md`
-2. **Acceptance criteria** matching the plan's `must_haves.truths`
-3. **Dependencies** section if the plan has `depends_on`
+## Agent Delegation
 
-## Agent Delegation Strategy
+| Task | Model | Subagent |
+|------|-------|----------|
+| Architecture decisions | Opus | — |
+| Go implementation | Sonnet | `go-backend` |
+| GraphQL schema | Sonnet | `graphql-designer` |
+| DB migrations | Sonnet | `db-migration` |
+| Code review | Haiku | `code-reviewer` |
+| Test generation | Haiku | `test-writer` |
 
-| Task Type | Model | Subagent | Rationale |
-|-----------|-------|----------|-----------|
-| Architecture decisions | Opus | - | Complex multi-file reasoning |
-| Go implementation | Sonnet | `go-backend` | Balanced quality/cost |
-| GraphQL schema design | Sonnet | `graphql-designer` | Schema patterns |
-| Database migrations | Sonnet | `db-migration` | SQL generation |
-| Code review | Haiku | `code-reviewer` | Fast pattern matching |
-| Test generation | Haiku | `test-writer` | Boilerplate generation |
+## GSD Workflow
 
-## Workflow Integration
+Planning and execution artifacts in `.planning/`: `PROJECT.md`, `ROADMAP.md`, `STATE.md`, `phases/`. Branching: see [docs/GSD_BRANCHING.md](docs/GSD_BRANCHING.md).
 
-This project uses **GSD workflow** for planning and execution. See `.planning/` for:
-- `PROJECT.md` - Project definition and requirements
-- `ROADMAP.md` - Phase-based milestone planning
-- `STATE.md` - Current position and accumulated context
-- `phases/` - Detailed execution plans
+## Self-Verification
 
-### GSD Workflow Branching
-
-See [docs/GSD_BRANCHING.md](docs/GSD_BRANCHING.md) for stacked PR workflow and `.planning/config.json` branching config.
-
-## Self-Verification Workflow
-
-Before marking any work complete, run interactive verification:
-
-### GSD Plan Verification
-
-For each plan's `must_haves`:
-
-| Check | Command |
-|-------|---------|
-| `truths` | Run actual command, verify output |
-| `artifacts.path` | `test -f {path} && echo "exists"` |
-| `artifacts.contains` | `grep -q "{pattern}" {path}` |
-| `artifacts.min_lines` | `wc -l < {path}` ≥ N |
-| `key_links.pattern` | `grep -q "{pattern}" {from}` |
-
-### Evidence Capture
-
-Before creating PR:
-- Screenshot at mobile (375px), tablet (768px), desktop (1024px+)
-- Console output showing no errors
-- Verification commands output
+Before marking work complete, verify against plan `must_haves` and capture evidence. See [docs/VERIFICATION.md](docs/VERIFICATION.md) for checklist and evidence capture workflow.
 
 ## Code Search with qmd
 
-This project has qmd indexing enabled. **Prefer qmd over Read/Glob for exploration.**
+**Prefer qmd MCP tools over Read/Glob for exploration.** Two collections:
 
-| Task | Tool | Example |
-|------|------|---------|
-| Quick keyword lookup | `qmd_search` | Find files mentioning "GraphQL" |
-| Semantic/concept search | `qmd_vsearch` | Find "authentication patterns" |
-| Complex questions | `qmd_query` | "How does pagination work?" |
-| Get specific file | `qmd_get` | Retrieve by path after search |
-| Batch retrieve | `qmd_multi_get` | Get multiple files by glob |
+| Collection | Scope | Use for |
+|------------|-------|---------|
+| `perspectize` | Source code, docs, configs | Codebase understanding, pattern discovery |
+| `planning` | `.planning/` files | Project context, roadmap, research, completed phases |
 
-**Workflow:**
-1. Use `qmd_search` or `qmd_query` first for exploration
-2. Use `qmd_get` to retrieve specific files from search results
-3. Fall back to `Read`/`Glob` only if qmd doesn't return enough context
+| Tool | When to use |
+|------|-------------|
+| `qmd_search` | Quick keyword lookup |
+| `qmd_vsearch` | Semantic/concept search |
+| `qmd_query` | Complex questions (BM25 + vector + reranking) |
+| `qmd_get` / `qmd_multi_get` | Retrieve specific files from search results |
 
-**Re-index after major changes:**
-```bash
-qmd update  # Re-index modified files
-qmd embed   # Update embeddings (run periodically)
-```
+**Stable vs live files:** Use qmd for stable reference (PROJECT.md, ROADMAP.md, research/*, completed SUMMARYs). **Always `Read` fresh:** STATE.md and the current phase PLAN.md — qmd index may be stale.
 
-**`.planning/` files** are indexed in a separate `planning` collection. Use qmd to discover and query planning context without consuming conversation context reading large files.
+**For GSD agents:** Start with `qmd_query` for context, `Read` STATE.md and current PLAN.md fresh, avoid broad `Glob`/`Read` sweeps.
 
-| File type | Use | Rationale |
-|-----------|-----|-----------|
-| `PROJECT.md`, `ROADMAP.md`, `REQUIREMENTS.md` | `qmd_query -c planning` | Stable reference — rarely changes |
-| `research/*`, `codebase/*`, completed `*-SUMMARY.md` | `qmd_query -c planning` | Historical context — never changes |
-| `STATE.md` | **Always `Read` fresh** | Mutated during execution — qmd index may be stale |
-| Current phase `*-PLAN.md` | **Always `Read` fresh** | Actively being worked from |
-
-**For GSD agents:** When spawning gsd-executor or gsd-planner subagents, they should:
-1. Use `qmd_query -c planning` for project context (roadmap, research, completed phases)
-2. **`Read` STATE.md and the current PLAN.md fresh** — never rely on qmd for these
-3. Use `qmd_query -c perspectize` to understand relevant codebase context
-4. Avoid broad `Glob`/`Read` sweeps that consume tokens
+**Re-index:** `qmd update && qmd embed`
 
 ## Resources
 
-**Project Documentation:**
-- [Architecture](docs/ARCHITECTURE.md) - System design and hexagonal architecture
-- [Local Development](docs/LOCAL_DEVELOPMENT.md) - Setup guide
-- [Agent Routing](docs/AGENTS.md) - AI agent navigation guide
-
-**External References:**
-- [gqlgen Documentation](https://gqlgen.com/)
-- [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/)
-- [Effective Go](https://go.dev/doc/effective_go)
-- [PostgreSQL 18 Documentation](https://www.postgresql.org/docs/18/)
+- [Architecture](docs/ARCHITECTURE.md) — System design and hexagonal architecture
+- [Local Development](docs/LOCAL_DEVELOPMENT.md) — Setup guide
+- [Agent Routing](docs/AGENTS.md) — AI agent navigation guide
+- [gqlgen](https://gqlgen.com/) | [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/) | [Effective Go](https://go.dev/doc/effective_go) | [PostgreSQL 18](https://www.postgresql.org/docs/18/)
