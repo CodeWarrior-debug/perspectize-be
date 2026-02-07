@@ -13,7 +13,8 @@ This roadmap delivers a functional SvelteKit frontend for Perspectize, enabling 
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - SvelteKit project setup with design system, tooling, and navigation skeleton
-- [ ] **Phase 2: Data Layer + Activity** - TanStack Query integration, AG Grid table, user selector
+- [x] **Phase 2: Data Layer + Activity** - TanStack Query integration, AG Grid table, user selector
+- [ ] **Phase 2.1: Mobile Responsive Fixes** - Fix header overflow, pagination bar, and table layout at 375px (INSERTED)
 - [ ] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
 - [ ] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
@@ -54,8 +55,20 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 02-01-PLAN.md — Backend users query + frontend query definitions + user selection store + tests
-- [ ] 02-02-PLAN.md — Activity page with AG Grid table, UserSelector in header, visual checkpoint
+- [x] 02-01-PLAN.md — Backend users query + frontend query definitions + user selection store + tests
+- [x] 02-02-PLAN.md — Activity page with AG Grid table, UserSelector in header, visual checkpoint
+
+### Phase 2.1: Mobile Responsive Fixes (INSERTED)
+**Goal**: Fix P1/P2 mobile responsive issues at 375px so the Activity page is fully usable on iPhone SE
+**Depends on**: Phase 2
+**Success Criteria** (what must be TRUE):
+  1. Header fits at 375px — logo, user selector, and Add Video button all visible without clipping
+  2. AG Grid pagination bar is readable and usable at 375px
+  3. Table content aligns within viewport bounds (no left-shift overflow)
+**Plans**: TBD (run /gsd:plan-phase 2.1 to break down)
+
+Plans:
+- [ ] TBD
 
 ### Phase 3: Add Video Flow
 **Goal**: Users can add YouTube videos by pasting a URL, with automatic metadata fetch and feedback
@@ -83,12 +96,11 @@ Plans:
   3. User can enter Like text and Review text (freeform)
   4. User sees validation error toasts before submission if form is invalid
   5. User sees success toast after perspective is created, attributed to selected user
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 04-01: TanStack Form setup with video selector
-- [ ] 04-02: Rating inputs with progress bar visualization
-- [ ] 04-03: Like, Review fields and form validation
+- [ ] 04-01-PLAN.md — Mutation definition, shadcn Progress/Textarea, RatingInput and VideoSelector components with tests
+- [ ] 04-02-PLAN.md — AddPerspectiveDialog with TanStack Form, Header wiring, validation, visual checkpoint
 
 ### Phase 5: Testing + Deployment
 **Goal**: Application is tested, deployed, and accessible via public URL with proper CORS
@@ -109,12 +121,13 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/5 | Complete | 2026-02-07 |
-| 2. Data Layer + Activity | 0/2 | Not started | - |
+| 2. Data Layer + Activity | 2/2 | Complete | 2026-02-07 |
+| 2.1 Mobile Responsive Fixes | 0/? | Not started | - |
 | 3. Add Video Flow | 0/2 | Not started | - |
-| 4. Add Perspective Flow | 0/3 | Not started | - |
+| 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 0/3 | Not started | - |

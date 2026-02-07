@@ -103,21 +103,27 @@ Queries use `graphql-request` with TanStack Svelte Query.
 2. Client in `lib/queries/client.ts` — uses `VITE_GRAPHQL_URL` (defaults to `http://localhost:8080/graphql`)
 3. QueryClientProvider wraps app in `+layout.svelte` with `enabled: browser` to prevent SSR queries
 
+**Svelte 5 API (CRITICAL):** TanStack Query v5+ with Svelte 5 uses a **function wrapper** pattern. Query results are reactive objects, NOT stores (no `$` prefix).
+
 ```svelte
 <script lang="ts">
   import { createQuery } from '@tanstack/svelte-query';
   import { graphqlClient } from '$lib/queries/client';
   import { LIST_CONTENT } from '$lib/queries/content';
 
-  const query = createQuery({
+  // Function wrapper pattern — pass a function returning options
+  const query = createQuery(() => ({
     queryKey: ['content'],
     queryFn: () => graphqlClient.request(LIST_CONTENT)
-  });
+  }));
 </script>
 
+<!-- Access as reactive object properties (NO $ prefix) -->
 {#if query.isLoading}Loading...{/if}
 {#if query.data}{JSON.stringify(query.data)}{/if}
 ```
+
+**Do NOT:** Use `$query.data` (stores syntax) · Pass options object directly to `createQuery({...})` (must be function wrapper)
 
 ## AG Grid Svelte 5 Setup (CRITICAL)
 

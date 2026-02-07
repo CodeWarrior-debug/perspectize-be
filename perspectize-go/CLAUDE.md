@@ -92,9 +92,15 @@ Error handling & DB query patterns: [docs/GO_PATTERNS.md](../docs/GO_PATTERNS.md
 7. Wire: `cmd/server/main.go`
 8. Tests: `test/services/`, `test/repositories/`
 
+## CORS
+
+CORS middleware is configured in `cmd/server/main.go` for local development. Currently allows all origins (`*`). Phase 5 will restrict to the frontend's production origin.
+
 ## Gotchas
 
 **GraphQL defaults:** gqlgen passes `first: Int = 10` as non-nil pointer (value `10`), not `nil`. Tests must expect the default value.
+
+**Adding repository interface methods:** When adding a new method to a port interface (e.g., `ListAll` on `UserRepository`), all test mocks that implement that interface must also be updated or compilation fails. Check `test/` for mock implementations.
 
 **JSON scalar:** Use `graphql.Map` (configured as `JSON` in `gqlgen.yml`) for JSONB data.
 

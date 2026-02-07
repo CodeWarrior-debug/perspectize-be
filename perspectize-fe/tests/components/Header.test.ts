@@ -10,6 +10,16 @@ vi.mock('svelte-sonner', () => ({
 	Toaster: vi.fn()
 }));
 
+// Mock UserSelector component
+vi.mock('$lib/components/UserSelector.svelte', () => ({
+	default: vi.fn(() => ({
+		$$: {},
+		$set: vi.fn(),
+		$on: vi.fn(),
+		$destroy: vi.fn(),
+	})),
+}));
+
 function renderHeader() {
 	const result = render(Header);
 	const header = result.container.querySelector('header');

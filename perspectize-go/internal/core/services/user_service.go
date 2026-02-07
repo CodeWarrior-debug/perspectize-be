@@ -103,3 +103,12 @@ func (s *UserService) GetByUsername(ctx context.Context, username string) (*doma
 	}
 	return user, nil
 }
+
+// ListAll retrieves all users
+func (s *UserService) ListAll(ctx context.Context) ([]*domain.User, error) {
+	users, err := s.repo.ListAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list users: %w", err)
+	}
+	return users, nil
+}

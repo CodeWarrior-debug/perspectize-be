@@ -17,6 +17,15 @@ describe('GraphQL query definitions', () => {
 			expect(LIST_CONTENT).toContain('$after: String');
 		});
 
+		it('includes sorting parameters', () => {
+			expect(LIST_CONTENT).toContain('$sortBy: ContentSortBy');
+			expect(LIST_CONTENT).toContain('$sortOrder: SortOrder');
+		});
+
+		it('includes includeTotalCount parameter', () => {
+			expect(LIST_CONTENT).toContain('$includeTotalCount: Boolean');
+		});
+
 		it('requests expected content fields', () => {
 			expect(LIST_CONTENT).toContain('id');
 			expect(LIST_CONTENT).toContain('name');
@@ -24,6 +33,11 @@ describe('GraphQL query definitions', () => {
 			expect(LIST_CONTENT).toContain('contentType');
 			expect(LIST_CONTENT).toContain('createdAt');
 			expect(LIST_CONTENT).toContain('updatedAt');
+		});
+
+		it('requests length and lengthUnits fields', () => {
+			expect(LIST_CONTENT).toContain('length');
+			expect(LIST_CONTENT).toContain('lengthUnits');
 		});
 
 		it('includes pageInfo for cursor pagination', () => {

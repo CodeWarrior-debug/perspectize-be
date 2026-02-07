@@ -1,38 +1,82 @@
 <script lang="ts">
-	import { toast } from 'svelte-sonner';
-	import { Button } from '$lib/components/shadcn';
+	import { createQuery } from '@tanstack/svelte-query';
+	import { graphqlClient } from '$lib/queries/client';
+	import { LIST_CONTENT } from '$lib/queries/content';
 	import PageWrapper from '$lib/components/PageWrapper.svelte';
-	import AGGridTest from '$lib/components/AGGridTest.svelte';
+	import ActivityTable from '$lib/components/ActivityTable.svelte';
+
+	interface ContentItem {
+		id: string;
+		name: string;
+		url: string | null;
+		contentType: string;
+		length: number | null;
+		lengthUnits: string | null;
+		createdAt: string;
+		updatedAt: string;
+	}
+
+	interface ContentResponse {
+		content: {
+			items: ContentItem[];
+			pageInfo: {
+				hasNextPage: boolean;
+				endCursor: string | null;
+			};
+			totalCount: number;
+		};
+	}
+
+	let searchText = $state('');
+
+	const contentQuery = createQuery(() => ({
+		queryKey: ['content', { first: 100, sortBy: 'UPDATED_AT', sortOrder: 'DESC' }],
+		queryFn: () => graphqlClient.request(LIST_CONTENT, {
+			first: 100,
+			sortBy: 'UPDATED_AT',
+			sortOrder: 'DESC'
+		}),
+		staleTime: 60 * 1000, // 1 minute
+		retry: 1
+	}));
+
+	const rowData = $derived(contentQuery.data?.content.items ?? []);
 </script>
 
 <PageWrapper>
-	<h1 class="text-3xl font-bold mb-4">Activity</h1>
-	<p class="text-muted-foreground mb-8">
-		Recently updated content will appear here. (Phase 2)
-	</p>
-
-	<!-- AG Grid Validation Section -->
-	<section class="mb-12">
-		<AGGridTest />
-	</section>
-
-	<!-- Toast and Theme Tests -->
-	<section class="border-t border-border pt-8">
-		<h2 class="text-xl font-semibold mb-4">Theme & Toast Tests</h2>
-
-		<div class="space-x-4 mb-4">
-			<Button>Primary (Navy)</Button>
-			<Button variant="secondary">Secondary</Button>
-			<Button variant="outline">Outline</Button>
+	<div class="space-y-6">
+		<div>
+			<h1 class="text-3xl font-bold mb-2">Activity</h1>
+			<p class="text-muted-foreground">
+				Recently updated content
+			</p>
 		</div>
 
-		<div class="space-x-4">
-			<Button variant="outline" size="sm" onclick={() => toast.success('Success!')}>
-				Success Toast
-			</Button>
-			<Button variant="outline" size="sm" onclick={() => toast.error('Error!')}>
-				Error Toast
-			</Button>
+		<!-- Search input -->
+		<div>
+			<input
+				type="text"
+				bind:value={searchText}
+				placeholder="Search content..."
+				class="w-full max-w-md px-4 py-2 border border-input rounded-md bg-background text-sm"
+			/>
 		</div>
-	</section>
+
+		<!-- Content Table -->
+		{#if contentQuery.isLoading}
+			<div class="py-12 text-center text-muted-foreground">
+				<p>Loading content...</p>
+			</div>
+		{:else if contentQuery.error}
+			<div class="py-12 text-center text-destructive">
+				<p>Error loading content: {contentQuery.error.message}</p>
+			</div>
+		{:else if rowData.length === 0}
+			<div class="py-12 text-center text-muted-foreground">
+				<p>No content found</p>
+			</div>
+		{:else}
+			<ActivityTable {rowData} loading={contentQuery.isLoading} {searchText} />
+		{/if}
+	</div>
 </PageWrapper>

@@ -5,33 +5,34 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 1 complete — Phase 2 next
+**Current focus:** Phase 2 complete — Phase 2.1 (Mobile Responsive Fixes) next
 
 ## Current Position
 
-Phase: 1 of 5 (Foundation)
-Plan: 5 of 5 in current phase
-Status: Phase complete
-Last activity: 2026-02-07 — Completed 01-05-PLAN.md (Test Coverage)
+Phase: 2 of 5 (Data Layer + Activity) — COMPLETE
+Plan: 2/2 complete
+Status: Complete — verified via Chrome DevTools MCP
+Last activity: 2026-02-07 — Phase 2 complete, all success criteria verified
 
-Progress: [██░░░░░░░░] 20%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 8 min
-- Total execution time: 0.6 hours
+- Total plans completed: 7
+- Average duration: 6 min
+- Total execution time: 0.8 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation | 5 | 36 min | 7 min |
+| 02-data-layer-activity | 2 | 9 min | 4.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 6 min, 8 min, 17 min, 0 min (04), 5 min (avg: 7 min)
-- Trend: Stable with fast automated plans
+- Last 5 plans: 17 min, 0 min (04), 5 min, 6 min, 3 min (avg: 6 min)
+- Trend: Accelerating — automated plans completing faster
 
 *Updated after each plan completion*
 
@@ -58,6 +59,12 @@ Recent decisions affecting current work:
 - [01-05]: Browser resolve condition in vite.config.ts for Svelte 5 component testing
 - [01-05]: Branch coverage threshold at 75% (vs 80% for others) due to Svelte compiler default parameter branches
 - [01-05]: createRawSnippet pattern for testing Svelte 5 components with children props
+- [02-01]: Setter-based session sync for Svelte 5 stores (not $effect) for testability
+- [02-01]: Simple ListAll repository method (no pagination) for small datasets
+- [02-01]: Namespaced session storage key: perspectize:selectedUserId
+- [02-02]: TanStack Query function wrapper pattern for Svelte 5: createQuery(() => ({ ... }))
+- [02-02]: Client-side AG Grid pagination (first: 100) for Phase 2 simplicity
+- [02-02]: AG Grid Quick Filter for text search (no backend search yet)
 - [Infra]: CLAUDE.md split into root + perspectize-go/CLAUDE.md + perspectize-fe/CLAUDE.md for package-level context loading
 - [Infra]: Go module renamed from `github.com/yourorg/perspectize-go` to `github.com/CodeWarrior-debug/perspectize-be/perspectize-go` (30 files, all 78 tests pass)
 - [Infra]: Docs delegated to docs/ directory: VERIFICATION.md, DOMAIN_GUIDE.md, GO_PATTERNS.md, GITHUB_PROJECTS.md, GSD_BRANCHING.md
@@ -65,13 +72,17 @@ Recent decisions affecting current work:
 - [Infra]: All three CLAUDE.md files scored 95/100 (A) quality after optimization
 - [Frontend]: Svelte 5 runes, SvelteKit routing, TanStack Query patterns documented in perspectize-fe/CLAUDE.md
 
+### Roadmap Evolution
+
+- Phase 02.1 inserted after Phase 2: Mobile Responsive Fixes (URGENT) — P1 issues: header overflow/clipping at 375px, pagination bar broken, table left-shift overflow
+
 ### Pending Todos
 
 None yet.
 
 ### Blockers/Concerns
 
-None - Phase 1 complete with all validation successful.
+None - Phase 2 complete with all validation successful.
 
 ## Session Log
 
@@ -99,8 +110,8 @@ None - Phase 1 complete with all validation successful.
 
 ## Session Continuity
 
-Last session: 2026-02-07T07:54:30Z
-Stopped at: Completed 01-05-PLAN.md (Test Coverage) — Phase 1 Foundation complete
+Last session: 2026-02-07T09:41:54Z
+Stopped at: Phase 2 complete — all success criteria verified via Chrome DevTools MCP
 Resume file: None
 
 ### 2026-02-07 — Plan 01-05: Test Coverage
@@ -125,3 +136,62 @@ Resume file: None
 - tests/unit/shadcn-barrel.test.ts (4 tests - barrel exports)
 - tests/components/Header.test.ts (9 tests - Header component)
 - tests/components/PageWrapper.test.ts (6 tests - PageWrapper component)
+
+### 2026-02-07 — Plan 02-01: Data Layer Foundation
+
+**Branch:** `feature/INI-47-phase-02-data-layer-activity`
+
+**Work completed:**
+1. **Backend users list query** — GraphQL `users: [User!]!` query implemented through full hexagonal architecture stack
+2. **Frontend query definitions** — LIST_USERS query created, LIST_CONTENT updated with sort/pagination params
+3. **User selection store** — Session-persistent store with Svelte 5 runes using setter-based sync pattern
+4. **Unit tests** — 13 new tests for queries and store (total: 55 frontend tests, 78+ backend tests)
+5. **Svelte 5 runes pattern** — Established testable pattern for module-level stores without $effect
+
+**Commits:**
+- `4575b3d` feat(02-01): add users list query to backend
+- `9e5de4f` feat(02-01): add frontend query definitions and user selection store
+- `c003722` test(02-01): add unit tests for frontend data layer
+
+**Key patterns established:**
+- Setter-based session sync for Svelte 5 stores (not $effect) for testability
+- GraphQL query parameter expansion pattern (sort, pagination, includeTotalCount)
+- Repository ListAll pattern for fetching all records without pagination
+
+**Files created:**
+- perspectize-fe/src/lib/queries/users.ts (LIST_USERS query)
+- perspectize-fe/src/lib/stores/userSelection.svelte.ts (session-persistent store)
+- perspectize-fe/tests/unit/queries-users.test.ts
+- perspectize-fe/tests/unit/stores-userSelection.test.ts
+
+**Duration:** 6 min
+
+### 2026-02-07 — Plan 02-02: Activity Page UI
+
+**Branch:** `feature/INI-47-phase-02-data-layer-activity`
+
+**Work completed:**
+1. **ActivityTable component** — AG Grid wrapper with 5 columns (Title, Type, Duration, Date Added, Last Updated), Quick Filter search, pagination (10/25/50)
+2. **UserSelector component** — User dropdown with TanStack Query fetching users list, session storage persistence
+3. **Activity page** — TanStack Query integration, search input, ActivityTable component with real content data
+4. **Header update** — UserSelector added before Add Video button
+5. **Component tests** — ActivityTable (4 tests), UserSelector (2 tests), Header tests updated (9 tests)
+
+**Commits:**
+- `d4ff7a2` feat(02-02): create ActivityTable and UserSelector components
+- `45c3af2` feat(02-02): wire Activity page and update Header, add component tests
+
+**Key patterns established:**
+- TanStack Query function wrapper for Svelte 5: `createQuery(() => ({ ... }))`
+- TanStack Query returns reactive object (not store) - access directly, not with $
+- AG Grid reactive loading state via $effect
+- Component mocking strategy for tests with QueryClient dependencies
+
+**Files created:**
+- perspectize-fe/src/lib/components/ActivityTable.svelte (AG Grid wrapper)
+- perspectize-fe/src/lib/components/UserSelector.svelte (User dropdown)
+- perspectize-fe/tests/components/ActivityTable.test.ts
+- perspectize-fe/tests/components/UserSelector.test.ts
+- perspectize-fe/tests/helpers/TestWrapper.svelte
+
+**Duration:** 3 min
