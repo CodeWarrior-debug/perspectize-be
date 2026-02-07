@@ -577,6 +577,98 @@ input PerspectiveFilter {
 3. Add DB converter if stored in PostgreSQL
 4. Run `make graphql-gen`
 
+### AG Grid Svelte 5 Setup (CRITICAL)
+
+The `ag-grid-svelte5` wrapper bundles AG Grid v32.x internally. **Do NOT install `ag-grid-community` separately** — it causes version conflicts.
+
+**Correct setup:**
+```bash
+pnpm add ag-grid-svelte5 @ag-grid-community/core@32.2.1 @ag-grid-community/client-side-row-model@32.2.1 @ag-grid-community/theming@32.2.0
+```
+
+**Correct imports:**
+```svelte
+<script lang="ts">
+  import AgGridSvelte5Component from 'ag-grid-svelte5';
+  import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
+  import { themeQuartz } from '@ag-grid-community/theming';
+  import type { GridOptions } from '@ag-grid-community/core';
+
+  const modules = [ClientSideRowModelModule];
+  const theme = themeQuartz.withParams({ fontFamily: 'Inter, sans-serif' });
+</script>
+
+<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
+```
+
+**Do NOT:**
+- ❌ Import from `ag-grid-community` (use `@ag-grid-community/*` packages)
+- ❌ Import AG Grid CSS in app.css (use `themeQuartz.withParams()`)
+- ❌ Use `AgGridSvelte` (use `AgGridSvelte5Component`)
+
+### GSD Workflow Branching
+
+By default, GSD executes all plans on the current branch. For stacked PRs:
+
+1. **Configure branching in `.planning/config.json`:**
+   ```json
+   {
+     "branching_strategy": "phase",
+     "phase_branch_template": "feature/{issue}-plan-{phase}-{slug}"
+   }
+   ```
+
+2. **Or create branches manually after execution:**
+   ```bash
+   # Create branch at each plan's completion commit
+   git branch feature/plan-01-01 <commit-hash>
+   git branch feature/plan-01-02 <commit-hash>
+   ```
+
+3. **Create stacked PRs:**
+   - PR 1: plan-01-01 → main
+   - PR 2: plan-01-02 → plan-01-01
+   - PR 3: plan-01-03 → plan-01-02
+   - Merge sequentially
+
+## Code Search with qmd
+
+This project has qmd indexing enabled. **Prefer qmd over Read/Glob for exploration.**
+
+| Task | Tool | Example |
+|------|------|---------|
+| Quick keyword lookup | `qmd_search` | Find files mentioning "GraphQL" |
+| Semantic/concept search | `qmd_vsearch` | Find "authentication patterns" |
+| Complex questions | `qmd_query` | "How does pagination work?" |
+| Get specific file | `qmd_get` | Retrieve by path after search |
+| Batch retrieve | `qmd_multi_get` | Get multiple files by glob |
+
+**Workflow:**
+1. Use `qmd_search` or `qmd_query` first for exploration
+2. Use `qmd_get` to retrieve specific files from search results
+3. Fall back to `Read`/`Glob` only if qmd doesn't return enough context
+
+**Re-index after major changes:**
+```bash
+qmd update  # Re-index modified files
+qmd embed   # Update embeddings (run periodically)
+```
+
+**GSD Workflow Integration:**
+
+| GSD Phase | qmd Usage |
+|-----------|-----------|
+| `/gsd:new-project` | Use `qmd_query` to understand existing patterns before defining project |
+| `/gsd:map-codebase` | Use `qmd_search` to find all files matching architectural layers |
+| `/gsd:plan-phase` | Use `qmd_vsearch` for semantic search of similar implementations |
+| `/gsd:execute-phase` | Use `qmd_get` for targeted file retrieval from plan references |
+| Context restoration | Use `qmd_multi_get` to batch-load `.planning/` files |
+
+**For GSD agents:** When spawning gsd-executor or gsd-planner subagents, they should:
+1. Start with `qmd_query` to understand relevant codebase context
+2. Use `qmd_get` to retrieve files referenced in PLAN.md
+3. Avoid broad `Glob`/`Read` sweeps that consume tokens
+
 ## Resources
 
 **Project Documentation:**
