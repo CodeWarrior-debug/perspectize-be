@@ -298,6 +298,22 @@ func (r *queryResolver) UserByUsername(ctx context.Context, username string) (*m
 	return userDomainToModel(user), nil
 }
 
+// Users is the resolver for the users field.
+func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
+	users, err := r.UserService.ListAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list users: %w", err)
+	}
+
+	// Convert domain users to GraphQL model users
+	modelUsers := make([]*model.User, len(users))
+	for i, user := range users {
+		modelUsers[i] = userDomainToModel(user)
+	}
+
+	return modelUsers, nil
+}
+
 // PerspectiveByID is the resolver for the perspectiveByID field.
 func (r *queryResolver) PerspectiveByID(ctx context.Context, id string) (*model.Perspective, error) {
 	intID, err := strconv.Atoi(id)

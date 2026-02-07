@@ -204,6 +204,7 @@ type Query {
   # User queries
   userByID(id: ID!): User
   userByUsername(username: String!): User
+  users: [User!]!
 
   # Perspective queries
   perspectiveByID(id: ID!): Perspective

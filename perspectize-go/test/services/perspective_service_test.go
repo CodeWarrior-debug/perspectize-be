@@ -89,6 +89,10 @@ func (m *mockUserRepoForPerspective) GetByEmail(ctx context.Context, email strin
 	return nil, domain.ErrNotFound
 }
 
+func (m *mockUserRepoForPerspective) ListAll(ctx context.Context) ([]*domain.User, error) {
+	return []*domain.User{}, nil
+}
+
 // --- Create Tests ---
 
 func TestPerspectiveCreate_Success(t *testing.T) {
