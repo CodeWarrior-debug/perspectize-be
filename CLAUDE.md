@@ -10,8 +10,6 @@ Monorepo with two stacks:
 - **Backend:** `perspectize-go/` — Go GraphQL API (see `perspectize-go/CLAUDE.md`)
 - **Frontend:** `perspectize-fe/` — SvelteKit web app (see `perspectize-fe/CLAUDE.md`)
 
-**Important:** `perspectize-be/` contains legacy C# code. **Do not modify, except to delete.** All backend work happens in `perspectize-go/`.
-
 **CLAUDE.md structure:** Root file (this) contains shared concerns. Package-level files contain stack-specific instructions. Claude loads root + the relevant package file per session.
 
 ## GitHub & Repository Management
@@ -67,6 +65,26 @@ Include: GSD Plan Reference (`.planning/phases/{phase}/{plan}-PLAN.md`), accepta
 | Database migrations | Sonnet | `db-migration` | SQL generation |
 | Code review | Haiku | `code-reviewer` | Fast pattern matching |
 | Test generation | Haiku | `test-writer` | Boilerplate generation |
+
+## Coding Conventions
+
+**Naming:** Balance brevity with clarity — names should be self-describing without needing comments. Avoid both cryptic abbreviations and excessive verbosity.
+
+**Comments:** Explain **why**, not **what**. Use comments for non-obvious decisions, not to narrate code.
+
+**Learning comments:** Mark temporary explanatory comments with `*TEMP*` for easy grep/removal:
+```go
+// *TEMP* - defer runs after function returns, ensures cleanup
+defer db.Close()
+```
+
+**Commit messages:** Use conventional commit format. Keep commits focused and atomic — one logical change per commit.
+```
+type(scope): short description
+
+Optional body explaining why, not what.
+```
+Types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`
 
 ## GSD Workflow
 
