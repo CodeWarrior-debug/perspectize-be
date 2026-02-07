@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
+	import { Button } from '$lib/components/shadcn';
 	import PageWrapper from '$lib/components/PageWrapper.svelte';
-	import { Button } from '$lib/components/ui/button';
 	import AGGridTest from '$lib/components/AGGridTest.svelte';
 </script>
 

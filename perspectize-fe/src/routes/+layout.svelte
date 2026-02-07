@@ -6,8 +6,6 @@
 	import Header from '$lib/components/Header.svelte';
 	import '../app.css';
 
-	export const prerender = true;
-
 	// CRITICAL: Disable queries on server to prevent post-SSR execution
 	const queryClient = new QueryClient({
 		defaultOptions: {
