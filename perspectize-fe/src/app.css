@@ -15,3 +15,25 @@
 	--color-primary-foreground: oklch(0.983 0.004 236.862);
 }
 
+/* AG Grid pagination mobile responsive fix (GitHub issue #9239) */
+.ag-paging-panel {
+	height: auto !important;
+	flex-wrap: wrap-reverse;
+	row-gap: 1rem;
+	padding: 0.25rem;
+	align-items: center;
+	justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+	.ag-paging-panel {
+		justify-content: center;
+	}
+}
+
+@media (max-width: 375px) {
+	.ag-paging-panel {
+		font-size: 0.875rem;
+	}
+}
+
