@@ -10,6 +10,13 @@ vi.mock('svelte-sonner', () => ({
 	Toaster: vi.fn()
 }));
 
+function renderHeader() {
+	const result = render(Header);
+	const header = result.container.querySelector('header');
+	const inner = result.container.querySelector('header > div');
+	return { ...result, header, inner };
+}
+
 describe('Header component', () => {
 	it('renders without errors', () => {
 		render(Header);
@@ -21,32 +28,27 @@ describe('Header component', () => {
 	});
 
 	it('renders a header element', () => {
-		const { container } = render(Header);
-		const header = container.querySelector('header');
+		const { header } = renderHeader();
 		expect(header).toBeInTheDocument();
 	});
 
 	it('header has fixed height class (h-16)', () => {
-		const { container } = render(Header);
-		const header = container.querySelector('header');
+		const { header } = renderHeader();
 		expect(header?.className).toContain('h-16');
 	});
 
 	it('header has bottom border', () => {
-		const { container } = render(Header);
-		const header = container.querySelector('header');
+		const { header } = renderHeader();
 		expect(header?.className).toContain('border-b');
 	});
 
 	it('has responsive padding classes on inner container', () => {
-		const { container } = render(Header);
-		const inner = container.querySelector('header > div');
+		const { inner } = renderHeader();
 		expect(inner?.className).toContain('px-4');
 	});
 
 	it('has max-width constraint for large screens', () => {
-		const { container } = render(Header);
-		const inner = container.querySelector('header > div');
+		const { inner } = renderHeader();
 		expect(inner?.className).toContain('max-w-screen-xl');
 	});
 

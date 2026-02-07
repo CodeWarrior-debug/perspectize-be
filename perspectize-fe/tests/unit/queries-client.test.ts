@@ -1,20 +1,25 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
+import type { GraphQLClient } from 'graphql-request';
+
+let graphqlClient: GraphQLClient;
+
+beforeEach(async () => {
+	const mod = await import('$lib/queries/client');
+	graphqlClient = mod.graphqlClient;
+});
 
 describe('GraphQL client', () => {
-	it('exports a graphqlClient instance', async () => {
-		const { graphqlClient } = await import('$lib/queries/client');
+	it('exports a graphqlClient instance', () => {
 		expect(graphqlClient).toBeDefined();
 		expect(typeof graphqlClient.request).toBe('function');
 	});
 
-	it('client has request method for making GraphQL calls', async () => {
-		const { graphqlClient } = await import('$lib/queries/client');
+	it('client has request method for making GraphQL calls', () => {
 		expect(graphqlClient).toHaveProperty('request');
 		expect(graphqlClient).toHaveProperty('rawRequest');
 	});
 
-	it('uses default endpoint when VITE_GRAPHQL_URL is not set', async () => {
-		const { graphqlClient } = await import('$lib/queries/client');
+	it('uses default endpoint when VITE_GRAPHQL_URL is not set', () => {
 		expect(graphqlClient).toBeDefined();
 	});
 });
