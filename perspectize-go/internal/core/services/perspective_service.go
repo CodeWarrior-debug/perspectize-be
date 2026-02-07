@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/yourorg/perspectize-go/internal/core/domain"
-	"github.com/yourorg/perspectize-go/internal/core/ports/repositories"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/ports/repositories"
 )
 
 // PerspectiveService implements business logic for perspective operations

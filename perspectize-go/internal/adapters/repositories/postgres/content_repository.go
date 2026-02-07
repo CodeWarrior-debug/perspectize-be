@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/yourorg/perspectize-go/internal/core/domain"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
 )
 
 // ContentRepository implements the ContentRepository interface using PostgreSQL

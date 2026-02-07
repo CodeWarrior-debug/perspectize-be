@@ -11,11 +11,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/yourorg/perspectize-go/internal/adapters/graphql/generated"
-	"github.com/yourorg/perspectize-go/internal/adapters/graphql/model"
-	"github.com/yourorg/perspectize-go/internal/adapters/youtube"
-	"github.com/yourorg/perspectize-go/internal/core/domain"
-	"github.com/yourorg/perspectize-go/internal/core/services"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/graphql/generated"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/graphql/model"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/youtube"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/services"
 )
 
 // CreateContentFromYouTube is the resolver for the createContentFromYouTube field.

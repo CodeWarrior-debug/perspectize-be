@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/yourorg/perspectize-go/internal/adapters/graphql/model"
-	"github.com/yourorg/perspectize-go/internal/core/domain"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/graphql/model"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
 )
 
 // userDomainToModel converts a domain User to a GraphQL model User
