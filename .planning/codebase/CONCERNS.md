@@ -2,679 +2,1105 @@
 
 **Analysis Date:** 2026-02-07
 
-## Known Bugs (Frontend)
-
-### Mobile Responsive Issues (Phase 2.1)
-
-**Status:** Mostly resolved, 1 deferred.
-
-**Resolved (Phase 2.1-01):**
-- BUG-001: Header overflow at 375px (fixed with min-w-0 + truncate + responsive sizing)
-- BUG-002: AG Grid pagination bar broken (fixed with CSS override: height: auto, flex-wrap: wrap-reverse)
-- BUG-003: Sticky header clipping on scroll (same root cause as BUG-001, fixed)
-- BUG-005: Table content left-shift overflow (fixed via responsive column hiding in Phase 2.1-02)
-
-**Deferred:**
-- BUG-004 (P2): No responsive header collapse — header needs hamburger menu at mobile widths (deferred to Phase 04+ when navigation redesign happens)
-- BUG-006 (P3): No visual affordance for hidden columns — low priority, users may not know scroll reveals more (P3, evaluate after BUG-005 complete)
-
-**Files Affected:**
-- `perspectize-fe/src/lib/components/Header.svelte` — sticky header, logo overflow
-- `perspectize-fe/src/lib/components/ActivityTable.svelte` — column hiding logic, AG Grid pagination
-- `perspectize-fe/src/app.css` — AG Grid pagination CSS overrides
+Comprehensive review of technical debt, bugs, and risk areas. Primary source: `KNOWN_BUGS.md` (comprehensive audit 2026-02-07), verified against actual codebase. Organized by severity and impact.
 
 ---
 
-## Tech Debt & Missing Features
+## CRITICAL ISSUES
 
-### 1. Authentication & Authorization Not Implemented
+### C-01: No Authentication or Authorization
 
-**Issue:** No authentication middleware wired into the GraphQL API.
+**Risk:** Any client can CRUD any user's data. Complete security bypass.
 
 **Files:**
-- `perspectize-go/cmd/server/main.go` — Server setup (no auth middleware)
-- `perspectize-go/internal/middleware/` — **Directory does not exist**
-- `perspectize-go/schema.graphql` — Schema includes user field on mutations/queries but no permission checks
+- `perspectize-go/cmd/server/main.go` (line 74-93: no auth middleware)
+- `perspectize-go/internal/adapters/graphql/resolvers/schema.resolvers.go` (no auth checks in any mutation)
 
-**Current State:**
-- Users can be created via `createUser(input)` but no user context is available in resolvers
-- No bearer token validation
-- No session management
-- All endpoints are public
+**Problem:** GraphQL resolvers process all queries without verifying user identity or permissions. A malicious client can:
+- List all users with email addresses exposed
+- Create perspectives/content for any user
+- Modify/delete any user's data
+- Modify/delete any content
 
-**Impact:**
-- Anyone can create, read, update users and perspectives
-- No ownership validation (user A can modify user B's data)
-- No privacy enforcement (public/private perspectives not enforced at API layer)
+**Impact:** Application unsuitable for multi-user deployment. Data integrity cannot be guaranteed.
 
-**Fix Approach:**
-1. Create `internal/middleware/` directory
-2. Implement JWT/bearer token extraction middleware
-3. Add user context to GraphQL operation context
-4. Add permission checks in resolvers before data access
-5. Validate `userID` in mutations matches authenticated user
-
-**Priority:** High — blocks production use
+**Fix approach:**
+1. Add authentication middleware (JWT, OAuth2, or session-based)
+2. Inject authenticated user into request context
+3. Add authorization checks in all mutations (e.g., `perspective.userID == currentUser.ID`)
+4. Update GraphQL schema to include `Query.me` endpoint
+5. Add `user` input parameter to mutations instead of deriving from auth context
 
 ---
 
-### 2. GraphQL Field Resolvers Missing for Nested Data
+### C-02: Cursor Pagination Broken for Non-ID Sorts
 
-**Issue:** Schema defines nested object fields that likely have no resolver implementations.
-
-**Files:**
-- `perspectize-go/schema.graphql` (lines 41, 43) — Defines `user: User` and `content: Content` on Perspective
-- `perspectize-go/internal/adapters/graphql/resolvers/helpers.go` — Helper functions for domain-to-model conversion
-
-**Current State:**
-- Perspective type includes `user: User!` and `content: Content` fields
-- Helper function `perspectiveDomainToModel` does NOT populate `user` or `content` fields
-- Queries requesting nested User/Content data will return null without error
-
-**Impact:**
-- Clients cannot fetch user details from perspective query
-- Clients cannot fetch content details from perspective query
-- Incomplete data responses degrade usability
-
-**Test Coverage:** No integration tests verify nested field resolution
-
-**Fix Approach:**
-1. Verify/implement field resolvers for `Perspective.user()` and `Perspective.content()`
-2. Update helpers to populate these fields (will require additional repository calls)
-3. Add integration tests that query nested fields
-4. Consider DataLoader pattern for N+1 query prevention
-
-**Priority:** Medium — breaks GraphQL contract
-
----
-
-### 3. Limited Content Filtering
-
-**Issue:** ContentFilter input type has minimal filtering options.
+**Risk:** Wrong pages returned when sorting by name/date.
 
 **Files:**
-- `perspectize-go/schema.graphql` (lines 116-121) — ContentFilter definition
-- Comment in schema: `# TODO: Add additional filters (e.g., dateRange, search) or make filters dynamic`
+- `perspectize-go/internal/adapters/repositories/postgres/content_repository.go:207-336`
+- `perspectize-go/internal/adapters/repositories/postgres/perspective_repository.go:233-362`
 
-**Current Filters Available:**
-- `contentType: ContentType` (enum: YOUTUBE only)
-- `minLengthSeconds: Int`
-- `maxLengthSeconds: Int`
-
-**Missing Filters:**
-- Date range (createdAt/updatedAt)
-- Text search (name, URL)
-- View count, like count ranges
-- User-created perspectives count
-
-**Impact:** Clients cannot efficiently discover content without loading all records
-
-**Fix Approach:**
-1. Extend ContentFilter type with additional fields
-2. Update repository query builders to support new filters
-3. Write tests for filter combinations
-
-**Priority:** Low — feature enhancement, not blocker
-
----
-
-## Code Quality Issues
-
-### 4. String-to-Int Conversion Scattered in Resolvers (Anti-pattern)
-
-**Issue:** Manual ID string-to-int conversion repeated in resolver functions instead of using custom scalar.
-
-**Files:**
-- `perspectize-go/internal/adapters/graphql/resolvers/schema.resolvers.go` — Multiple `strconv.Atoi` calls
-- `perspectize-go/pkg/graphql/intid.go` — IntID custom scalar exists but underutilized
-
-**Current Pattern:**
+**Problem:** Keyset pagination cursor only encodes `id`:
 ```go
-// In resolvers - manual conversion
-intID, err := strconv.Atoi(id)
-if err != nil {
-    return false, fmt.Errorf("invalid perspective ID: %s", id)
-}
+// cursor format: base64("id:<id>")
 ```
 
-**Why It's Debt:**
-- Repetitive boilerplate scattered across resolver functions
-- Error handling inconsistent (some return nil, some return false)
-- IntID scalar exists but only used in input types, not on query/mutation IDs
+When sorting by `CREATED_AT` or `NAME`, the next page query uses the last ID but wrong sort direction, producing duplicates or missing rows.
 
-**Impact:**
-- Harder to maintain (6+ places convert IDs)
-- Inconsistent error messages
-- Future ID type changes require multiple edits
+**Correct keyset pagination requires:**
+- Encode both `id` AND the sort column value in cursor
+- Construct WHERE clause with compound condition: `(sortCol, id) > (lastSortVal, lastId)`
 
-**Fix Approach:**
-1. Update GraphQL schema to use IntID scalar for all ID fields in Query/Mutation
-2. Run `make graphql-gen` to regenerate resolvers with IntID parameters
-3. Remove strconv.Atoi calls from resolvers (gqlgen will handle conversion)
+**Impact:** Pagination UX broken for any content/perspective list sorted by date or name. Users see duplicates or missing items.
 
-**Priority:** Low — code cleanup, no functional impact
+**Fix approach:**
+1. Redesign cursor to encode `{id, sortColumnValue}` as JSON then base64
+2. Update `decodeCursor` to extract both values
+3. Refactor WHERE clause construction to use compound keyset logic
+4. Add tests for pagination with non-ID sorts (currently zero coverage)
 
 ---
 
-### 5. Inconsistent Null Handling for Not Found
+### C-03: XSS Vulnerability in AG Grid cellRenderer
 
-**Issue:** Mixed patterns for returning not-found resource.
+**Risk:** User-controlled data interpolated into HTML without escaping.
 
-**Files:**
-- `perspectize-go/internal/adapters/graphql/resolvers/schema.resolvers.go` — Various resolver functions
+**Files:** `perspectize-fe/src/lib/components/ActivityTable.svelte:64-70`
 
-**Current Patterns:**
-- UserByID/UserByUsername: `return nil, nil` (GraphQL convention)
-- ContentByID: `return nil, fmt.Errorf("content not found with ID: %s", id)` (error variant)
-- PerspectiveByID: `return nil, nil` (GraphQL convention)
-
-**Impact:**
-- Inconsistent API behavior — some null returns are silent, others error
-- Client code can't distinguish "not found" from null field
-- Makes error handling unpredictable
-
-**Fix Approach:**
-1. Standardize: nullable fields should return `nil, nil` (GraphQL convention)
-2. Update ContentByID to return `nil, nil` instead of error
-3. Document pattern in CONVENTIONS.md
-
-**Priority:** Low — behavioral inconsistency
-
----
-
-### 6. Frontend Error Handling Incomplete
-
-**Issue:** Error states exist but lack proper user feedback mechanisms.
-
-**Files:**
-- `perspectize-fe/src/routes/+page.svelte` — Shows error message but no recovery action
-- `perspectize-fe/src/lib/components/UserSelector.svelte` — Shows error state without retry mechanism
-
-**Current Pattern:**
+**Problem:**
 ```svelte
-{:else if contentQuery.error}
-  <p>Error loading content: {contentQuery.error.message}</p>
-```
-
-**Missing:**
-- Retry button after error
-- Error boundary component for graceful degradation
-- Detailed error messaging for different error types (network vs. API)
-- Sentry/error tracking integration
-
-**Impact:**
-- Users stuck with "Error loading content" message, no way to recover
-- Network errors and API errors treated the same
-- No visibility into frontend errors in production
-
-**Fix Approach:**
-1. Create error boundary component to wrap query providers
-2. Add retry logic to query hooks with exponential backoff
-3. Differentiate error types (network, GraphQL, timeout)
-4. Implement error logging service for production monitoring
-
-**Priority:** Low — UX enhancement, users can refresh manually
-
----
-
-## Testing Gaps
-
-### 7. Integration Tests Skip When Database Unavailable
-
-**Issue:** No verification that tests pass against actual PostgreSQL.
-
-**Files:**
-- `perspectize-go/test/database/postgres_test.go` — `t.Skip()` guards on DB availability
-
-**Current Pattern:**
-```go
-if os.Getenv("DATABASE_URL") == "" && !dbAvailable {
-    t.Skip("Skipping test - PostgreSQL not available...")
-}
-```
-
-**Problem:**
-- Tests silently skip in CI/local environments without database
-- Developers can't verify schema/query changes work without manual DB setup
-- Migration issues only discovered in production
-
-**Impact:**
-- False confidence in test suite (100% pass with skipped tests)
-- Integration bugs slip through review
-- Onboarding friction (must run Docker for tests)
-
-**Fix Approach:**
-1. Use testcontainers-go to spin up PostgreSQL for each test suite
-2. Run migrations automatically in test setup
-3. Fail tests if database can't start (vs. silently skip)
-4. CI must verify testcontainers work
-
-**Priority:** Medium — affects test reliability
-
----
-
-### 8. Limited Nested Object Testing
-
-**Issue:** Tests don't verify nested field resolution (User, Content on Perspective).
-
-**Files:**
-- `perspectize-go/test/resolvers/content_resolver_test.go` — Content resolver tests exist
-- No corresponding perspective resolver test file
-- Service tests (`perspective_service_test.go`) don't test nested population
-
-**Impact:**
-- Nested field bugs won't be caught by tests
-- Refactoring nested resolvers has no test safety net
-
-**Fix Approach:**
-1. Create `test/resolvers/perspective_resolver_test.go`
-2. Add integration tests that query `perspectives { user { id username } content { id name } }`
-3. Verify null handling when user/content not found
-
-**Priority:** Low — missing test coverage
-
----
-
-### 9. Frontend Component Testing Minimal
-
-**Issue:** Most Svelte components lack unit tests.
-
-**Files:**
-- `perspectize-fe/tests/unit/utils.test.ts` — Only utility function tests
-- `perspectize-fe/tests/components/` — No component tests exist
-- `perspectize-fe/src/lib/components/ActivityTable.svelte` (139 lines) — Complex AG Grid logic, no tests
-- `perspectize-fe/src/routes/+page.svelte` (82 lines) — Query integration, no tests
-
-**Coverage:**
-- TanStack Query hooks: untested
-- AG Grid event handlers: untested
-- Column visibility logic (BUG-005 fix): untested
-
-**Impact:**
-- Refactoring components risky without test safety
-- Responsive fixes (Phase 2.1) have no automated verification
-- Visual regressions undetected
-
-**Fix Approach:**
-1. Add Svelte Testing Library tests for ActivityTable
-2. Test column hiding logic at different viewport widths
-3. Mock TanStack Query for page component tests
-4. Consider visual regression testing (Percy, Playwright)
-
-**Priority:** Medium — Phase 2.1 changes should have tests
-
----
-
-## Configuration & Secrets
-
-### 10. Database Credentials Logged in Connection String
-
-**Issue:** Password appears in cleartext logs when database connection fails.
-
-**Files:**
-- `perspectize-go/cmd/server/main.go` (lines 35-39) — Conditional logging
-- `perspectize-go/internal/config/config.go` — GetDSN constructs connection string
-
-**Current Mitigation:**
-```go
-// Mask credentials in log output
-if os.Getenv("DATABASE_URL") != "" {
-    log.Println("Connecting to database using DATABASE_URL...")
-} else {
-    log.Printf("Connecting to database at %s:%d/%s...",
-        cfg.Database.Host, cfg.Database.Port, cfg.Database.Name)
-}
-```
-
-**Remaining Risk:**
-- If DATABASE_URL env var is empty but Password is set, connection fails silently
-- Error messages from sqlx.Connect may leak password if database connection fails
-- Logs at debug/trace level might expose full DSN
-
-**Impact:** Moderate — credential exposure in error logs
-
-**Fix Approach:**
-1. Always use DATABASE_URL in production (per CLAUDE.md guidance)
-2. Never log full connection string
-3. Use structured logging (slog, not fmt.Printf)
-4. Mask password in all error messages
-
-**Priority:** Medium — security hardening
-
----
-
-## Fragile Areas
-
-### 11. YouTube API Client Has Silent Duration Parsing Failure
-
-**Issue:** ISO8601 duration parsing defaults to 0 without logging error.
-
-**Files:**
-- `perspectize-go/internal/adapters/youtube/client.go` (lines 90-93)
-
-**Current Code:**
-```go
-duration, err := ParseISO8601Duration(item.ContentDetails.Duration)
-if err != nil {
-    duration = 0 // Default to 0 if parsing fails
-}
-```
-
-**Problem:**
-- Parsing errors are silently swallowed
-- Content gets saved with length = 0 and lengthUnits = null
-- No way to detect if video metadata was incomplete
-
-**Impact:**
-- Incorrect video durations in API
-- Users can't filter by length (always falls outside min/max ranges)
-- Debugging why content appears broken is hard
-
-**Fix Approach:**
-1. Return error from GetVideoMetadata if duration parsing fails
-2. Log parsing failures with context (videoID, raw duration string)
-3. Consider retry logic for YouTube API transients
-4. Add test case for non-standard duration formats
-
-**Priority:** Low — data quality issue
-
----
-
-### 12. JSONB Array Column Type Has Custom Scanner
-
-**Issue:** Complex custom type for jsonb[] columns adds maintenance burden.
-
-**Files:**
-- `perspectize-go/internal/adapters/repositories/postgres/perspective_repository.go` (lines 17-44)
-
-**Current Implementation:**
-```go
-type JSONBArray []string
-func (a *JSONBArray) Scan(src interface{}) error { ... }
-func (a JSONBArray) Value() (driver.Value, error) { ... }
-```
-
-**Problem:**
-- Custom scanner wraps pq.StringArray
-- Not used elsewhere in codebase (potential dead code)
-- If jsonb[] column schema changes, this breaks silently
-- Alternative: Store as JSON array in JSONB (simpler)
-
-**Impact:** Low — code smell, no immediate functional impact
-
-**Fix Approach:**
-1. Verify where JSONBArray is actually used in schema
-2. If only one column uses it, consider standardizing to pure JSONB instead
-3. Add type documentation explaining why custom type is needed
-4. Add test verifying scanner handles NULL, empty array, and populated array
-
-**Priority:** Low — refactoring candidate
-
----
-
-### 13. GraphQL Error Responses Lack Machine-Readable Error Codes
-
-**Issue:** GraphQL error responses are ad-hoc error messages without error codes.
-
-**Files:**
-- `perspectize-go/internal/adapters/graphql/resolvers/schema.resolvers.go` — Errors are fmt.Errorf strings
-
-**Current Errors:**
-- "user already exists: %w"
-- "invalid input: %w"
-- "resource not found"
-
-**Problem:**
-- Clients can't reliably parse error type from message
-- No standard error codes (like REST status codes)
-- Error mapping is inconsistent
-
-**Impact:** Clients must implement fragile string parsing to handle errors
-
-**Fix Approach:**
-1. Define error code constants in domain/errors.go
-2. Create custom GraphQL error extension format
-3. Update resolvers to include error codes in response
-4. Document error catalog in CONVENTIONS.md
-
-**Priority:** Low — future enhancement
-
----
-
-## Security & Performance
-
-### 14. No Query Complexity Limits (DoS Vulnerability)
-
-**Issue:** GraphQL queries have no depth or complexity restrictions.
-
-**Files:**
-- `perspectize-go/cmd/server/main.go` (lines 74-75) — Server setup
-
-**Current Setup:**
-```go
-srv := handler.NewDefaultServer(generated.NewExecutableSchema(...))
-```
-
-**Missing:**
-- Query complexity calculation
-- Depth limiting (prevents `perspectives { user { perspectives { user { ... } } } }`)
-- Timeout on resolver execution
-- Rate limiting
-
-**Potential Attack:**
-```graphql
-{
-  perspectives(first: 1000000) {
-    items {
-      user {
-        perspectives(first: 1000000) { items { ... } }
-      }
+cellRenderer: (params: { data?: ContentRow }) => {
+    if (!params.data) return '';
+    if (params.data.url) {
+        return `<a href="${params.data.url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">${params.data.name}</a>`;
     }
-  }
+    return params.data.name;
 }
 ```
 
-**Impact:** DoS vulnerability — malicious queries can exhaust server resources
+If `params.data.name` contains `<img src=x onerror=alert(1)>` or `params.data.url` contains `javascript:alert(1)`, it executes in the grid cell.
 
-**Fix Approach:**
-1. Add gqlgen complexity analyzer config
-2. Set per-query complexity budget (e.g., max 1000 points)
-3. Add timeout middleware (ctx.WithTimeout)
-4. Add request rate limiting
+**Impact:** XSS attack via backend response. Attacker can steal session tokens, post as user, modify page.
 
-**Priority:** High — security issue, should address before public launch
+**Fix approach:**
+1. Use `document.createElement()` instead of template string interpolation
+2. Or use AG Grid's built-in sanitization (check ag-grid-svelte5 options)
+3. Or use Svelte template syntax with `{@html ...}` guards for explicit trust boundary
 
 ---
 
-### 15. CORS Allows All Origins in Production Config
+### C-04: No GraphQL Query Complexity Limiting
 
-**Issue:** GraphQL server allows requests from any origin with `Access-Control-Allow-Origin: *`.
+**Risk:** DoS vector via deeply nested queries.
 
-**Files:**
-- `perspectize-go/cmd/server/main.go` (lines 78-89) — CORS middleware
+**Files:** `perspectize-go/cmd/server/main.go:75` (handler initialization)
 
-**Current Implementation:**
+**Problem:** gqlgen server has no complexity calculator configured. Query like:
+```graphql
+query {
+  perspectives { perspectives { perspectives { ... } } }
+}
+```
+will cause unbounded recursion or O(n²) query execution.
+
+**Impact:** Attacker can crash backend with single malicious query.
+
+**Fix approach:**
+1. Add `complexity.go` with `ComplexityCalculator` function
+2. Register in handler config before `NewDefaultServer()`
+3. Set complexity budget (e.g., 1000) and check before execution
+4. Test with nested query bombs
+
+---
+
+### C-05: Wildcard CORS Configuration
+
+**Risk:** `Access-Control-Allow-Origin: *` allows any origin.
+
+**Files:** `perspectize-go/cmd/server/main.go:80`
+
+**Problem:**
 ```go
-corsHandler := func(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        w.Header().Set("Access-Control-Allow-Origin", "*")
-        ...
-    })
+w.Header().Set("Access-Control-Allow-Origin", "*")
+```
+
+A malicious website can make requests to the GraphQL API on behalf of your users' browsers (if authentication were in place). Combined with C-01 (no auth), this is less critical but still wrong.
+
+**Impact:** Cross-site request forgery (CSRF) possible once auth is added. Currently moot due to C-01.
+
+**Fix approach:**
+1. Replace wildcard with explicit frontend URL (e.g., `https://perspectize.com`)
+2. Use environment variable for origin (dev = `http://localhost:5173`, prod = frontend domain)
+3. Update `perspectize-fe/CLAUDE.md` to document required CORS setup
+
+---
+
+### C-06: Silent JSON Unmarshal Failure
+
+**Risk:** Corrupted data silently omitted from responses.
+
+**Files:** `perspectize-go/internal/adapters/repositories/postgres/perspective_repository.go:419-426`
+
+**Problem:** `categorizedRatings` JSON field is unmarshaled without error checking:
+```go
+json.Unmarshal([]byte(dbCategorizedRatings), &categorizedRatings)
+// error is ignored — bad data becomes nil array
+```
+
+If database contains invalid JSON, response silently drops the field instead of failing or logging.
+
+**Impact:** Users see incomplete perspective data without knowing why. Data loss appears random.
+
+**Fix approach:**
+1. Add error check: `if err := json.Unmarshal(...); err != nil { return nil, fmt.Errorf(...) }`
+2. Add structured logging to all JSON unmarshal operations
+3. Add repository tests for malformed JSON handling
+
+---
+
+### C-07: Silent Duration Parse Failure
+
+**Risk:** Bad duration defaults to 0 seconds, indistinguishable from real short video.
+
+**Files:** `perspectize-go/internal/adapters/youtube/client.go:90-93`
+
+**Problem:**
+```go
+duration, _ := time.ParseDuration(durationStr)
+// error is ignored
+```
+
+If YouTube API returns unparseable duration string, the field silently becomes 0 without logging.
+
+**Impact:** UI displays "0 seconds" for videos with bad metadata. No visibility into data quality.
+
+**Fix approach:**
+1. Add error handling with structured log
+2. Or return `*int` (nil if unparseable) instead of silent 0
+3. Add tests for non-ISO8601 duration formats
+
+---
+
+### C-08: Five Silent Parse Failures in Domain Conversion
+
+**Risk:** Response, viewCount, likeCount, commentCount all silently become nil on parse error.
+
+**Files:** `perspectize-go/internal/adapters/graphql/resolvers/helpers.go:36-63`
+
+**Problem:** `domainToModel` unmarshal errors are silently discarded:
+```go
+json.Unmarshal(c.Response, &response)  // error ignored
+strconv.Atoi(c.ViewCount)              // error ignored
+strconv.Atoi(c.LikeCount)              // error ignored
+strconv.Atoi(c.CommentCount)           // error ignored
+```
+
+**Impact:** Incomplete data in GraphQL responses with no error signal. Users can't tell if counts are 0 or corrupted.
+
+**Fix approach:**
+1. Add error handling and structured logging for all conversions
+2. Return error from `domainToModel` or use proper nullable fields
+3. Add resolver tests for malformed input
+
+---
+
+### C-09: GraphQL Playground Exposed Unconditionally
+
+**Risk:** Introspection enabled without environment check.
+
+**Files:** `perspectize-go/cmd/server/main.go:92`
+
+**Problem:**
+```go
+http.Handle("/", playground.Handler("GraphQL Playground", "/graphql"))
+```
+
+Playground is accessible in production, exposes schema to anyone.
+
+**Impact:** Schema enumeration enables targeted attacks. Best practice is to disable in production.
+
+**Fix approach:**
+1. Check `APP_ENV` or `DEBUG` env var
+2. Only register playground in dev mode
+3. Also disable GraphQL introspection in production (see C-10)
+
+---
+
+### C-10: GraphQL Introspection Enabled Without Restriction
+
+**Risk:** Full schema introspection available to all clients.
+
+**Files:** `perspectize-go/cmd/server/main.go:75` (no introspection config)
+
+**Problem:** gqlgen server has default `IntrospectionEnabled: true`. Combined with exposed playground (C-09), attackers enumerate all queries/mutations.
+
+**Impact:** Complete API surface visible. Enables reconnaissance for targeted attacks.
+
+**Fix approach:**
+1. Add introspection config check:
+   ```go
+   cfg := generated.Config{
+       IntrospectionEnabled: os.Getenv("ENABLE_INTROSPECTION") == "true",
+   }
+   ```
+2. Default to false in production
+3. Allow override for dev/staging only
+
+---
+
+## HIGH PRIORITY ISSUES
+
+### H-01: Adapter-to-Adapter Coupling
+
+**Risk:** Violates hexagonal architecture dependency rule.
+
+**Files:** `perspectize-go/internal/adapters/graphql/resolvers/schema.resolvers.go:16,23`
+
+**Problem:** Resolver imports YouTube adapter directly:
+```go
+import "github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/youtube"
+```
+
+Dependencies should flow: adapter → service → port. Adapter never talks to adapter.
+
+**Impact:** Services layer bypassed. Tight coupling makes testing and swapping implementations difficult.
+
+**Fix approach:**
+1. Verify all YouTube operations are in `ContentService` (they should be)
+2. Remove direct youtube imports from resolvers
+3. Add architecture test to prevent adapter-to-adapter imports
+
+---
+
+### H-02: Resolver Depends on Concrete Service Types
+
+**Risk:** Missing service port interfaces.
+
+**Files:** `perspectize-go/internal/adapters/graphql/resolvers/resolver.go:12-16`
+
+**Problem:**
+```go
+type Resolver struct {
+    contentService *services.ContentService  // concrete, not interface
+    userService *services.UserService        // concrete, not interface
+    perspectiveService *services.PerspectiveService
 }
 ```
 
-**Issue:** CLAUDE.md (phase 5 note) states this will be restricted, but currently allows all origins.
+Should depend on interfaces, not concrete types.
 
-**Impact:**
-- CSRF vulnerability (any website can make GraphQL requests to perspectize API)
-- Data leakage if frontend has sensitive info in response
+**Impact:** Can't mock services for testing. Resolver tests must use real service implementations.
 
-**Fix Approach:**
-1. Read allowed frontend origin from env var
-2. Validate `Origin` header against whitelist
-3. Return error for disallowed origins
-4. Phase 5 should implement this; currently OK for localhost dev
-
-**Priority:** Medium — defer to Phase 5 per CLAUDE.md, but document as security debt
+**Fix approach:**
+1. Create port interfaces: `ContentServicePort`, `UserServicePort`, `PerspectiveServicePort`
+2. Update resolver to accept interfaces
+3. Update `cmd/server/main.go` wiring
+4. Update resolver tests to use mocks
 
 ---
 
-## Missing Operational Features
+### H-03: ListAll() Users Has No Pagination
 
-### 16. No Health Check Endpoint
+**Risk:** Unbounded query result set.
 
-**Issue:** No /health or readiness probe for Kubernetes/Fly.io deployments.
+**Files:** `perspectize-go/internal/adapters/repositories/postgres/user_repository.go:98-114`
 
-**Files:**
-- `perspectize-go/cmd/server/main.go` — Only /graphql and / endpoints
-
-**Current Routes:**
-- `/` — GraphQL playground
-- `/graphql` — GraphQL API
-
-**Missing:**
-- `/health` — Simple status check
-- `/ready` — Database connectivity check
-
-**Impact:**
-- Load balancers can't detect unhealthy instances
-- Deployments may serve traffic to crashed processes
-- Cold start detection impossible
-
-**Fix Approach:**
-1. Add HTTP handler for `/health` (returns 200 OK)
-2. Add `/ready` that checks database connectivity
-3. Wire into main.go before ListenAndServe
-4. Document expected response format
-
-**Priority:** Medium — operational necessity before Fly.io deployment
-
----
-
-### 17. Structured Logging Not Implemented
-
-**Issue:** Standard library `log` package used instead of structured logging (slog).
-
-**Files:**
-- `perspectize-go/cmd/server/main.go` — All logs use `log.Println`, `log.Printf`, `log.Fatalf`
-- CLAUDE.md mentions `slog` should be used
-
-**Current Approach:**
+**Problem:**
 ```go
-log.Printf("PostgreSQL version: %s", version)
+func (r *UserRepository) ListAll(ctx context.Context) ([]domain.User, error) {
+    // SELECT * FROM users — no LIMIT
+}
 ```
 
-**Recommended:**
-```go
-slog.Info("PostgreSQL version", "version", version)
-```
+Query returns all users. If 10,000 users exist, all rows loaded into memory.
 
-**Impact:**
-- No structured JSON logs for aggregation/analysis in production
-- Harder to correlate requests across logs
-- Missing context (user ID, request ID, latency)
+**Impact:** Memory exhaustion DoS. Unbounded response size (C-10 + H-03 = attacker can request massive response).
 
-**Fix Approach:**
-1. Initialize slog logger in main.go
-2. Replace all log.Print* calls with slog.Info/Error/Debug
-3. Add structured fields (version, duration, error context)
-4. Configure JSON output for production
-
-**Priority:** Low — doesn't block functionality, but needed for production observability
+**Fix approach:**
+1. Add `limit int` parameter (or use cursor pagination from H-03)
+2. Default to reasonable limit (50-100)
+3. Return error if limit exceeds max (1000)
+4. Update GraphQL schema to require pagination
 
 ---
 
-## Frontend-Specific Issues
+### H-04 & H-05: GraphQL Type Schema Issues
 
-### 18. No TanStack Query Error Retry Strategy
+**Risk:** Weak API contracts.
 
-**Issue:** Queries retry only once with no backoff or fallback strategy.
+**Files:** `perspectize-go/schema.graphql`
+
+**Problems:**
+- **H-04:** Timestamps as `String!` instead of custom `DateTime` scalar (lines 9-10, 56-58, 77-78)
+- **H-05:** `contentType` uses `String!` instead of defined `ContentType` enum (line 70)
+
+**Impact:** No type safety for timestamps (clients must parse manually). Content type values not enumerated (clients don't know valid values).
+
+**Fix approach:**
+1. Define `scalar DateTime` in schema
+2. Implement DateTime scalar resolver for serialization
+3. Update all timestamp fields to `DateTime!`
+4. Define `ContentType` enum (e.g., `YOUTUBE`, `VIMEO`)
+5. Bind enum in `gqlgen.yml`
+6. Update content type storage to use enum values
+
+---
+
+### H-06 & H-07: Race Conditions on Uniqueness Checks
+
+**Risk:** Duplicate inserts possible under concurrent load.
 
 **Files:**
-- `perspectize-fe/src/routes/+page.svelte` (line 40) — `retry: 1`
+- `perspectize-go/internal/core/services/perspective_service.go:91-97` (duplicate claim check)
+- `perspectize-go/internal/core/services/user_service.go:49-65` (duplicate user check)
 
-**Current Pattern:**
+**Problem:** Classic TOCTOU (time-of-check-time-of-use) race:
+```go
+// Thread A: Check if claim exists
+existing, _ := r.FindByClaimAndUser(ctx, claim, userID)
+if existing != nil {
+    return nil, ErrAlreadyExists
+}
+// [Thread B inserts here]
+// Thread A: Insert new claim
+r.Create(ctx, ...)  // UNIQUE constraint violated at DB level
+```
+
+**Impact:** Under load, concurrent create requests can both pass the check and fail at database, causing errors or partial inserts.
+
+**Fix approach:**
+1. Use database UNIQUE constraint as the sole source of truth
+2. Catch DB unique violation error and return `ErrAlreadyExists`
+3. Remove app-level duplicate check
+4. Or use database-level transactions with explicit locks
+
+---
+
+### H-08: YouTube API Response Stored Verbatim
+
+**Risk:** Bloat and information leakage.
+
+**Files:** `perspectize-go/internal/adapters/youtube/client.go:100`
+
+**Problem:** Entire YouTube API response (with metadata, thumbnails, etc.) stored in `Content.response: JSON` field. YouTube response is ~5KB per video.
+
+**Impact:** Database bloat. Unnecessary data stored increases backup size, query time. No use case for storing full response.
+
+**Fix approach:**
+1. Parse response and extract only needed fields (title, duration, viewCount, etc.)
+2. Store structured fields, not raw JSON
+3. Remove `response: JSON` from schema (or make it optional for debugging)
+4. Backfill existing data to remove YouTube responses
+
+---
+
+### H-09: Hardcoded Config Path
+
+**Risk:** Config not flexible for deployments.
+
+**Files:** `perspectize-go/cmd/server/main.go:27`
+
+**Problem:**
+```go
+cfg, err := config.Load("config/config.example.json")
+```
+
+Path is hardcoded. Works in dev, fails in containers where file structure differs.
+
+**Impact:** Docker builds fail. Production deployment requires workarounds.
+
+**Fix approach:**
+1. Use environment variable: `CONFIG_PATH = os.Getenv("CONFIG_PATH")`
+2. Default to reasonable path if unset
+3. Test in Docker container
+4. Document in `.env.example`
+
+---
+
+### H-10: User Email Addresses Exposed
+
+**Risk:** GDPR/privacy violation. Enables spam/phishing.
+
+**Files:** `perspectize-go/internal/adapters/graphql/resolvers/schema.resolvers.go:302-315` (users query)
+
+**Problem:** `Query.users` returns list with email addresses. No access control.
+
+**Impact:** Scraping tool can dump all user emails. Violates privacy regulations.
+
+**Fix approach:**
+1. Add authentication check to `users` query
+2. Only return own email, not others'
+3. Or remove email from public user type, add separate `Query.me` endpoint
+4. Audit other endpoints for exposed PII
+
+---
+
+### H-11: No Rate Limiting
+
+**Risk:** Brute force, enumeration, DoS attacks.
+
+**Files:** `perspectize-go/cmd/server/main.go` (no middleware)
+
+**Problem:** No rate limiting on GraphQL endpoint. Attacker can spam queries without throttling.
+
+**Impact:** Username enumeration (list all users via H-03 + H-11). Password brute force if auth added. Query complexity bombs (C-04).
+
+**Fix approach:**
+1. Add rate limiting middleware (e.g., `ulule/limiter`)
+2. Limit by IP address (or user ID if authenticated)
+3. Different limits for mutations vs queries
+4. Return 429 Too Many Requests when exceeded
+
+---
+
+### H-12: YouTube API Key Exposure Risk
+
+**Risk:** Key compromise enables unauthorized YouTube API calls.
+
+**Files:**
+- `perspectize-go/internal/adapters/youtube/client.go:53-57,76` (key in URL, error messages)
+- Stored in config and environment
+
+**Problem:** API key may appear in:
+- HTTP error responses if request fails
+- Server logs if key validation fails
+- GitHub commits if `.env` checked in (see `.gitignore`)
+
+**Impact:** Attacker can use compromised key to spam YouTube API, incurring charges.
+
+**Fix approach:**
+1. Never log API key (sanitize in error messages)
+2. Add validation at startup (try dummy request, catch error, don't log key)
+3. Use Cloud Key Management (e.g., AWS Secrets Manager) instead of env vars
+4. Rotate key regularly
+5. Audit git history: `git log -S "AIza" --`
+
+---
+
+### H-13: Sensitive Data Leaked in GraphQL Errors
+
+**Risk:** Database schema/structure exposed via error messages.
+
+**Files:** `perspectize-go/internal/adapters/graphql/resolvers/schema.resolvers.go:31,47,99,152,173`
+
+**Problem:** Resolvers use `%w` formatting which wraps underlying errors:
+```go
+return nil, fmt.Errorf("failed to find content: %w", err)
+// If err = "column 'foo' does not exist", attacker sees DB schema
+```
+
+**Impact:** SQL errors expose schema structure, table names, columns. Enables targeted SQL injection attempts.
+
+**Fix approach:**
+1. Return generic error to GraphQL clients: `fmt.Errorf("internal server error")`
+2. Log full error server-side with structured logging
+3. Add middleware to scrub errors before returning to client
+4. Test: deliberately trigger DB errors, verify no schema leakage
+
+---
+
+### H-14 & H-15: No HTTPS/TLS and HTTP Timeouts
+
+**Risk:** Man-in-the-middle attacks and Slowloris DoS.
+
+**Files:** `perspectize-go/cmd/server/main.go:99` (http.ListenAndServe with no config)
+
+**Problems:**
+- **H-14:** No TLS/HTTPS. Traffic is unencrypted.
+- **H-15:** Server has no timeouts. Slowloris attacker can open slow connections forever.
+
+**Impact:** Credentials/API keys transmitted in plaintext. Server hangs waiting for slow clients.
+
+**Fix approach:**
+1. Use `http.Server` with timeouts:
+   ```go
+   srv := &http.Server{
+       Addr:         ":8080",
+       ReadTimeout:  15 * time.Second,
+       WriteTimeout: 15 * time.Second,
+       IdleTimeout:  60 * time.Second,
+   }
+   ```
+2. For HTTPS: use `ListenAndServeTLS` with cert/key or reverse proxy (Caddy/Nginx)
+3. Document TLS setup in deployment guide
+
+---
+
+### H-16: Inconsistent Not-Found Error Handling
+
+**Risk:** Inconsistent GraphQL contracts.
+
+**Files:** `perspectize-go/internal/adapters/graphql/resolvers/schema.resolvers.go:274,289,326`
+
+**Problem:** Some resolvers return `nil, nil` (errors hidden from GraphQL) while others return proper errors:
+```go
+// Line 274: return nil, nil
+// Line 289: return nil, nil
+// vs ContentByID: returns error
+```
+
+**Impact:** Clients expect errors but get nulls. Silent failures hard to debug.
+
+**Fix approach:**
+1. Standardize: always return `(T, error)` with proper error handling
+2. GraphQL layer converts errors to null fields as needed
+3. Add resolver tests asserting error behavior
+
+---
+
+### H-17 & H-18: Missing Svelte Error Boundaries
+
+**Risk:** Unhandled errors show blank page or default error.
+
+**Files:**
+- `perspectize-fe/src/routes/` (missing `+error.svelte`)
+- `perspectize-fe/src/` (missing `hooks.client.ts`, `hooks.server.ts`)
+
+**Problem:** No error boundary component. Errors outside TanStack Query are invisible to users.
+
+**Impact:** If header fails to load, entire page is broken. Users see nothing or generic "Error" message.
+
+**Fix approach:**
+1. Create `src/routes/+error.svelte` with graceful error UI
+2. Create `src/hooks.client.ts` to catch client-side errors
+3. Log to error tracking service (see H-24 for client infra)
+
+---
+
+### H-19 & H-20: .env Load Failure and Empty API Key Validation
+
+**Risk:** Silent misconfiguration.
+
+**Files:** `perspectize-go/cmd/server/main.go:24` (.env ignored) and `youtube/client.go:23` (no key validation)
+
+**Problems:**
+- `.env` load failure is silently ignored: `_ = godotenv.Load()`
+- YouTube API key not validated at startup. Fails with cryptic 403 at runtime.
+
+**Impact:** Typo in .env goes unnoticed. Configuration errors only surface when queries run.
+
+**Fix approach:**
+1. Warn if .env file expected but missing: `if _, err := os.Stat(".env"); err != nil && os.Getenv("ENVIRONMENT") != "production" { log.Warn(...) }`
+2. Add config validation: `if cfg.YouTube.APIKey == "" { log.Fatal("YOUTUBE_API_KEY required") }`
+3. Test YouTube key at startup with dummy request
+
+---
+
+### H-21: WriteString Return Ignored
+
+**Risk:** Response corruption.
+
+**Files:** `perspectize-go/pkg/graphql/intid.go:17`
+
+**Problem:**
+```go
+func (i IntID) MarshalJSON() ([]byte, error) {
+    _, _ = io.WriteString(...) // return value ignored
+}
+```
+
+If `WriteString` fails, no error is returned. Response may be incomplete.
+
+**Impact:** IntID serialization silently fails. Clients receive null IDs.
+
+**Fix approach:**
+1. Check return value: `if n, err := io.WriteString(...); err != nil { return nil, err }`
+2. Add tests for WriteString error cases
+
+---
+
+### H-22: prerender = true Without SSR
+
+**Risk:** Architectural mismatch.
+
+**Files:** `perspectize-fe/src/routes/+layout.ts:1`
+
+**Problem:**
 ```typescript
-const contentQuery = createQuery(() => ({
-    ...
-    retry: 1  // Only retries once, immediately
+export const prerender = true;
+```
+
+With `adapter-static`, this tells SvelteKit to prerender all routes as static HTML. But the app fetches dynamic GraphQL data, making prerender pointless. App runs as SPA.
+
+**Impact:** Build time wastage. No SEO benefit (content is JS-rendered). Confusing architecture.
+
+**Fix approach:**
+1. Set `prerender = false` to use SPA mode explicitly
+2. Or actually leverage prerendering by fetching data at build time (requires build-time GraphQL endpoint)
+
+---
+
+### H-23: No TypeScript Types from GraphQL Schema
+
+**Risk:** Manual duplication and drift.
+
+**Files:** `perspectize-fe/src/lib/components/` (all component files)
+
+**Problem:** Type definitions for GraphQL responses are manually written in Svelte components:
+```typescript
+interface ContentItem {
+    id: string;
+    name: string;
+    // ... manually duplicated from schema
+}
+```
+
+No code generation from schema. Changes to GraphQL schema require manual updates.
+
+**Impact:** Types drift from schema. Type safety lost. Updates require multiple changes.
+
+**Fix approach:**
+1. Use `graphql-codegen` to generate TypeScript types from GraphQL schema
+2. Run as part of build: `gql-codegen` before `pnpm build`
+3. Import types from generated file
+4. All types stay in sync with schema
+
+---
+
+### H-24: GraphQL Client Missing Error/Timeout Infrastructure
+
+**Risk:** No error recovery, no timeout protection.
+
+**Files:** `perspectize-fe/src/lib/queries/client.ts:1-7`
+
+**Problem:**
+```typescript
+const graphqlClient = new GraphQLClient("http://localhost:8080/graphql");
+```
+
+Client has no:
+- Error interceptor to catch network errors
+- Timeout configuration (requests hang forever)
+- Authorization header support
+- Request/response logging
+
+**Impact:** Network errors not handled. Queries that fail are invisible. No auth infrastructure.
+
+**Fix approach:**
+1. Add error interceptor to catch network failures
+2. Set timeout (e.g., 30 seconds)
+3. Add `headers` callback to inject auth token (prepare for C-01 fix)
+4. Add request/response logging
+
+---
+
+### H-25: No Content Security Policy
+
+**Risk:** XSS/injection attacks.
+
+**Files:** `perspectize-fe/app.html` (no CSP header)
+
+**Problem:** No CSP header restricts what scripts can run. Combined with C-05 (innerHTML XSS), attacks easier.
+
+**Impact:** XSS payloads can load external scripts, exfiltrate data.
+
+**Fix approach:**
+1. Add CSP header in `app.html` or server middleware
+2. Recommended: `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'` (AG Grid needs unsafe-inline)
+3. Report violations to logging service
+
+---
+
+### H-26: No CI/CD or Security Scanning
+
+**Risk:** No automated checks for regressions, secrets, vulnerable dependencies.
+
+**Files:** `.github/` (missing workflows)
+
+**Problem:** No GitHub Actions workflows for:
+- Testing on every commit
+- Dependency scanning (Dependabot)
+- Secret scanning (SAST)
+- Container scanning if Docker used
+
+**Impact:** Vulnerable packages not detected. Secrets committed. Breaking changes merged.
+
+**Fix approach:**
+1. Add `.github/workflows/test.yml` for Go tests
+2. Add `.github/workflows/test-fe.yml` for frontend tests
+3. Enable Dependabot in repo settings
+4. Add SAST scanning (e.g., `github/super-linter`)
+5. Document CI requirements in CLAUDE.md
+
+---
+
+## MEDIUM PRIORITY ISSUES
+
+### M-01: Dual PostgreSQL Driver Dependencies
+
+**Issue:** `lib/pq` and `pgx/v5` both imported
+
+**Files:** `perspectize-go/go.mod:10-11`
+
+**Impact:** Unnecessary bloat, potential conflicts. Choose one.
+
+**Fix:** Remove unused driver. If using sqlx, use `pgx` driver exclusively.
+
+---
+
+### M-02: Hardcoded Database Connection Pool Settings
+
+**Issue:** No configuration for pool size, timeout.
+
+**Files:** `perspectize-go/pkg/database/postgres.go:21-23`
+
+**Problem:** Max 25 open connections, 5 idle hard-coded.
+
+**Fix:** Load from env vars with sensible defaults.
+
+---
+
+### M-03: CreateFromYouTube Returns Error Instead of Idempotent Result
+
+**Issue:** Error response for duplicate, should be idempotent.
+
+**Files:** `perspectize-go/internal/core/services/content_service.go:30-36`
+
+**Fix:** Check for `ErrAlreadyExists` and return existing item, not error.
+
+---
+
+### M-04: Schema Type Inconsistency
+
+**Issue:** `deletePerspective` uses `ID` scalar instead of `IntID`.
+
+**Files:** `perspectize-go/schema.graphql:185`
+
+**Fix:** Standardize all IDs to use `IntID` scalar.
+
+---
+
+### M-05: Function Parameter Instead of Dependency Injection
+
+**Issue:** `CreateFromYouTube` accepts `extractVideoID` as parameter.
+
+**Files:** `perspectize-go/internal/core/services/content_service.go:28`
+
+**Fix:** Inject into service constructor instead.
+
+---
+
+### M-06: No Request Logging Middleware
+
+**Issue:** Uses default `net/http` mux, no middleware chain.
+
+**Files:** `perspectize-go/cmd/server/main.go:91-94`
+
+**Impact:** No visibility into request/response for debugging.
+
+**Fix:** Add request logging middleware (use `chi` router with middleware).
+
+---
+
+### M-07: Inconsistent Not-Found Error Handling
+
+**Issue:** Different approaches across resolvers (see H-16).
+
+**Files:** `perspectize-go/internal/adapters/graphql/resolvers/schema.resolvers.go`
+
+**Fix:** Standardize error return pattern.
+
+---
+
+### M-08: Missing Nested Field Resolvers
+
+**Issue:** `user` and `content` fields on Perspective return null instead of fetching.
+
+**Files:** `perspectize-go/internal/adapters/graphql/resolvers/helpers.go:70-107`
+
+**Problem:**
+```graphql
+type Perspective {
+    user: User  # Always null
+    content: Content  # Always null
+}
+```
+
+Clients must separately fetch user/content after fetching perspective.
+
+**Fix:** Implement field resolvers to fetch nested objects.
+
+---
+
+### M-09: No Graceful Shutdown Handler
+
+**Issue:** Server kills in-flight requests on shutdown.
+
+**Files:** `perspectize-go/cmd/server/main.go:99`
+
+**Fix:** Add signal handler for SIGTERM with graceful shutdown timeout.
+
+---
+
+### M-10: No Health Check Endpoint
+
+**Issue:** Load balancers/orchestrators have no way to check health.
+
+**Files:** `perspectize-go/cmd/server/main.go:91-93`
+
+**Fix:** Add `/health` (liveness) and `/ready` (readiness) endpoints.
+
+---
+
+### M-11: Missing Input Length Validation
+
+**Issue:** No length checks on description, labels, categorizedRatings.
+
+**Files:** `perspectize-go/internal/core/services/perspective_service.go`, `user_service.go`
+
+**Impact:** Unbounded inputs can cause performance issues.
+
+**Fix:** Add validator: `description max 1000 chars`, `labels max 10 items`, etc.
+
+---
+
+### M-12: DB Credentials in Logs on Failure
+
+**Issue:** Connection string may appear in logs.
+
+**Files:** `perspectize-go/cmd/server/main.go:43-44`, `config.go:83`
+
+**Fix:** Sanitize DSN before logging (redact password).
+
+---
+
+### M-13: Unbounded JSON Field
+
+**Issue:** `response: JSON` field stores full YouTube response (~5KB per item).
+
+**Files:** `perspectize-go/schema.graphql:77`
+
+**Impact:** Bloats database, unnecessary data in queries.
+
+**Fix:** See H-08.
+
+---
+
+### M-14: Missing Security Headers
+
+**Issue:** No X-Content-Type-Options, X-Frame-Options, HSTS, etc.
+
+**Files:** `perspectize-go/cmd/server/main.go`
+
+**Fix:** Add security headers middleware:
+```go
+w.Header().Set("X-Content-Type-Options", "nosniff")
+w.Header().Set("X-Frame-Options", "DENY")
+w.Header().Set("Strict-Transport-Security", "max-age=31536000")
+```
+
+---
+
+### M-15: No CSRF Protection
+
+**Issue:** No anti-CSRF tokens.
+
+**Files:** `perspectize-go/cmd/server/main.go:93`
+
+**Impact:** Moot until C-01 (auth) is fixed, but should be added.
+
+**Fix:** Add CSRF middleware after auth implemented.
+
+---
+
+### M-16: Update Does Not Check RowsAffected
+
+**Issue:** Race condition on concurrent updates.
+
+**Files:** `perspectize-go/internal/adapters/repositories/postgres/perspective_repository.go:187-209`
+
+**Problem:** Unlike Delete, Update doesn't check if row was actually modified (optimistic lock missing).
+
+**Fix:** Check `result.RowsAffected() > 0` or add `version` column for optimistic locking.
+
+---
+
+### M-17: No DATABASE_URL Format Validation
+
+**Issue:** Invalid URL accepted without error.
+
+**Files:** `perspectize-go/internal/config/config.go:79-84`
+
+**Fix:** Validate DSN format at startup.
+
+---
+
+### M-18: Duplicated Type Definitions Across Components
+
+**Issue:** ContentItem, ContentRow, User types manually defined in multiple files.
+
+**Files:** `perspectize-fe/src/lib/components/ActivityTable.svelte`, `+page.svelte`, `UserSelector.svelte`
+
+**Fix:** See H-23 (use codegen).
+
+---
+
+### M-19: No Server-Side Pagination Integration
+
+**Issue:** Content query hard-codes 100 items fetch.
+
+**Files:** `perspectize-fe/src/routes/+page.svelte:33-34`
+
+**Problem:**
+```typescript
+const query = createQuery(() => ({
+    queryFn: () => listContent({ first: 100 })  // Hard-coded
 }));
 ```
 
-**Problems:**
-- Network transients cause failed queries with no recovery
-- No exponential backoff (retries too fast)
-- No retry visibility to user
-- Global query cache doesn't invalidate on network failures
+AG Grid pagination not integrated with server. Fetches all 100 items then paginates client-side.
 
-**Impact:**
-- Poor UX on slow networks
-- Users see "Error loading content" on transient failures
-
-**Fix Approach:**
-1. Increase retry count to 3 with exponential backoff
-2. Add visual retry indicator (spinner, "retrying..." toast)
-3. Consider stale-while-revalidate pattern
-4. Add Sentry integration for monitoring retry exhaustion
-
-**Priority:** Low — frontend resilience improvement
+**Fix:** Integrate AG Grid pagination with cursor pagination from server.
 
 ---
 
-## Legacy Codebase Issues
+### M-20: selectedUserId Store Not Consumed
 
-### 19. C# Legacy Code Still Present
+**Issue:** Wired but never used.
 
-**Issue:** Legacy C# ASP.NET Core implementation in `perspectize-be/` directory.
+**Files:** `perspectize-fe/src/lib/stores/userSelection.svelte.ts`, `src/routes/+page.svelte`
 
-**Files:**
-- `perspectize-be/Controllers/*.cs`
-- `perspectize-be/Program.cs`
-- `perspectize-be/KNOWN_BUGS.md` lists C# TODOs
-
-**C# TODOs Found:**
-- `Program.cs` (line 61): "TODO: stop localhost 7253 opening browser window every time"
-- `YTController.cs` (line 117): "TODO: refactor to ON CONFLICT upsert method"
-- `YTController.cs` (line 188): "TODO: refactor later - expensive GET then INSERT/UPDATE approach"
-- `ContentController.cs` (line 32): "TODO: later, change to id, names include spaces and can get long"
-
-**Status:** Marked as "do not modify" in CLAUDE.md, but code still in repo creating confusion.
-
-**Impact:**
-- Risk of accidental modifications to abandoned code
-- Increases repo size
-- Confuses new developers
-
-**Fix Approach:**
-1. After full Go migration verification, delete `perspectize-be/` directory
-2. Archive to separate branch if historical record needed
-3. Update all documentation to remove C# references
-
-**Priority:** Low — cleanup task, after Go migration verified
+**Fix:** Either use in content query filter or remove.
 
 ---
 
-## Summary Table
+### M-21: Unused Type Guards
 
-| Area | Issue | Priority | Blocks | Status |
-|------|-------|----------|--------|--------|
-| UI/UX | Mobile responsive bugs | High | Phase 2.1 | Mostly done (BUG-004,006 deferred) |
-| Auth | No authentication middleware | High | Production | Not started |
-| DoS | No query complexity limits | High | Security | Not started |
-| Deployment | No health checks | Medium | Fly.io | Not started |
-| Testing | DB tests skip silently | Medium | Reliability | Not started |
-| Nested Fields | User/Content resolvers missing | Medium | GraphQL contract | Not started |
-| CORS | Allows all origins | Medium | Security | Known, deferred to Phase 5 |
-| Component Tests | No Svelte component tests | Medium | Phase 2.1 coverage | Not started |
-| Error Handling | Frontend error recovery weak | Low | UX | Not started |
-| Logging | Using standard log, not slog | Low | Observability | Not started |
-| Filters | Limited content filtering | Low | UX | Not started |
-| ID Conversion | String-to-int scattered | Low | Code quality | Not started |
-| Null Handling | Inconsistent not-found patterns | Low | API consistency | Not started |
-| Error Codes | No machine-readable error codes | Low | Future enhancement | Not started |
-| Duration Parse | Silent failure on YouTube metadata | Low | Data quality | Not started |
-| Legacy Code | C# code not deleted | Low | Cleanup | Not started |
+**Issue:** ContentResponse/ContentItem interfaces declared but never used as type guards.
+
+**Files:** `perspectize-fe/src/routes/+page.svelte:8-28`
+
+**Fix:** Remove unused types or implement runtime validation.
 
 ---
 
-*Concerns audit: 2026-02-07*
+### M-22: Search Input Not Debounced
+
+**Issue:** AG Grid filter triggered on every keystroke.
+
+**Files:** `perspectize-fe/src/routes/+page.svelte:30`, `ActivityTable.svelte:130-133`
+
+**Impact:** Excessive queries sent to server.
+
+**Fix:** Add 300ms debounce to search input.
+
+---
+
+### M-23: No Error Recovery UI
+
+**Issue:** Error states have no retry button.
+
+**Files:** `perspectize-fe/src/routes/+page.svelte:70-73`, `UserSelector.svelte:37-40`
+
+**Fix:** Add retry button on error, call `query.refetch()`.
+
+---
+
+### M-24: Dead Code in Production
+
+**Issue:** AGGridTest.svelte never imported but in component tree.
+
+**Files:** `perspectize-fe/src/lib/components/AGGridTest.svelte`
+
+**Fix:** Delete or comment.
+
+---
+
+### M-25: HTTP Fallback for GraphQL Endpoint
+
+**Issue:** Fallback uses HTTP not HTTPS.
+
+**Files:** `perspectize-fe/src/lib/queries/client.ts:3`
+
+**Problem:**
+```typescript
+const endpoint = process.env.VITE_GRAPHQL_URL || "http://localhost:8080/graphql";
+```
+
+**Fix:** Use HTTPS in production endpoint.
+
+---
+
+### M-26: Retry Configuration Retries All Errors
+
+**Issue:** `retry: 1` retries 4xx errors (should only retry network/5xx).
+
+**Files:** `perspectize-fe/src/routes/+layout.svelte:15`, `+page.svelte:40`
+
+**Fix:** Use `shouldRetry: (failureCount, error) => error.status >= 500 || !error.response`
+
+---
+
+### M-27: formatDate Silently Produces Invalid Date
+
+**Issue:** Bad input produces "Invalid Date" string instead of error.
+
+**Files:** `perspectize-fe/src/lib/components/ActivityTable.svelte:48-53`
+
+**Fix:** Add validation or return fallback with warning.
+
+---
+
+### M-28: No Secret Rotation or Vault Integration
+
+**Issue:** Secrets stored in .env, no rotation mechanism.
+
+**Impact:** Compromised secret is permanent.
+
+**Fix:** Use AWS Secrets Manager, HashiCorp Vault, or 1Password for rotation.
+
+---
+
+## LOW PRIORITY ISSUES
+
+### L-01 through L-22
+
+Code style, unused dependencies, test organization issues. See `KNOWN_BUGS.md` lines 88-110 for full details.
+
+**Priority fixes:**
+- **L-16:** Remove `@tanstack/svelte-form` (unused dependency)
+- **L-23:** Inject `ref` prop instead of using `any` type
+
+---
+
+## UI BUGS (Phase 2.1)
+
+See `KNOWN_BUGS.md` "UI Bugs" section (lines 111-121) for mobile responsiveness issues.
+
+**Critical (P1):**
+- BUG-001: Header overflow at 375px
+- BUG-002: Pagination bar broken at 375px
+- BUG-003: Sticky header clipping persists on scroll
+
+---
+
+## TEST COVERAGE GAPS
+
+**Critical (P1):**
+- T-01: `PerspectiveService.Update()` — 100-line mutation with zero tests
+- T-02: No resolver tests for User/Perspective queries/mutations
+- T-03: No tests for `helpers.go` domain-to-model conversion with silent JSON parse failures
+
+**High (P2):**
+- T-04: No repository-layer tests
+- T-05: No YouTube API client tests
+- T-06: No `IntID` scalar tests
+
+See `KNOWN_BUGS.md` lines 122-138 for complete test gap inventory.
+
+---
+
+## Impact Summary
+
+| Severity | Count | Primary Risk | Key Issues |
+|----------|-------|--------------|------------|
+| Critical | 5 | Security (no auth), Data integrity | C-01, C-02, C-03, C-04, C-05 |
+| High | 22 | Operational (errors, crashes, DoS) | H-01–H-26 |
+| Medium | 28 | Code quality, maintainability | M-01–M-28 |
+| Low | 22 | Style, cleanup | L-01–L-22 |
+| **Total** | **77** | **Multi-layer** | Requires coordinated fixes |
+
+---
+
+*Audit completed 2026-02-07. See `KNOWN_BUGS.md` for complete metadata and source documentation.*
