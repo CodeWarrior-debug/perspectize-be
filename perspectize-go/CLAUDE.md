@@ -1,6 +1,6 @@
 # Backend: Perspectize Go
 
-Go GraphQL API built with gqlgen, PostgreSQL 18, and Hexagonal Architecture.
+Go GraphQL API built with gqlgen, PostgreSQL 17, and Hexagonal Architecture.
 
 ## Architecture
 
@@ -32,7 +32,7 @@ Domain layer rules: [docs/DOMAIN_GUIDE.md](../docs/DOMAIN_GUIDE.md)
 
 ## Stack
 
-Go 1.25+ · gqlgen (schema-first) · PostgreSQL 18 (sqlx + pgx/v5) · golang-migrate · go-playground/validator · testify + sqlmock · log/slog · godotenv
+Go 1.25+ · gqlgen (schema-first) · PostgreSQL 17 (sqlx + pgx/v5) · golang-migrate · go-playground/validator · testify + sqlmock · log/slog · godotenv
 
 ## Commands
 
