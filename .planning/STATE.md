@@ -9,28 +9,29 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 
 ## Current Position
 
-Phase: 1 of 5 (Foundation)
-Plan: 5 of 5 in current phase
-Status: Phase complete
-Last activity: 2026-02-07 — Completed 01-05-PLAN.md (Test Coverage)
+Phase: 2 of 5 (Data Layer + Activity)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-02-07 — Completed 02-01-PLAN.md (Data Layer Foundation)
 
 Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 8 min
-- Total execution time: 0.6 hours
+- Total plans completed: 6
+- Average duration: 7 min
+- Total execution time: 0.7 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation | 5 | 36 min | 7 min |
+| 02-data-layer-activity | 1 | 6 min | 6 min |
 
 **Recent Trend:**
-- Last 5 plans: 6 min, 8 min, 17 min, 0 min (04), 5 min (avg: 7 min)
+- Last 5 plans: 8 min, 17 min, 0 min (04), 5 min, 6 min (avg: 7 min)
 - Trend: Stable with fast automated plans
 
 *Updated after each plan completion*
@@ -58,6 +59,9 @@ Recent decisions affecting current work:
 - [01-05]: Browser resolve condition in vite.config.ts for Svelte 5 component testing
 - [01-05]: Branch coverage threshold at 75% (vs 80% for others) due to Svelte compiler default parameter branches
 - [01-05]: createRawSnippet pattern for testing Svelte 5 components with children props
+- [02-01]: Setter-based session sync for Svelte 5 stores (not $effect) for testability
+- [02-01]: Simple ListAll repository method (no pagination) for small datasets
+- [02-01]: Namespaced session storage key: perspectize:selectedUserId
 - [Infra]: CLAUDE.md split into root + perspectize-go/CLAUDE.md + perspectize-fe/CLAUDE.md for package-level context loading
 - [Infra]: Go module renamed from `github.com/yourorg/perspectize-go` to `github.com/CodeWarrior-debug/perspectize-be/perspectize-go` (30 files, all 78 tests pass)
 - [Infra]: Docs delegated to docs/ directory: VERIFICATION.md, DOMAIN_GUIDE.md, GO_PATTERNS.md, GITHUB_PROJECTS.md, GSD_BRANCHING.md
@@ -99,8 +103,8 @@ None - Phase 1 complete with all validation successful.
 
 ## Session Continuity
 
-Last session: 2026-02-07T07:54:30Z
-Stopped at: Completed 01-05-PLAN.md (Test Coverage) — Phase 1 Foundation complete
+Last session: 2026-02-07T09:34:48Z
+Stopped at: Completed 02-01-PLAN.md (Data Layer Foundation) — Phase 2 Data Layer + Activity in progress
 Resume file: None
 
 ### 2026-02-07 — Plan 01-05: Test Coverage
@@ -125,3 +129,32 @@ Resume file: None
 - tests/unit/shadcn-barrel.test.ts (4 tests - barrel exports)
 - tests/components/Header.test.ts (9 tests - Header component)
 - tests/components/PageWrapper.test.ts (6 tests - PageWrapper component)
+
+### 2026-02-07 — Plan 02-01: Data Layer Foundation
+
+**Branch:** `feature/INI-47-phase-02-data-layer-activity`
+
+**Work completed:**
+1. **Backend users list query** — GraphQL `users: [User!]!` query implemented through full hexagonal architecture stack
+2. **Frontend query definitions** — LIST_USERS query created, LIST_CONTENT updated with sort/pagination params
+3. **User selection store** — Session-persistent store with Svelte 5 runes using setter-based sync pattern
+4. **Unit tests** — 13 new tests for queries and store (total: 55 frontend tests, 78+ backend tests)
+5. **Svelte 5 runes pattern** — Established testable pattern for module-level stores without $effect
+
+**Commits:**
+- `4575b3d` feat(02-01): add users list query to backend
+- `9e5de4f` feat(02-01): add frontend query definitions and user selection store
+- `c003722` test(02-01): add unit tests for frontend data layer
+
+**Key patterns established:**
+- Setter-based session sync for Svelte 5 stores (not $effect) for testability
+- GraphQL query parameter expansion pattern (sort, pagination, includeTotalCount)
+- Repository ListAll pattern for fetching all records without pagination
+
+**Files created:**
+- perspectize-fe/src/lib/queries/users.ts (LIST_USERS query)
+- perspectize-fe/src/lib/stores/userSelection.svelte.ts (session-persistent store)
+- perspectize-fe/tests/unit/queries-users.test.ts
+- perspectize-fe/tests/unit/stores-userSelection.test.ts
+
+**Duration:** 6 min
