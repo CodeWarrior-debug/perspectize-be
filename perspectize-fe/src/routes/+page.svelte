@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
+	import { Button } from '$lib/components/shadcn';
 </script>
 
 <main class="p-8 max-w-4xl mx-auto">
 	<h1 class="text-4xl font-bold mb-4 text-foreground">Perspectize</h1>
 	<p class="mb-6 text-lg text-muted-foreground">
-		This text should be in Inter font. Check DevTools to verify font-family.
+		This text should be in Geist font. Check DevTools to verify font-family.
 	</p>
 
 	<div class="space-x-4 mb-8">
@@ -19,7 +19,7 @@
 		<h2 class="text-2xl font-semibold mb-2">Theme Verification</h2>
 		<p>This box should have a navy background (#1a365d) with white text.</p>
 		<p class="mt-2 text-sm opacity-90">
-			The primary color is set to: oklch(0.216 0.006 56.043)
+			The primary color is set to: oklch(0.333 0.077 257.109)
 		</p>
 	</div>
 
