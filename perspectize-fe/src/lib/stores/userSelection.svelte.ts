@@ -10,21 +10,41 @@ function loadFromSession(): number | null {
 	return Number.isNaN(parsed) ? null : parsed;
 }
 
-// Exported reactive state — import and use directly in components
-export let selectedUserId = $state<number | null>(loadFromSession());
-
-// Auto-sync to session storage when value changes
-if (browser) {
-	$effect(() => {
-		if (selectedUserId !== null) {
-			sessionStorage.setItem(STORAGE_KEY, String(selectedUserId));
-		} else {
-			sessionStorage.removeItem(STORAGE_KEY);
-		}
-	});
+function syncToSession(value: number | null): void {
+	if (!browser) return;
+	if (value !== null) {
+		sessionStorage.setItem(STORAGE_KEY, String(value));
+	} else {
+		sessionStorage.removeItem(STORAGE_KEY);
+	}
 }
+
+// Internal reactive state
+let _selectedUserId = $state<number | null>(loadFromSession());
+
+// Export getter/setter functions for external access
+export function getSelectedUserId(): number | null {
+	return _selectedUserId;
+}
+
+export function setSelectedUserId(value: number | null): void {
+	_selectedUserId = value;
+	syncToSession(value);
+}
+
+// Export object with value getter/setter for convenience
+export const selectedUserId = {
+	get value() {
+		return _selectedUserId;
+	},
+	set value(newValue: number | null) {
+		_selectedUserId = newValue;
+		syncToSession(newValue);
+	}
+};
 
 // Helper to clear selection
 export function clearUserSelection(): void {
-	selectedUserId = null;
+	_selectedUserId = null;
+	syncToSession(null);
 }
