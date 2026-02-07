@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 2.1 complete — Phase 3 (Add Video Flow) next
+**Current focus:** Phase 3 complete — Phase 4 (Add Perspective Flow) next
 
 ## Current Position
 
-Phase: 3 of 5 (Add Video Flow) — IN PROGRESS
-Plan: 1/3 complete
-Status: Foundation components ready (Dialog/Input/Label, YouTube validation, mutation definition)
-Last activity: 2026-02-07 — Completed 03-01-PLAN.md
+Phase: 3 of 5 (Add Video Flow) — COMPLETE
+Plan: 2/2 complete
+Status: Add Video flow fully working (dialog, mutation, validation, error handling, duplicate detection)
+Last activity: 2026-02-07 — Completed 03-02-PLAN.md (self-verified via Chrome DevTools MCP)
 
-Progress: [█████░░░░░] 55%
+Progress: [███████░░░] 70%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: 5.4 min
-- Total execution time: 0.9 hours
+- Total plans completed: 11
+- Average duration: 5.3 min
+- Total execution time: 1.0 hours
 
 **By Phase:**
 
@@ -29,11 +29,11 @@ Progress: [█████░░░░░] 55%
 |-------|-------|-------|----------|
 | 01-foundation | 5 | 36 min | 7 min |
 | 02-data-layer-activity | 2 | 9 min | 4.5 min |
-| 03-add-video-flow | 1 | 3 min | 3 min |
+| 03-add-video-flow | 2 | 8 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 0 min (04), 5 min, 6 min, 3 min, 3 min (avg: 3.4 min)
-- Trend: Accelerating — foundation plans fast, automated execution efficient
+- Last 5 plans: 5 min, 6 min, 3 min, 3 min, 5 min (avg: 4.4 min)
+- Trend: Steady — Phase 3 executed efficiently with self-verification
 
 *Updated after each plan completion*
 
@@ -71,6 +71,10 @@ Recent decisions affecting current work:
 - [03-01]: shadcn components in shadcn/ directory (moved from default ui/ for consistency)
 - [03-01]: URL constructor for YouTube validation (no regex, avoids catastrophic backtracking)
 - [03-01]: Support 4 YouTube hosts: youtube.com, www.youtube.com, youtu.be, m.youtube.com
+- [03-02]: TanStack Query createMutation with onSuccess/onError callbacks for dialog flow
+- [03-02]: Error mapping via string matching (duplicate/already exists, invalid/not found, generic)
+- [03-02]: Dialog stays open on error, closes only on success
+- [03-02]: $effect for form reset when dialog opens (not on close)
 - [Infra]: CLAUDE.md split into root + perspectize-go/CLAUDE.md + perspectize-fe/CLAUDE.md for package-level context loading
 - [Infra]: Go module renamed from `github.com/yourorg/perspectize-go` to `github.com/CodeWarrior-debug/perspectize-be/perspectize-go` (30 files, all 78 tests pass)
 - [Infra]: Docs delegated to docs/ directory: VERIFICATION.md, DOMAIN_GUIDE.md, GO_PATTERNS.md, GITHUB_PROJECTS.md, GSD_BRANCHING.md
@@ -88,7 +92,7 @@ None yet.
 
 ### Blockers/Concerns
 
-None — Phase 3 Plan 01 complete, ready for Plan 02 (AddVideoDialog component).
+None — Phase 3 complete, ready for Phase 4 (Add Perspective Flow).
 
 ## Session Log
 
@@ -114,10 +118,27 @@ None — Phase 3 Plan 01 complete, ready for Plan 02 (AddVideoDialog component).
 
 ### 2026-02-05 — Phase 1 Foundation (Plans 01-01 through 01-03)
 
+### 2026-02-07 — Phase 03: Add Video Flow
+
+**Branch:** `feature/INI-phase-03-add-video-flow`
+
+**Work completed:**
+1. **Plan 01: Foundation Components** — shadcn Dialog/Input/Label, YouTube URL validation (URL constructor), CREATE_CONTENT_FROM_YOUTUBE mutation definition
+2. **Plan 02: AddVideoDialog + Header Wiring** — Complete dialog with TanStack Query mutation, error mapping (duplicate/invalid/generic), Header button wired to dialog
+3. **Self-verification** — Chrome DevTools MCP: add video flow, validation errors, duplicate detection, mobile 375px responsiveness
+4. **95 tests passing** — 12 test files, 26 new tests for Phase 3
+
+**Commits:**
+- `9bea0d4` feat(03-01): install shadcn Dialog, Input, Label components
+- `9255b47` feat(03-01): add YouTube validation utility and mutation definition
+- `8e330d3` docs(03-01): complete foundation components plan
+- `713f00c` feat(03-02): create AddVideoDialog component with mutation and error handling
+- `21faae0` feat(03-02): wire Header to AddVideoDialog and add tests
+
 ## Session Continuity
 
-Last session: 2026-02-07T13:37:02Z
-Stopped at: Completed 03-01-PLAN.md (Foundation Components)
+Last session: 2026-02-07
+Stopped at: Phase 3 complete, docs committed
 Resume file: None
 
 ### 2026-02-07 — Plan 01-05: Test Coverage

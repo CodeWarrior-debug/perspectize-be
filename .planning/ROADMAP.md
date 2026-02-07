@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation** - SvelteKit project setup with design system, tooling, and navigation skeleton
 - [x] **Phase 2: Data Layer + Activity** - TanStack Query integration, AG Grid table, user selector
 - [x] **Phase 2.1: Mobile Responsive Fixes** - Fix header overflow, pagination bar, and table layout at 375px (INSERTED)
-- [ ] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
+- [x] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
 - [ ] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
 
@@ -84,8 +84,8 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 03-01-PLAN.md — YouTube URL validation utility, mutation definition, shadcn Dialog/Input/Label setup
-- [ ] 03-02-PLAN.md — AddVideoDialog component with mutation, error handling, Header wiring, visual checkpoint
+- [x] 03-01-PLAN.md — YouTube URL validation utility, mutation definition, shadcn Dialog/Input/Label setup
+- [x] 03-02-PLAN.md — AddVideoDialog component with mutation, error handling, Header wiring, visual checkpoint
 
 ### Phase 4: Add Perspective Flow
 **Goal**: Users can create perspectives on videos with ratings, Like text, and Review text
@@ -129,6 +129,6 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 4 -> 5
 | 1. Foundation | 5/5 | Complete | 2026-02-07 |
 | 2. Data Layer + Activity | 2/2 | Complete | 2026-02-07 |
 | 2.1 Mobile Responsive Fixes | 2/2 | Complete | 2026-02-07 |
-| 3. Add Video Flow | 0/2 | Not started | - |
+| 3. Add Video Flow | 2/2 | Complete | 2026-02-07 |
 | 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 0/3 | Not started | - |
