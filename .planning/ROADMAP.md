@@ -51,12 +51,11 @@ Plans:
   3. User can filter the table by text search (searches title, description)
   4. User can paginate with page size selector (10/25/50) using cursor-based navigation
   5. User can select from existing users via dropdown, selection persists across navigation
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 02-01: TanStack Query setup with GraphQL client
-- [ ] 02-02: Activity page with AG Grid (default: recently updated content)
-- [ ] 02-03: User selector dropdown with session persistence
+- [ ] 02-01-PLAN.md — Backend users query + frontend query definitions + user selection store + tests
+- [ ] 02-02-PLAN.md — Activity page with AG Grid table, UserSelector in header, visual checkpoint
 
 ### Phase 3: Add Video Flow
 **Goal**: Users can add YouTube videos by pasting a URL, with automatic metadata fetch and feedback
@@ -115,7 +114,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/5 | Complete | 2026-02-07 |
-| 2. Data Layer + Activity | 0/3 | Not started | - |
+| 2. Data Layer + Activity | 0/2 | Not started | - |
 | 3. Add Video Flow | 0/2 | Not started | - |
 | 4. Add Perspective Flow | 0/3 | Not started | - |
 | 5. Testing + Deployment | 0/3 | Not started | - |
