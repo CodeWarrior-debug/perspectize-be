@@ -20,7 +20,7 @@
 
 **Databases:**
 
-**PostgreSQL 18:**
+**PostgreSQL 17:**
 - **Connection:** Via environment variable `DATABASE_URL` or config file settings
 - **Client:** sqlx v1.4.0 (query builder) + pgx/v5 (driver)
 - **Connection Details:**
@@ -159,7 +159,7 @@
 
 | Integration | Status | Priority | Notes |
 |-------------|--------|----------|-------|
-| PostgreSQL 18 | Active | Critical | Primary data store, fully integrated |
+| PostgreSQL 17 | Active | Critical | Primary data store, fully integrated |
 | YouTube API v3 | Active | High | Content enrichment, custom client |
 | godotenv | Active | Medium | Config loading, local dev only |
 | External Identity | Not Implemented | Medium | Basic user system exists, no OAuth/JWT |

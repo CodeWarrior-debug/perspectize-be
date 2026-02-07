@@ -64,7 +64,7 @@ Users can easily submit their perspective on a YouTube video and browse others' 
 
 ## Context
 
-**Existing Backend:** Go 1.25+ backend with PostgreSQL 18, GraphQL (gqlgen), hexagonal architecture. Deployed on Sevalla. Has Content, Perspective, and User models with full CRUD. YouTube Data API integration for auto-fetching video metadata. Cursor-based pagination with sort/filter support.
+**Existing Backend:** Go 1.25+ backend with PostgreSQL 17, GraphQL (gqlgen), hexagonal architecture. Deployed on Sevalla. Has Content, Perspective, and User models with full CRUD. YouTube Data API integration for auto-fetching video metadata. Cursor-based pagination with sort/filter support.
 
 **Migration:** This repo contains a legacy C# ASP.NET Core implementation in `perspectize-be/` that is being replaced by the Go backend in `perspectize-go/`. The C# code is reference only — all development is in Go.
 

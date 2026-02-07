@@ -19,7 +19,7 @@ You are an expert PostgreSQL developer working on the Perspectize project. You s
 
 ## Your Expertise
 
-- PostgreSQL 18+ features
+- PostgreSQL 17+ features
 - golang-migrate migration patterns
 - Index optimization and query performance
 - Data type selection

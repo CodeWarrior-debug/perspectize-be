@@ -29,14 +29,6 @@ perspectize-fe/src/
 
 Tailwind v4 uses `--color-*` prefix for theme variables (e.g., `--color-primary`), not bare `--primary` from v3/shadcn conventions.
 
-## Font
-
-Currently using **Geist** (by Vercel). Alternatives to try if switching:
-- **Plus Jakarta Sans** — more personality than Geist, highly readable
-- **General Sans** (Fontshare) — slightly premium feel, free commercial use
-- **Satoshi** (Fontshare) — geometric, modern, pairs well with data UIs
-- **DM Sans** (Google Fonts) — clean geometric, good at small sizes
-
 ## Commands
 
 ```bash
@@ -83,17 +75,6 @@ This project uses **Svelte 5 runes** exclusively. Do not use Svelte 4 syntax.
 
 {@render children()}
 ```
-
-## SvelteKit Routing
-
-| File | Purpose |
-|------|---------|
-| `+page.svelte` | Page component (receives `data` from load) |
-| `+page.ts` / `+page.server.ts` | Data loading (universal / server-only) |
-| `+layout.svelte` | Shared layout wrapping child routes |
-| `+layout.ts` | Layout data loading |
-
-**Data flow:** `+layout.ts` → `+layout.svelte` → `+page.ts` → `+page.svelte`. Access load data via `let { data } = $props()`.
 
 ## TanStack Query + GraphQL
 

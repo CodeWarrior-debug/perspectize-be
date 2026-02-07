@@ -100,14 +100,14 @@ Configuration is loaded from two sources (in order of precedence):
 **Development:**
 - Go 1.25.0+
 - Docker & Docker Compose (for PostgreSQL container)
-- PostgreSQL 18 (via docker-compose.yml)
+- PostgreSQL 17 (via docker-compose.yml)
 - GNU Make (for Makefile commands)
 - golangci-lint (optional, for `make lint`)
 - golang-migrate CLI (required for database migrations)
 - air (included in `go.mod` as tool, for hot-reload development)
 
 **Production:**
-- PostgreSQL 18 database (external or managed)
+- PostgreSQL 17 database (external or managed)
 - Linux/Unix environment (Go binary runs on macOS/Linux/Windows)
 - Deployment target: Fly.io or Sevalla (mentioned in CLAUDE.md)
   - Special note: Sevalla connections may require `?sslmode=disable` and may succeed on second attempt

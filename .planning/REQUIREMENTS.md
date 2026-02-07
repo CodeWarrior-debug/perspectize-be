@@ -90,7 +90,7 @@
 | Decision | Options | Status |
 |----------|---------|--------|
 | Frontend hosting | GitHub Pages, Vercel, Cloudflare Pages, Netlify | TBD in Phase 5 |
-| Database provider | Sevalla (current) vs Neon (PostgreSQL 18, better analytics) | TBD — Sevalla lacks PG18 and analysis drivers |
+| Database provider | Sevalla (current) vs Neon (PostgreSQL 17, better analytics) | TBD — evaluate Neon for analytics drivers |
 
 **GitHub Project:** https://github.com/users/CodeWarrior-debug/projects/4
 

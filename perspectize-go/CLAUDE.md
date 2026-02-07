@@ -77,7 +77,7 @@ Schema-first in `schema.graphql`. After changes: `make graphql-gen` → implemen
 
 ## Code Style
 
-`gofmt` formatting · explicit error handling · structured logging (`slog`) · dependency injection via ports. See [Effective Go](https://go.dev/doc/effective_go).
+Structured logging with `slog` · dependency injection via ports.
 
 Error handling & DB query patterns: [docs/GO_PATTERNS.md](../docs/GO_PATTERNS.md)
 
