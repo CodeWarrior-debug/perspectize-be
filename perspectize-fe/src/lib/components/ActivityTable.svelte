@@ -134,6 +134,6 @@
 	});
 </script>
 
-<div class="w-full">
+<div class="w-full overflow-x-auto">
 	<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
 </div>

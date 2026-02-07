@@ -62,4 +62,13 @@ describe('ActivityTable', () => {
 
 		expect(container).toBeTruthy();
 	});
+
+	it('renders wrapper div with overflow-x-auto for mobile scrolling', () => {
+		const { container } = render(ActivityTable, {
+			props: { rowData: [] }
+		});
+
+		const wrapper = container.querySelector('.overflow-x-auto');
+		expect(wrapper).toBeTruthy();
+	});
 });
