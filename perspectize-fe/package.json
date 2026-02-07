@@ -12,7 +12,8 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"test": "vitest",
 		"test:run": "vitest run",
-		"test:coverage": "vitest run --coverage"
+		"test:coverage": "vitest run --coverage",
+		"test:duplication": "jscpd src/ tests/ --min-lines 3 --min-tokens 25 --reporters html --output coverage/duplication"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.0",
@@ -23,6 +24,7 @@
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/svelte": "^5.3.1",
 		"@vitest/coverage-v8": "^4.0.18",
+		"jscpd": "^4.0.8",
 		"jsdom": "^28.0.0",
 		"svelte": "^5.48.2",
 		"svelte-check": "^4.3.5",
