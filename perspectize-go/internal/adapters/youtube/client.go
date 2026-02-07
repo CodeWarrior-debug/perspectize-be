@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 
@@ -90,7 +90,7 @@ func (c *Client) GetVideoMetadata(ctx context.Context, videoID string) (*service
 
 	duration, err := ParseISO8601Duration(item.ContentDetails.Duration)
 	if err != nil {
-		log.Printf("Warning: failed to parse duration %q for video %s: %v", item.ContentDetails.Duration, videoID, err)
+		slog.Warn("failed to parse duration", "duration", item.ContentDetails.Duration, "videoID", videoID, "error", err)
 		duration = 0
 	}
 

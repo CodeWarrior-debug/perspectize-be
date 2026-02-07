@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -422,7 +422,7 @@ func perspectiveRowToDomain(row *perspectiveRow) *domain.Perspective {
 		for _, jsonStr := range row.CategorizedRatings {
 			var cr domain.CategorizedRating
 			if err := json.Unmarshal([]byte(jsonStr), &cr); err != nil {
-				log.Printf("Warning: failed to parse categorized rating JSON: %v", err)
+				slog.Warn("failed to parse categorized rating JSON", "error", err)
 				continue
 			}
 			p.CategorizedRatings = append(p.CategorizedRatings, cr)

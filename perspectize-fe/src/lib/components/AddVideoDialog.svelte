@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { toast } from 'svelte-sonner';
-	import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Button, Input, Label } from '$lib/components/shadcn';
+	import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Button, Input, Label } from '$lib/components/shadcn';
 	import { graphqlClient } from '$lib/queries/client';
 	import { CREATE_CONTENT_FROM_YOUTUBE } from '$lib/queries/content';
 	import { validateYouTubeUrl } from '$lib/utils/youtube';
@@ -32,15 +32,16 @@
 			});
 		},
 		onSuccess: (data: any) => {
-			toast.success(`Added: ${data.createContentFromYouTube.name}`);
+			const name = data?.createContentFromYouTube?.name ?? 'video';
+			toast.success(`Added: ${name}`);
 			queryClient.invalidateQueries({ queryKey: ['content'] });
 			open = false;
 		},
 		onError: (err: Error) => {
 			const message = err.message.toLowerCase();
-			if (message.includes('duplicate') || message.includes('already exists')) {
+			if (message.includes('already exists')) {
 				toast.error('This video has already been added');
-			} else if (message.includes('invalid') || message.includes('not found')) {
+			} else if (message.includes('invalid youtube url') || message.includes('video not found')) {
 				toast.error('Invalid YouTube URL or video not found');
 			} else {
 				toast.error('Failed to add video. Please try again.');
@@ -66,6 +67,7 @@
 	<DialogContent>
 		<DialogHeader>
 			<DialogTitle>Add Video</DialogTitle>
+			<DialogDescription>Paste a YouTube URL to add it to your library.</DialogDescription>
 		</DialogHeader>
 
 		<form onsubmit={handleSubmit}>

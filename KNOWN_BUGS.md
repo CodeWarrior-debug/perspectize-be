@@ -119,6 +119,34 @@ Issues discovered during development, testing, and codebase review (2026-02-07).
 | BUG-005 | P2 | Table content left-shifted beyond viewport at 375px when scrolled down | `ActivityTable.svelte` | 2026-02-07 |
 | BUG-006 | P3 | No visual affordance for hidden columns — no hint that horizontal scroll reveals more | `ActivityTable.svelte` | 2026-02-07 |
 
+## New Issues from PR #54 Review
+
+| ID | Stack | Priority | Summary | Location | Source |
+|----|-------|----------|---------|----------|--------|
+| N-01 | FE | Medium | Toast-based error feedback may be missed — no inline error state in dialog after mutation failure | `AddVideoDialog.svelte` | Code Review |
+| N-02 | FE | Medium | `validateYouTubeUrl` client-side validation not tested in component integration tests | `AddVideoDialog.svelte:56` | Code Review |
+| N-03 | FE | Low | `handleSubmit` does not trim URL before validation/mutation — whitespace-padded URLs may behave inconsistently | `AddVideoDialog.svelte:53-63` | Code Review |
+| N-04 | FE | Low | Dialog close on success happens before toast renders — user may not see success feedback | `AddVideoDialog.svelte:38` | Code Review |
+| N-05 | FE | Low | No loading spinner or skeleton in dialog body during mutation — only button text changes | `AddVideoDialog.svelte:99-101` | Code Review |
+| N-06 | Go | Medium | YouTube API key not validated at startup — empty key causes cryptic 403 errors at runtime | `youtube/client.go:23` | Code Review |
+
+## Fixed in PR #54
+
+Items from this file that were addressed in PR #54:
+
+| Original ID | Fix Summary |
+|-------------|-------------|
+| L-01 | Migrated from `log` to `slog` structured logging across all Go files |
+| C-05 | XSS fix: replaced innerHTML with DOM element creation (`document.createElement` + `textContent`) |
+| C-06, C-07, C-08 | Silent failures now use `slog.Warn` with structured fields instead of silent drops |
+| C-09 | GraphQL Playground gated behind `GIN_MODE != release` environment check |
+| M-09 | Graceful shutdown with signal handling (SIGINT/SIGTERM) and context timeout |
+| M-10 | Health check endpoint added at `/health` |
+| M-22 | Search input debounced (300ms) |
+| H-15 | HTTP server timeouts configured (ReadTimeout, WriteTimeout, IdleTimeout) |
+| H-19 | `.env` load failure now logs warning via `slog.Warn` |
+| H-22 | Prerender disabled, adapter-static removed in favor of adapter-auto |
+
 ## Test Coverage Gaps
 
 | ID | Priority | Summary | Location |

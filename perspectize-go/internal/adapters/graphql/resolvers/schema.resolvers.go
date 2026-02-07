@@ -9,7 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
 
 	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/graphql/generated"
@@ -29,7 +29,7 @@ func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input m
 		if errors.Is(err, domain.ErrInvalidURL) {
 			return nil, fmt.Errorf("invalid YouTube URL")
 		}
-		log.Printf("Error creating content: %v", err)
+		slog.Error("creating content failed", "error", err)
 		return nil, fmt.Errorf("failed to create content")
 	}
 
@@ -46,7 +46,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return nil, fmt.Errorf("invalid input: %w", err)
 		}
-		log.Printf("Error creating user: %v", err)
+		slog.Error("creating user failed", "error", err)
 		return nil, fmt.Errorf("failed to create user")
 	}
 
@@ -99,7 +99,7 @@ func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.Cr
 		if errors.Is(err, domain.ErrNotFound) {
 			return nil, fmt.Errorf("user not found: %w", err)
 		}
-		log.Printf("Error creating perspective: %v", err)
+		slog.Error("creating perspective failed", "error", err)
 		return nil, fmt.Errorf("failed to create perspective")
 	}
 
@@ -153,7 +153,7 @@ func (r *mutationResolver) UpdatePerspective(ctx context.Context, input model.Up
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return nil, fmt.Errorf("invalid input: %w", err)
 		}
-		log.Printf("Error updating perspective: %v", err)
+		slog.Error("updating perspective failed", "error", err)
 		return nil, fmt.Errorf("failed to update perspective")
 	}
 
@@ -175,7 +175,7 @@ func (r *mutationResolver) DeletePerspective(ctx context.Context, id string) (bo
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return false, fmt.Errorf("invalid perspective ID")
 		}
-		log.Printf("Error deleting perspective: %v", err)
+		slog.Error("deleting perspective failed", "error", err)
 		return false, fmt.Errorf("failed to delete perspective")
 	}
 
@@ -197,7 +197,7 @@ func (r *queryResolver) ContentByID(ctx context.Context, id string) (*model.Cont
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return nil, fmt.Errorf("invalid content ID: %s", id)
 		}
-		log.Printf("Error getting content %s: %v", id, err)
+		slog.Error("getting content failed", "id", id, "error", err)
 		return nil, fmt.Errorf("failed to get content")
 	}
 
@@ -245,7 +245,7 @@ func (r *queryResolver) Content(ctx context.Context, first *int, after *string, 
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return nil, fmt.Errorf("invalid pagination parameters: %w", err)
 		}
-		log.Printf("Error listing content: %v", err)
+		slog.Error("listing content failed", "error", err)
 		return nil, fmt.Errorf("failed to list content")
 	}
 
@@ -284,7 +284,7 @@ func (r *queryResolver) UserByID(ctx context.Context, id string) (*model.User, e
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return nil, fmt.Errorf("invalid user ID: %s", id)
 		}
-		log.Printf("Error getting user %s: %v", id, err)
+		slog.Error("getting user failed", "id", id, "error", err)
 		return nil, fmt.Errorf("failed to get user")
 	}
 
@@ -301,7 +301,7 @@ func (r *queryResolver) UserByUsername(ctx context.Context, username string) (*m
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return nil, fmt.Errorf("invalid username")
 		}
-		log.Printf("Error getting user by username %s: %v", username, err)
+		slog.Error("getting user by username failed", "username", username, "error", err)
 		return nil, fmt.Errorf("failed to get user")
 	}
 
@@ -312,7 +312,7 @@ func (r *queryResolver) UserByUsername(ctx context.Context, username string) (*m
 func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	users, err := r.UserService.ListAll(ctx)
 	if err != nil {
-		log.Printf("Error listing users: %v", err)
+		slog.Error("listing users failed", "error", err)
 		return nil, fmt.Errorf("failed to list users")
 	}
 
@@ -340,7 +340,7 @@ func (r *queryResolver) PerspectiveByID(ctx context.Context, id string) (*model.
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return nil, fmt.Errorf("invalid perspective ID: %s", id)
 		}
-		log.Printf("Error getting perspective %s: %v", id, err)
+		slog.Error("getting perspective failed", "id", id, "error", err)
 		return nil, fmt.Errorf("failed to get perspective")
 	}
 
@@ -392,7 +392,7 @@ func (r *queryResolver) Perspectives(ctx context.Context, first *int, after *str
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return nil, fmt.Errorf("invalid pagination parameters: %w", err)
 		}
-		log.Printf("Error listing perspectives: %v", err)
+		slog.Error("listing perspectives failed", "error", err)
 		return nil, fmt.Errorf("failed to list perspectives")
 	}
 

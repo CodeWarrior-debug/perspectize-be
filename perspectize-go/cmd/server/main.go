@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -26,7 +27,7 @@ func main() {
 	// Load .env file
 	if err := godotenv.Load(); err != nil {
 		if os.Getenv("APP_ENV") != "production" {
-			log.Println("Warning: .env file not found (set APP_ENV=production to suppress)")
+			slog.Warn(".env file not found", "hint", "set APP_ENV=production to suppress")
 		}
 	}
 
@@ -40,9 +41,9 @@ func main() {
 
 	// Mask credentials in log output
 	if os.Getenv("DATABASE_URL") != "" {
-		log.Println("Connecting to database using DATABASE_URL...")
+		slog.Info("connecting to database using DATABASE_URL")
 	} else {
-		log.Printf("Connecting to database at %s:%d/%s...", cfg.Database.Host, cfg.Database.Port, cfg.Database.Name)
+		slog.Info("connecting to database", "host", cfg.Database.Host, "port", cfg.Database.Port, "name", cfg.Database.Name)
 	}
 
 	// Connect to database
@@ -57,18 +58,18 @@ func main() {
 		log.Fatalf("Database ping failed: %v", err)
 	}
 
-	log.Println("Successfully connected to database!")
+	slog.Info("successfully connected to database")
 
 	// Quick query to verify
 	var version string
 	if err := db.Get(&version, "SELECT version()"); err != nil {
 		log.Fatalf("Failed to query database: %v", err)
 	}
-	log.Printf("PostgreSQL version: %s", version)
+	slog.Info("PostgreSQL version", "version", version)
 
 	// Validate YouTube API key
 	if cfg.YouTube.APIKey == "" {
-		log.Println("Warning: YOUTUBE_API_KEY is empty — YouTube metadata fetching will fail")
+		slog.Warn("YOUTUBE_API_KEY is empty — YouTube metadata fetching will fail")
 	}
 
 	// Initialize adapters
@@ -125,17 +126,17 @@ func main() {
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 		<-sigChan
-		log.Println("Shutting down gracefully...")
+		slog.Info("shutting down gracefully")
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		if err := server.Shutdown(ctx); err != nil {
-			log.Printf("Shutdown error: %v", err)
+			slog.Error("shutdown failed", "error", err)
 		}
 	}()
 
-	log.Printf("Server running at http://localhost%s", addr)
+	slog.Info("server running", "addr", addr)
 	if os.Getenv("APP_ENV") != "production" {
-		log.Printf("GraphQL Playground available at http://localhost%s/", addr)
+		slog.Info("GraphQL Playground available", "url", fmt.Sprintf("http://localhost%s/", addr))
 	}
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Failed to start server: %v", err)

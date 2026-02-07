@@ -2,46 +2,60 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/svelte';
 import AddVideoDialog from '$lib/components/AddVideoDialog.svelte';
 
-// Mock TanStack Query
-const mockMutate = vi.fn();
-const mockInvalidateQueries = vi.fn();
+// Hoisted mocks — these are referenced inside vi.mock factories
+const {
+	mockMutate,
+	mockInvalidateQueries,
+	mockToastSuccess,
+	mockToastError,
+	mockValidate,
+} = vi.hoisted(() => ({
+	mockMutate: vi.fn(),
+	mockInvalidateQueries: vi.fn(),
+	mockToastSuccess: vi.fn(),
+	mockToastError: vi.fn(),
+	mockValidate: vi.fn(),
+}));
+
+// Capture mutation options for behavioral testing
+let capturedMutationOptions: any;
 
 vi.mock('@tanstack/svelte-query', () => ({
-	createMutation: vi.fn(() => ({
-		mutate: mockMutate,
-		isPending: false,
-	})),
+	createMutation: vi.fn((optionsFn: () => any) => {
+		capturedMutationOptions = optionsFn();
+		return {
+			mutate: mockMutate,
+			isPending: false,
+		};
+	}),
 	useQueryClient: vi.fn(() => ({
 		invalidateQueries: mockInvalidateQueries,
 	})),
 }));
 
-// Mock svelte-sonner
 vi.mock('svelte-sonner', () => ({
 	toast: {
-		success: vi.fn(),
-		error: vi.fn(),
+		success: mockToastSuccess,
+		error: mockToastError,
 	},
 }));
 
-// Mock GraphQL client
 vi.mock('$lib/queries/client', () => ({
 	graphqlClient: {
 		request: vi.fn(),
 	},
 }));
 
-// Mock YouTube validator
 vi.mock('$lib/utils/youtube', () => ({
-	validateYouTubeUrl: vi.fn(),
+	validateYouTubeUrl: (...args: any[]) => mockValidate(...args),
 }));
 
-// Mock shadcn components
 vi.mock('$lib/components/shadcn', () => ({
 	Dialog: vi.fn(() => ({ $$: {}, $set: vi.fn(), $on: vi.fn(), $destroy: vi.fn() })),
 	DialogContent: vi.fn(() => ({ $$: {}, $set: vi.fn(), $on: vi.fn(), $destroy: vi.fn() })),
 	DialogHeader: vi.fn(() => ({ $$: {}, $set: vi.fn(), $on: vi.fn(), $destroy: vi.fn() })),
 	DialogTitle: vi.fn(() => ({ $$: {}, $set: vi.fn(), $on: vi.fn(), $destroy: vi.fn() })),
+	DialogDescription: vi.fn(() => ({ $$: {}, $set: vi.fn(), $on: vi.fn(), $destroy: vi.fn() })),
 	DialogFooter: vi.fn(() => ({ $$: {}, $set: vi.fn(), $on: vi.fn(), $destroy: vi.fn() })),
 	Button: vi.fn(() => ({ $$: {}, $set: vi.fn(), $on: vi.fn(), $destroy: vi.fn() })),
 	Input: vi.fn(() => ({ $$: {}, $set: vi.fn(), $on: vi.fn(), $destroy: vi.fn() })),
@@ -51,6 +65,7 @@ vi.mock('$lib/components/shadcn', () => ({
 describe('AddVideoDialog component', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		capturedMutationOptions = undefined;
 	});
 
 	it('renders without errors when open', () => {
@@ -71,5 +86,87 @@ describe('AddVideoDialog component', () => {
 	it('accepts no props', () => {
 		const result = render(AddVideoDialog);
 		expect(result).toBeTruthy();
+	});
+});
+
+describe('AddVideoDialog mutation callbacks', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		capturedMutationOptions = undefined;
+		render(AddVideoDialog, { props: { open: true } });
+	});
+
+	it('onSuccess shows toast with video name and invalidates cache', () => {
+		expect(capturedMutationOptions).toBeDefined();
+
+		capturedMutationOptions.onSuccess({
+			createContentFromYouTube: { name: 'Test Video' }
+		});
+
+		expect(mockToastSuccess).toHaveBeenCalledWith('Added: Test Video');
+		expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['content'] });
+	});
+
+	it('onSuccess handles null response gracefully', () => {
+		expect(capturedMutationOptions).toBeDefined();
+
+		capturedMutationOptions.onSuccess(null);
+
+		expect(mockToastSuccess).toHaveBeenCalledWith('Added: video');
+		expect(mockInvalidateQueries).toHaveBeenCalled();
+	});
+
+	it('onSuccess handles missing nested properties', () => {
+		expect(capturedMutationOptions).toBeDefined();
+
+		capturedMutationOptions.onSuccess({ createContentFromYouTube: {} });
+
+		expect(mockToastSuccess).toHaveBeenCalledWith('Added: video');
+	});
+
+	it('onError shows duplicate message for "already exists" errors', () => {
+		expect(capturedMutationOptions).toBeDefined();
+
+		capturedMutationOptions.onError(new Error('content already exists for this URL'));
+
+		expect(mockToastError).toHaveBeenCalledWith('This video has already been added');
+	});
+
+	it('onError shows invalid URL message for "invalid youtube url" errors', () => {
+		expect(capturedMutationOptions).toBeDefined();
+
+		capturedMutationOptions.onError(new Error('invalid YouTube URL'));
+
+		expect(mockToastError).toHaveBeenCalledWith('Invalid YouTube URL or video not found');
+	});
+
+	it('onError shows invalid URL message for "video not found" errors', () => {
+		expect(capturedMutationOptions).toBeDefined();
+
+		capturedMutationOptions.onError(new Error('video not found: abc123'));
+
+		expect(mockToastError).toHaveBeenCalledWith('Invalid YouTube URL or video not found');
+	});
+
+	it('onError shows generic message for unknown errors', () => {
+		expect(capturedMutationOptions).toBeDefined();
+
+		capturedMutationOptions.onError(new Error('failed to create content'));
+
+		expect(mockToastError).toHaveBeenCalledWith('Failed to add video. Please try again.');
+	});
+
+	it('onError does not misclassify errors containing "invalid" in unrelated context', () => {
+		expect(capturedMutationOptions).toBeDefined();
+
+		capturedMutationOptions.onError(new Error('invalid connection state'));
+
+		expect(mockToastError).toHaveBeenCalledWith('Failed to add video. Please try again.');
+	});
+
+	it('mutationFn is defined and callable', () => {
+		expect(capturedMutationOptions).toBeDefined();
+		expect(capturedMutationOptions.mutationFn).toBeDefined();
+		expect(typeof capturedMutationOptions.mutationFn).toBe('function');
 	});
 });
