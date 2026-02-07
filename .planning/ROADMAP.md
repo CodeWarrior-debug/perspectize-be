@@ -65,10 +65,11 @@ Plans:
   1. Header fits at 375px — logo, user selector, and Add Video button all visible without clipping
   2. AG Grid pagination bar is readable and usable at 375px
   3. Table content aligns within viewport bounds (no left-shift overflow)
-**Plans**: TBD (run /gsd:plan-phase 2.1 to break down)
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] TBD
+- [ ] 02.1-01-PLAN.md — Header responsive fix (min-w-0, truncate, shrink-0) + AG Grid pagination CSS override
+- [ ] 02.1-02-PLAN.md — Table responsive column hiding + visual checkpoint at 375px
 
 ### Phase 3: Add Video Flow
 **Goal**: Users can add YouTube videos by pasting a URL, with automatic metadata fetch and feedback
@@ -127,7 +128,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/5 | Complete | 2026-02-07 |
 | 2. Data Layer + Activity | 2/2 | Complete | 2026-02-07 |
-| 2.1 Mobile Responsive Fixes | 0/? | Not started | - |
+| 2.1 Mobile Responsive Fixes | 0/2 | Not started | - |
 | 3. Add Video Flow | 0/2 | Not started | - |
 | 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 0/3 | Not started | - |
