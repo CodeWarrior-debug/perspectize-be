@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 2 complete — Phase 3 next
+**Current focus:** Phase 2 complete — Phase 2.1 (Mobile Responsive Fixes) next
 
 ## Current Position
 
@@ -71,6 +71,10 @@ Recent decisions affecting current work:
 - [Infra]: qmd .planning/ collection added with stable-vs-live convention
 - [Infra]: All three CLAUDE.md files scored 95/100 (A) quality after optimization
 - [Frontend]: Svelte 5 runes, SvelteKit routing, TanStack Query patterns documented in perspectize-fe/CLAUDE.md
+
+### Roadmap Evolution
+
+- Phase 02.1 inserted after Phase 2: Mobile Responsive Fixes (URGENT) — P1 issues: header overflow/clipping at 375px, pagination bar broken, table left-shift overflow
 
 ### Pending Todos
 
