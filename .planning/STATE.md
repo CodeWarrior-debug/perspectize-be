@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 3 complete — Phase 4 (Add Perspective Flow) next
+**Current focus:** Phase 3 complete — Phase 3.1 (Dialog UX Polish) next
 
 ## Current Position
 
@@ -85,14 +85,19 @@ Recent decisions affecting current work:
 ### Roadmap Evolution
 
 - Phase 02.1 inserted after Phase 2: Mobile Responsive Fixes (URGENT) — P1 issues: header overflow/clipping at 375px, pagination bar broken, table left-shift overflow
+- Phase 03.1 inserted after Phase 3: Dialog UX Polish — Gray overlay too aggressive, modal translucent/hard to read, needs redesign with shadcn best practices
 
 ### Pending Todos
 
 None yet.
 
+### Known Bugs
+
+- **Add Video dialog UX (P2):** Full-screen gray overlay too aggressive, modal content translucent/hard to read, poor visual hierarchy. Needs redesign with solid backgrounds, reduced overlay, and polished shadcn-svelte patterns. See Phase 3.1.
+
 ### Blockers/Concerns
 
-None — Phase 3 complete, ready for Phase 4 (Add Perspective Flow).
+None — Phase 3 complete, Phase 3.1 (Dialog UX) inserted before Phase 4.
 
 ## Session Log
 

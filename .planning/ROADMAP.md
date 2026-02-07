@@ -16,6 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Data Layer + Activity** - TanStack Query integration, AG Grid table, user selector
 - [x] **Phase 2.1: Mobile Responsive Fixes** - Fix header overflow, pagination bar, and table layout at 375px (INSERTED)
 - [x] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
+- [ ] **Phase 3.1: Dialog UX Polish** - Redesign dialog with solid backgrounds, reduced overlay, polished shadcn patterns (INSERTED)
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
 - [ ] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
 
@@ -87,6 +88,23 @@ Plans:
 - [x] 03-01-PLAN.md — YouTube URL validation utility, mutation definition, shadcn Dialog/Input/Label setup
 - [x] 03-02-PLAN.md — AddVideoDialog component with mutation, error handling, Header wiring, visual checkpoint
 
+### Phase 3.1: Dialog UX Polish (INSERTED)
+**Goal**: Redesign Add Video dialog (and establish dialog patterns for Phase 4) with solid backgrounds, proper overlay, and polished shadcn-svelte styling informed by best-practice examples
+**Depends on**: Phase 3
+**Success Criteria** (what must be TRUE):
+  1. Dialog has solid opaque background — no translucency, no bleed-through of table content
+  2. Overlay is subtle (not full-screen dark gray) or replaced with alternative pattern
+  3. Form content is clearly readable with proper visual hierarchy
+  4. Dialog pattern established for reuse in Phase 4 (Add Perspective)
+  5. Mobile 375px dialog is usable and well-styled
+**Plans**: 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 3.1 to break down)
+
+**Details:**
+Research well-regarded shadcn dialog implementations, gather user preferences on desired look/feel, and implement polished dialog UX that sets the pattern for all future dialogs.
+
 ### Phase 4: Add Perspective Flow
 **Goal**: Users can create perspectives on videos with ratings, Like text, and Review text
 **Depends on**: Phase 3
@@ -130,5 +148,6 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 4 -> 5
 | 2. Data Layer + Activity | 2/2 | Complete | 2026-02-07 |
 | 2.1 Mobile Responsive Fixes | 2/2 | Complete | 2026-02-07 |
 | 3. Add Video Flow | 2/2 | Complete | 2026-02-07 |
+| 3.1 Dialog UX Polish | 0/0 | Not planned | - |
 | 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 0/3 | Not started | - |
