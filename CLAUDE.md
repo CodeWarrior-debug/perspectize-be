@@ -143,10 +143,20 @@ qmd update  # Re-index modified files
 qmd embed   # Update embeddings (run periodically)
 ```
 
+**`.planning/` files** are indexed in a separate `planning` collection. Use qmd to discover and query planning context without consuming conversation context reading large files.
+
+| File type | Use | Rationale |
+|-----------|-----|-----------|
+| `PROJECT.md`, `ROADMAP.md`, `REQUIREMENTS.md` | `qmd_query -c planning` | Stable reference — rarely changes |
+| `research/*`, `codebase/*`, completed `*-SUMMARY.md` | `qmd_query -c planning` | Historical context — never changes |
+| `STATE.md` | **Always `Read` fresh** | Mutated during execution — qmd index may be stale |
+| Current phase `*-PLAN.md` | **Always `Read` fresh** | Actively being worked from |
+
 **For GSD agents:** When spawning gsd-executor or gsd-planner subagents, they should:
-1. Start with `qmd_query` to understand relevant codebase context
-2. Use `qmd_get` to retrieve files referenced in PLAN.md
-3. Avoid broad `Glob`/`Read` sweeps that consume tokens
+1. Use `qmd_query -c planning` for project context (roadmap, research, completed phases)
+2. **`Read` STATE.md and the current PLAN.md fresh** — never rely on qmd for these
+3. Use `qmd_query -c perspectize` to understand relevant codebase context
+4. Avoid broad `Glob`/`Read` sweeps that consume tokens
 
 ## Resources
 
