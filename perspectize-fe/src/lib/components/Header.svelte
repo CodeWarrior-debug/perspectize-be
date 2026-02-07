@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
 	import { Button } from '$lib/components/shadcn';
+	import UserSelector from '$lib/components/UserSelector.svelte';
 
 	function handleAddVideo() {
 		// Placeholder - modal will be implemented in Phase 3
@@ -16,6 +17,7 @@
 			Perspectize
 		</a>
 		<div class="flex items-center gap-4">
+			<UserSelector />
 			<Button onclick={handleAddVideo}>Add Video</Button>
 		</div>
 	</div>
