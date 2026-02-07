@@ -12,7 +12,7 @@ This roadmap delivers a functional SvelteKit frontend for Perspectize, enabling 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation** - SvelteKit project setup with design system, tooling, and navigation skeleton
+- [x] **Phase 1: Foundation** - SvelteKit project setup with design system, tooling, and navigation skeleton
 - [ ] **Phase 2: Data Layer + Activity** - TanStack Query integration, AG Grid table, user selector
 - [ ] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
@@ -35,11 +35,11 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 5 plans in 3 waves
 
 Plans:
-- [ ] 01-01-PLAN.md - SvelteKit + Tailwind + shadcn + Inter font + folder structure docs
-- [ ] 01-02-PLAN.md - Mobile-first layout system (Header, PageWrapper, breakpoints)
-- [ ] 01-03-PLAN.md - TanStack Query + GraphQL client + Toast + Vitest
-- [ ] 01-04-PLAN.md - Navigation + AG Grid validation (checkpoint)
-- [ ] 01-05-PLAN.md - Comprehensive test coverage (>80%) with testing conventions
+- [x] 01-01-PLAN.md - SvelteKit + Tailwind + shadcn + Inter font + folder structure docs
+- [x] 01-02-PLAN.md - Mobile-first layout system (Header, PageWrapper, breakpoints)
+- [x] 01-03-PLAN.md - TanStack Query + GraphQL client + Toast + Vitest
+- [x] 01-04-PLAN.md - Navigation + AG Grid validation (checkpoint)
+- [x] 01-05-PLAN.md - Comprehensive test coverage (>80%) with testing conventions
 
 ### Phase 2: Data Layer + Activity
 **Goal**: Users can view recently updated content in an AG Grid table (Activity page, default landing)
@@ -114,7 +114,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/5 | Planned | - |
+| 1. Foundation | 5/5 | Complete | 2026-02-07 |
 | 2. Data Layer + Activity | 0/3 | Not started | - |
 | 3. Add Video Flow | 0/2 | Not started | - |
 | 4. Add Perspective Flow | 0/3 | Not started | - |

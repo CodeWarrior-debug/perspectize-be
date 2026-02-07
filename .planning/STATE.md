@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 1 - Foundation
+**Current focus:** Phase 1 complete — Phase 2 next
 
 ## Current Position
 
@@ -14,7 +14,7 @@ Plan: 5 of 5 in current phase
 Status: Phase complete
 Last activity: 2026-02-07 — Completed 01-05-PLAN.md (Test Coverage)
 
-Progress: [██░░░░░░░░] 15%
+Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
