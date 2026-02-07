@@ -396,6 +396,17 @@ This project uses **GSD workflow** for planning and execution. See `.planning/` 
 - `STATE.md` - Current position and accumulated context
 - `phases/` - Detailed execution plans
 
+### qmd Pre-Exploration for GSD Planning
+
+Before spawning `gsd-phase-researcher` or `gsd-planner`, use qmd to gather codebase context efficiently:
+
+1. **Update index first:** `qmd update && qmd embed` (ensures index matches current branch)
+2. **Broad sweep:** `mcp__qmd__query` — "what source files exist in {directory}?" / "what patterns are established?"
+3. **Targeted detail:** `mcp__qmd__get` or `mcp__qmd__vsearch` for specific files or concepts
+4. **Feed digests into planner prompt** as `<codebase_context>` instead of inlining raw file contents
+
+Only inline raw code for **files being directly modified** by the plan. Use qmd summaries for everything else. This reduces planner token usage by 40-60%.
+
 ## Self-Verification Workflow
 
 Before marking any work complete, run interactive verification:
@@ -416,6 +427,7 @@ curl -X POST http://localhost:8080/graphql \
   -d '{"query": "{ __typename }"}'
 # Expect: {"data":{"__typename":"Query"}}
 ```
+Also test any frontend GraphQL queries (`src/lib/queries/*.ts`) against the live backend to catch schema drift.
 
 ### 3. Verify Frontend (Chrome DevTools MCP)
 
