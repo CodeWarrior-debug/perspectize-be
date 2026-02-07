@@ -94,16 +94,16 @@ describe('ActivityTable', () => {
 		expect(source).toContain('updateColumnVisibility()');
 	});
 
-	it('component includes onGridReady handler that calls updateColumnVisibility', () => {
+	it('component includes onFirstDataRendered handler that calls updateColumnVisibility', () => {
 		const __dirname = path.dirname(fileURLToPath(import.meta.url));
 		const componentPath = path.resolve(__dirname, '../../src/lib/components/ActivityTable.svelte');
 		const source = readFileSync(componentPath, 'utf-8');
 
-		expect(source).toContain('onGridReady:');
-		// Verify onGridReady calls updateColumnVisibility
-		const onGridReadyMatch = source.match(/onGridReady:\s*\(params\)\s*=>\s*{([^}]+)}/);
-		expect(onGridReadyMatch).toBeTruthy();
-		expect(onGridReadyMatch![1]).toContain('updateColumnVisibility()');
+		expect(source).toContain('onFirstDataRendered:');
+		// Verify onFirstDataRendered calls updateColumnVisibility (deferred to avoid AG Grid bean init race)
+		const onFirstDataRenderedMatch = source.match(/onFirstDataRendered:\s*\(\)\s*=>\s*{([^}]+)}/);
+		expect(onFirstDataRenderedMatch).toBeTruthy();
+		expect(onFirstDataRenderedMatch![1]).toContain('updateColumnVisibility()');
 	});
 
 	it('duration column includes colId for responsive hiding', () => {

@@ -22,6 +22,7 @@
 	}>();
 
 	let gridApi = $state<GridApi | null>(null);
+	let isGridInitialized = false;
 
 	const modules = [ClientSideRowModelModule];
 
@@ -117,10 +118,13 @@
 		suppressCellFocus: true,
 		onGridReady: (params) => {
 			gridApi = params.api;
+		},
+		onFirstDataRendered: () => {
+			isGridInitialized = true;
 			updateColumnVisibility();
 		},
 		onGridSizeChanged: () => {
-			updateColumnVisibility();
+			if (isGridInitialized) updateColumnVisibility();
 		}
 	};
 
