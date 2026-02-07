@@ -3,8 +3,8 @@
 	import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
 	import { themeQuartz } from '@ag-grid-community/theming';
 	import type { GridOptions } from '@ag-grid-community/core';
+	import { Button } from '$lib/components/shadcn';
 
-	// Define row data type
 	interface VideoRow {
 		id: number;
 		title: string;
@@ -13,7 +13,6 @@
 		published: string;
 	}
 
-	// Test data simulating video content
 	let rowData = $state<VideoRow[]>([
 		{ id: 1, title: 'Introduction to Svelte 5', duration: '15:42', rating: 92, published: '2026-01-15' },
 		{ id: 2, title: 'Building with SvelteKit', duration: '23:18', rating: 87, published: '2026-01-20' },
@@ -29,17 +28,15 @@
 		{ id: 12, title: 'API Design Principles', duration: '24:07', rating: 86, published: '2026-02-20' },
 	]);
 
-	// AG Grid modules (required)
 	const modules = [ClientSideRowModelModule];
 
-	// Custom theme to match shadcn
 	const theme = themeQuartz.withParams({
 		fontFamily: 'Inter, sans-serif',
 		fontSize: 14,
 		headerFontSize: 14,
 	});
 
-	let gridOptions: GridOptions<VideoRow> = $state({
+	const gridOptions: GridOptions<VideoRow> = {
 		columnDefs: [
 			{ field: 'id', headerName: 'ID', width: 80, sortable: true },
 			{ field: 'title', headerName: 'Title', flex: 2, filter: true, sortable: true },
@@ -50,19 +47,20 @@
 		pagination: true,
 		paginationPageSize: 5,
 		paginationPageSizeSelector: [5, 10, 25],
-		rowSelection: 'multiple',
+		rowSelection: { mode: 'multiRow' },
 		defaultColDef: {
 			resizable: true,
 		},
-		getRowId: (params) => String(params.data!.id),
+		getRowId: (params) => String(params.data?.id ?? ''),
 		domLayout: 'autoHeight',
-	});
+	};
+
+	let nextId = rowData.length + 1;
 
 	function addRow() {
-		const newId = rowData.length + 1;
 		rowData = [...rowData, {
-			id: newId,
-			title: `New Video ${newId}`,
+			id: nextId++,
+			title: `New Video ${nextId - 1}`,
 			duration: '10:00',
 			rating: 80,
 			published: new Date().toISOString().split('T')[0],
@@ -85,14 +83,9 @@
 		</ul>
 	</div>
 
-	<button
-		class="px-4 py-2 bg-secondary text-secondary-foreground rounded hover:bg-secondary/80"
-		onclick={addRow}
-	>
-		Add Row (Test Reactivity)
-	</button>
+	<Button variant="secondary" onclick={addRow}>Add Row (Test Reactivity)</Button>
 
-	<div style="width: 100%;">
+	<div class="w-full">
 		<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
 	</div>
 </div>

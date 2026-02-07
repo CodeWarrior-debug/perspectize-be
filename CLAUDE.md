@@ -396,7 +396,7 @@ For exposing JSONB data via GraphQL, use gqlgen's built-in `graphql.Map` scalar 
    models:
      SortOrder:
        model:
-         - github.com/yourorg/perspectize-go/internal/core/domain.SortOrder
+         - github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain.SortOrder
    ```
 
 3. For DB-stored enums (Privacy, ContentType, ReviewStatus), add repository converters:

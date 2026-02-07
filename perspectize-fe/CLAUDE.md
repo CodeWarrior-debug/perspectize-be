@@ -138,7 +138,7 @@ pnpm add ag-grid-svelte5 @ag-grid-community/core@32.2.1 @ag-grid-community/clien
   const modules = [ClientSideRowModelModule];
   const theme = themeQuartz.withParams({ fontFamily: 'Inter, sans-serif' });
   let rowData = $state<MyRow[]>([]);
-  let gridOptions: GridOptions<MyRow> = $state({ columnDefs: [...] });
+  const gridOptions: GridOptions<MyRow> = { columnDefs: [...] };
 </script>
 
 <AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
