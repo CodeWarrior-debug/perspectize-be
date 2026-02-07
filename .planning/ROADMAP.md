@@ -13,7 +13,7 @@ This roadmap delivers a functional SvelteKit frontend for Perspectize, enabling 
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - SvelteKit project setup with design system, tooling, and navigation skeleton
-- [ ] **Phase 2: Data Layer + Activity** - TanStack Query integration, AG Grid table, user selector
+- [x] **Phase 2: Data Layer + Activity** - TanStack Query integration, AG Grid table, user selector
 - [ ] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
 - [ ] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
@@ -54,8 +54,8 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 02-01-PLAN.md — Backend users query + frontend query definitions + user selection store + tests
-- [ ] 02-02-PLAN.md — Activity page with AG Grid table, UserSelector in header, visual checkpoint
+- [x] 02-01-PLAN.md — Backend users query + frontend query definitions + user selection store + tests
+- [x] 02-02-PLAN.md — Activity page with AG Grid table, UserSelector in header, visual checkpoint
 
 ### Phase 3: Add Video Flow
 **Goal**: Users can add YouTube videos by pasting a URL, with automatic metadata fetch and feedback
@@ -113,7 +113,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/5 | Complete | 2026-02-07 |
-| 2. Data Layer + Activity | 0/2 | Not started | - |
+| 2. Data Layer + Activity | 2/2 | Complete | 2026-02-07 |
 | 3. Add Video Flow | 0/2 | Not started | - |
 | 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 0/3 | Not started | - |
