@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 
 ## Current Position
 
-Phase: 2.1 of 5 (Mobile Responsive Fixes) — COMPLETE
-Plan: 2/2 complete
-Status: All mobile responsive fixes verified at 375px/768px/1280px via Chrome DevTools MCP
-Last activity: 2026-02-07 — Phase 2.1 complete, visual verification passed
+Phase: 3 of 5 (Add Video Flow) — IN PROGRESS
+Plan: 1/3 complete
+Status: Foundation components ready (Dialog/Input/Label, YouTube validation, mutation definition)
+Last activity: 2026-02-07 — Completed 03-01-PLAN.md
 
-Progress: [█████░░░░░] 50%
+Progress: [█████░░░░░] 55%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
-- Average duration: 6 min
-- Total execution time: 0.8 hours
+- Total plans completed: 10
+- Average duration: 5.4 min
+- Total execution time: 0.9 hours
 
 **By Phase:**
 
@@ -29,10 +29,11 @@ Progress: [█████░░░░░] 50%
 |-------|-------|-------|----------|
 | 01-foundation | 5 | 36 min | 7 min |
 | 02-data-layer-activity | 2 | 9 min | 4.5 min |
+| 03-add-video-flow | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 17 min, 0 min (04), 5 min, 6 min, 3 min (avg: 6 min)
-- Trend: Accelerating — automated plans completing faster
+- Last 5 plans: 0 min (04), 5 min, 6 min, 3 min, 3 min (avg: 3.4 min)
+- Trend: Accelerating — foundation plans fast, automated execution efficient
 
 *Updated after each plan completion*
 
@@ -67,6 +68,9 @@ Recent decisions affecting current work:
 - [02-02]: AG Grid Quick Filter for text search (no backend search yet)
 - [02.1-02]: AG Grid onFirstDataRendered for deferred column visibility (avoids postConstruct bean init race)
 - [02.1-02]: isGridInitialized flag gates onGridSizeChanged calls during AG Grid initialization
+- [03-01]: shadcn components in shadcn/ directory (moved from default ui/ for consistency)
+- [03-01]: URL constructor for YouTube validation (no regex, avoids catastrophic backtracking)
+- [03-01]: Support 4 YouTube hosts: youtube.com, www.youtube.com, youtu.be, m.youtube.com
 - [Infra]: CLAUDE.md split into root + perspectize-go/CLAUDE.md + perspectize-fe/CLAUDE.md for package-level context loading
 - [Infra]: Go module renamed from `github.com/yourorg/perspectize-go` to `github.com/CodeWarrior-debug/perspectize-be/perspectize-go` (30 files, all 78 tests pass)
 - [Infra]: Docs delegated to docs/ directory: VERIFICATION.md, DOMAIN_GUIDE.md, GO_PATTERNS.md, GITHUB_PROJECTS.md, GSD_BRANCHING.md
@@ -84,7 +88,7 @@ None yet.
 
 ### Blockers/Concerns
 
-None — Phase 2.1 complete, ready for Phase 3.
+None — Phase 3 Plan 01 complete, ready for Plan 02 (AddVideoDialog component).
 
 ## Session Log
 
@@ -112,8 +116,8 @@ None — Phase 2.1 complete, ready for Phase 3.
 
 ## Session Continuity
 
-Last session: 2026-02-07T09:41:54Z
-Stopped at: Phase 2 complete — all success criteria verified via Chrome DevTools MCP
+Last session: 2026-02-07T13:37:02Z
+Stopped at: Completed 03-01-PLAN.md (Foundation Components)
 Resume file: None
 
 ### 2026-02-07 — Plan 01-05: Test Coverage
