@@ -147,6 +147,21 @@ Tailwind CSS v4 default breakpoints:
 | `xl`       | 1280px    | Desktop                |
 | `2xl`      | 1536px    | Large desktop          |
 
+### Responsive Design Pattern
+
+Mobile-first approach using Tailwind breakpoints:
+
+- **Base (0px+):** px-4 padding, single column layouts, mobile-optimized
+- **md (768px+):** px-6 padding, multi-column where appropriate
+- **lg (1024px+):** px-8 padding, max-w-screen-xl centered content
+
+**Layout Components:**
+
+- `Header.svelte` - Fixed height (h-16) with responsive padding
+- `PageWrapper.svelte` - Consistent page wrapper with responsive padding and max-width
+
+**Test at:** 375px (iPhone SE), 768px (tablet), 1024px+ (desktop)
+
 ## Data Fetching (TanStack Query)
 
 Query and mutation definitions live in `src/lib/queries/`:

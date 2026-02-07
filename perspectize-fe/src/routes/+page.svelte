@@ -1,8 +1,24 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
+	import { toast } from 'svelte-sonner';
 	import { Button } from '$lib/components/shadcn';
+	import PageWrapper from '$lib/components/PageWrapper.svelte';
+
+	let width = $state(0);
+
+	$effect(() => {
+		if (browser) {
+			width = window.innerWidth;
+			const handleResize = () => {
+				width = window.innerWidth;
+			};
+			window.addEventListener('resize', handleResize);
+			return () => window.removeEventListener('resize', handleResize);
+		}
+	});
 </script>
 
-<main class="p-8 max-w-4xl mx-auto">
+<PageWrapper>
 	<h1 class="text-4xl font-bold mb-4 text-foreground">Perspectize</h1>
 	<p class="mb-6 text-lg text-muted-foreground">
 		This text should be in Geist font. Check DevTools to verify font-family.
@@ -13,6 +29,21 @@
 		<Button variant="secondary">Secondary</Button>
 		<Button variant="outline">Outline</Button>
 		<Button variant="ghost">Ghost</Button>
+	</div>
+
+	<div class="mb-8">
+		<h2 class="text-xl font-semibold mb-4">Toast Tests</h2>
+		<div class="space-x-4">
+			<Button variant="outline" onclick={() => toast.success('Success! This will dismiss in 2s')}>
+				Success Toast
+			</Button>
+			<Button variant="outline" onclick={() => toast.error('Error occurred!')}>
+				Error Toast
+			</Button>
+			<Button variant="outline" onclick={() => toast.info('Information message')}>
+				Info Toast
+			</Button>
+		</div>
 	</div>
 
 	<div class="mt-8 p-6 bg-primary text-primary-foreground rounded-lg shadow-md">
@@ -48,4 +79,9 @@
 			<div class="w-12 h-12 bg-yellow-500 rounded"></div>
 		</div>
 	</div>
-</main>
+
+	<!-- Viewport width debug display -->
+	<div class="fixed bottom-4 right-4 bg-muted px-2 py-1 rounded text-sm">
+		{width}px
+	</div>
+</PageWrapper>

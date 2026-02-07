@@ -442,10 +442,12 @@ For each plan's `must_haves`:
 
 ### 5. Evidence Capture
 
-Before creating PR:
-- Screenshot at mobile (375px), tablet (768px), desktop (1024px+)
-- Console output showing no errors
-- Verification commands output
+Save screenshots to `~/Downloads/screenshots/` with naming convention:
+- **Prefix:** `ccsv-` (Claude Code Self Verification)
+- **Format:** `ccsv-{plan}-{description}-{width}.png`
+- **Example:** `ccsv-01-02-mobile-375px.png`, `ccsv-01-04-ag-grid-desktop-1280px.png`
+- Use `filePath` parameter on `take_screenshot` to save directly
+- Take full-page screenshots (`fullPage: true`) at mobile (375px), tablet (768px), desktop (1280px)
 
 ## Legacy C# Code
 

@@ -25,7 +25,12 @@
 		"vite": "^6.4.1"
 	},
 	"dependencies": {
+		"@tanstack/svelte-form": "^1.28.0",
+		"@tanstack/svelte-query": "^6.0.18",
 		"clsx": "^2.1.1",
+		"graphql": "^16.12.0",
+		"graphql-request": "^7.4.0",
+		"svelte-sonner": "^1.0.7",
 		"tailwind-merge": "^3.4.0"
 	}
 }
