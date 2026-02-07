@@ -67,11 +67,11 @@ Plans:
   3. User sees success toast (top-right, 2s auto-dismiss) after video creation
   4. User sees error toast if URL is invalid or fetch fails
   5. User is warned via toast if video already exists (duplicate detection)
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 03-01: Add Video page with URL input and creation mutation
-- [ ] 03-02: Error handling, duplicate detection, and toast feedback
+- [ ] 03-01-PLAN.md — YouTube URL validation utility, mutation definition, shadcn Dialog/Input/Label setup
+- [ ] 03-02-PLAN.md — AddVideoDialog component with mutation, error handling, Header wiring, visual checkpoint
 
 ### Phase 4: Add Perspective Flow
 **Goal**: Users can create perspectives on videos with ratings, Like text, and Review text
@@ -95,7 +95,7 @@ Plans:
 **Depends on**: Phase 4
 **Requirements**: TEST-06, DEPLOY-01, DEPLOY-02, DEPLOY-03, API-02
 **Success Criteria** (what must be TRUE):
-  1. Final coverage verification shows ≥80% of lines covered
+  1. Final coverage verification shows >=80% of lines covered
   2. Frontend is deployed and accessible via public URL
   3. CI/CD pipeline runs tests and deploys automatically on push
   4. CORS is configured on backend to allow frontend origin
