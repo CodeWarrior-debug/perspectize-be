@@ -1,219 +1,392 @@
 # Coding Conventions
 
-**Analysis Date:** 2026-02-04
+**Analysis Date:** 2026-02-07
 
 ## Naming Patterns
 
+### Go Conventions
+
 **Files:**
-- Lowercase with underscores: `user_service.go`, `user_repository.go`, `content_repository.go`
-- Domain models: `user.go`, `content.go`, `perspective.go`, `pagination.go`, `errors.go`
-- Test files: `{subject}_test.go` placed in `test/{category}/` (e.g., `test/services/user_service_test.go`)
-- Generated files: prefixed with context like `models_gen.go`, `generated.go`, `schema.resolvers.go`
+- `snake_case.go` — All Go files use lowercase with underscores
+- Test files: `*_test.go` (e.g., `content_service_test.go`) placed in `test/` directory
+- Package organization mirrors domain/adapter structure:
+  - `internal/core/domain/` — Domain models
+  - `internal/core/ports/` — Interfaces (repositories, services)
+  - `internal/core/services/` — Business logic
+  - `internal/adapters/` — Infrastructure (GraphQL, repositories)
+  - `test/` — Test files mirroring source structure
 
-**Functions:**
-- Public functions: PascalCase starting with verb or noun (e.g., `Create()`, `GetByID()`, `NewUserService()`)
-- Private functions: camelCase (e.g., `userRowToDomain()`, `contentTypeToDBValue()`)
-- Receivers: single lowercase letter (e.g., `s *UserService`, `r *UserRepository`, `m *mockUserRepository`)
-- Constructor functions: `New{Type}` pattern (e.g., `NewUserService()`, `NewUserRepository()`)
+**Functions and Methods:**
+- PascalCase for exported functions: `GetByID`, `NewContentService`, `ListContent`, `Create`
+- camelCase for unexported: `contentTypeToDBValue`, `toNullString`, `convertToRow`
+- Constructor pattern: `New<Type>(...) *<Type>` (e.g., `NewContentService`, `NewContentRepository`)
+- Receiver names: single lowercase letter (e.g., `r *ContentRepository`, `s *ContentService`)
 
-**Variables:**
-- Local variables: camelCase (e.g., `userID`, `existing`, `username`, `createdAt`)
-- Constants: SCREAMING_SNAKE_CASE or PascalCase based on context
-  - Domain enums: UPPERCASE (e.g., `SortOrderAsc`, `ContentTypeYouTube`, `ContentSortByName`)
-  - Error variables: PascalCase with `Err` prefix (e.g., `ErrNotFound`, `ErrAlreadyExists`)
-- Pointers for optional fields: `*int`, `*string` (e.g., `URL *string`, `Length *int`)
-- Slice for collections: `[]int`, `[]string` (e.g., `Parts []int`, `Labels []string`)
+**Variables and Constants:**
+- camelCase for local variables: `userID`, `existing`, `createdAt`
+- UPPERCASE for domain error constants: `ErrNotFound`, `ErrAlreadyExists`, `ErrInvalidInput`, `ErrInvalidURL`, `ErrYouTubeAPI`, `ErrInvalidRating`, `ErrDuplicateClaim`
+- UPPERCASE for enum type constants: `ContentTypeYouTube`, `SortOrderASC`, `SortOrderDESC`, `PrivacyPublic`, `PrivacyPrivate`
+- Type aliases for enums use PascalCase: `ContentType`, `SortOrder`, `Privacy`, `ReviewStatus`, `ContentSortBy`, `PerspectiveSortBy`
+- Pointers for optional fields: `*string`, `*int`, `*time.Time`
 
-**Types:**
-- Structs: PascalCase (e.g., `UserRepository`, `ContentService`, `PaginatedContent`)
-- Enums: PascalCase type name with UPPERCASE constants (e.g., `type ContentType string; const ContentTypeYouTube ContentType = "YOUTUBE"`)
-- Input types: `{Name}Input` pattern (e.g., `CreatePerspectiveInput`)
-- Database mapping types: lowercase with suffix (e.g., `userRow`, `contentRow`)
-- Mock implementations: `mock{Name}` pattern (e.g., `mockUserRepository`, `mockContentRepository`)
+**Struct Types:**
+- PascalCase: `ContentRepository`, `ContentService`, `PaginatedContent`, `ContentListParams`
+- Database row structs: lowercase: `contentRow`, `userRow`, `perspectiveRow`
+- Mock implementations: `mock<Type>` (e.g., `mockContentRepository`, `mockYouTubeClient`)
+
+**Domain Enums Pattern:**
+- Type alias in PascalCase: `type ContentType string`
+- Constants in UPPERCASE: `ContentTypeYouTube = "YOUTUBE"`, `ContentTypeArticle = "ARTICLE"`
+- Bound to GraphQL in `gqlgen.yml` to prevent manual conversion
+- Stored enums have DB converters (lowercase ↔ UPPERCASE)
+
+### TypeScript/Svelte Conventions
+
+**Files:**
+- camelCase: `utils.ts`, `userSelection.svelte.ts`, `client.ts`, `content.ts`
+- Components: PascalCase: `UserSelector.svelte`, `ActivityTable.svelte`, `PageWrapper.svelte`, `Header.svelte`
+- Test files: `*.test.ts` (co-located with source or in `tests/` directory)
+
+**Functions and Variables:**
+- camelCase for all functions and variables: `formatDuration`, `handleChange`, `getSelectedUserId`, `setSelectedUserId`
+- React/Svelte components: PascalCase
+- Constants: UPPERCASE_SNAKE_CASE: `STORAGE_KEY = 'perspectize:selectedUserId'`, `GRAPHQL_ENDPOINT`
+
+**Svelte 5 Reactive Patterns (MANDATORY):**
+- State: `let variable = $state(initialValue)` — NOT `let variable = initialValue`
+- Derived: `let derived = $derived(expression)` — NOT `$: derived = expression`
+- Props via destructuring: `let { prop1, prop2 = default } = $props()`
+- Render children via snippet: `let { children } = $props()` then `{@render children()}`
+- Event handlers: `onclick={handler}` — NOT `on:click={handler}`
+
+**Import Paths:**
+- Absolute aliases: `$lib` → `src/lib`, `$app` → SvelteKit internals
+- Relative imports for local references
 
 ## Code Style
 
-**Formatting:**
-- Uses `gofmt` (enforced by `make fmt`)
-- All Go files must be `gofmt`-compliant
-- Lines can exceed 80 characters when necessary (e.g., SQL queries, long error messages)
+### Go Formatting
 
-**Linting:**
-- Uses `golangci-lint` (run with `make lint`)
-- Config not explicitly checked in (uses default rules)
-- Errors must be wrapped with `fmt.Errorf("message: %w", err)` format
+**Tool:** `go fmt` (built-in)
+- Enforced via `make fmt`
+- All files must be gofmt-compliant
 
-**Whitespace:**
-- Tab indentation (Go standard)
-- Blank lines separate logical sections within functions
-- Imports grouped with blank lines: standard library, third-party, local
+**Conventions:**
+- Max line length: No strict limit, but keep under 120 characters when reasonable
+- Imports: Organized in three groups separated by blank lines:
+  1. Standard library: `"context"`, `"encoding/json"`, `"errors"`, `"fmt"`
+  2. Third-party: `"github.com/stretchr/testify/assert"`
+  3. Local project: `"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/..."`
+- Example from `internal/core/services/content_service.go`:
+  ```go
+  import (
+      "context"
+      "errors"
+      "fmt"
+
+      "github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
+      "github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/ports/repositories"
+      portservices "github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/ports/services"
+  )
+  ```
+
+**Receivers:**
+- Single lowercase letter abbreviations (e.g., `r *ContentRepository`, `s *ContentService`)
+- Pointer receivers for methods that modify state or operate on large structs
+
+### TypeScript/Svelte Formatting
+
+**Tool:** No formatter configured (rely on IDE)
+- Tab width: 2 spaces (SvelteKit default)
+- Strict TypeScript: enabled in `tsconfig.json`
+
+**Conventions:**
+- Max line length: 120 characters (soft limit)
+- Indentation: 2 spaces throughout
+- CSS: Tailwind utilities via class attributes
 
 ## Import Organization
 
-**Order:**
-1. Standard library imports (e.g., `context`, `fmt`, `errors`)
-2. Third-party imports (e.g., `github.com/stretchr/testify`, `github.com/jmoiron/sqlx`)
-3. Local imports from `github.com/yourorg/perspectize-go/` (domain, ports, adapters, config)
+### Go
 
-**Path Aliases:**
-- No custom aliases used in codebase
-- Long import paths not aliased (full paths used)
-- `portservices` import alias used for `internal/core/ports/services` to avoid confusion with `internal/core/services`
+**Order (enforced by go fmt):**
+1. Standard library: `"context"`, `"fmt"`, `"errors"`
+2. Third-party: `"github.com/stretchr/testify/assert"`
+3. Local: `"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/..."`
+
+**Aliases:** Use for clarity when importing multiple ports packages
+```go
+portservices "github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/ports/services"
+```
+
+### TypeScript/Svelte
+
+**Order:**
+1. Framework imports: `import { Component } from 'svelte'`
+2. Third-party: `import { createQuery } from '@tanstack/svelte-query'`
+3. Local imports: `import { graphqlClient } from '$lib/queries/client'`
+4. Type imports: `import type { GridOptions } from '@ag-grid-community/core'`
+
+**Aliases (via SvelteKit):**
+- `$lib` → `src/lib`
+- `$app/environment`, `$app/stores`, `$app/navigation`
+
+**Example from `UserSelector.svelte`:**
+```typescript
+import { createQuery } from '@tanstack/svelte-query';
+import { graphqlClient } from '$lib/queries/client';
+import { LIST_USERS } from '$lib/queries/users';
+import { setSelectedUserId, getSelectedUserId } from '$lib/stores/userSelection.svelte';
+```
 
 ## Error Handling
 
-**Patterns:**
-- Domain layer defines error variables: `var ErrNotFound = errors.New("resource not found")` (file: `internal/core/domain/errors.go`)
-- Service/adapter layers wrap errors: `fmt.Errorf("context message: %w", err)` to preserve error chain
-- Use `errors.Is(err, domain.ErrNotFound)` to check domain errors
-- SQL `sql.ErrNoRows` is converted to domain `ErrNotFound` at repository level
-- Do NOT use custom error types; use sentinel errors (defined in `domain/errors.go`)
+### Go Patterns
 
-**Error Translation:**
-- Domain errors have "business meaning" (e.g., `ErrInvalidInput`, `ErrAlreadyExists`)
-- Services wrap domain errors with contextual messages: `fmt.Errorf("%w: username already taken", domain.ErrAlreadyExists)`
-- Repositories wrap database errors with operation context: `fmt.Errorf("failed to get user by id: %w", err)`
-- Resolvers translate domain errors to GraphQL responses (error translation may differ per resolver)
+**Domain Errors:** Defined in `internal/core/domain/errors.go`
+```go
+var (
+    ErrNotFound       = errors.New("resource not found")
+    ErrAlreadyExists  = errors.New("resource already exists")
+    ErrInvalidInput   = errors.New("invalid input")
+    ErrInvalidURL     = errors.New("invalid URL")
+    ErrYouTubeAPI     = errors.New("youtube API error")
+    ErrInvalidRating  = errors.New("rating must be between 0 and 10000")
+    ErrDuplicateClaim = errors.New("claim already exists for this user")
+)
+```
 
-**Validation Pattern:**
-- Input validation in service methods, not repositories
-- Validate constraints at service layer: `if len(username) > 24 { return nil, fmt.Errorf("%w: ...", domain.ErrInvalidInput) }`
-- Return early on validation failure
+**Wrapping Pattern:**
+```go
+// Repository detects domain error and wraps with context
+if err != nil && !errors.Is(err, domain.ErrNotFound) {
+    return nil, fmt.Errorf("failed to check existing content: %w", err)
+}
+
+// Service validates input and wraps domain error
+if errors.Is(err, domain.ErrNotFound) {
+    return nil, fmt.Errorf("resource not found")
+}
+
+// Never use switch on error types - use errors.Is()
+// Example of what NOT to do:
+// if err == domain.ErrNotFound { } // WRONG
+
+// Correct approach:
+// if errors.Is(err, domain.ErrNotFound) { } // CORRECT
+```
+
+**Detection:** Always use `errors.Is(err, domain.ErrNotFound)` to detect wrapped errors
+
+**GraphQL Resolution:** Resolvers translate domain errors to HTTP responses
+```go
+result, err := r.service.GetById(id)
+if errors.Is(err, domain.ErrNotFound) {
+    return nil, fmt.Errorf("resource not found")
+}
+return result, err
+```
+
+### TypeScript Conventions
+
+**Async/await with error handling:**
+```typescript
+try {
+    const result = await graphqlClient.request(QUERY);
+    return result;
+} catch (error) {
+    console.error('Query failed:', error);
+    throw error;
+}
+```
+
+**TanStack Query error states:**
+```typescript
+if (query.error) {
+    console.error('Failed to load:', query.error);
+}
+```
 
 ## Logging
 
-**Framework:** Standard library `log` package (not `slog`)
-- File: `cmd/server/main.go` uses `log.Println()` and `log.Printf()` for startup/connection messages
-- No structured logging yet in code (CLAUDE.md documents intent to use `slog`, but not yet applied)
-- Logging is sparse: only critical operations (DB connection, version checks)
+### Go
 
-**Patterns:**
-- Log at startup: configuration loading, database connection, version queries
-- Log connection success with operational context (e.g., "Connecting to database at host:port/db...")
-- Mask credentials in logs: "Connecting to database using DATABASE_URL..." (no printed values)
-- Use `log.Fatalf()` for fatal errors that prevent startup
-- Use `log.Println()` and `log.Printf()` for informational messages
+**Framework:** Standard library `log/slog`
+- Usage: `log.Println("message")`, `log.Printf("format: %v", val)`, `log.Fatalf("error: %v", err)`
+- Structured logging available: `slog.Info()`, `slog.Error()`
+- Used in `cmd/server/main.go` for lifecycle events
+- Example: `log.Println("Successfully connected to database!")`
+
+### TypeScript/Svelte
+
+**Framework:** Browser `console`
+- Development: `console.log()`, `console.error()`, `console.warn()`, `console.debug()`
+- No centralized logging library configured
+- Example: `console.error('Failed to load:', error)`
 
 ## Comments
 
-**When to Comment:**
-- Function comments: Exported functions have comment starting with function name (e.g., `// Create inserts a new user record...`)
-- Type comments: Structs have comment describing purpose (e.g., `// User represents a user who can create perspectives`)
-- Complex logic: Inline comments explain non-obvious decisions (e.g., "Fetch limit+1 to determine hasNextPage")
-- Conversions: Comments explain why conversions are needed (e.g., `// userRowToDomain converts a database row to a domain User`)
-- Database queries: Comments label query steps (e.g., "Check if username already exists", "Validate email")
+### Go
 
-**JSDoc/TSDoc:**
-- Not used (Go uses `//` comments only)
-- Function signatures are self-documenting with type information
+**When to Comment:**
+- Exported functions and types: Required comment starting with name
+  ```go
+  // ContentService implements business logic for content operations
+  type ContentService struct { ... }
+
+  // GetByID retrieves content by ID
+  func (s *ContentService) GetByID(ctx context.Context, id int) (*domain.Content, error) { ... }
+  ```
+- Complex logic: Explain WHY, not WHAT
+- Non-obvious error handling: Comment domain error checks
+- Example: `// Check if content already exists (ErrNotFound is expected if not found)`
+
+**Style:** `// Comment` format (not `/* */` for single-line comments)
+
+### TypeScript/Svelte
+
+**When to Comment:**
+- Complex business logic requiring explanation
+- Non-obvious GraphQL or state management
+- Component behavior that needs context
+
+**Example from `ActivityTable.svelte`:**
+```typescript
+// Convert length + lengthUnits to display format
+function formatDuration(length: number | null, lengthUnits: string | null): string { ... }
+
+// Format dates to locale string
+function formatDate(isoString: string): string { ... }
+```
 
 ## Function Design
 
-**Size:**
-- Small focused functions (typical 20-50 lines)
-- Services contain validation logic and orchestration (50-100 lines common for complex operations like `Create`)
-- Repositories contain query logic (30-80 lines typical)
-- Helper functions extracted for reuse (e.g., `contentTypeToDBValue()`, `userRowToDomain()`)
+### Go
+
+**Size:** 20-60 lines typical (service and repository methods)
+- Prefer small focused functions
+- Example methods: `GetByID`, `Create`, `List` are 10-30 lines each
 
 **Parameters:**
-- Accept `context.Context` as first parameter in all service/repository methods
-- Use `*Domain` pointers for input entities
-- Use `interface{}` for dependencies (e.g., `repositories.UserRepository`, `portservices.YouTubeClient`)
-- Optional inputs: pointer types for nullable fields (e.g., `First *int`, `After *string`)
+- Context as first parameter (Go convention): `func (s *Service) Method(ctx context.Context, ...)`
+- Domain models by pointer for mutations: `*domain.Content`
+- Scalars by value: `id int`, `url string`
+- Input structs for multiple parameters: `params domain.ContentListParams`
 
 **Return Values:**
-- Single or dual returns
-- Dual pattern: `(*Type, error)` - return nil resource on error
-- Never return both resource and error set
-- Error always checked with `if err != nil { return ... }`
+- Pointer + error tuple: `(*Model, error)`
+- Pagination: `(*PaginatedModel, error)`
+- Validation result with wrapped error: `fmt.Errorf("%w: message", domain.ErrInvalidInput)`
+
+**Example from `internal/core/services/content_service.go`:**
+```go
+func (s *ContentService) GetByID(ctx context.Context, id int) (*domain.Content, error) {
+    if id <= 0 {
+        return nil, fmt.Errorf("%w: content id must be a positive integer", domain.ErrInvalidInput)
+    }
+    content, err := s.repo.GetByID(ctx, id)
+    if err != nil {
+        return nil, fmt.Errorf("failed to get content: %w", err)
+    }
+    return content, nil
+}
+```
+
+### TypeScript/Svelte
+
+**Size:** Utilities 10-50 lines, components 50-200 lines
+
+**Parameters:**
+- Object when more than 2 parameters
+- Svelte store getters: `export function getSelectedUserId(): number | null`
+- Svelte store setters: `export function setSelectedUserId(value: number | null): void`
+
+**Return Values:**
+- Typed via TypeScript: `function getValue(): string`
+- Nullable: `| null | undefined`
+
+**Svelte 5 Store Patterns:**
+- Getter: `export function getValue(): Type { return _internal; }`
+- Setter: `export function setValue(val: Type): void { _internal = val; syncStorage(); }`
+- Property: `export const value = { get value() { ... }, set value(...) { ... } }`
 
 ## Module Design
 
-**Exports:**
-- All public types and functions exported (PascalCase)
-- Private types/functions lowercase (only used within package)
-- Constructor functions (`New{Type}`) always exported
+### Go Packages
 
-**Barrel Files:**
-- Not used (no index.go or barrel exports)
-- Each package imports what it needs from other packages
-
-**Dependency Injection:**
-- Via constructor functions: `NewUserService(repo repositories.UserRepository) *UserService`
-- Repository injected via interface: repositories are interfaces in `internal/core/ports/repositories/`
-- Services injected into resolvers via constructor: `NewResolver(contentService, userService, perspectiveService)`
-- All dependencies resolved in `cmd/server/main.go`
+**Exports:** Follow Effective Go
+- Unexported (lowercase) by default
+- Export only for cross-package use
+- Example: Repository types exported as `*ContentRepository`, methods as `GetByID()`, `Create()`
 
 **Package Structure:**
-- Domain layer (`internal/core/domain/`): entities, enums, errors (no dependencies on adapters)
-- Ports (`internal/core/ports/`): repository/service interfaces (contracts)
-- Services (`internal/core/services/`): business logic (depends on ports, not adapters)
-- Adapters (`internal/adapters/`): implementations (depends on domain, not domain dependent)
-- Config: loaded via `internal/config/`, environment variables override JSON
+- `internal/core/domain/` — Domain models, NO external dependencies
+- `internal/core/ports/` — Interfaces only (repositories, services)
+- `internal/core/services/` — Business logic using ports
+- `internal/adapters/` — Infrastructure (implements ports, depends on domain)
+- `internal/adapters/repositories/postgres/` — Database implementations
+- `internal/adapters/graphql/resolvers/` — GraphQL resolver implementations
 
-## Domain Enum Pattern
-
-**Requirement:** Always use gqlgen model binding - never write switch statements to convert between GraphQL and domain enums.
-
-**For value enums (SortOrder, Privacy, ContentType, etc.):**
-1. Define domain enums with UPPERCASE values in `internal/core/domain/`:
-   ```go
-   type SortOrder string
-   const (
-       SortOrderAsc  SortOrder = "ASC"
-       SortOrderDesc SortOrder = "DESC"
-   )
-   ```
-
-2. Bind in `gqlgen.yml` to use Go types directly (eliminates manual mapping)
-
-3. For DB-stored enums, add repository converter functions:
-   ```go
-   func contentTypeToDBValue(ct domain.ContentType) string {
-       return strings.ToLower(string(ct))
-   }
-   func contentTypeFromDBValue(s string) domain.ContentType {
-       return domain.ContentType(strings.ToUpper(s))
-   }
-   ```
-
-**For ID fields in filters/inputs:**
-Use the `IntID` custom scalar (`pkg/graphql/intid.go`) instead of `ID` with manual `strconv.Atoi`. This auto-converts string IDs to integers in filters.
-
-## Pagination & Cursors
-
-**Cursor Pattern:**
-- Opaque base64-encoded strings: `base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("cursor:%d", id)))`
-- Encoded format: `cursor:<id>` before base64 encoding
-- Decoded in repository: validate format, extract ID, convert to int
-- Helper functions: `encodeCursor()`, `decodeCursor()` in repository
-
-**SQL Pagination:**
-- Keyset pagination: `id > cursor_id` for forward, `id < cursor_id` for backward
-- Fetch `limit+1` rows to determine `hasNextPage` without extra query
-- Whitelist sort columns via switch function: `sortColumnName()` prevents SQL injection
-
-## Optional Fields Pattern
-
-**Nullable fields:** Use pointers for optional values
-```go
-type Perspective struct {
-    Claim   string  // Required - always has value
-    Quality *int    // Optional - nil means "not provided"
-}
-
-// Check if optional field is set
-if p.Quality != nil {
-    fmt.Println(*p.Quality)  // Dereference to get value
-}
-
-// Set an optional field
-quality := 85
-p.Quality = &quality
+**Dependency Rule:** Always points inward
+```
+adapters → ports → domain
+services → ports → domain
+Domain never imports adapters or services
 ```
 
-**Database mapping:** `sql.NullString`, `sql.NullInt64`, `sql.NullTime` for nullable columns
+### TypeScript/Svelte
+
+**Exports:** ES modules
+- Default for single exports: `export default Component`
+- Named for multiple: `export function cn(...)`
+- Re-export via barrel files: `export { Button } from './button/button.svelte'`
+
+**Module Structure:**
+- `src/lib/queries/` — GraphQL client and query definitions
+- `src/lib/stores/` — Reactive state (Svelte 5 runes)
+- `src/lib/components/` — Reusable components
+- `src/lib/utils/` — Helper functions
+- `src/routes/` — SvelteKit file-based routing
+
+**Barrel Files:**
+- Location: `src/lib/components/shadcn/index.ts`
+- Pattern: `export { default as Button } from './button/button.svelte'`
+- Enable: `import { Button } from '$lib/components/shadcn'`
+
+## Svelte 5 Specific Conventions
+
+**Runes (MANDATORY - violating these breaks reactivity):**
+
+| Use This | NOT This | Reason |
+|----------|----------|--------|
+| `let count = $state(0)` | `let count = 0` | State requires rune for reactivity |
+| `let doubled = $derived(count * 2)` | `$: doubled = count * 2` | Derived values use runes in v5 |
+| `let { prop } = $props()` | `export let prop` | Props use runes in v5 |
+| `$effect(() => { ... })` | `onMount(() => { ... })` | Effects replace lifecycle hooks |
+| `{@render children()}` | `<slot />` | Render snippets in v5 |
+| `onclick={handler}` | `on:click={handler}` | Event directive syntax changed |
+
+**Anti-patterns (will break):**
+- Using `$effect` for derivation → Use `$derived` instead
+- Using `onMount`, `beforeUpdate`, etc. → Use `$effect` instead
+- Using `$:` reactive statements → Use `$state` + `$derived`
+- Using store `$store` syntax → TanStack Query v5 returns reactive objects (no `$`)
+
+**Query Pattern (CRITICAL for v5):**
+```typescript
+// Function wrapper REQUIRED for reactivity
+const query = createQuery(() => ({
+    queryKey: ['key'],
+    queryFn: () => graphqlClient.request(QUERY),
+    staleTime: 5 * 60 * 1000  // optional
+}));
+
+// Access as reactive object (NO $ prefix)
+{#if query.isLoading}Loading...{/if}
+{#if query.data}{@render renderData(query.data)}{/if}
+{#if query.error}Error: {query.error}{/if}
+```
 
 ---
 
-*Convention analysis: 2026-02-04*
+*Convention analysis: 2026-02-07*

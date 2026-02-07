@@ -1,334 +1,415 @@
 # Architecture
 
-**Analysis Date:** 2026-02-04
+**Analysis Date:** 2026-02-07
 
-## Pattern Overview
+## Monorepo Overview
 
-**Overall:** Hexagonal Architecture (Ports and Adapters)
+Perspectize is a **two-stack monorepo** with active development on both frontend and backend:
 
-**Key Characteristics:**
-- Clean separation of domain logic from infrastructure
-- Dependency injection through port interfaces
-- Domain models have zero external dependencies
-- Primary adapter is GraphQL (gqlgen), secondary adapters are PostgreSQL repositories and YouTube API client
-- Explicit error handling with domain-specific error types
-
-## Layers
-
-**Domain Layer (Core):**
-- Purpose: Pure business logic and domain models, completely independent of frameworks and infrastructure
-- Location: `internal/core/domain/` and `internal/core/services/`
-- Contains: Domain entities (`Content`, `Perspective`, `User`), constants/enums (`ContentType`, `Privacy`, `ReviewStatus`, `SortOrder`), domain errors, validation functions, pagination/filter types
-- Depends on: Standard library only
-- Used by: Services, adapters
-
-**Ports Layer:**
-- Purpose: Define interfaces (contracts) that adapters must implement
-- Location: `internal/core/ports/repositories/` and `internal/core/ports/services/`
-- Contains: `ContentRepository`, `UserRepository`, `PerspectiveRepository` interfaces; `YouTubeClient` service interface
-- Depends on: Domain types
-- Used by: Services, adapters
-
-**Services Layer (Business Logic):**
-- Purpose: Implement core business operations and orchestration
-- Location: `internal/core/services/`
-- Contains: `ContentService`, `UserService`, `PerspectiveService` with validation, error handling, and business rules
-- Depends on: Domain types and port interfaces (repositories, external services)
-- Used by: GraphQL resolvers
-
-**GraphQL Adapter (Primary):**
-- Purpose: HTTP entry point for the application using GraphQL
-- Location: `internal/adapters/graphql/`
-- Contains:
-  - `resolvers/resolver.go` - Dependency injection container
-  - `resolvers/schema.resolvers.go` - Query and Mutation resolver implementations
-  - `resolvers/helpers.go` - Model conversion helpers
-  - `generated/generated.go` - gqlgen auto-generated GraphQL execution code
-  - `model/` - GraphQL model types (auto-generated from schema)
-- Depends on: Services, domain types, gqlgen
-- Used by: HTTP handler in main.go
-
-**Repository Adapters (Secondary - Data Persistence):**
-- Purpose: PostgreSQL database access implementations
-- Location: `internal/adapters/repositories/postgres/`
-- Contains:
-  - `content_repository.go` - Cursor-based pagination, content CRUD
-  - `user_repository.go` - User CRUD, lookups by ID/username/email
-  - `perspective_repository.go` - Complex perspective queries with JSONB array handling
-- Depends on: Domain types, sqlx, pq (PostgreSQL driver)
-- Pattern: Each implements a port interface; handles DB type conversions (sql.NullString, pq.StringArray, JSONBArray)
-- Used by: Services
-
-**YouTube Adapter (Secondary - External API):**
-- Purpose: YouTube Data API v3 integration
-- Location: `internal/adapters/youtube/`
-- Contains:
-  - `client.go` - HTTP client for YouTube API; implements YouTubeClient port; fetches video metadata
-  - `parser.go` - Utility functions: `ExtractVideoID()` parses URL formats, `ParseISO8601Duration()` converts duration format
-- Depends on: Domain types, standard HTTP library
-- Used by: ContentService
-
-**Configuration Layer:**
-- Purpose: Load and manage application configuration
-- Location: `internal/config/config.go`
-- Contains: Config structures (Server, Database, YouTube, Logging); `Load()` function that reads config.json and overrides with env vars
-- Key flow: Environment variables override JSON config for secrets (`DATABASE_URL`, `DATABASE_PASSWORD`, `YOUTUBE_API_KEY`)
-- Used by: main.go
-
-**Database Utilities:**
-- Purpose: Shared database connection and utilities
-- Location: `pkg/database/postgres.go`
-- Contains: `Connect()` - creates sqlx.DB with connection pooling; `Ping()` - health check
-- Used by: main.go
-
-**Custom GraphQL Scalars:**
-- Purpose: Handle type conversion between GraphQL and Go
-- Location: `pkg/graphql/intid.go`
-- Contains: `IntID` scalar; `MarshalIntID()` and `UnmarshalIntID()` for string<->int conversion
-- Used by: GraphQL generated code for ID fields
-
-## Data Flow
-
-**Content Creation from YouTube (Mutation):**
-
-1. GraphQL mutation `createContentFromYouTube(url)` → `schema.resolvers.go:CreateContentFromYouTube()`
-2. Call `ContentService.CreateFromYouTube(url, extractVideoIDFunc)`
-3. Service validates: check if URL already exists via `ContentRepository.GetByURL()`
-4. Extract video ID using `youtube.ExtractVideoID()` utility
-5. Fetch metadata via `YouTubeClient.GetVideoMetadata(videoID)` (YouTube API adapter)
-6. Parse ISO8601 duration via `youtube.ParseISO8601Duration()` utility
-7. Create domain `Content` object with metadata
-8. Persist via `ContentRepository.Create()` → PostgreSQL INSERT
-9. Return `Content` domain object, converted to GraphQL model by `domainToModel()`
-10. Return to client
-
-**Perspective Creation (Mutation):**
-
-1. GraphQL mutation `createPerspective(input)` → `schema.resolvers.go:CreatePerspective()`
-2. Convert GraphQL input to service input type
-3. Call `PerspectiveService.Create(input)`
-4. Service validation:
-   - Validate claim (required, max 255 chars)
-   - Validate user exists via `UserRepository.GetByID()`
-   - Validate all ratings in range [0, 10000] via `domain.ValidateRating()`
-   - Check for duplicate claim via `PerspectiveRepository.GetByUserAndClaim()`
-5. Set default privacy if not provided
-6. Create domain `Perspective` object
-7. Persist via `PerspectiveRepository.Create()` → PostgreSQL INSERT
-8. Handle JSONB array conversion for categorized ratings (serialize to JSON strings)
-9. Return persisted Perspective, converted to GraphQL model
-
-**Perspective List Query with Pagination:**
-
-1. GraphQL query `perspectives(first, after, sortBy, filter)` → `schema.resolvers.go:PerspectivesResolver()`
-2. Call `PerspectiveService.ListPerspectives(params)`
-3. Service validates pagination bounds (1-100 items)
-4. Call `PerspectiveRepository.List(params)`
-5. Repository builds SQL query:
-   - Cursor-based pagination: decode `after` cursor (base64 format "cursor:{id}") to find starting point
-   - Fetch `limit+1` rows to determine `hasNextPage` without extra query
-   - Apply filters (userID, contentID, privacy)
-   - Apply sort (CREATED_AT/UPDATED_AT/CLAIM, ASC/DESC)
-   - Use keyset pagination (WHERE id > cursor_id) for performance
-6. Convert perspectiveRow to domain Perspective objects
-7. Unmarshal categorized_ratings from JSONB array
-8. Return PaginatedPerspectives with cursors and optional total count
-
-**State Management:**
-
-- Domain objects are immutable data structures (no setters)
-- Services receive input objects and return new domain objects
-- Repositories receive domain objects and return database-stored versions with populated timestamps/IDs
-- GraphQL resolvers convert between models and domain types at boundaries
-- No shared state between requests; each request has its own service/repository instances
-
-## Key Abstractions
-
-**Port Interfaces (Contracts):**
-
-**`ContentRepository` interface** (`internal/core/ports/repositories/content_repository.go`)
-- Purpose: Define contract for content persistence layer
-- Methods:
-  - `Create(ctx, content)` - Insert new content, return with generated ID/timestamps
-  - `GetByID(ctx, id)` - Retrieve single content
-  - `GetByURL(ctx, url)` - Check for duplicate content by URL
-  - `List(ctx, params)` - Cursor-based pagination with filtering and sorting
-- Implemented by: `postgres.ContentRepository` in `internal/adapters/repositories/postgres/content_repository.go`
-
-**`UserRepository` interface** (`internal/core/ports/repositories/user_repository.go`)
-- Purpose: Define contract for user persistence
-- Methods:
-  - `Create(ctx, user)` - Insert new user
-  - `GetByID(ctx, id)` - Retrieve user by ID
-  - `GetByUsername(ctx, username)` - Retrieve user by username
-  - `GetByEmail(ctx, email)` - Retrieve user by email
-- Implemented by: `postgres.UserRepository` in `internal/adapters/repositories/postgres/user_repository.go`
-
-**`PerspectiveRepository` interface** (`internal/core/ports/repositories/perspective_repository.go`)
-- Purpose: Define contract for perspective persistence with complex queries
-- Methods:
-  - `Create(ctx, perspective)` - Insert new perspective with JSONB array handling
-  - `GetByID(ctx, id)` - Retrieve single perspective
-  - `GetByUserAndClaim(ctx, userID, claim)` - Check for duplicate claim
-  - `Update(ctx, perspective)` - Update existing perspective
-  - `Delete(ctx, id)` - Remove perspective
-  - `List(ctx, params)` - Cursor-based pagination with user/content/privacy filters
-- Implemented by: `postgres.PerspectiveRepository` in `internal/adapters/repositories/postgres/perspective_repository.go`
-
-**`YouTubeClient` interface** (`internal/core/ports/services/youtube_client.go`)
-- Purpose: Define contract for YouTube API interactions
-- Methods:
-  - `GetVideoMetadata(ctx, videoID) → VideoMetadata, error` - Fetch title, description, duration, channel name
-- Implemented by: `youtube.Client` in `internal/adapters/youtube/client.go`
-
-**Domain Error Types:**
-
-Located in `internal/core/domain/errors.go`:
-- `ErrNotFound` - Resource does not exist
-- `ErrAlreadyExists` - Resource already exists (duplicate)
-- `ErrInvalidInput` - Validation failed
-- `ErrInvalidURL` - Malformed YouTube URL
-- `ErrYouTubeAPI` - External API error
-- `ErrInvalidRating` - Rating outside [0, 10000] range
-- `ErrDuplicateClaim` - User already created this claim
-
-Used throughout services for explicit error handling:
-```go
-if errors.Is(err, domain.ErrNotFound) {
-    // Handle not found
-}
+```
+perspectize-be/ (repository root)
+├── perspectize-go/     # Go GraphQL API backend (ACTIVE)
+├── perspectize-fe/     # SvelteKit web app frontend (ACTIVE)
+└── perspectize-be/     # Legacy C# (DEPRECATED - ignore)
 ```
 
-**Pagination Abstractions:**
-
-**Cursor-based pagination** (keyset pagination):
-- Location: `internal/core/domain/pagination.go` (types), `internal/adapters/repositories/postgres/` (implementation)
-- Cursor encoding: Base64-encoded string in format "cursor:{id}"
-- SQL pattern: `WHERE id > $cursor AND ... ORDER BY created_at DESC LIMIT limit+1`
-- Avoids OFFSET performance issues; supports forward traversal
-- Determines `hasNextPage` by fetching `limit+1` rows and checking length
-
-**Type Conversion Abstractions:**
-
-**Custom scalar handling:**
-- `IntID` scalar in `pkg/graphql/intid.go` - Converts GraphQL string IDs to Go int
-- Marshalers: `MarshalIntID()` for Go→GraphQL, `UnmarshalIntID()` for GraphQL→Go
-- Eliminates manual strconv.Atoi calls in resolvers
-
-**Database type converters:**
-- Content enum: `contentTypeToDBValue()`, `contentTypeFromDBValue()` - Converts domain.ContentType (UPPERCASE) to lowercase for DB
-- Perspective privacy: `privacyToDBValue()` (implicit pattern) - Stores as lowercase in DB
-- Null handling: `toNullString()`, `toNullInt64()` - Convert pointers to sql.Null* types
-- Array handling: `pq.StringArray` for labels, `pq.Int64Array` for parts, `JSONBArray` for categorized_ratings
-
-**Model Conversion:**
-
-- Location: `internal/adapters/graphql/resolvers/helpers.go`
-- Pattern: `domainToModel()`, `userDomainToModel()`, `perspectiveDomainToModel()` functions
-- Purpose: Convert domain objects to GraphQL model types before returning to client
-- Domain types have zero GraphQL knowledge; conversion happens at adapter boundary
-
-## Entry Points
-
-**HTTP Server Entry Point:**
-- Location: `cmd/server/main.go`
-- Triggers:
-  1. Load .env file (optional via godotenv)
-  2. Load config from config/config.example.json, override with env vars
-  3. Connect to PostgreSQL via `database.Connect(dsn)`
-  4. Test connection with `database.Ping()` and version query
-  5. Initialize adapters (YouTube client, repositories)
-  6. Initialize services with adapter dependencies
-  7. Initialize GraphQL resolver with service dependencies
-  8. Create gqlgen handler: `handler.NewDefaultServer(generated.NewExecutableSchema())`
-  9. Register HTTP routes:
-     - `GET /` → GraphQL Playground
-     - `POST /graphql` → GraphQL execution
-  10. Listen on configured port (default 8080)
-
-**GraphQL Request Flow:**
-- Client sends mutation/query → HTTP POST /graphql
-- gqlgen parses request, validates against schema
-- Routes to appropriate resolver in `schema.resolvers.go`
-- Resolver calls service methods
-- Service calls repository/external service methods via port interfaces
-- Results propagated back through layers, converted to GraphQL models at boundary
-
-## Error Handling
-
-**Strategy:** Explicit error returns with domain error types; no exceptions
-
-**Patterns:**
-
-**Service layer:**
-```go
-// Domain error
-func (s *UserService) Create(ctx context.Context, username, email string) (*domain.User, error) {
-    if username == "" {
-        return nil, fmt.Errorf("%w: username is required", domain.ErrInvalidInput)
-    }
-    // ...
-}
-
-// Check if error is specific domain error
-existing, err := s.repo.GetByUsername(ctx, username)
-if err != nil && !errors.Is(err, domain.ErrNotFound) {
-    return nil, fmt.Errorf("failed to check username: %w", err)
-}
-```
-
-**Repository layer:**
-```go
-// Map database "not found" to domain error
-if errors.Is(err, sql.ErrNoRows) {
-    return nil, domain.ErrNotFound
-}
-return nil, fmt.Errorf("failed to get user: %w", err)
-```
-
-**Resolver layer (GraphQL boundary):**
-```go
-user, err := r.UserService.Create(ctx, input.Username, input.Email)
-if err != nil {
-    if errors.Is(err, domain.ErrAlreadyExists) {
-        return nil, fmt.Errorf("user already exists: %w", err)
-    }
-    if errors.Is(err, domain.ErrInvalidInput) {
-        return nil, fmt.Errorf("invalid input: %w", err)
-    }
-    return nil, fmt.Errorf("failed to create user: %w", err)
-}
-```
-
-**Context propagation:**
-- All repository and service methods accept `context.Context` as first parameter
-- Enables request cancellation, deadlines, and request-scoped values
-- Database operations respect context timeouts
-
-## Cross-Cutting Concerns
-
-**Logging:** Not yet implemented. Placeholder: use `log/slog` (per CLAUDE.md).
-
-**Validation:**
-- **Input validation:** Done in service layer before database operations
-  - Username: required, max 24 chars
-  - Email: required, valid format (regex), unique
-  - Claim: required, max 255 chars, unique per user
-  - Ratings: 0-10000 range (validated per field)
-- **Type validation:** Handled by domain constants/enums (ContentType, Privacy, etc.)
-- **Database constraints:** Enforce NOT NULL, UNIQUE, CHECK constraints at DB level
-
-**Authentication:** Not yet implemented. No auth middleware or user session handling in current codebase.
-
-**Rate Limiting:** Not implemented.
-
-**Database Connection Pooling:**
-- Location: `pkg/database/postgres.go`
-- Settings:
-  - MaxOpenConns: 25
-  - MaxIdleConns: 5
-  - ConnMaxLifetime: 5 minutes
+**Key Principle:** Frontend and backend are loosely coupled via GraphQL HTTP API. No shared code between stacks. Stacks are independently deployable.
 
 ---
 
-*Architecture analysis: 2026-02-04*
+## Backend Architecture (perspectize-go/)
+
+### Pattern: Hexagonal Architecture (Ports & Adapters)
+
+The Go backend implements **Hexagonal Architecture** with strict dependency inversion:
+
+```
+┌─────────────────────────────────────────────────────┐
+│         PRIMARY ADAPTERS (Driving/Input)            │
+│    GraphQL Resolvers (gqlgen schema-first)          │
+│    HTTP Handlers (net/http + CORS middleware)       │
+└──────────────┬──────────────────────────────────────┘
+               │ depends on
+┌──────────────▼──────────────────────────────────────┐
+│         CORE DOMAIN LAYER (Domain Logic)            │
+│  ├── domain/       (Entities, enums, errors)        │
+│  ├── services/     (Business logic, orchestration)  │
+│  └── ports/        (Interface contracts)            │
+│                                                      │
+│  Critical Rule: Dependencies point INWARD ONLY      │
+│  Domain never depends on adapters or frameworks     │
+└──────────────┬──────────────────────────────────────┘
+               │ implements
+┌──────────────▼──────────────────────────────────────┐
+│      SECONDARY ADAPTERS (Driven/Output)             │
+│  ├── repositories/postgres/  (Database access)      │
+│  └── youtube/                (External API client)  │
+└─────────────────────────────────────────────────────┘
+```
+
+**Critical:** Services depend on port interfaces, not concrete adapters. This enables testability and clean separation.
+
+### Layers
+
+**Domain Layer** (`internal/core/domain/`):
+- **Purpose:** Pure business models and rules, zero external dependencies
+- **Location:** `internal/core/domain/`
+- **Contains:**
+  - `content.go` — Content entity (name, URL, type, length, JSONB response)
+  - `perspective.go` — Perspective entity (ratings: quality/agreement/importance/confidence, privacy, category, labels, categorizedRatings)
+  - `user.go` — User entity (username, email)
+  - `pagination.go` — Pagination types (ContentListParams, PaginatedContent, cursors)
+  - `errors.go` — Domain error constants (ErrNotFound, ErrAlreadyExists, ErrInvalidInput, ErrInvalidURL, ErrYouTubeAPI)
+- **Depends on:** Standard library only (time, encoding/json)
+- **Used by:** Services, repositories map domain models
+
+**Ports Layer** (`internal/core/ports/`):
+- **Purpose:** Define contracts (interfaces) between core and adapters
+- **Location:** `internal/core/ports/repositories/`, `internal/core/ports/services/`
+- **Contains:**
+  - `repositories/content_repository.go` — ContentRepository interface (Create, GetByID, GetByURL, List)
+  - `repositories/user_repository.go` — UserRepository interface (Create, GetByID, GetByUsername, GetByEmail)
+  - `repositories/perspective_repository.go` — PerspectiveRepository interface (Create, GetByID, GetByUserAndClaim, Update, Delete, List)
+  - `services/youtube_client.go` — YouTubeClient interface (GetVideoMetadata)
+- **Depends on:** Domain types only
+- **Key Rule:** Core depends on these, adapters implement these
+
+**Services Layer** (`internal/core/services/`):
+- **Purpose:** Business logic orchestration, validation, error handling
+- **Location:** `internal/core/services/`
+- **Contains:**
+  - `content_service.go` — ContentService (CreateFromYouTube, GetByID, ListContent)
+  - `user_service.go` — UserService (Create, GetByID, GetByUsername)
+  - `perspective_service.go` — PerspectiveService (Create, GetByID, Update, Delete, ListPerspectives)
+- **Depends on:** Domain models + port interfaces (NOT concrete adapters)
+- **Pattern:** Constructor injection: `NewContentService(repo ContentRepository, yt YouTubeClient) *ContentService`
+- **Error handling:** Explicit error returns with fmt.Errorf("%w: context", domainError)
+
+**GraphQL Adapter** (`internal/adapters/graphql/`):
+- **Purpose:** PRIMARY adapter — HTTP GraphQL API entry point
+- **Location:** `internal/adapters/graphql/`
+- **Contains:**
+  - `resolvers/resolver.go` — Dependency injection container (holds service references)
+  - `resolvers/schema.resolvers.go` — Query/Mutation resolver implementations
+  - `generated/generated.go` — Auto-generated gqlgen code (DO NOT EDIT)
+  - `model/` — Auto-generated GraphQL type definitions
+- **Workflow:** Edit `schema.graphql` → `make graphql-gen` → Implement resolvers in schema.resolvers.go
+- **Key pattern:** Resolver calls service, maps domain response to GraphQL model
+
+**Repository Adapters** (`internal/adapters/repositories/postgres/`):
+- **Purpose:** SECONDARY adapter — PostgreSQL database access
+- **Location:** `internal/adapters/repositories/postgres/`
+- **Contains:**
+  - `content_repository.go` — ContentRepository implementation (cursor pagination, keyset queries)
+  - `user_repository.go` — UserRepository implementation (ID/username/email lookups)
+  - `perspective_repository.go` — PerspectiveRepository implementation (complex JSONB handling)
+- **Pattern:** Each implements corresponding port interface
+- **Key techniques:**
+  - Cursor-based pagination: `WHERE id > cursor_id ORDER BY ... LIMIT limit+1`
+  - Type conversion: `contentTypeToDBValue()`, `contentTypeFromDBValue()`
+  - Null handling: sql.NullString, sql.NullInt64
+  - Array handling: pq.StringArray, custom JSONBArray for JSONB arrays
+
+**YouTube Adapter** (`internal/adapters/youtube/`):
+- **Purpose:** SECONDARY adapter — External API client
+- **Location:** `internal/adapters/youtube/`
+- **Contains:**
+  - `client.go` — YouTube API HTTP client (GetVideoMetadata)
+  - `parser.go` — Utility functions (ExtractVideoID regex, ParseISO8601Duration)
+- **Implements:** YouTubeClient port interface
+- **Pattern:** HTTP client abstraction, no direct calls from services
+
+**Configuration** (`internal/config/`):
+- **Purpose:** Load and manage configuration
+- **Location:** `internal/config/config.go`
+- **Behavior:** Load `config/config.example.json` + environment variable overrides
+- **Critical variables:** DATABASE_URL, YOUTUBE_API_KEY
+
+## Frontend Architecture (perspectize-fe/)
+
+### Pattern: SvelteKit File-Based Routing + TanStack Query
+
+**Entry Point:** `src/routes/+layout.svelte` (root) → `src/routes/+page.svelte` (home)
+
+```
+Routes (SvelteKit filesystem routing):
+├── +layout.svelte          Root layout
+├── +layout.ts              Prerender config
+└── +page.svelte            Home page (activity feed)
+
+Library Structure:
+├── components/             Reusable Svelte 5 components
+│   ├── Header.svelte
+│   ├── ActivityTable.svelte (AG Grid content table)
+│   ├── UserSelector.svelte
+│   ├── PageWrapper.svelte
+│   └── shadcn/             shadcn-svelte UI primitives
+│
+├── queries/                TanStack Query + GraphQL
+│   ├── client.ts           GraphQLClient singleton
+│   ├── content.ts          Content queries (gql)
+│   └── users.ts            User queries (gql)
+│
+├── stores/                 Svelte runes reactive state
+│   └── userSelection.svelte.ts
+│
+└── utils/                  Helper functions
+    └── utils.ts
+```
+
+### Data Flow: TanStack Query Pattern
+
+**1. GraphQL Client Setup** (`lib/queries/client.ts`):
+```typescript
+const graphqlClient = new GraphQLClient(
+  import.meta.env.VITE_GRAPHQL_URL || 'http://localhost:8080/graphql'
+);
+```
+
+**2. Query Definition** (`lib/queries/content.ts`):
+```typescript
+export const LIST_CONTENT = gql`
+  query Content($first: Int, $sortBy: ContentSortBy, $sortOrder: SortOrder) {
+    content(first: $first, sortBy: $sortBy, sortOrder: $sortOrder) {
+      items { id name url contentType length lengthUnits createdAt updatedAt }
+      pageInfo { hasNextPage endCursor }
+      totalCount
+    }
+  }
+`;
+```
+
+**3. Component Query Usage** (Svelte 5 with function wrapper pattern):
+```svelte
+const query = createQuery(() => ({
+  queryKey: ['content', { first: 100, sortBy: 'UPDATED_AT', sortOrder: 'DESC' }],
+  queryFn: () => graphqlClient.request(LIST_CONTENT, { ... }),
+  staleTime: 60 * 1000,
+  retry: 1,
+  enabled: browser  // Browser-only (prevents SSR)
+}));
+```
+
+**4. Reactive Access** (NO `$` prefix — reactive objects, not stores):
+```svelte
+{#if query.isLoading}Loading...{/if}
+{#if query.error}Error: {query.error.message}{/if}
+{#if query.data}Display: {query.data.content.items}{/if}
+```
+
+### Svelte 5 Runes (REQUIRED)
+
+This codebase uses **Svelte 5 runes exclusively**. Do NOT use Svelte 4 syntax:
+
+| Svelte 5 (USE THIS) | Svelte 4 (DON'T) | Purpose |
+|---|---|---|
+| `let count = $state(0)` | `let count = 0` + `$:` | Reactive state |
+| `let doubled = $derived(count * 2)` | `$: doubled = count * 2` | Derived values |
+| `let { prop } = $props()` | `export let prop` | Props |
+| `$effect(() => { ... })` | `onMount()` / `$:` side effects | Lifecycle/effects |
+| `{@render children()}` | `<slot />` | Render children |
+| `onclick={handler}` | `on:click={handler}` | Event handlers |
+
+**Component Structure** (from ActivityTable.svelte):
+```svelte
+<script lang="ts">
+  let { rowData = [], loading = false, searchText = '' } = $props<{
+    rowData: ContentRow[];
+    loading?: boolean;
+    searchText?: string;
+  }>();
+
+  let gridApi = $state<GridApi | null>(null);
+
+  let formattedDuration = $derived(rowData.map(row => formatDuration(row.length, row.lengthUnits)));
+
+  $effect(() => {
+    if (gridApi) {
+      gridApi.setGridOption('quickFilterText', searchText);
+    }
+  });
+</script>
+```
+
+### AG Grid v32.x Integration (CRITICAL)
+
+The frontend uses **ag-grid-svelte5** wrapper which bundles AG Grid v32.x internally:
+
+```svelte
+<script lang="ts">
+  import AgGridSvelte5Component from 'ag-grid-svelte5';
+  import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
+  import { themeQuartz } from '@ag-grid-community/theming';
+  import type { GridOptions } from '@ag-grid-community/core';
+
+  const theme = themeQuartz.withParams({ fontFamily: 'Inter, sans-serif' });
+  const gridOptions: GridOptions<ContentRow> = {
+    columnDefs: [
+      { field: 'name', headerName: 'Title', flex: 2, sortable: true },
+      { field: 'contentType', headerName: 'Type', width: 100 },
+      // ...
+    ],
+    pagination: true,
+    paginationPageSize: 10,
+    paginationPageSizeSelector: [10, 25, 50]
+  };
+</script>
+
+<AgGridSvelte5Component {gridOptions} {rowData} {theme} modules={[ClientSideRowModelModule]} />
+```
+
+**Critical:**
+- Do NOT import from `ag-grid-community` directly (use `@ag-grid-community/*`)
+- Do NOT import AG Grid CSS (use `themeQuartz.withParams()`)
+- Do use `AgGridSvelte5Component` (not `AgGridSvelte`)
+
+## End-to-End Data Flow
+
+### Fetching Content List
+
+```
+Svelte Component (+page.svelte)
+    |
+    | createQuery(() => LIST_CONTENT query)
+    v
+graphqlClient.request() [graphql-request library]
+    |
+    | HTTP POST /graphql with GraphQL query
+    v
+Go Backend (gqlgen handler)
+    |
+    | Parse GraphQL query
+    | Route to Query.content() resolver
+    v
+GraphQL Resolver (schema.resolvers.go)
+    |
+    | contentService.ListContent(ctx, params)
+    v
+Service (ContentService)
+    |
+    | Validate pagination (1-100)
+    | contentRepo.List(ctx, params)
+    v
+Repository (postgres/ContentRepository)
+    |
+    | Build cursor-keyset SQL: SELECT * FROM content WHERE id > cursor ORDER BY ...
+    | sqlx.DB.Select() executes
+    v
+PostgreSQL 17
+    |
+    | SELECT * FROM content ORDER BY updated_at DESC LIMIT 101
+    |
+    +--- Map rows to domain.Content objects ---+
+                                               |
+                        PaginatedContent { items, pageInfo }
+                                               |
+                        Resolver maps to GraphQL types
+                                               |
+                        HTTP JSON response
+                                               |
+                        graphql-request deserializes
+                                               |
+                        TanStack Query caches (staleTime: 60s)
+                                               |
+                        Svelte reactive object updates
+                                               |
+                        Component re-renders
+                                               |
+                        ActivityTable receives rowData
+                                               |
+                        AG Grid renders with columns
+```
+
+## Key Abstractions
+
+### Content Entity
+- **Purpose:** Represents media items (YouTube videos initially)
+- **Domain path:** `internal/core/domain/content.go`
+- **Fields:** id, name, url, contentType (enum: YOUTUBE), length (seconds), lengthUnits, response (JSONB YouTube metadata), createdAt, updatedAt
+
+### Perspective Entity
+- **Purpose:** Multi-dimensional user rating of content
+- **Domain path:** `internal/core/domain/perspective.go`
+- **Rating fields:** quality (0-10000), agreement (0-10000), importance (0-10000), confidence (0-10000)
+- **Metadata:** claim (string), privacy (PUBLIC/PRIVATE), reviewStatus (PENDING/APPROVED/REJECTED), category, labels (array), parts (array), categorizedRatings (JSONB array)
+
+### Pagination Abstraction
+- **Type:** Cursor-based (keyset) not offset-based
+- **Format:** Opaque base64-encoded cursor: `cursor:<id>`
+- **SQL Pattern:** `WHERE id > :cursor AND ... ORDER BY created_at DESC LIMIT limit+1`
+- **Frontend:** TanStack Query handles caching and invalidation
+
+## Entry Points
+
+### Backend
+
+**Server Startup** (`cmd/server/main.go`):
+1. Load .env file (optional via godotenv)
+2. Load config from `config/config.example.json`, override with env vars
+3. Connect to PostgreSQL via DATABASE_URL or local config
+4. Test connection: Ping and version query
+5. Initialize adapters: YouTube client, repositories with db connection
+6. Initialize services: Inject adapter dependencies
+7. Create GraphQL resolver: Inject services
+8. Register HTTP routes:
+   - `GET /` → GraphQL Playground (gqlgen built-in)
+   - `POST /graphql` → GraphQL execution
+   - CORS middleware allows all origins (`*`)
+9. Listen on port 8080 (configurable)
+
+**GraphQL Endpoint:** `POST http://localhost:8080/graphql`
+
+### Frontend
+
+**Root Layout** (`src/routes/+layout.svelte`):
+- Initializes QueryClient with browser-only queries
+- Wraps app with QueryClientProvider
+- Renders Toaster (top-right, 2s auto-dismiss)
+- Renders Header component
+- Renders {@render children()} for page routes
+
+**Home Page** (`src/routes/+page.svelte`):
+- Fetches LIST_CONTENT query with sorting/pagination
+- Displays search input
+- Renders ActivityTable with AG Grid
+
+## Error Handling
+
+### Backend Strategy
+- Explicit error returns, no exceptions
+- Domain error types in `internal/core/domain/errors.go`
+- Error wrapping: `fmt.Errorf("%w: context", domain.ErrXxx)`
+- Service layer validates, maps to domain errors
+- Repository layer maps sql.ErrNoRows → domain.ErrNotFound
+- Resolver layer returns GraphQL errors
+
+### Frontend Strategy
+- TanStack Query error state: `query.error`
+- Conditional rendering: `{#if query.error} Show error {/if}`
+- Toast notifications for user feedback via svelte-sonner
+- Network errors passed through graphql-request
+
+## Cross-Cutting Concerns
+
+**Logging (Backend):**
+- Framework: `log/slog` (standard library)
+- Current: Used in main.go for startup diagnostics
+- Future: Add structured logging to services
+
+**Validation (Backend):**
+- Input validation in service layer before DB operations
+- Example: Pagination bounds (1-100), claim length, rating ranges (0-10000)
+- GraphQL input types validated by gqlgen
+- Database constraints enforce NOT NULL, UNIQUE, CHECK
+
+**Authentication:**
+- Currently: None (public API for MVP development)
+- Planned: OAuth 2.0 with YouTube, JWT tokens, refresh token rotation
+
+**CORS (Backend):**
+- Middleware in main.go: Allows all origins (`*`)
+- Future Phase 5: Restrict to frontend production origin
+
+---
+
+*Architecture analysis: 2026-02-07*
