@@ -76,6 +76,28 @@ Planning and execution artifacts in `.planning/`: `PROJECT.md`, `ROADMAP.md`, `S
 
 Before marking work complete, verify against plan `must_haves` and capture evidence. See [docs/VERIFICATION.md](docs/VERIFICATION.md) for checklist and evidence capture workflow.
 
+## Code Search with qmd
+
+**Prefer qmd MCP tools over Read/Glob for exploration.** Two collections:
+
+| Collection | Scope | Use for |
+|------------|-------|---------|
+| `perspectize` | Source code, docs, configs | Codebase understanding, pattern discovery |
+| `planning` | `.planning/` files | Project context, roadmap, research, completed phases |
+
+| Tool | When to use |
+|------|-------------|
+| `qmd_search` | Quick keyword lookup |
+| `qmd_vsearch` | Semantic/concept search |
+| `qmd_query` | Complex questions (BM25 + vector + reranking) |
+| `qmd_get` / `qmd_multi_get` | Retrieve specific files from search results |
+
+**Stable vs live files:** Use qmd for stable reference (PROJECT.md, ROADMAP.md, research/*, completed SUMMARYs). **Always `Read` fresh:** STATE.md and the current phase PLAN.md — qmd index may be stale.
+
+**For GSD agents:** Start with `qmd_query` for context, `Read` STATE.md and current PLAN.md fresh, avoid broad `Glob`/`Read` sweeps.
+
+**Re-index:** `qmd update && qmd embed`
+
 ### Production Setup (Sevalla/Fly.io)
 
 Use `DATABASE_URL` with external endpoint from hosting provider. Note: Sevalla connections may require `?sslmode=disable` and may succeed on second attempt.
@@ -214,6 +236,17 @@ This project uses **GSD workflow** for planning and execution. See `.planning/` 
 - `ROADMAP.md` - Phase-based milestone planning
 - `STATE.md` - Current position and accumulated context
 - `phases/` - Detailed execution plans
+
+### qmd Pre-Exploration for GSD Planning
+
+Before spawning `gsd-phase-researcher` or `gsd-planner`, use qmd to gather codebase context efficiently:
+
+1. **Update index first:** `qmd update && qmd embed` (ensures index matches current branch)
+2. **Broad sweep:** `mcp__qmd__query` — "what source files exist in {directory}?" / "what patterns are established?"
+3. **Targeted detail:** `mcp__qmd__get` or `mcp__qmd__vsearch` for specific files or concepts
+4. **Feed digests into planner prompt** as `<codebase_context>` instead of inlining raw file contents
+
+Only inline raw code for **files being directly modified** by the plan. Use qmd summaries for everything else. This reduces planner token usage by 40-60%.
 
 ## Self-Verification Workflow
 
