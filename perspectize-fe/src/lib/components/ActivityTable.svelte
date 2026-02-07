@@ -22,7 +22,6 @@
 	}>();
 
 	let gridApi = $state<GridApi | null>(null);
-	let isGridInitialized = false;
 
 	const modules = [ClientSideRowModelModule];
 
@@ -77,7 +76,6 @@
 				sortable: true,
 			},
 			{
-				colId: 'duration',
 				headerName: 'Duration',
 				width: 120,
 				sortable: false,
@@ -118,37 +116,8 @@
 		suppressCellFocus: true,
 		onGridReady: (params) => {
 			gridApi = params.api;
-		},
-		onFirstDataRendered: () => {
-			isGridInitialized = true;
-			updateColumnVisibility();
-		},
-		onGridSizeChanged: () => {
-			if (isGridInitialized) updateColumnVisibility();
 		}
 	};
-
-	function updateColumnVisibility() {
-		if (!gridApi) return;
-
-		const container = document.querySelector('.ag-root-wrapper');
-		if (!container) return;
-
-		const gridWidth = (container as HTMLElement).offsetWidth;
-
-		// Progressive column hiding based on width
-		// < 640px (mobile): Title only
-		// 640-767px (small tablet): Title + Type + Duration
-		// 768px+ (tablet/desktop): All columns
-		if (gridWidth < 640) {
-			gridApi.setColumnsVisible(['contentType', 'duration', 'createdAt', 'updatedAt'], false);
-		} else if (gridWidth < 768) {
-			gridApi.setColumnsVisible(['contentType', 'duration'], true);
-			gridApi.setColumnsVisible(['createdAt', 'updatedAt'], false);
-		} else {
-			gridApi.setColumnsVisible(['contentType', 'duration', 'createdAt', 'updatedAt'], true);
-		}
-	}
 
 	// Update loading state reactively
 	$effect(() => {
@@ -165,6 +134,6 @@
 	});
 </script>
 
-<div class="w-full">
+<div class="w-full overflow-x-auto">
 	<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
 </div>

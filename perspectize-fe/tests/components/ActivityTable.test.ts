@@ -1,9 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/svelte';
 import ActivityTable from '$lib/components/ActivityTable.svelte';
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import path from 'path';
 
 // Mock AG Grid component
 vi.mock('ag-grid-svelte5', () => ({
@@ -66,52 +63,12 @@ describe('ActivityTable', () => {
 		expect(container).toBeTruthy();
 	});
 
-	it('renders wrapper div with w-full class', () => {
+	it('renders wrapper div with overflow-x-auto for mobile scrolling', () => {
 		const { container } = render(ActivityTable, {
 			props: { rowData: [] }
 		});
 
-		const wrapper = container.querySelector('.w-full');
+		const wrapper = container.querySelector('.overflow-x-auto');
 		expect(wrapper).toBeTruthy();
-	});
-
-	it('component includes updateColumnVisibility function', () => {
-		// Read the source file to verify updateColumnVisibility exists
-		const __dirname = path.dirname(fileURLToPath(import.meta.url));
-		const componentPath = path.resolve(__dirname, '../../src/lib/components/ActivityTable.svelte');
-		const source = readFileSync(componentPath, 'utf-8');
-
-		expect(source).toContain('function updateColumnVisibility()');
-		expect(source).toContain('gridApi.setColumnsVisible');
-	});
-
-	it('component includes onGridSizeChanged handler', () => {
-		const __dirname = path.dirname(fileURLToPath(import.meta.url));
-		const componentPath = path.resolve(__dirname, '../../src/lib/components/ActivityTable.svelte');
-		const source = readFileSync(componentPath, 'utf-8');
-
-		expect(source).toContain('onGridSizeChanged:');
-		expect(source).toContain('updateColumnVisibility()');
-	});
-
-	it('component includes onFirstDataRendered handler that calls updateColumnVisibility', () => {
-		const __dirname = path.dirname(fileURLToPath(import.meta.url));
-		const componentPath = path.resolve(__dirname, '../../src/lib/components/ActivityTable.svelte');
-		const source = readFileSync(componentPath, 'utf-8');
-
-		expect(source).toContain('onFirstDataRendered:');
-		// Verify onFirstDataRendered calls updateColumnVisibility (deferred to avoid AG Grid bean init race)
-		const onFirstDataRenderedMatch = source.match(/onFirstDataRendered:\s*\(\)\s*=>\s*{([^}]+)}/);
-		expect(onFirstDataRenderedMatch).toBeTruthy();
-		expect(onFirstDataRenderedMatch![1]).toContain('updateColumnVisibility()');
-	});
-
-	it('duration column includes colId for responsive hiding', () => {
-		const __dirname = path.dirname(fileURLToPath(import.meta.url));
-		const componentPath = path.resolve(__dirname, '../../src/lib/components/ActivityTable.svelte');
-		const source = readFileSync(componentPath, 'utf-8');
-
-		// Verify duration column has colId: 'duration'
-		expect(source).toContain("colId: 'duration'");
 	});
 });
