@@ -1,12 +1,9 @@
 <script lang="ts">
-	import { toast } from 'svelte-sonner';
 	import { Button } from '$lib/components/shadcn';
 	import UserSelector from '$lib/components/UserSelector.svelte';
+	import AddVideoDialog from '$lib/components/AddVideoDialog.svelte';
 
-	function handleAddVideo() {
-		// Placeholder - modal will be implemented in Phase 3
-		toast.info('Add Video modal coming in Phase 3');
-	}
+	let dialogOpen = $state(false);
 </script>
 
 <header class="h-16 border-b border-border bg-white sticky top-0 z-50">
@@ -18,7 +15,9 @@
 		</a>
 		<div class="flex items-center gap-2 md:gap-4 shrink-0">
 			<UserSelector />
-			<Button size="sm" onclick={handleAddVideo}>Add Video</Button>
+			<Button size="sm" onclick={() => (dialogOpen = true)}>Add Video</Button>
 		</div>
 	</div>
 </header>
+
+<AddVideoDialog bind:open={dialogOpen} />
