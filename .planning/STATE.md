@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 Phase: 1 of 5 (Foundation)
 Plan: 3 of 3 in current phase
 Status: Phase complete
-Last activity: 2026-02-05 — Completed 01-03-PLAN.md (TanStack Query & Testing)
+Last activity: 2026-02-06 — CLAUDE.md Audit & Optimization session
 
 Progress: [█░░░░░░░░░] 9%
 
@@ -55,6 +55,12 @@ Recent decisions affecting current work:
 - [01-03]: TanStack Query enabled: browser for SSG compatibility
 - [01-03]: Toast notifications at top-right with 2s auto-dismiss
 - [01-03]: Vitest with jsdom environment and SvelteKit mocks
+- [Infra]: CLAUDE.md split into root + perspectize-go/CLAUDE.md + perspectize-fe/CLAUDE.md for package-level context loading
+- [Infra]: Go module renamed from `github.com/yourorg/perspectize-go` to `github.com/CodeWarrior-debug/perspectize-be/perspectize-go` (30 files, all 78 tests pass)
+- [Infra]: Docs delegated to docs/ directory: VERIFICATION.md, DOMAIN_GUIDE.md, GO_PATTERNS.md, GITHUB_PROJECTS.md, GSD_BRANCHING.md
+- [Infra]: qmd .planning/ collection added with stable-vs-live convention
+- [Infra]: All three CLAUDE.md files scored 95/100 (A) quality after optimization
+- [Frontend]: Svelte 5 runes, SvelteKit routing, TanStack Query patterns documented in perspectize-fe/CLAUDE.md
 
 ### Pending Todos
 
@@ -65,8 +71,32 @@ None yet.
 - [Research]: AG Grid Svelte wrapper is community-maintained (v0.0.15) — validate in Phase 1 before committing
 - [Research]: TanStack Query v6 requires thunk syntax for reactivity — enforce in code review
 
+## Session Log
+
+### 2026-02-06 — CLAUDE.md Audit & Optimization
+
+**Branch:** `feature/INI-37-plan-01-04-navigation-ag-grid`
+
+**Work completed:**
+1. **CLAUDE.md audit skill created** — custom-claude-improver skill with instruction counting, context budget analysis, and session-based compliance checking
+2. **CLAUDE.md split** — Monolithic CLAUDE.md (683 lines, 372 instructions) split into root + perspectize-go/CLAUDE.md + perspectize-fe/CLAUDE.md
+3. **Content delegated to docs/** — Created docs/VERIFICATION.md, docs/DOMAIN_GUIDE.md, docs/GO_PATTERNS.md, docs/GITHUB_PROJECTS.md, docs/GSD_BRANCHING.md
+4. **Go module renamed** — `github.com/yourorg/perspectize-go` to `github.com/CodeWarrior-debug/perspectize-be/perspectize-go` (30 files, all 78 tests pass)
+5. **qmd .planning/ collection** — Added .planning/ as separate qmd collection with stable-vs-live convention
+6. **Quality scores** — All three CLAUDE.md files at 95/100 (A). Session compliance: root+backend 122/200, root+frontend 145/200
+7. **Frontend patterns documented** — Svelte 5 runes, SvelteKit routing, TanStack Query patterns
+
+**Commits:**
+- `8fa9784` docs: apply CLAUDE.md audit fixes and split into package-level files
+- `88b39b6` refactor: rename Go module path to match GitHub repository
+- `f533df5` chore: add coverage/ to frontend .gitignore
+- `6619f98` docs: add .planning/ qmd collection with stable vs live convention
+- `21abf6a` docs: optimize all CLAUDE.md files to 95/100 quality score
+
+### 2026-02-05 — Phase 1 Foundation (Plans 01-01 through 01-03)
+
 ## Session Continuity
 
-Last session: 2026-02-05 08:45:34 UTC
-Stopped at: Completed 01-03-PLAN.md (TanStack Query & Testing)
+Last session: 2026-02-06
+Stopped at: CLAUDE.md Audit & Optimization — all three CLAUDE.md files optimized, Go module renamed, docs delegated
 Resume file: None
