@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - SvelteKit project setup with design system, tooling, and navigation skeleton
 - [x] **Phase 2: Data Layer + Activity** - TanStack Query integration, AG Grid table, user selector
-- [ ] **Phase 2.1: Mobile Responsive Fixes** - Fix header overflow, pagination bar, and table layout at 375px (INSERTED)
+- [x] **Phase 2.1: Mobile Responsive Fixes** - Fix header overflow, pagination bar, and table layout at 375px (INSERTED)
 - [ ] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
 - [ ] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
@@ -69,7 +69,7 @@ Plans:
 
 Plans:
 - [x] 02.1-01-PLAN.md — Header responsive fix (min-w-0, truncate, shrink-0) + AG Grid pagination CSS override
-- [ ] 02.1-02-PLAN.md — Table responsive column hiding + visual checkpoint at 375px
+- [x] 02.1-02-PLAN.md — Table responsive column hiding + visual checkpoint at 375px
 
 ### Phase 3: Add Video Flow
 **Goal**: Users can add YouTube videos by pasting a URL, with automatic metadata fetch and feedback
@@ -128,7 +128,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/5 | Complete | 2026-02-07 |
 | 2. Data Layer + Activity | 2/2 | Complete | 2026-02-07 |
-| 2.1 Mobile Responsive Fixes | 1/2 | In progress | - |
+| 2.1 Mobile Responsive Fixes | 2/2 | Complete | 2026-02-07 |
 | 3. Add Video Flow | 0/2 | Not started | - |
 | 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 0/3 | Not started | - |

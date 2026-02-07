@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 2 complete — Phase 2.1 (Mobile Responsive Fixes) next
+**Current focus:** Phase 2.1 complete — Phase 3 (Add Video Flow) next
 
 ## Current Position
 
-Phase: 2 of 5 (Data Layer + Activity) — COMPLETE
+Phase: 2.1 of 5 (Mobile Responsive Fixes) — COMPLETE
 Plan: 2/2 complete
-Status: Complete — verified via Chrome DevTools MCP
-Last activity: 2026-02-07 — Phase 2 complete, all success criteria verified
+Status: All mobile responsive fixes verified at 375px/768px/1280px via Chrome DevTools MCP
+Last activity: 2026-02-07 — Phase 2.1 complete, visual verification passed
 
-Progress: [████░░░░░░] 40%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
+- Total plans completed: 9
 - Average duration: 6 min
 - Total execution time: 0.8 hours
 
@@ -65,6 +65,8 @@ Recent decisions affecting current work:
 - [02-02]: TanStack Query function wrapper pattern for Svelte 5: createQuery(() => ({ ... }))
 - [02-02]: Client-side AG Grid pagination (first: 100) for Phase 2 simplicity
 - [02-02]: AG Grid Quick Filter for text search (no backend search yet)
+- [02.1-02]: AG Grid onFirstDataRendered for deferred column visibility (avoids postConstruct bean init race)
+- [02.1-02]: isGridInitialized flag gates onGridSizeChanged calls during AG Grid initialization
 - [Infra]: CLAUDE.md split into root + perspectize-go/CLAUDE.md + perspectize-fe/CLAUDE.md for package-level context loading
 - [Infra]: Go module renamed from `github.com/yourorg/perspectize-go` to `github.com/CodeWarrior-debug/perspectize-be/perspectize-go` (30 files, all 78 tests pass)
 - [Infra]: Docs delegated to docs/ directory: VERIFICATION.md, DOMAIN_GUIDE.md, GO_PATTERNS.md, GITHUB_PROJECTS.md, GSD_BRANCHING.md
@@ -82,7 +84,7 @@ None yet.
 
 ### Blockers/Concerns
 
-None - Phase 2 complete with all validation successful.
+None — Phase 2.1 complete, ready for Phase 3.
 
 ## Session Log
 
