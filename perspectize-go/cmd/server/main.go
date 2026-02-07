@@ -74,9 +74,23 @@ func main() {
 	resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 
+	// CORS middleware for frontend dev server
+	corsHandler := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+			if r.Method == http.MethodOptions {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+
 	// Setup HTTP routes
 	http.Handle("/", playground.Handler("GraphQL Playground", "/graphql"))
-	http.Handle("/graphql", srv)
+	http.Handle("/graphql", corsHandler(srv))
 
 	// Start server
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
