@@ -83,12 +83,11 @@ Plans:
   3. User can enter Like text and Review text (freeform)
   4. User sees validation error toasts before submission if form is invalid
   5. User sees success toast after perspective is created, attributed to selected user
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 04-01: TanStack Form setup with video selector
-- [ ] 04-02: Rating inputs with progress bar visualization
-- [ ] 04-03: Like, Review fields and form validation
+- [ ] 04-01-PLAN.md — Mutation definition, shadcn Progress/Textarea, RatingInput and VideoSelector components with tests
+- [ ] 04-02-PLAN.md — AddPerspectiveDialog with TanStack Form, Header wiring, validation, visual checkpoint
 
 ### Phase 5: Testing + Deployment
 **Goal**: Application is tested, deployed, and accessible via public URL with proper CORS
@@ -116,5 +115,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Foundation | 5/5 | Complete | 2026-02-07 |
 | 2. Data Layer + Activity | 0/2 | Not started | - |
 | 3. Add Video Flow | 0/2 | Not started | - |
-| 4. Add Perspective Flow | 0/3 | Not started | - |
+| 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 0/3 | Not started | - |
