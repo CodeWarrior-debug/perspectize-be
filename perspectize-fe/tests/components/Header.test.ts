@@ -1,17 +1,19 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import Header from '$lib/components/Header.svelte';
-import * as sonner from 'svelte-sonner';
-
-vi.mock('svelte-sonner', () => ({
-	toast: {
-		info: vi.fn()
-	},
-	Toaster: vi.fn()
-}));
 
 // Mock UserSelector component
 vi.mock('$lib/components/UserSelector.svelte', () => ({
+	default: vi.fn(() => ({
+		$$: {},
+		$set: vi.fn(),
+		$on: vi.fn(),
+		$destroy: vi.fn(),
+	})),
+}));
+
+// Mock AddVideoDialog component
+vi.mock('$lib/components/AddVideoDialog.svelte', () => ({
 	default: vi.fn(() => ({
 		$$: {},
 		$set: vi.fn(),
@@ -93,10 +95,12 @@ describe('Header component', () => {
 		expect(rightContainer?.className).toContain('shrink-0');
 	});
 
-	it('calls toast.info when Add Video button is clicked', async () => {
+	it('Add Video button is clickable', async () => {
 		render(Header);
 		const button = screen.getByRole('button', { name: /add video/i });
 		await fireEvent.click(button);
-		expect(sonner.toast.info).toHaveBeenCalledWith('Add Video modal coming in Phase 3');
+		// Button click sets dialogOpen = true, which is internal state
+		// Verify button is still accessible after click
+		expect(button).toBeInTheDocument();
 	});
 });

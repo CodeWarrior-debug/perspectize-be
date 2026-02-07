@@ -4,8 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -20,8 +24,12 @@ import (
 )
 
 func main() {
-	// Load .env file (optional - won't error if missing)
-	_ = godotenv.Load()
+	// Load .env file
+	if err := godotenv.Load(); err != nil {
+		if os.Getenv("APP_ENV") != "production" {
+			slog.Warn(".env file not found", "hint", "set APP_ENV=production to suppress")
+		}
+	}
 
 	// Load config
 	cfg, err := config.Load("config/config.example.json")
@@ -33,9 +41,9 @@ func main() {
 
 	// Mask credentials in log output
 	if os.Getenv("DATABASE_URL") != "" {
-		log.Println("Connecting to database using DATABASE_URL...")
+		slog.Info("connecting to database using DATABASE_URL")
 	} else {
-		log.Printf("Connecting to database at %s:%d/%s...", cfg.Database.Host, cfg.Database.Port, cfg.Database.Name)
+		slog.Info("connecting to database", "host", cfg.Database.Host, "port", cfg.Database.Port, "name", cfg.Database.Name)
 	}
 
 	// Connect to database
@@ -50,14 +58,19 @@ func main() {
 		log.Fatalf("Database ping failed: %v", err)
 	}
 
-	log.Println("Successfully connected to database!")
+	slog.Info("successfully connected to database")
 
 	// Quick query to verify
 	var version string
 	if err := db.Get(&version, "SELECT version()"); err != nil {
 		log.Fatalf("Failed to query database: %v", err)
 	}
-	log.Printf("PostgreSQL version: %s", version)
+	slog.Info("PostgreSQL version", "version", version)
+
+	// Validate YouTube API key
+	if cfg.YouTube.APIKey == "" {
+		slog.Warn("YOUTUBE_API_KEY is empty — YouTube metadata fetching will fail")
+	}
 
 	// Initialize adapters
 	youtubeClient := youtube.NewClient(cfg.YouTube.APIKey)
@@ -89,14 +102,43 @@ func main() {
 	}
 
 	// Setup HTTP routes
-	http.Handle("/", playground.Handler("GraphQL Playground", "/graphql"))
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	})
+
+	if os.Getenv("APP_ENV") != "production" {
+		http.Handle("/", playground.Handler("GraphQL Playground", "/graphql"))
+	}
 	http.Handle("/graphql", corsHandler(srv))
 
-	// Start server
+	// Start server with timeouts
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
-	log.Printf("Server running at http://localhost%s", addr)
-	log.Printf("GraphQL Playground available at http://localhost%s/", addr)
-	if err := http.ListenAndServe(addr, nil); err != nil {
+	server := &http.Server{
+		Addr:         addr,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	// Graceful shutdown
+	go func() {
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+		<-sigChan
+		slog.Info("shutting down gracefully")
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := server.Shutdown(ctx); err != nil {
+			slog.Error("shutdown failed", "error", err)
+		}
+	}()
+
+	slog.Info("server running", "addr", addr)
+	if os.Getenv("APP_ENV") != "production" {
+		slog.Info("GraphQL Playground available", "url", fmt.Sprintf("http://localhost%s/", addr))
+	}
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }

@@ -3,6 +3,7 @@
 	import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
 	import { themeQuartz } from '@ag-grid-community/theming';
 	import type { GridApi, GridOptions } from '@ag-grid-community/core';
+	import { nameCellRenderer, durationValueGetter, dateValueFormatter, contentRowId } from '$lib/utils/formatting';
 
 	interface ContentRow {
 		id: string;
@@ -31,28 +32,6 @@
 		headerFontSize: 14,
 	});
 
-	// Convert length + lengthUnits to display format
-	function formatDuration(length: number | null, lengthUnits: string | null): string {
-		if (length === null) return '—';
-
-		if (lengthUnits === 'seconds') {
-			const minutes = Math.floor(length / 60);
-			const seconds = length % 60;
-			return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-		}
-
-		return `${length} ${lengthUnits}`;
-	}
-
-	// Format dates to locale string
-	function formatDate(isoString: string): string {
-		return new Date(isoString).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric'
-		});
-	}
-
 	const gridOptions: GridOptions<ContentRow> = {
 		columnDefs: [
 			{
@@ -61,13 +40,7 @@
 				flex: 2,
 				sortable: true,
 				filter: true,
-				cellRenderer: (params: { data?: ContentRow }) => {
-					if (!params.data) return '';
-					if (params.data.url) {
-						return `<a href="${params.data.url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">${params.data.name}</a>`;
-					}
-					return params.data.name;
-				}
+				cellRenderer: nameCellRenderer,
 			},
 			{
 				field: 'contentType',
@@ -79,19 +52,14 @@
 				headerName: 'Duration',
 				width: 120,
 				sortable: false,
-				valueGetter: (params) => {
-					if (!params.data) return '—';
-					return formatDuration(params.data.length, params.data.lengthUnits);
-				}
+				valueGetter: durationValueGetter,
 			},
 			{
 				field: 'createdAt',
 				headerName: 'Date Added',
 				width: 140,
 				sortable: true,
-				valueFormatter: (params) => {
-					return params.value ? formatDate(params.value) : '—';
-				}
+				valueFormatter: dateValueFormatter,
 			},
 			{
 				field: 'updatedAt',
@@ -99,9 +67,7 @@
 				width: 140,
 				sortable: true,
 				sort: 'desc',
-				valueFormatter: (params) => {
-					return params.value ? formatDate(params.value) : '—';
-				}
+				valueFormatter: dateValueFormatter,
 			}
 		],
 		pagination: true,
@@ -111,7 +77,7 @@
 			resizable: true,
 			sortable: true,
 		},
-		getRowId: (params) => String(params.data?.id ?? ''),
+		getRowId: contentRowId,
 		domLayout: 'autoHeight',
 		suppressCellFocus: true,
 		onGridReady: (params) => {
