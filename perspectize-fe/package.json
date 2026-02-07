@@ -16,6 +16,8 @@
 		"test:duplication": "jscpd src/ tests/ --min-lines 3 --min-tokens 25 --reporters html --output coverage/duplication"
 	},
 	"devDependencies": {
+		"@internationalized/date": "^3.11.0",
+		"@lucide/svelte": "^0.561.0",
 		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/adapter-static": "^3.0.10",
 		"@sveltejs/kit": "^2.50.1",
@@ -24,6 +26,7 @@
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/svelte": "^5.3.1",
 		"@vitest/coverage-v8": "^4.0.18",
+		"bits-ui": "^2.15.5",
 		"jscpd": "^4.0.8",
 		"jsdom": "^28.0.0",
 		"svelte": "^5.48.2",
