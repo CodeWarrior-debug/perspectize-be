@@ -28,6 +28,16 @@
 	}
 
 	let searchText = $state('');
+	let debouncedSearchText = $state('');
+	let debounceTimer: ReturnType<typeof setTimeout>;
+
+	$effect(() => {
+		clearTimeout(debounceTimer);
+		debounceTimer = setTimeout(() => {
+			debouncedSearchText = searchText;
+		}, 300);
+		return () => clearTimeout(debounceTimer);
+	});
 
 	const contentQuery = createQuery(() => ({
 		queryKey: ['content', { first: 100, sortBy: 'UPDATED_AT', sortOrder: 'DESC' }],
@@ -70,13 +80,19 @@
 		{:else if contentQuery.error}
 			<div class="py-12 text-center text-destructive">
 				<p>Error loading content: {contentQuery.error.message}</p>
+				<button
+					onclick={() => contentQuery.refetch()}
+					class="mt-4 px-4 py-2 text-sm rounded-md border border-input bg-background hover:bg-accent"
+				>
+					Retry
+				</button>
 			</div>
 		{:else if rowData.length === 0}
 			<div class="py-12 text-center text-muted-foreground">
 				<p>No content found</p>
 			</div>
 		{:else}
-			<ActivityTable {rowData} loading={contentQuery.isLoading} {searchText} />
+			<ActivityTable {rowData} loading={contentQuery.isLoading} searchText={debouncedSearchText} />
 		{/if}
 	</div>
 </PageWrapper>

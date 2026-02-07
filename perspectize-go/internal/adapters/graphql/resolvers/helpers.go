@@ -2,6 +2,7 @@ package resolvers
 
 import (
 	"encoding/json"
+	"log"
 	"strconv"
 
 	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/graphql/model"
@@ -35,7 +36,9 @@ func domainToModel(c *domain.Content) *model.Content {
 	// Parse the raw response JSON into a map for GraphQL
 	if len(c.Response) > 0 {
 		var responseMap map[string]interface{}
-		if err := json.Unmarshal(c.Response, &responseMap); err == nil {
+		if err := json.Unmarshal(c.Response, &responseMap); err != nil {
+			log.Printf("Warning: failed to parse content response JSON for content %d: %v", c.ID, err)
+		} else {
 			m.Response = responseMap
 		}
 
@@ -49,15 +52,23 @@ func domainToModel(c *domain.Content) *model.Content {
 				} `json:"statistics"`
 			} `json:"items"`
 		}
-		if err := json.Unmarshal(c.Response, &resp); err == nil && len(resp.Items) > 0 {
+		if err := json.Unmarshal(c.Response, &resp); err != nil {
+			log.Printf("Warning: failed to parse YouTube statistics JSON for content %d: %v", c.ID, err)
+		} else if len(resp.Items) > 0 {
 			stats := resp.Items[0].Statistics
-			if v, err := strconv.Atoi(stats.ViewCount); err == nil {
+			if v, err := strconv.Atoi(stats.ViewCount); err != nil {
+				log.Printf("Warning: failed to parse viewCount %q for content %d: %v", stats.ViewCount, c.ID, err)
+			} else {
 				m.ViewCount = &v
 			}
-			if v, err := strconv.Atoi(stats.LikeCount); err == nil {
+			if v, err := strconv.Atoi(stats.LikeCount); err != nil {
+				log.Printf("Warning: failed to parse likeCount %q for content %d: %v", stats.LikeCount, c.ID, err)
+			} else {
 				m.LikeCount = &v
 			}
-			if v, err := strconv.Atoi(stats.CommentCount); err == nil {
+			if v, err := strconv.Atoi(stats.CommentCount); err != nil {
+				log.Printf("Warning: failed to parse commentCount %q for content %d: %v", stats.CommentCount, c.ID, err)
+			} else {
 				m.CommentCount = &v
 			}
 		}

@@ -6,6 +6,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -20,8 +23,12 @@ import (
 )
 
 func main() {
-	// Load .env file (optional - won't error if missing)
-	_ = godotenv.Load()
+	// Load .env file
+	if err := godotenv.Load(); err != nil {
+		if os.Getenv("APP_ENV") != "production" {
+			log.Println("Warning: .env file not found (set APP_ENV=production to suppress)")
+		}
+	}
 
 	// Load config
 	cfg, err := config.Load("config/config.example.json")
@@ -59,6 +66,11 @@ func main() {
 	}
 	log.Printf("PostgreSQL version: %s", version)
 
+	// Validate YouTube API key
+	if cfg.YouTube.APIKey == "" {
+		log.Println("Warning: YOUTUBE_API_KEY is empty — YouTube metadata fetching will fail")
+	}
+
 	// Initialize adapters
 	youtubeClient := youtube.NewClient(cfg.YouTube.APIKey)
 	contentRepo := postgres.NewContentRepository(db)
@@ -89,14 +101,43 @@ func main() {
 	}
 
 	// Setup HTTP routes
-	http.Handle("/", playground.Handler("GraphQL Playground", "/graphql"))
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	})
+
+	if os.Getenv("APP_ENV") != "production" {
+		http.Handle("/", playground.Handler("GraphQL Playground", "/graphql"))
+	}
 	http.Handle("/graphql", corsHandler(srv))
 
-	// Start server
+	// Start server with timeouts
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
+	server := &http.Server{
+		Addr:         addr,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	// Graceful shutdown
+	go func() {
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+		<-sigChan
+		log.Println("Shutting down gracefully...")
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := server.Shutdown(ctx); err != nil {
+			log.Printf("Shutdown error: %v", err)
+		}
+	}()
+
 	log.Printf("Server running at http://localhost%s", addr)
-	log.Printf("GraphQL Playground available at http://localhost%s/", addr)
-	if err := http.ListenAndServe(addr, nil); err != nil {
+	if os.Getenv("APP_ENV") != "production" {
+		log.Printf("GraphQL Playground available at http://localhost%s/", addr)
+	}
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }

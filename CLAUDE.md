@@ -10,8 +10,6 @@ Monorepo with two stacks:
 - **Backend:** `perspectize-go/` — Go GraphQL API (see `perspectize-go/CLAUDE.md`)
 - **Frontend:** `perspectize-fe/` — SvelteKit web app (see `perspectize-fe/CLAUDE.md`)
 
-**Important:** `perspectize-be/` contains legacy C# code. **Do not modify, except to delete.** All backend work happens in `perspectize-go/`.
-
 **CLAUDE.md structure:** Root file (this) contains shared concerns. Package-level files contain stack-specific instructions. Claude loads root + the relevant package file per session.
 
 ## GitHub & Repository Management

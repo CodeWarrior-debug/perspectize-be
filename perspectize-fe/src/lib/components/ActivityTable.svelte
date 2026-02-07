@@ -46,7 +46,9 @@
 
 	// Format dates to locale string
 	function formatDate(isoString: string): string {
-		return new Date(isoString).toLocaleDateString('en-US', {
+		const date = new Date(isoString);
+		if (isNaN(date.getTime())) return '—';
+		return date.toLocaleDateString('en-US', {
 			year: 'numeric',
 			month: 'short',
 			day: 'numeric'
@@ -64,9 +66,17 @@
 				cellRenderer: (params: { data?: ContentRow }) => {
 					if (!params.data) return '';
 					if (params.data.url) {
-						return `<a href="${params.data.url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">${params.data.name}</a>`;
+						const a = document.createElement('a');
+						a.href = params.data.url;
+						a.target = '_blank';
+						a.rel = 'noopener noreferrer';
+						a.className = 'text-primary hover:underline';
+						a.textContent = params.data.name;
+						return a;
 					}
-					return params.data.name;
+					const span = document.createElement('span');
+					span.textContent = params.data.name;
+					return span;
 				}
 			},
 			{
