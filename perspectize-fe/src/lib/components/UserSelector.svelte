@@ -14,11 +14,11 @@
 		users: User[];
 	}
 
-	const usersQuery = createQuery<UsersResponse>({
+	const usersQuery = createQuery(() => ({
 		queryKey: ['users'],
 		queryFn: () => graphqlClient.request(LIST_USERS),
 		staleTime: 5 * 60 * 1000, // 5 minutes
-	});
+	}));
 
 	function handleChange(event: Event) {
 		const target = event.target as HTMLSelectElement;
@@ -30,22 +30,22 @@
 </script>
 
 <div>
-	{#if $usersQuery.isLoading}
+	{#if usersQuery.isLoading}
 		<select class="h-9 rounded-md border border-input bg-background px-3 text-sm" disabled>
 			<option>Loading users...</option>
 		</select>
-	{:else if $usersQuery.error}
+	{:else if usersQuery.error}
 		<select class="h-9 rounded-md border border-input bg-background px-3 text-sm text-destructive" disabled>
 			<option>Error loading users</option>
 		</select>
-	{:else if $usersQuery.data}
+	{:else if usersQuery.data}
 		<select
 			class="h-9 rounded-md border border-input bg-background px-3 text-sm"
 			value={currentUserId ? String(currentUserId) : ''}
 			onchange={handleChange}
 		>
 			<option value="">Select user...</option>
-			{#each $usersQuery.data.users as user}
+			{#each usersQuery.data.users as user}
 				<option value={user.id}>{user.username}</option>
 			{/each}
 		</select>

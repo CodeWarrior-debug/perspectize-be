@@ -116,9 +116,15 @@
 		suppressCellFocus: true,
 		onGridReady: (params) => {
 			gridApi = params.api;
-		},
-		loading
+		}
 	};
+
+	// Update loading state reactively
+	$effect(() => {
+		if (gridApi) {
+			gridApi.setGridOption('loading', loading);
+		}
+	});
 
 	// Update Quick Filter when searchText changes
 	$effect(() => {
