@@ -86,6 +86,31 @@ Optional body explaining why, not what.
 ```
 Types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`
 
+## Approved Tools & Permissions
+
+Claude Code may use the following tools **without prompting** for this project:
+
+### File Operations
+- **Read**: Any file in `.planning/`, `perspectize-fe/src/`, `perspectize-go/`, `docs/`
+- **Edit/Write**: Any file in `.planning/` (design specs, roadmaps, plans), `perspectize-fe/src/`, `perspectize-go/` (excluding sensitive files)
+- **Glob/Grep**: Unlimited search across the codebase
+
+### Bash Commands
+- **Safe navigation**: `git`, `pnpm`, `npm`, `ls`, `pwd`, `cd`, `cat`, `head`, `tail`
+- **Git operations**: All git commands (clone, checkout, pull, push, commit, log, diff)
+- **Package management**: `pnpm install`, `pnpm run`
+- **Forbidden**: `rm -rf`, `sudo`, `chmod 777` (these require explicit permission)
+
+### Figma MCP Tools
+- **Design context**: `get_screenshot`, `get_design_context`, `get_metadata` for fileKey `SyvrP9yYbrmCorofJK4Co8` (Perspectize Figma file)
+- **Design system**: `get_variable_defs`
+
+### Task & Execution Tools
+- **TaskCreate/TaskUpdate**: Creating and updating tasks from conversations
+- **Agents**: Launching Task tool subagents for exploration, planning, code review
+
+**Rationale:** These tools are safe for this workflow. The project uses GSD planning, TanStack + Svelte 5 stack, and Figma for design. File reads/edits focus on spec updates and source code. Bash is limited to safe operations.
+
 ## GSD Workflow
 
 Planning and execution artifacts in `.planning/`: `PROJECT.md`, `ROADMAP.md`, `STATE.md`, `phases/`. Branching: see [docs/GSD_BRANCHING.md](docs/GSD_BRANCHING.md).
