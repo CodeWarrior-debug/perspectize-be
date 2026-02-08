@@ -125,9 +125,16 @@ Use `DATABASE_URL` with external endpoint from hosting provider. Note: Sevalla c
 
 ## Resources
 
+**Monorepo docs:**
 - [Architecture](docs/ARCHITECTURE.md) — System design and hexagonal architecture
 - [Local Development](docs/LOCAL_DEVELOPMENT.md) — Setup guide
 - [Agent Routing](docs/AGENTS.md) — AI agent navigation guide
 - [Domain Guide](docs/DOMAIN_GUIDE.md) — Domain layer rules and patterns
 - [Go Patterns](docs/GO_PATTERNS.md) — Error handling and DB query patterns
+
+**Frontend docs:**
+- [Frontend CLAUDE.md](perspectize-fe/CLAUDE.md) — SvelteKit, Svelte 5, TanStack Query patterns
+- [Design Spec](perspectize-fe/docs/DESIGN_SPEC.md) — Figma design system, color tokens, typography, component specs
+
+**External references:**
 - [gqlgen](https://gqlgen.com/) | [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/) | [Effective Go](https://go.dev/doc/effective_go) | [PostgreSQL 17](https://www.postgresql.org/docs/17/)

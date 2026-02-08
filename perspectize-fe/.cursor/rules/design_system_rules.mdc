@@ -1,0 +1,415 @@
+# Perspectize Design System Rules
+
+> Rules for integrating Figma designs into the Perspectize frontend via Model Context Protocol (MCP).
+
+---
+
+## 1. Token Definitions
+
+### Location
+Design tokens are defined in **`perspectize-fe/src/app.css`** using Tailwind CSS v4's `@theme` directive.
+
+### Format
+Tailwind v4 CSS custom properties with `--color-*` prefix (NOT bare `--primary` from v3/shadcn):
+
+```css
+/* perspectize-fe/src/app.css */
+@import 'tailwindcss';
+
+@theme {
+  --default-font-family: 'Geist', system-ui, -apple-system, sans-serif;
+
+  /* Primary navy color */
+  --color-primary: oklch(0.333 0.077 257.109); /* #1a365d */
+  --color-primary-foreground: oklch(0.983 0.004 236.862);
+}
+```
+
+### Token Categories
+
+| Category | Token Pattern | Example |
+|----------|--------------|---------|
+| **Primary** | `--color-primary`, `--color-primary-foreground` | Navy (#1a365d) + white text |
+| **Semantic** | Tailwind defaults: `destructive`, `secondary`, `accent`, `muted` | Via Tailwind's built-in system |
+| **Layout** | `--background`, `--foreground`, `--border`, `--input` | From Tailwind defaults |
+| **Typography** | `--default-font-family` | Geist variable font |
+| **Spacing** | Tailwind default scale | `px-4`, `gap-2`, `py-6` |
+
+### Color Space
+- Uses **oklch** color space for perceptual uniformity
+- **CRITICAL**: Never trust AI-generated oklch values. Always verify against target hex using browser: `oklch(from #1a365d l c h)`
+
+### Token Transformation
+- No external token transformation system (no Style Dictionary, no Theo)
+- Tokens defined directly in CSS, consumed via Tailwind utility classes
+- Tailwind v4 generates utilities from `@theme` custom properties automatically
+
+---
+
+## 2. Component Library
+
+### Location
+```
+perspectize-fe/src/lib/components/
+├── shadcn/              # shadcn-svelte primitive components
+│   ├── button/          # Button with variants
+│   ├── dialog/          # Dialog/modal system
+│   ├── input/           # Form input
+│   ├── label/           # Form label
+│   └── index.ts         # Barrel export
+├── Header.svelte        # App header
+├── PageWrapper.svelte   # Content wrapper
+├── AddVideoDialog.svelte # Video submission dialog
+├── UserSelector.svelte  # User dropdown
+├── ActivityTable.svelte # AG Grid data table
+└── AGGridTest.svelte    # AG Grid test harness
+```
+
+### Architecture
+- **shadcn-svelte** primitives in `src/lib/components/shadcn/` (generated via CLI)
+- **Custom components** in `src/lib/components/` (flat structure, not nested by feature)
+- **Variant system**: `tailwind-variants` (tv) for multi-variant component styling
+- **Primitive layer**: `bits-ui` for headless UI primitives (Dialog, Label)
+
+### Component Configuration
+```json
+// perspectize-fe/components.json
+{
+  "$schema": "https://shadcn-svelte.com/schema.json",
+  "style": "default",
+  "tailwind": {
+    "config": "tailwind.config.ts",
+    "css": "src/app.css",
+    "baseColor": "slate"
+  },
+  "aliases": {
+    "components": "$lib/components/shadcn",
+    "utils": "$lib/utils"
+  }
+}
+```
+
+### Component Import Pattern
+```svelte
+<!-- Import from shadcn barrel -->
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label } from '$lib/components/shadcn';
+
+<!-- Import custom components directly -->
+import Header from '$lib/components/Header.svelte';
+import PageWrapper from '$lib/components/PageWrapper.svelte';
+```
+
+### Component Authoring Pattern (Svelte 5 Runes)
+```svelte
+<script lang="ts">
+  import { cn } from '$lib/utils.js';
+
+  let {
+    class: className,
+    children,
+    ...restProps
+  } = $props();
+</script>
+
+<div class={cn("base-classes", className)} {...restProps}>
+  {@render children?.()}
+</div>
+```
+
+### No Storybook
+- No component documentation system or Storybook configured
+- Components are tested via `@testing-library/svelte` + Vitest
+
+---
+
+## 3. Frameworks & Libraries
+
+### Core Stack
+
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| **Framework** | SvelteKit | 2.50.1 |
+| **UI Library** | Svelte 5 | 5.48.2 |
+| **Language** | TypeScript | 5.9.3 |
+| **Styling** | Tailwind CSS v4 | 4.1.18 |
+| **Build** | Vite | 6.4.1 |
+| **Adapter** | adapter-static | 3.0.10 (SSG) |
+
+### UI Libraries
+
+| Library | Version | Purpose |
+|---------|---------|---------|
+| **shadcn-svelte** | (components.json) | Component primitives |
+| **bits-ui** | 2.15.5 | Headless UI primitives |
+| **tailwind-variants** | 3.2.2 | Component variant system |
+| **tailwind-merge** | 3.4.0 | Class conflict resolution |
+| **clsx** | 2.1.1 | Conditional class composition |
+| **@lucide/svelte** | 0.561.0 | Icon library |
+| **ag-grid-svelte5** | 1.0.3 | Data grid (AG Grid v32.2) |
+| **svelte-sonner** | 1.0.7 | Toast notifications |
+
+### Data Layer
+
+| Library | Version | Purpose |
+|---------|---------|---------|
+| **@tanstack/svelte-query** | 6.0.18 | Server state management |
+| **@tanstack/svelte-form** | 1.28.0 | Form management |
+| **graphql-request** | 7.4.0 | GraphQL client |
+| **graphql** | 16.12.0 | GraphQL utilities |
+
+### Build Configuration
+```typescript
+// perspective-fe/vite.config.ts
+import { sveltekit } from '@sveltejs/kit/vite';
+import tailwindcss from '@tailwindcss/vite';
+
+export default defineConfig({
+  plugins: [sveltekit(), tailwindcss()],
+  // ... test config
+});
+```
+
+---
+
+## 4. Asset Management
+
+### Static Assets Location
+```
+perspectize-fe/static/
+├── fonts/
+│   └── Geist-Variable.woff2    # Variable font (100-900 weight)
+└── robots.txt
+```
+
+### Font Loading
+```html
+<!-- perspectize-fe/src/app.html -->
+<link rel="preload" href="/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+```
+
+```css
+/* perspectize-fe/src/app.css */
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+```
+
+### Dynamic Assets
+- Favicon: `src/lib/assets/favicon.svg` (imported in `+layout.svelte`)
+- No CDN configuration
+- No image optimization pipeline (no `@sveltejs/enhanced-img` or similar)
+- Static site generation outputs to `build/` directory
+
+---
+
+## 5. Icon System
+
+### Library
+**Lucide Svelte** (`@lucide/svelte@0.561.0`)
+
+### Import Pattern (per-icon, tree-shakeable)
+```svelte
+<script lang="ts">
+  import XIcon from '@lucide/svelte/icons/x';
+  import PlusIcon from '@lucide/svelte/icons/plus';
+</script>
+
+<XIcon class="size-4" />
+```
+
+### Naming Convention
+- Lucide icon names: kebab-case identifiers (e.g., `x`, `plus`, `search`, `chevron-down`)
+- Import path: `@lucide/svelte/icons/{icon-name}`
+
+### Default Sizing
+- Button base applies default sizing: `[&_svg:not([class*='size-'])]:size-4`
+- Override with explicit `size-*` classes: `class="size-5"`, `class="size-6"`
+
+### SVG Behavior in Buttons
+```css
+/* Applied via button base class */
+[&_svg]:pointer-events-none  /* Prevent icon click interference */
+[&_svg]:shrink-0             /* Prevent icon shrinking */
+```
+
+---
+
+## 6. Styling Approach
+
+### Methodology
+**Utility-first Tailwind CSS v4** with component variants via `tailwind-variants`.
+
+No CSS Modules, no Styled Components, no scoped `<style>` blocks.
+
+### Class Composition Utility
+```typescript
+// perspectize-fe/src/lib/utils.ts
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+```
+
+### Component Variant Pattern
+```typescript
+import { tv } from 'tailwind-variants';
+
+export const buttonVariants = tv({
+  base: "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium ...",
+  variants: {
+    variant: {
+      default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs",
+      destructive: "bg-destructive hover:bg-destructive/90 text-white shadow-xs",
+      outline: "bg-background hover:bg-accent border shadow-xs",
+      secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-xs",
+      ghost: "hover:bg-accent hover:text-accent-foreground",
+      link: "text-primary underline-offset-4 hover:underline",
+    },
+    size: {
+      default: "h-9 px-4 py-2",
+      sm: "h-8 gap-1.5 rounded-md px-3",
+      lg: "h-10 rounded-md px-6",
+      icon: "size-9",
+      "icon-sm": "size-8",
+      "icon-lg": "size-10",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+    size: "default",
+  },
+});
+```
+
+### Global Styles
+- **File**: `perspectize-fe/src/app.css`
+- Contains: Tailwind import, `@font-face`, `@theme` tokens, AG Grid pagination fix
+- Minimal global overrides; prefer utility classes
+
+### Responsive Design
+- **Mobile-first** approach
+- Breakpoints: `sm` (640px), `md` (768px), `lg` (1024px), `xl` (1280px), `2xl` (1536px)
+- Pattern: base styles for mobile, add wider breakpoints with prefixes
+
+```svelte
+<!-- Responsive padding example (Header.svelte) -->
+<header class="px-4 md:px-6 lg:px-8">
+
+<!-- Responsive text (Input.svelte) -->
+<input class="text-base md:text-sm" />
+```
+
+### Dark Mode
+- Supported via `dark:` prefix (Tailwind default)
+- Examples in shadcn components: `dark:bg-input/30`, `dark:border-input`
+- No explicit dark mode toggle implemented yet
+
+---
+
+## 7. Project Structure
+
+### Overall Organization
+```
+perspectize-be/                    # Monorepo root
+├── perspectize-fe/                # SvelteKit frontend
+│   ├── src/
+│   │   ├── routes/                # File-based routing
+│   │   │   ├── +layout.svelte     # Root layout (QueryClientProvider, Header, Toaster)
+│   │   │   ├── +layout.ts         # Layout config
+│   │   │   └── +page.svelte       # Home page
+│   │   ├── lib/
+│   │   │   ├── components/        # UI components
+│   │   │   │   ├── shadcn/        # Generated shadcn-svelte primitives
+│   │   │   │   └── *.svelte       # Custom app components
+│   │   │   ├── queries/           # TanStack Query + GraphQL definitions
+│   │   │   │   ├── client.ts      # GraphQLClient setup
+│   │   │   │   ├── content.ts     # Content queries/mutations
+│   │   │   │   └── users.ts       # User queries
+│   │   │   ├── stores/            # Svelte runes state stores
+│   │   │   ├── utils/             # Utility functions
+│   │   │   ├── assets/            # Imported assets (favicon)
+│   │   │   └── utils.ts           # cn() class merge utility
+│   │   ├── app.css                # Global styles + tokens
+│   │   ├── app.html               # HTML shell
+│   │   └── app.d.ts               # TypeScript ambient types
+│   ├── static/                    # Static files (fonts, robots.txt)
+│   ├── tests/                     # Test setup & utilities
+│   ├── svelte.config.js           # SvelteKit config
+│   ├── vite.config.ts             # Vite + test config
+│   ├── tailwind.config.ts         # Tailwind config
+│   ├── components.json            # shadcn-svelte config
+│   ├── tsconfig.json              # TypeScript config
+│   └── package.json               # Dependencies (pnpm)
+├── perspectize-go/                # Go GraphQL backend
+├── .planning/                     # GSD workflow planning artifacts
+└── CLAUDE.md                      # Root project instructions
+```
+
+### File Naming Conventions
+
+| Type | Convention | Example |
+|------|-----------|---------|
+| **Components** | PascalCase | `Header.svelte`, `AddVideoDialog.svelte` |
+| **Utilities** | camelCase | `formatting.ts`, `youtube.ts` |
+| **Stores** | camelCase with `.svelte.ts` | `userSelection.svelte.ts` |
+| **Routes** | SvelteKit convention | `+page.svelte`, `+layout.svelte` |
+| **Types** | PascalCase | `ContentItem`, `VideoRow` |
+
+### Organization Pattern
+- **Type-based** organization (components, queries, stores, utils)
+- NOT feature-based (no `features/auth/`, `features/videos/` folders)
+- Flat component directory (shadcn in subdirectory, custom components at top level)
+
+---
+
+## 8. Figma-to-Code Mapping Rules
+
+### When implementing Figma designs:
+
+1. **Colors**: Map Figma fills to Tailwind semantic tokens (`bg-primary`, `text-muted-foreground`). If a color doesn't match existing tokens, add it to `@theme` in `app.css` using oklch — verify the oklch value against the hex.
+
+2. **Typography**: Use Geist font (already default). Map Figma text styles to Tailwind text utilities (`text-sm`, `text-base`, `text-lg`, `font-medium`, `font-semibold`).
+
+3. **Spacing**: Map Figma spacing to Tailwind's 4px grid scale (`p-1` = 4px, `p-2` = 8px, `p-4` = 16px, etc.).
+
+4. **Components**: Check if a shadcn-svelte component exists first (`$lib/components/shadcn`). If not, create a new component in `$lib/components/` using the established patterns.
+
+5. **Icons**: Use Lucide icons (`@lucide/svelte/icons/{name}`). Find the closest Lucide match for Figma icons.
+
+6. **Responsive**: Implement mobile-first. Start with mobile layout, add `md:` and `lg:` breakpoints for wider screens.
+
+7. **Interactions**: Use Svelte 5 event handlers (`onclick`, `onkeydown`). For complex state, use `$state()` and `$derived()` runes.
+
+8. **Shadows**: Map to Tailwind shadow scale (`shadow-xs`, `shadow-sm`, `shadow-md`).
+
+9. **Border Radius**: Map to Tailwind radius scale (`rounded-md` = 6px, `rounded-lg` = 8px, `rounded-xl` = 12px).
+
+10. **Opacity**: Use Tailwind opacity modifiers (`bg-black/50`, `text-muted-foreground/80`).
+
+---
+
+## 9. Critical Do's and Don'ts
+
+### DO
+- Use `--color-*` prefix for Tailwind v4 theme variables
+- Use Svelte 5 runes (`$state`, `$derived`, `$props`, `$effect`)
+- Use `cn()` for composing classes with override support
+- Use `tailwind-variants` (tv) for multi-variant components
+- Import icons per-icon from `@lucide/svelte/icons/*`
+- Use `{@render children?.()}` for component children
+- Verify oklch color values against target hex in browser
+
+### DON'T
+- Use bare `--primary` CSS variables (that's v3/shadcn convention)
+- Use Svelte 4 syntax (`export let`, `$:`, `on:click`, `<slot />`)
+- Use `$` prefix on TanStack Query results (they're reactive objects, not stores)
+- Pass options objects directly to `createQuery()` (must use function wrapper)
+- Import from `ag-grid-community` (use `@ag-grid-community/*`)
+- Import AG Grid CSS files (use `themeQuartz.withParams()`)
+- Use CSS Modules or `<style>` blocks (utility-first only)
+- Trust AI-generated oklch values without verification
