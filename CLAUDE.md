@@ -102,8 +102,9 @@ Claude Code may use the following tools **without prompting** for this project:
 - **Forbidden**: `rm -rf`, `sudo`, `chmod 777` (these require explicit permission)
 
 ### Figma MCP Tools
-- **Design context**: `get_screenshot`, `get_design_context`, `get_metadata` for fileKey `SyvrP9yYbrmCorofJK4Co8` (Perspectize Figma file)
-- **Design system**: `get_variable_defs`
+- **Design context**: `get_screenshot`, `get_design_context`, `get_metadata` — all Figma MCP tools auto-approved
+- **Design system**: `get_variable_defs`, `create_design_system_rules`
+- **File keys**: Design 1 (`K1HaZLeNwCckWvhoyAfRhj`), Radix 3.0 (`SyvrP9yYbrmCorofJK4Co8`), App 1 (`dAiiWM7FOsob5upzUjtocY`) — see [perspectize-fe/docs/FIGMA.md](perspectize-fe/docs/FIGMA.md)
 
 ### Task & Execution Tools
 - **TaskCreate/TaskUpdate**: Creating and updating tasks from conversations
