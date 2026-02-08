@@ -135,6 +135,10 @@ Use `DATABASE_URL` with external endpoint from hosting provider. Note: Sevalla c
 **Frontend docs:**
 - [Frontend CLAUDE.md](perspectize-fe/CLAUDE.md) — SvelteKit, Svelte 5, TanStack Query patterns
 - [Design Spec](perspectize-fe/docs/DESIGN_SPEC.md) — Figma design system, color tokens, typography, component specs
+- [Figma Reference](perspectize-fe/docs/FIGMA.md) — File keys, pages, variables, code↔Figma mapping
+
+**Planning & backlog:**
+- [Feature Backlog](FEATURE_BACKLOG.md) — Future ideas and enhancements not tied to any milestone. Capture ideas here during development; evaluate when planning new work.
 
 **External references:**
 - [gqlgen](https://gqlgen.com/) | [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/) | [Effective Go](https://go.dev/doc/effective_go) | [PostgreSQL 17](https://www.postgresql.org/docs/17/)

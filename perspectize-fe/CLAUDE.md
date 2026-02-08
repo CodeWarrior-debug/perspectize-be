@@ -133,6 +133,11 @@ pnpm add ag-grid-svelte5 @ag-grid-community/core@32.2.1 @ag-grid-community/clien
 
 **Do NOT:** Import from `ag-grid-community` (use `@ag-grid-community/*`) · Import AG Grid CSS (use `themeQuartz.withParams()`) · Use `AgGridSvelte` (use `AgGridSvelte5Component`)
 
+## Figma Design Workflow
+
+- **[docs/FIGMA.md](docs/FIGMA.md)** — Figma file reference (file key, pages, variables, code↔Figma mapping)
+- **[docs/FIGMA_VERIFICATION.md](docs/FIGMA_VERIFICATION.md)** — Verification guide for Figma Make outputs
+
 ## Self-Verification (Chrome DevTools MCP)
 
 | Step | Tool | Purpose |
