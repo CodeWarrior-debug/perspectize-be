@@ -302,7 +302,20 @@ Example prompt to user:
 
 ---
 
-## Figma Make Workflow Progress
+## Figma Make Workflow
+
+### How Make Works
+
+Figma Make is a **standalone prompt interface** — it is NOT run from within a file. To target a specific file:
+
+1. Open Figma Make (separate prompt window)
+2. In the initial step, **link to the target file** (usually Design 1)
+3. Paste the prompt
+4. Make applies changes to the linked file
+
+**Target file for all 13 steps:** Perspectize Youtube - Design 1 (`K1HaZLeNwCckWvhoyAfRhj`)
+
+### Progress
 
 Tracks the 13-step design build process. See [DESIGN_SPEC.md](DESIGN_SPEC.md) for full prompts.
 
