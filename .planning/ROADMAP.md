@@ -133,9 +133,9 @@ Plans:
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 05-01-PLAN.md — Coverage verification and gap filling (tests for UserSelector, ActivityTable, userSelection store)
-- [ ] 05-02-PLAN.md — GitHub Pages deployment with CI/CD workflows (frontend-deploy.yml, frontend-test.yml)
-- [ ] 05-03-PLAN.md — CORS configuration with rs/cors and production verification
+- [x] 05-01-PLAN.md — Coverage verification — SKIPPED (thresholds already met: 87.6% stmts, 90.1% lines)
+- [ ] 05-02-PLAN.md — DigitalOcean App Platform static site deployment (cleanup GitHub Pages artifacts, deploy frontend)
+- [ ] 05-03-PLAN.md — CORS configuration with rs/cors and DigitalOcean App Platform frontend origin
 
 ## Progress
 
@@ -150,4 +150,4 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 4 -> 5
 | 3. Add Video Flow | 2/2 | Complete | 2026-02-07 |
 | 3.1 Dialog UX Polish | 0/0 | Not planned | - |
 | 4. Add Perspective Flow | 0/2 | Not started | - |
-| 5. Testing + Deployment | 0/3 | Not started | - |
+| 5. Testing + Deployment | 1/3 | In progress | - |
