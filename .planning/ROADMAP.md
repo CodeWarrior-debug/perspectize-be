@@ -97,10 +97,11 @@ Plans:
   3. Charter font is loaded and available via font-serif utility class
   4. Geist + Charter dual-font system works (Geist for UI, Charter for body/content)
   5. Existing components (Dialog, Header, shadcn primitives) render correctly with the new tokens — no visual regressions
-**Plans**: 0 plans
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 3.1 to break down)
+- [ ] 03.1-01-PLAN.md — Complete color token system (27 tokens) + Charter font setup in app.css
+- [ ] 03.1-02-PLAN.md — AG Grid branded theming + visual verification checkpoint
 
 ### Phase 4: Add Perspective Flow
 **Goal**: Users can create perspectives on videos with ratings, Like text, and Review text
@@ -137,7 +138,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 4 -> 5
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -145,6 +146,6 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 4 -> 5
 | 2. Data Layer + Activity | 2/2 | Complete | 2026-02-07 |
 | 2.1 Mobile Responsive Fixes | 2/2 | Complete | 2026-02-07 |
 | 3. Add Video Flow | 2/2 | Complete | 2026-02-07 |
-| 3.1 Design Token System | 0/0 | Not planned | - |
+| 3.1 Design Token System | 0/2 | Planned | - |
 | 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 0/3 | Not started | - |
