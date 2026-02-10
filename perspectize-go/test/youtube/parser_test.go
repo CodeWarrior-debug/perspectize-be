@@ -69,6 +69,54 @@ func TestExtractVideoID_HTTPWithoutS(t *testing.T) {
 	assert.Equal(t, "dQw4w9WgXcQ", id)
 }
 
+func TestExtractVideoID_ShortsURL(t *testing.T) {
+	id, err := youtube.ExtractVideoID("https://www.youtube.com/shorts/dQw4w9WgXcQ")
+	require.NoError(t, err)
+	assert.Equal(t, "dQw4w9WgXcQ", id)
+}
+
+func TestExtractVideoID_LiveURL(t *testing.T) {
+	id, err := youtube.ExtractVideoID("https://www.youtube.com/live/dQw4w9WgXcQ")
+	require.NoError(t, err)
+	assert.Equal(t, "dQw4w9WgXcQ", id)
+}
+
+func TestExtractVideoID_ShortEmbedURL(t *testing.T) {
+	id, err := youtube.ExtractVideoID("https://www.youtube.com/e/dQw4w9WgXcQ")
+	require.NoError(t, err)
+	assert.Equal(t, "dQw4w9WgXcQ", id)
+}
+
+func TestExtractVideoID_NoCookieEmbedURL(t *testing.T) {
+	id, err := youtube.ExtractVideoID("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ")
+	require.NoError(t, err)
+	assert.Equal(t, "dQw4w9WgXcQ", id)
+}
+
+func TestExtractVideoID_MusicYouTubeURL(t *testing.T) {
+	id, err := youtube.ExtractVideoID("https://music.youtube.com/watch?v=dQw4w9WgXcQ")
+	require.NoError(t, err)
+	assert.Equal(t, "dQw4w9WgXcQ", id)
+}
+
+func TestExtractVideoID_MobileURL(t *testing.T) {
+	id, err := youtube.ExtractVideoID("https://m.youtube.com/watch?v=dQw4w9WgXcQ")
+	require.NoError(t, err)
+	assert.Equal(t, "dQw4w9WgXcQ", id)
+}
+
+func TestExtractVideoID_ShortsWithParams(t *testing.T) {
+	id, err := youtube.ExtractVideoID("https://youtube.com/shorts/dQw4w9WgXcQ?si=abc123")
+	require.NoError(t, err)
+	assert.Equal(t, "dQw4w9WgXcQ", id)
+}
+
+func TestExtractVideoID_LiveWithParams(t *testing.T) {
+	id, err := youtube.ExtractVideoID("https://youtube.com/live/dQw4w9WgXcQ?feature=share")
+	require.NoError(t, err)
+	assert.Equal(t, "dQw4w9WgXcQ", id)
+}
+
 // --- ParseISO8601Duration Tests ---
 
 func TestParseISO8601Duration_HoursMinutesSeconds(t *testing.T) {

@@ -7,10 +7,17 @@ import (
 	"strings"
 )
 
-// ExtractVideoID extracts the video ID from various YouTube URL formats
+// ExtractVideoID extracts the video ID from various YouTube URL formats.
+// Supported: /watch?v=, youtu.be/, /embed/, /v/, /e/, /shorts/, /live/,
+// youtube-nocookie.com, music.youtube.com, m.youtube.com
 func ExtractVideoID(url string) (string, error) {
 	patterns := []string{
-		`(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/|youtube\.com/v/)([a-zA-Z0-9_-]{11})`,
+		// Standard watch URL (matches www., m., music. subdomains)
+		`youtube\.com/watch\?v=([a-zA-Z0-9_-]{11})`,
+		// Short URL
+		`youtu\.be/([a-zA-Z0-9_-]{11})`,
+		// Path-based: /embed/, /v/, /e/, /shorts/, /live/ (including youtube-nocookie.com)
+		`(?:youtube\.com|youtube-nocookie\.com)/(?:embed|v|e|shorts|live)/([a-zA-Z0-9_-]{11})`,
 	}
 
 	for _, pattern := range patterns {

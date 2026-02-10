@@ -28,6 +28,30 @@ describe('validateYouTubeUrl', () => {
 			expect(validateYouTubeUrl('https://youtube.com/shorts/xyz')).toBe(true);
 		});
 
+		it('accepts youtube.com/live URLs', () => {
+			expect(validateYouTubeUrl('https://www.youtube.com/live/dQw4w9WgXcQ')).toBe(true);
+			expect(validateYouTubeUrl('https://youtube.com/live/abc123')).toBe(true);
+		});
+
+		it('accepts youtube.com/v legacy URLs', () => {
+			expect(validateYouTubeUrl('https://www.youtube.com/v/dQw4w9WgXcQ')).toBe(true);
+		});
+
+		it('accepts youtube.com/e short embed URLs', () => {
+			expect(validateYouTubeUrl('https://www.youtube.com/e/dQw4w9WgXcQ')).toBe(true);
+		});
+
+		it('accepts music.youtube.com URLs', () => {
+			expect(validateYouTubeUrl('https://music.youtube.com/watch?v=dQw4w9WgXcQ')).toBe(true);
+		});
+
+		it('accepts youtube-nocookie.com embed URLs', () => {
+			expect(validateYouTubeUrl('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ')).toBe(
+				true
+			);
+			expect(validateYouTubeUrl('https://youtube-nocookie.com/embed/abc')).toBe(true);
+		});
+
 		it('accepts URLs with query parameters', () => {
 			expect(validateYouTubeUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=30')).toBe(true);
 			expect(
@@ -67,11 +91,16 @@ describe('validateYouTubeUrl', () => {
 			expect(validateYouTubeUrl('https://notyoutube.com/watch?v=abc')).toBe(false);
 		});
 
-		it('rejects youtube.com without watch/embed/shorts path', () => {
+		it('rejects youtube.com without valid video path', () => {
 			expect(validateYouTubeUrl('https://www.youtube.com/')).toBe(false);
 			expect(validateYouTubeUrl('https://youtube.com')).toBe(false);
 			expect(validateYouTubeUrl('https://www.youtube.com/about')).toBe(false);
 			expect(validateYouTubeUrl('https://www.youtube.com/channel/UCxxx')).toBe(false);
+		});
+
+		it('rejects youtube-nocookie.com without /embed path', () => {
+			expect(validateYouTubeUrl('https://www.youtube-nocookie.com/watch?v=abc')).toBe(false);
+			expect(validateYouTubeUrl('https://youtube-nocookie.com/')).toBe(false);
 		});
 
 		it('rejects youtu.be without video ID', () => {

@@ -2,8 +2,10 @@
  * Validates if a string is a YouTube URL.
  *
  * Supports:
- * - youtube.com, www.youtube.com, m.youtube.com (with /watch, /embed, /shorts)
+ * - youtube.com, www.youtube.com, m.youtube.com, music.youtube.com
+ *   (with /watch, /embed, /v, /e, /shorts, /live)
  * - youtu.be (short URLs)
+ * - youtube-nocookie.com, www.youtube-nocookie.com (with /embed)
  *
  * Uses URL constructor to avoid catastrophic backtracking issues with complex regex.
  *
@@ -19,33 +21,25 @@ export function validateYouTubeUrl(url: string): boolean {
 	try {
 		const urlObj = new URL(url);
 
-		// Valid YouTube hosts
-		const validHosts = [
-			'youtube.com',
-			'www.youtube.com',
-			'youtu.be',
-			'm.youtube.com'
-		];
-
-		if (!validHosts.includes(urlObj.hostname)) {
-			return false;
-		}
-
-		// For youtube.com hosts, pathname must include /watch, /embed, or /shorts
-		if (urlObj.hostname.includes('youtube.com')) {
-			return (
-				urlObj.pathname.includes('/watch') ||
-				urlObj.pathname.includes('/embed') ||
-				urlObj.pathname.includes('/shorts')
-			);
-		}
-
-		// For youtu.be, pathname must have video ID (length > 1)
+		// youtu.be short URLs — pathname must have video ID (length > 1)
 		if (urlObj.hostname === 'youtu.be') {
 			return urlObj.pathname.length > 1;
 		}
 
-		return true;
+		// youtube-nocookie.com — only /embed is valid
+		if (
+			urlObj.hostname === 'youtube-nocookie.com' ||
+			urlObj.hostname.endsWith('.youtube-nocookie.com')
+		) {
+			return urlObj.pathname.startsWith('/embed/');
+		}
+
+		// youtube.com variants (www., m., music.)
+		if (urlObj.hostname === 'youtube.com' || urlObj.hostname.endsWith('.youtube.com')) {
+			return /^\/(watch|embed|v|e|shorts|live)(\/|$)/.test(urlObj.pathname);
+		}
+
+		return false;
 	} catch {
 		// Malformed URLs throw, which we treat as invalid
 		return false;
