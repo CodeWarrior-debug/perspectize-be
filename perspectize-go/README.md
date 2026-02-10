@@ -4,12 +4,12 @@ Go implementation of the Perspectize backend, migrated from C# ASP.NET Core.
 
 ## Overview
 
-This is a RESTful API for storing, refining, and sharing perspectives on content (initially YouTube videos). Built with Go, PostgreSQL 18, and focused on simplicity and developer experience.
+This is a RESTful API for storing, refining, and sharing perspectives on content (initially YouTube videos). Built with Go, PostgreSQL 17, and focused on simplicity and developer experience.
 
 ## Prerequisites
 
 - **Go**: 1.21 or later
-- **PostgreSQL**: 18.x
+- **PostgreSQL**: 17.x
 - **Docker & Docker Compose**: For local PostgreSQL (optional)
 - **golang-migrate**: For database migrations
 
@@ -147,7 +147,7 @@ Configuration is loaded from:
 
 ## Database
 
-Uses PostgreSQL 18 with advanced features:
+Uses PostgreSQL 17 with advanced features:
 - JSONB columns for structured data
 - Array types for collections
 - Custom domain types for validation

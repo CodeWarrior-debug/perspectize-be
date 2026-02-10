@@ -9,9 +9,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/yourorg/perspectize-go/internal/core/domain"
-	portservices "github.com/yourorg/perspectize-go/internal/core/ports/services"
-	"github.com/yourorg/perspectize-go/internal/core/services"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
+	portservices "github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/ports/services"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/services"
 )
 
 // mockContentRepository implements repositories.ContentRepository for testing

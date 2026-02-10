@@ -1,7 +1,7 @@
 package resolvers
 
 import (
-	"github.com/yourorg/perspectize-go/internal/core/services"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/services"
 )
 
 // This file will not be regenerated automatically.
@@ -10,12 +10,20 @@ import (
 // here.
 
 type Resolver struct {
-	ContentService *services.ContentService
+	ContentService     *services.ContentService
+	UserService        *services.UserService
+	PerspectiveService *services.PerspectiveService
 }
 
 // NewResolver creates a new resolver with dependencies
-func NewResolver(contentService *services.ContentService) *Resolver {
+func NewResolver(
+	contentService *services.ContentService,
+	userService *services.UserService,
+	perspectiveService *services.PerspectiveService,
+) *Resolver {
 	return &Resolver{
-		ContentService: contentService,
+		ContentService:     contentService,
+		UserService:        userService,
+		PerspectiveService: perspectiveService,
 	}
 }

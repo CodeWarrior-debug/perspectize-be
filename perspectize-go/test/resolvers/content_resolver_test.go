@@ -12,11 +12,11 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/yourorg/perspectize-go/internal/adapters/graphql/generated"
-	"github.com/yourorg/perspectize-go/internal/adapters/graphql/resolvers"
-	"github.com/yourorg/perspectize-go/internal/core/domain"
-	portservices "github.com/yourorg/perspectize-go/internal/core/ports/services"
-	"github.com/yourorg/perspectize-go/internal/core/services"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/graphql/generated"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/graphql/resolvers"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
+	portservices "github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/ports/services"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/services"
 )
 
 // mockContentRepository implements repositories.ContentRepository for testing
@@ -67,6 +67,104 @@ func (m *mockYouTubeClient) GetVideoMetadata(ctx context.Context, videoID string
 	return nil, fmt.Errorf("not implemented")
 }
 
+// mockUserRepository implements repositories.UserRepository for testing
+type mockUserRepository struct {
+	createFn        func(ctx context.Context, user *domain.User) (*domain.User, error)
+	getByIDFn       func(ctx context.Context, id int) (*domain.User, error)
+	getByUsernameFn func(ctx context.Context, username string) (*domain.User, error)
+	getByEmailFn    func(ctx context.Context, email string) (*domain.User, error)
+	listAllFn       func(ctx context.Context) ([]*domain.User, error)
+}
+
+func (m *mockUserRepository) Create(ctx context.Context, user *domain.User) (*domain.User, error) {
+	if m.createFn != nil {
+		return m.createFn(ctx, user)
+	}
+	user.ID = 1
+	return user, nil
+}
+
+func (m *mockUserRepository) GetByID(ctx context.Context, id int) (*domain.User, error) {
+	if m.getByIDFn != nil {
+		return m.getByIDFn(ctx, id)
+	}
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockUserRepository) GetByUsername(ctx context.Context, username string) (*domain.User, error) {
+	if m.getByUsernameFn != nil {
+		return m.getByUsernameFn(ctx, username)
+	}
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockUserRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
+	if m.getByEmailFn != nil {
+		return m.getByEmailFn(ctx, email)
+	}
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockUserRepository) ListAll(ctx context.Context) ([]*domain.User, error) {
+	if m.listAllFn != nil {
+		return m.listAllFn(ctx)
+	}
+	return []*domain.User{}, nil
+}
+
+// mockPerspectiveRepository implements repositories.PerspectiveRepository for testing
+type mockPerspectiveRepository struct {
+	createFn            func(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error)
+	getByIDFn           func(ctx context.Context, id int) (*domain.Perspective, error)
+	getByUserAndClaimFn func(ctx context.Context, userID int, claim string) (*domain.Perspective, error)
+	updateFn            func(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error)
+	deleteFn            func(ctx context.Context, id int) error
+	listFn              func(ctx context.Context, params domain.PerspectiveListParams) (*domain.PaginatedPerspectives, error)
+}
+
+func (m *mockPerspectiveRepository) Create(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error) {
+	if m.createFn != nil {
+		return m.createFn(ctx, p)
+	}
+	p.ID = 1
+	return p, nil
+}
+
+func (m *mockPerspectiveRepository) GetByID(ctx context.Context, id int) (*domain.Perspective, error) {
+	if m.getByIDFn != nil {
+		return m.getByIDFn(ctx, id)
+	}
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockPerspectiveRepository) GetByUserAndClaim(ctx context.Context, userID int, claim string) (*domain.Perspective, error) {
+	if m.getByUserAndClaimFn != nil {
+		return m.getByUserAndClaimFn(ctx, userID, claim)
+	}
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockPerspectiveRepository) Update(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error) {
+	if m.updateFn != nil {
+		return m.updateFn(ctx, p)
+	}
+	return p, nil
+}
+
+func (m *mockPerspectiveRepository) Delete(ctx context.Context, id int) error {
+	if m.deleteFn != nil {
+		return m.deleteFn(ctx, id)
+	}
+	return nil
+}
+
+func (m *mockPerspectiveRepository) List(ctx context.Context, params domain.PerspectiveListParams) (*domain.PaginatedPerspectives, error) {
+	if m.listFn != nil {
+		return m.listFn(ctx, params)
+	}
+	return &domain.PaginatedPerspectives{Items: []*domain.Perspective{}}, nil
+}
+
 // graphqlResponse represents a generic GraphQL JSON response
 type graphqlResponse struct {
 	Data   json.RawMessage `json:"data"`
@@ -77,8 +175,11 @@ type graphqlResponse struct {
 
 // setupTestServer creates a test GraphQL server with the given mock dependencies
 func setupTestServer(repo *mockContentRepository, ytClient *mockYouTubeClient) *httptest.Server {
+	userRepo := &mockUserRepository{}
 	contentService := services.NewContentService(repo, ytClient)
-	resolver := resolvers.NewResolver(contentService)
+	userService := services.NewUserService(userRepo)
+	perspectiveService := services.NewPerspectiveService(&mockPerspectiveRepository{}, userRepo)
+	resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 	return httptest.NewServer(srv)
 }
@@ -140,7 +241,7 @@ func TestContentQuery_Success(t *testing.T) {
 
 	assert.Equal(t, "1", data.ContentByID.ID)
 	assert.Equal(t, "Test Video", data.ContentByID.Name)
-	assert.Equal(t, "youtube", data.ContentByID.ContentType)
+	assert.Equal(t, "YOUTUBE", data.ContentByID.ContentType)
 	assert.Equal(t, url, data.ContentByID.URL)
 }
 
@@ -259,7 +360,7 @@ func TestCreateContentFromYouTube_Success(t *testing.T) {
 
 	assert.Equal(t, "42", data.CreateContentFromYouTube.ID)
 	assert.Equal(t, "Amazing Video", data.CreateContentFromYouTube.Name)
-	assert.Equal(t, "youtube", data.CreateContentFromYouTube.ContentType)
+	assert.Equal(t, "YOUTUBE", data.CreateContentFromYouTube.ContentType)
 }
 
 func TestCreateContentFromYouTube_AlreadyExists(t *testing.T) {
@@ -577,7 +678,7 @@ func TestPaginatedContentQuery_WithContentTypeFilter(t *testing.T) {
 
 	assert.Len(t, data.Content.Items, 1)
 	assert.Equal(t, "YouTube Video", data.Content.Items[0].Name)
-	assert.Equal(t, "youtube", data.Content.Items[0].ContentType)
+	assert.Equal(t, "YOUTUBE", data.Content.Items[0].ContentType)
 }
 
 func TestPaginatedContentQuery_WithFilterAndTotalCount(t *testing.T) {
@@ -775,10 +876,15 @@ func TestPaginatedContentQuery_WithMinMaxLengthFilter(t *testing.T) {
 func TestNewResolver(t *testing.T) {
 	repo := &mockContentRepository{}
 	ytClient := &mockYouTubeClient{}
+	userRepo := &mockUserRepository{}
 	contentService := services.NewContentService(repo, ytClient)
+	userService := services.NewUserService(userRepo)
+	perspectiveService := services.NewPerspectiveService(&mockPerspectiveRepository{}, userRepo)
 
-	resolver := resolvers.NewResolver(contentService)
+	resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
 
 	assert.NotNil(t, resolver)
 	assert.Equal(t, contentService, resolver.ContentService)
+	assert.Equal(t, userService, resolver.UserService)
+	assert.Equal(t, perspectiveService, resolver.PerspectiveService)
 }

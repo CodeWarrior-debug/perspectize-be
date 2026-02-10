@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/yourorg/perspectize-go/internal/core/domain"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
 )
 
 // ContentRepository implements the ContentRepository interface using PostgreSQL
@@ -49,7 +49,7 @@ func (r *ContentRepository) Create(ctx context.Context, content *domain.Content)
 	err := r.db.QueryRowContext(ctx, query,
 		content.Name,
 		toNullString(content.URL),
-		string(content.ContentType),
+		contentTypeToDBValue(content.ContentType),
 		toNullInt64(content.Length),
 		toNullString(content.LengthUnits),
 		content.Response,
@@ -109,7 +109,7 @@ func rowToDomain(row *contentRow) *domain.Content {
 	content := &domain.Content{
 		ID:          row.ID,
 		Name:        row.Name,
-		ContentType: domain.ContentType(row.ContentType),
+		ContentType: contentTypeFromDBValue(row.ContentType),
 		Response:    row.Response,
 	}
 
@@ -131,6 +131,16 @@ func rowToDomain(row *contentRow) *domain.Content {
 	}
 
 	return content
+}
+
+// contentTypeToDBValue converts domain ContentType to lowercase for database storage
+func contentTypeToDBValue(ct domain.ContentType) string {
+	return strings.ToLower(string(ct))
+}
+
+// contentTypeFromDBValue converts lowercase database value to domain ContentType
+func contentTypeFromDBValue(s string) domain.ContentType {
+	return domain.ContentType(strings.ToUpper(s))
 }
 
 // toNullString converts a string pointer to sql.NullString
@@ -178,6 +188,8 @@ func sortColumnName(sortBy domain.ContentSortBy) string {
 		return "updated_at"
 	case domain.ContentSortByName:
 		return "name"
+	case domain.ContentSortByCreatedAt:
+		return "created_at"
 	default:
 		return "created_at"
 	}
@@ -224,7 +236,7 @@ func (r *ContentRepository) List(ctx context.Context, params domain.ContentListP
 	if params.Filter != nil {
 		if params.Filter.ContentType != nil {
 			conditions = append(conditions, fmt.Sprintf("content_type = $%d", argIdx))
-			args = append(args, string(*params.Filter.ContentType))
+			args = append(args, contentTypeToDBValue(*params.Filter.ContentType))
 			argIdx++
 		}
 		if params.Filter.MinLengthSeconds != nil {
@@ -293,7 +305,7 @@ func (r *ContentRepository) List(ctx context.Context, params domain.ContentListP
 		if params.Filter != nil {
 			if params.Filter.ContentType != nil {
 				countConditions = append(countConditions, fmt.Sprintf("content_type = $%d", countArgIdx))
-				countArgs = append(countArgs, string(*params.Filter.ContentType))
+				countArgs = append(countArgs, contentTypeToDBValue(*params.Filter.ContentType))
 				countArgIdx++
 			}
 			if params.Filter.MinLengthSeconds != nil {

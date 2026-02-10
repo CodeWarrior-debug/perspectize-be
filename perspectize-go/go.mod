@@ -1,4 +1,4 @@
-module github.com/yourorg/perspectize-go
+module github.com/CodeWarrior-debug/perspectize-be/perspectize-go
 
 go 1.25.0
 
@@ -7,6 +7,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
+	github.com/lib/pq v1.10.9
 	github.com/stretchr/testify v1.11.1
 	github.com/vektah/gqlparser/v2 v2.5.31
 )

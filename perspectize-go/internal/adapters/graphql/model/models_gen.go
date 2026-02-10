@@ -3,11 +3,18 @@
 package model
 
 import (
-	"bytes"
-	"fmt"
-	"io"
-	"strconv"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
 )
+
+type CategorizedRating struct {
+	Category string `json:"category"`
+	Rating   int    `json:"rating"`
+}
+
+type CategorizedRatingInput struct {
+	Category string `json:"category"`
+	Rating   int    `json:"rating"`
+}
 
 type Content struct {
 	ID           string         `json:"id"`
@@ -25,13 +32,35 @@ type Content struct {
 }
 
 type ContentFilter struct {
-	ContentType      *ContentType `json:"contentType,omitempty"`
-	MinLengthSeconds *int         `json:"minLengthSeconds,omitempty"`
-	MaxLengthSeconds *int         `json:"maxLengthSeconds,omitempty"`
+	ContentType      *domain.ContentType `json:"contentType,omitempty"`
+	MinLengthSeconds *int                `json:"minLengthSeconds,omitempty"`
+	MaxLengthSeconds *int                `json:"maxLengthSeconds,omitempty"`
 }
 
 type CreateContentFromYouTubeInput struct {
 	URL string `json:"url"`
+}
+
+type CreatePerspectiveInput struct {
+	Claim              string                    `json:"claim"`
+	UserID             int                       `json:"userID"`
+	ContentID          *int                      `json:"contentID,omitempty"`
+	Quality            *int                      `json:"quality,omitempty"`
+	Agreement          *int                      `json:"agreement,omitempty"`
+	Importance         *int                      `json:"importance,omitempty"`
+	Confidence         *int                      `json:"confidence,omitempty"`
+	Like               *string                   `json:"like,omitempty"`
+	Privacy            *domain.Privacy           `json:"privacy,omitempty"`
+	Description        *string                   `json:"description,omitempty"`
+	Category           *string                   `json:"category,omitempty"`
+	Parts              []int                     `json:"parts,omitempty"`
+	Labels             []string                  `json:"labels,omitempty"`
+	CategorizedRatings []*CategorizedRatingInput `json:"categorizedRatings,omitempty"`
+}
+
+type CreateUserInput struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
 }
 
 type Mutation struct {
@@ -50,170 +79,66 @@ type PaginatedContent struct {
 	TotalCount *int       `json:"totalCount,omitempty"`
 }
 
+type PaginatedPerspectives struct {
+	Items      []*Perspective `json:"items"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
+	TotalCount *int           `json:"totalCount,omitempty"`
+}
+
+type Perspective struct {
+	ID                 string               `json:"id"`
+	Claim              string               `json:"claim"`
+	UserID             string               `json:"userID"`
+	User               *User                `json:"user,omitempty"`
+	ContentID          *string              `json:"contentID,omitempty"`
+	Content            *Content             `json:"content,omitempty"`
+	Quality            *int                 `json:"quality,omitempty"`
+	Agreement          *int                 `json:"agreement,omitempty"`
+	Importance         *int                 `json:"importance,omitempty"`
+	Confidence         *int                 `json:"confidence,omitempty"`
+	Like               *string              `json:"like,omitempty"`
+	Privacy            domain.Privacy       `json:"privacy"`
+	Description        *string              `json:"description,omitempty"`
+	Category           *string              `json:"category,omitempty"`
+	ReviewStatus       *domain.ReviewStatus `json:"reviewStatus,omitempty"`
+	Parts              []int                `json:"parts,omitempty"`
+	Labels             []string             `json:"labels,omitempty"`
+	CategorizedRatings []*CategorizedRating `json:"categorizedRatings,omitempty"`
+	CreatedAt          string               `json:"createdAt"`
+	UpdatedAt          string               `json:"updatedAt"`
+}
+
+type PerspectiveFilter struct {
+	UserID    *int            `json:"userID,omitempty"`
+	ContentID *int            `json:"contentID,omitempty"`
+	Privacy   *domain.Privacy `json:"privacy,omitempty"`
+}
+
 type Query struct {
 }
 
-type ContentSortBy string
-
-const (
-	ContentSortByCreatedAt ContentSortBy = "CREATED_AT"
-	ContentSortByUpdatedAt ContentSortBy = "UPDATED_AT"
-	ContentSortByName      ContentSortBy = "NAME"
-)
-
-var AllContentSortBy = []ContentSortBy{
-	ContentSortByCreatedAt,
-	ContentSortByUpdatedAt,
-	ContentSortByName,
+type UpdatePerspectiveInput struct {
+	ID                 int                       `json:"id"`
+	Claim              *string                   `json:"claim,omitempty"`
+	ContentID          *int                      `json:"contentID,omitempty"`
+	Quality            *int                      `json:"quality,omitempty"`
+	Agreement          *int                      `json:"agreement,omitempty"`
+	Importance         *int                      `json:"importance,omitempty"`
+	Confidence         *int                      `json:"confidence,omitempty"`
+	Like               *string                   `json:"like,omitempty"`
+	Privacy            *domain.Privacy           `json:"privacy,omitempty"`
+	Description        *string                   `json:"description,omitempty"`
+	Category           *string                   `json:"category,omitempty"`
+	ReviewStatus       *domain.ReviewStatus      `json:"reviewStatus,omitempty"`
+	Parts              []int                     `json:"parts,omitempty"`
+	Labels             []string                  `json:"labels,omitempty"`
+	CategorizedRatings []*CategorizedRatingInput `json:"categorizedRatings,omitempty"`
 }
 
-func (e ContentSortBy) IsValid() bool {
-	switch e {
-	case ContentSortByCreatedAt, ContentSortByUpdatedAt, ContentSortByName:
-		return true
-	}
-	return false
-}
-
-func (e ContentSortBy) String() string {
-	return string(e)
-}
-
-func (e *ContentSortBy) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = ContentSortBy(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid ContentSortBy", str)
-	}
-	return nil
-}
-
-func (e ContentSortBy) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *ContentSortBy) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e ContentSortBy) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
-}
-
-type ContentType string
-
-const (
-	ContentTypeYoutube ContentType = "YOUTUBE"
-)
-
-var AllContentType = []ContentType{
-	ContentTypeYoutube,
-}
-
-func (e ContentType) IsValid() bool {
-	switch e {
-	case ContentTypeYoutube:
-		return true
-	}
-	return false
-}
-
-func (e ContentType) String() string {
-	return string(e)
-}
-
-func (e *ContentType) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = ContentType(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid ContentType", str)
-	}
-	return nil
-}
-
-func (e ContentType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *ContentType) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e ContentType) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
-}
-
-type SortOrder string
-
-const (
-	SortOrderAsc  SortOrder = "ASC"
-	SortOrderDesc SortOrder = "DESC"
-)
-
-var AllSortOrder = []SortOrder{
-	SortOrderAsc,
-	SortOrderDesc,
-}
-
-func (e SortOrder) IsValid() bool {
-	switch e {
-	case SortOrderAsc, SortOrderDesc:
-		return true
-	}
-	return false
-}
-
-func (e SortOrder) String() string {
-	return string(e)
-}
-
-func (e *SortOrder) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = SortOrder(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid SortOrder", str)
-	}
-	return nil
-}
-
-func (e SortOrder) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *SortOrder) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e SortOrder) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
+type User struct {
+	ID        string `json:"id"`
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	CreatedAt string `json:"createdAt"`
+	UpdatedAt string `json:"updatedAt"`
 }
