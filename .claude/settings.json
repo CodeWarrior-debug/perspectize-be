@@ -55,7 +55,8 @@
       "Bash(touch:*)",
       "Bash(kill:*)",
       "Bash(pkill:*)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "WebFetch"
     ]
   },
   "enabledPlugins": {
