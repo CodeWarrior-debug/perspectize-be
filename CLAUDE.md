@@ -18,7 +18,7 @@ Monorepo with two stacks:
 
 ```bash
 # Pull requests
-gh pr create --title "Title" --body "Description"
+gh pr create --title "Title" --body "..."  # Use PR template (see below)
 gh pr list
 gh pr view 123
 gh pr merge 123
@@ -27,13 +27,32 @@ gh pr merge 123
 gh api repos/CodeWarrior-debug/perspectize-be/pulls/123 -X PATCH -f body="New description"
 
 # Issues (use API — gh issue view fails with Projects Classic deprecation)
-gh issue create --title "Title" --body "Description"
+gh issue create --title "Title" --body "..."  # Use issue templates (see below)
 gh issue list
 gh api repos/CodeWarrior-debug/perspectize-be/issues/123 --jq '.title, .html_url'
 
 # API access
 gh api repos/CodeWarrior-debug/perspectize-be/pulls/123/comments
 ```
+
+### GitHub Templates
+
+**Always use the repository templates** in `.github/` when creating PRs and issues.
+
+**Pull Requests** — follow `.github/pull_request_template.md`:
+```
+## Summary        — 1-3 bullet points
+## Problem        — What problem, link to issue (Closes #XX)
+## Solution       — How it solves it
+## Technical Changes — Key changes made
+## Testing        — Checklist: unit tests, manual, GraphQL playground
+## Checklist      — Conventions, tests, docs, breaking changes
+## Related Issues — Closes #XX, Fixes #XX
+```
+
+**Issues** — use the matching template from `.github/ISSUE_TEMPLATE/`:
+- **Feature request** (`feature_request.md`): Summary, Problem Statement, Proposed Solution, Alternatives, Acceptance Criteria
+- **Bug report** (`bug_report.md`): Description, Steps to Reproduce, Expected/Actual Behavior, Environment, Logs
 
 GitHub Projects v2: See [docs/GITHUB_PROJECTS.md](docs/GITHUB_PROJECTS.md).
 

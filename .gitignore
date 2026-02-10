@@ -38,3 +38,6 @@ $RECYCLE.BIN/
 
 # Debug
 *.stackdump
+
+# Coverage
+coverage/
