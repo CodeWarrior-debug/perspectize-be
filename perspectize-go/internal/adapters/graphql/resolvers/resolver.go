@@ -1,7 +1,7 @@
 package resolvers
 
 import (
-	"github.com/yourorg/perspectize-go/internal/core/services"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/services"
 )
 
 // This file will not be regenerated automatically.

@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/yourorg/perspectize-go/internal/core/domain"
-	"github.com/yourorg/perspectize-go/internal/core/ports/repositories"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/ports/repositories"
 )
 
 // UserService implements business logic for user operations
@@ -102,4 +102,13 @@ func (s *UserService) GetByUsername(ctx context.Context, username string) (*doma
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 	return user, nil
+}
+
+// ListAll retrieves all users
+func (s *UserService) ListAll(ctx context.Context) ([]*domain.User, error) {
+	users, err := s.repo.ListAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list users: %w", err)
+	}
+	return users, nil
 }

@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/yourorg/perspectize-go/internal/core/domain"
-	"github.com/yourorg/perspectize-go/internal/core/services"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/services"
 )
 
 // mockPerspectiveRepository implements repositories.PerspectiveRepository for testing
@@ -87,6 +87,10 @@ func (m *mockUserRepoForPerspective) GetByUsername(ctx context.Context, username
 
 func (m *mockUserRepoForPerspective) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	return nil, domain.ErrNotFound
+}
+
+func (m *mockUserRepoForPerspective) ListAll(ctx context.Context) ([]*domain.User, error) {
+	return []*domain.User{}, nil
 }
 
 // --- Create Tests ---

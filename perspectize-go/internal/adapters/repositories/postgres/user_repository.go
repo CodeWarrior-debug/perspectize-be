@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/yourorg/perspectize-go/internal/core/domain"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
 )
 
 // UserRepository implements the UserRepository interface using PostgreSQL
@@ -92,6 +92,25 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*domain.
 	}
 
 	return userRowToDomain(&row), nil
+}
+
+// ListAll retrieves all users ordered by username
+func (r *UserRepository) ListAll(ctx context.Context) ([]*domain.User, error) {
+	query := `SELECT id, username, email, created_at, updated_at FROM users ORDER BY username ASC`
+
+	var rows []userRow
+	err := r.db.SelectContext(ctx, &rows, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list users: %w", err)
+	}
+
+	// Return empty slice (not nil) if no users found
+	users := make([]*domain.User, 0, len(rows))
+	for i := range rows {
+		users = append(users, userRowToDomain(&rows[i]))
+	}
+
+	return users, nil
 }
 
 // userRowToDomain converts a database row to a domain User

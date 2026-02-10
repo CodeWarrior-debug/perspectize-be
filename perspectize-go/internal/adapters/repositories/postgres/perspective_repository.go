@@ -7,11 +7,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	"github.com/yourorg/perspectize-go/internal/core/domain"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
 )
 
 // JSONBArray is a custom type for PostgreSQL jsonb[] columns.
@@ -420,9 +421,11 @@ func perspectiveRowToDomain(row *perspectiveRow) *domain.Perspective {
 		p.CategorizedRatings = make([]domain.CategorizedRating, 0, len(row.CategorizedRatings))
 		for _, jsonStr := range row.CategorizedRatings {
 			var cr domain.CategorizedRating
-			if err := json.Unmarshal([]byte(jsonStr), &cr); err == nil {
-				p.CategorizedRatings = append(p.CategorizedRatings, cr)
+			if err := json.Unmarshal([]byte(jsonStr), &cr); err != nil {
+				slog.Warn("failed to parse categorized rating JSON", "error", err)
+				continue
 			}
+			p.CategorizedRatings = append(p.CategorizedRatings, cr)
 		}
 	}
 

@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 
-	"github.com/yourorg/perspectize-go/internal/core/domain"
-	"github.com/yourorg/perspectize-go/internal/core/ports/services"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/ports/services"
 )
 
 // Client implements the YouTubeClient interface for YouTube Data API v3
@@ -89,7 +90,8 @@ func (c *Client) GetVideoMetadata(ctx context.Context, videoID string) (*service
 
 	duration, err := ParseISO8601Duration(item.ContentDetails.Duration)
 	if err != nil {
-		duration = 0 // Default to 0 if parsing fails
+		slog.Warn("failed to parse duration", "duration", item.ContentDetails.Duration, "videoID", videoID, "error", err)
+		duration = 0
 	}
 
 	return &services.VideoMetadata{

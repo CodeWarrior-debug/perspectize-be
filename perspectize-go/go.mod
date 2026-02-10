@@ -1,4 +1,4 @@
-module github.com/yourorg/perspectize-go
+module github.com/CodeWarrior-debug/perspectize-be/perspectize-go
 
 go 1.25.0
 

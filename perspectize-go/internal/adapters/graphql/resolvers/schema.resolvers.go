@@ -9,13 +9,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strconv"
 
-	"github.com/yourorg/perspectize-go/internal/adapters/graphql/generated"
-	"github.com/yourorg/perspectize-go/internal/adapters/graphql/model"
-	"github.com/yourorg/perspectize-go/internal/adapters/youtube"
-	"github.com/yourorg/perspectize-go/internal/core/domain"
-	"github.com/yourorg/perspectize-go/internal/core/services"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/graphql/generated"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/graphql/model"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/youtube"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/services"
 )
 
 // CreateContentFromYouTube is the resolver for the createContentFromYouTube field.
@@ -28,7 +29,8 @@ func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input m
 		if errors.Is(err, domain.ErrInvalidURL) {
 			return nil, fmt.Errorf("invalid YouTube URL")
 		}
-		return nil, fmt.Errorf("failed to create content: %w", err)
+		slog.Error("creating content failed", "error", err)
+		return nil, fmt.Errorf("failed to create content")
 	}
 
 	return domainToModel(content), nil
@@ -44,7 +46,8 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return nil, fmt.Errorf("invalid input: %w", err)
 		}
-		return nil, fmt.Errorf("failed to create user: %w", err)
+		slog.Error("creating user failed", "error", err)
+		return nil, fmt.Errorf("failed to create user")
 	}
 
 	return userDomainToModel(user), nil
@@ -96,7 +99,8 @@ func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.Cr
 		if errors.Is(err, domain.ErrNotFound) {
 			return nil, fmt.Errorf("user not found: %w", err)
 		}
-		return nil, fmt.Errorf("failed to create perspective: %w", err)
+		slog.Error("creating perspective failed", "error", err)
+		return nil, fmt.Errorf("failed to create perspective")
 	}
 
 	return perspectiveDomainToModel(perspective), nil
@@ -149,7 +153,8 @@ func (r *mutationResolver) UpdatePerspective(ctx context.Context, input model.Up
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return nil, fmt.Errorf("invalid input: %w", err)
 		}
-		return nil, fmt.Errorf("failed to update perspective: %w", err)
+		slog.Error("updating perspective failed", "error", err)
+		return nil, fmt.Errorf("failed to update perspective")
 	}
 
 	return perspectiveDomainToModel(perspective), nil
@@ -170,7 +175,8 @@ func (r *mutationResolver) DeletePerspective(ctx context.Context, id string) (bo
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return false, fmt.Errorf("invalid perspective ID")
 		}
-		return false, fmt.Errorf("failed to delete perspective: %w", err)
+		slog.Error("deleting perspective failed", "error", err)
+		return false, fmt.Errorf("failed to delete perspective")
 	}
 
 	return true, nil
@@ -191,7 +197,8 @@ func (r *queryResolver) ContentByID(ctx context.Context, id string) (*model.Cont
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return nil, fmt.Errorf("invalid content ID: %s", id)
 		}
-		return nil, fmt.Errorf("failed to get content: %w", err)
+		slog.Error("getting content failed", "id", id, "error", err)
+		return nil, fmt.Errorf("failed to get content")
 	}
 
 	return domainToModel(content), nil
@@ -238,7 +245,8 @@ func (r *queryResolver) Content(ctx context.Context, first *int, after *string, 
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return nil, fmt.Errorf("invalid pagination parameters: %w", err)
 		}
-		return nil, fmt.Errorf("failed to list content: %w", err)
+		slog.Error("listing content failed", "error", err)
+		return nil, fmt.Errorf("failed to list content")
 	}
 
 	// Map domain result to GraphQL model
@@ -276,7 +284,8 @@ func (r *queryResolver) UserByID(ctx context.Context, id string) (*model.User, e
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return nil, fmt.Errorf("invalid user ID: %s", id)
 		}
-		return nil, fmt.Errorf("failed to get user: %w", err)
+		slog.Error("getting user failed", "id", id, "error", err)
+		return nil, fmt.Errorf("failed to get user")
 	}
 
 	return userDomainToModel(user), nil
@@ -292,10 +301,28 @@ func (r *queryResolver) UserByUsername(ctx context.Context, username string) (*m
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return nil, fmt.Errorf("invalid username")
 		}
-		return nil, fmt.Errorf("failed to get user: %w", err)
+		slog.Error("getting user by username failed", "username", username, "error", err)
+		return nil, fmt.Errorf("failed to get user")
 	}
 
 	return userDomainToModel(user), nil
+}
+
+// Users is the resolver for the users field.
+func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
+	users, err := r.UserService.ListAll(ctx)
+	if err != nil {
+		slog.Error("listing users failed", "error", err)
+		return nil, fmt.Errorf("failed to list users")
+	}
+
+	// Convert domain users to GraphQL model users
+	modelUsers := make([]*model.User, len(users))
+	for i, user := range users {
+		modelUsers[i] = userDomainToModel(user)
+	}
+
+	return modelUsers, nil
 }
 
 // PerspectiveByID is the resolver for the perspectiveByID field.
@@ -313,7 +340,8 @@ func (r *queryResolver) PerspectiveByID(ctx context.Context, id string) (*model.
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return nil, fmt.Errorf("invalid perspective ID: %s", id)
 		}
-		return nil, fmt.Errorf("failed to get perspective: %w", err)
+		slog.Error("getting perspective failed", "id", id, "error", err)
+		return nil, fmt.Errorf("failed to get perspective")
 	}
 
 	return perspectiveDomainToModel(perspective), nil
@@ -364,7 +392,8 @@ func (r *queryResolver) Perspectives(ctx context.Context, first *int, after *str
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return nil, fmt.Errorf("invalid pagination parameters: %w", err)
 		}
-		return nil, fmt.Errorf("failed to list perspectives: %w", err)
+		slog.Error("listing perspectives failed", "error", err)
+		return nil, fmt.Errorf("failed to list perspectives")
 	}
 
 	// Map domain result to GraphQL model

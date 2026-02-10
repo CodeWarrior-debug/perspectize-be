@@ -13,11 +13,11 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/graphql/model"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
+	graphql1 "github.com/CodeWarrior-debug/perspectize-be/perspectize-go/pkg/graphql"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
-	"github.com/yourorg/perspectize-go/internal/adapters/graphql/model"
-	"github.com/yourorg/perspectize-go/internal/core/domain"
-	graphql1 "github.com/yourorg/perspectize-go/pkg/graphql"
 )
 
 // region    ************************** generated!.gotpl **************************
@@ -125,6 +125,7 @@ type ComplexityRoot struct {
 		Perspectives    func(childComplexity int, first *int, after *string, last *int, before *string, sortBy *domain.PerspectiveSortBy, sortOrder *domain.SortOrder, includeTotalCount *bool, filter *model.PerspectiveFilter) int
 		UserByID        func(childComplexity int, id string) int
 		UserByUsername  func(childComplexity int, username string) int
+		Users           func(childComplexity int) int
 	}
 
 	User struct {
@@ -148,6 +149,7 @@ type QueryResolver interface {
 	Content(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *domain.ContentSortBy, sortOrder *domain.SortOrder, includeTotalCount *bool, filter *model.ContentFilter) (*model.PaginatedContent, error)
 	UserByID(ctx context.Context, id string) (*model.User, error)
 	UserByUsername(ctx context.Context, username string) (*model.User, error)
+	Users(ctx context.Context) ([]*model.User, error)
 	PerspectiveByID(ctx context.Context, id string) (*model.Perspective, error)
 	Perspectives(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *domain.PerspectiveSortBy, sortOrder *domain.SortOrder, includeTotalCount *bool, filter *model.PerspectiveFilter) (*model.PaginatedPerspectives, error)
 }
@@ -563,6 +565,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.UserByUsername(childComplexity, args["username"].(string)), true
+	case "Query.users":
+		if e.complexity.Query.Users == nil {
+			break
+		}
+
+		return e.complexity.Query.Users(childComplexity), true
 
 	case "User.createdAt":
 		if e.complexity.User.CreatedAt == nil {
@@ -913,6 +921,7 @@ type Query {
   # User queries
   userByID(id: ID!): User
   userByUsername(username: String!): User
+  users: [User!]!
 
   # Perspective queries
   perspectiveByID(id: ID!): Perspective
@@ -938,7 +947,7 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Mutation_createContentFromYouTube_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateContentFromYouTubeInput2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateContentFromYouTubeInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateContentFromYouTubeInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateContentFromYouTubeInput)
 	if err != nil {
 		return nil, err
 	}
@@ -949,7 +958,7 @@ func (ec *executionContext) field_Mutation_createContentFromYouTube_args(ctx con
 func (ec *executionContext) field_Mutation_createPerspective_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreatePerspectiveInput2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreatePerspectiveInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreatePerspectiveInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreatePerspectiveInput)
 	if err != nil {
 		return nil, err
 	}
@@ -960,7 +969,7 @@ func (ec *executionContext) field_Mutation_createPerspective_args(ctx context.Co
 func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateUserInput2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateUserInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateUserInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateUserInput)
 	if err != nil {
 		return nil, err
 	}
@@ -982,7 +991,7 @@ func (ec *executionContext) field_Mutation_deletePerspective_args(ctx context.Co
 func (ec *executionContext) field_Mutation_updatePerspective_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdatePerspectiveInput2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUpdatePerspectiveInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdatePerspectiveInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUpdatePerspectiveInput)
 	if err != nil {
 		return nil, err
 	}
@@ -1035,12 +1044,12 @@ func (ec *executionContext) field_Query_content_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOContentSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentSortBy)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOContentSortBy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentSortBy)
 	if err != nil {
 		return nil, err
 	}
 	args["sortBy"] = arg4
-	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐSortOrder)
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐSortOrder)
 	if err != nil {
 		return nil, err
 	}
@@ -1050,7 +1059,7 @@ func (ec *executionContext) field_Query_content_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["includeTotalCount"] = arg6
-	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOContentFilter2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentFilter)
+	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOContentFilter2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -1092,12 +1101,12 @@ func (ec *executionContext) field_Query_perspectives_args(ctx context.Context, r
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOPerspectiveSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPerspectiveSortBy)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOPerspectiveSortBy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPerspectiveSortBy)
 	if err != nil {
 		return nil, err
 	}
 	args["sortBy"] = arg4
-	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐSortOrder)
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐSortOrder)
 	if err != nil {
 		return nil, err
 	}
@@ -1107,7 +1116,7 @@ func (ec *executionContext) field_Query_perspectives_args(ctx context.Context, r
 		return nil, err
 	}
 	args["includeTotalCount"] = arg6
-	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOPerspectiveFilter2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveFilter)
+	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOPerspectiveFilter2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -1606,7 +1615,7 @@ func (ec *executionContext) _Mutation_createContentFromYouTube(ctx context.Conte
 			return ec.resolvers.Mutation().CreateContentFromYouTube(ctx, fc.Args["input"].(model.CreateContentFromYouTubeInput))
 		},
 		nil,
-		ec.marshalNContent2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent,
+		ec.marshalNContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent,
 		true,
 		true,
 	)
@@ -1673,7 +1682,7 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 			return ec.resolvers.Mutation().CreateUser(ctx, fc.Args["input"].(model.CreateUserInput))
 		},
 		nil,
-		ec.marshalNUser2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
+		ec.marshalNUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
 		true,
 		true,
 	)
@@ -1726,7 +1735,7 @@ func (ec *executionContext) _Mutation_createPerspective(ctx context.Context, fie
 			return ec.resolvers.Mutation().CreatePerspective(ctx, fc.Args["input"].(model.CreatePerspectiveInput))
 		},
 		nil,
-		ec.marshalNPerspective2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective,
+		ec.marshalNPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective,
 		true,
 		true,
 	)
@@ -1809,7 +1818,7 @@ func (ec *executionContext) _Mutation_updatePerspective(ctx context.Context, fie
 			return ec.resolvers.Mutation().UpdatePerspective(ctx, fc.Args["input"].(model.UpdatePerspectiveInput))
 		},
 		nil,
-		ec.marshalNPerspective2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective,
+		ec.marshalNPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective,
 		true,
 		true,
 	)
@@ -2048,7 +2057,7 @@ func (ec *executionContext) _PaginatedContent_items(ctx context.Context, field g
 			return obj.Items, nil
 		},
 		nil,
-		ec.marshalNContent2ᚕᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentᚄ,
+		ec.marshalNContent2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentᚄ,
 		true,
 		true,
 	)
@@ -2103,7 +2112,7 @@ func (ec *executionContext) _PaginatedContent_pageInfo(ctx context.Context, fiel
 			return obj.PageInfo, nil
 		},
 		nil,
-		ec.marshalNPageInfo2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPageInfo,
+		ec.marshalNPageInfo2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPageInfo,
 		true,
 		true,
 	)
@@ -2171,7 +2180,7 @@ func (ec *executionContext) _PaginatedPerspectives_items(ctx context.Context, fi
 			return obj.Items, nil
 		},
 		nil,
-		ec.marshalNPerspective2ᚕᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveᚄ,
+		ec.marshalNPerspective2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveᚄ,
 		true,
 		true,
 	)
@@ -2242,7 +2251,7 @@ func (ec *executionContext) _PaginatedPerspectives_pageInfo(ctx context.Context,
 			return obj.PageInfo, nil
 		},
 		nil,
-		ec.marshalNPageInfo2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPageInfo,
+		ec.marshalNPageInfo2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPageInfo,
 		true,
 		true,
 	)
@@ -2397,7 +2406,7 @@ func (ec *executionContext) _Perspective_user(ctx context.Context, field graphql
 			return obj.User, nil
 		},
 		nil,
-		ec.marshalOUser2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
+		ec.marshalOUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
 		true,
 		false,
 	)
@@ -2467,7 +2476,7 @@ func (ec *executionContext) _Perspective_content(ctx context.Context, field grap
 			return obj.Content, nil
 		},
 		nil,
-		ec.marshalOContent2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent,
+		ec.marshalOContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent,
 		true,
 		false,
 	)
@@ -2667,7 +2676,7 @@ func (ec *executionContext) _Perspective_privacy(ctx context.Context, field grap
 			return obj.Privacy, nil
 		},
 		nil,
-		ec.marshalNPrivacy2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy,
+		ec.marshalNPrivacy2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy,
 		true,
 		true,
 	)
@@ -2754,7 +2763,7 @@ func (ec *executionContext) _Perspective_reviewStatus(ctx context.Context, field
 			return obj.ReviewStatus, nil
 		},
 		nil,
-		ec.marshalOReviewStatus2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐReviewStatus,
+		ec.marshalOReviewStatus2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐReviewStatus,
 		true,
 		false,
 	)
@@ -2841,7 +2850,7 @@ func (ec *executionContext) _Perspective_categorizedRatings(ctx context.Context,
 			return obj.CategorizedRatings, nil
 		},
 		nil,
-		ec.marshalOCategorizedRating2ᚕᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingᚄ,
+		ec.marshalOCategorizedRating2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingᚄ,
 		true,
 		false,
 	)
@@ -2935,7 +2944,7 @@ func (ec *executionContext) _Query_contentByID(ctx context.Context, field graphq
 			return ec.resolvers.Query().ContentByID(ctx, fc.Args["id"].(string))
 		},
 		nil,
-		ec.marshalOContent2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent,
+		ec.marshalOContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent,
 		true,
 		false,
 	)
@@ -3002,7 +3011,7 @@ func (ec *executionContext) _Query_content(ctx context.Context, field graphql.Co
 			return ec.resolvers.Query().Content(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["sortBy"].(*domain.ContentSortBy), fc.Args["sortOrder"].(*domain.SortOrder), fc.Args["includeTotalCount"].(*bool), fc.Args["filter"].(*model.ContentFilter))
 		},
 		nil,
-		ec.marshalNPaginatedContent2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedContent,
+		ec.marshalNPaginatedContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedContent,
 		true,
 		true,
 	)
@@ -3051,7 +3060,7 @@ func (ec *executionContext) _Query_userByID(ctx context.Context, field graphql.C
 			return ec.resolvers.Query().UserByID(ctx, fc.Args["id"].(string))
 		},
 		nil,
-		ec.marshalOUser2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
+		ec.marshalOUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
 		true,
 		false,
 	)
@@ -3104,7 +3113,7 @@ func (ec *executionContext) _Query_userByUsername(ctx context.Context, field gra
 			return ec.resolvers.Query().UserByUsername(ctx, fc.Args["username"].(string))
 		},
 		nil,
-		ec.marshalOUser2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
+		ec.marshalOUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
 		true,
 		false,
 	)
@@ -3146,6 +3155,47 @@ func (ec *executionContext) fieldContext_Query_userByUsername(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_users,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Query().Users(ctx)
+		},
+		nil,
+		ec.marshalNUser2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUserᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_users(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_User_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_User_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_perspectiveByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3157,7 +3207,7 @@ func (ec *executionContext) _Query_perspectiveByID(ctx context.Context, field gr
 			return ec.resolvers.Query().PerspectiveByID(ctx, fc.Args["id"].(string))
 		},
 		nil,
-		ec.marshalOPerspective2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective,
+		ec.marshalOPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective,
 		true,
 		false,
 	)
@@ -3240,7 +3290,7 @@ func (ec *executionContext) _Query_perspectives(ctx context.Context, field graph
 			return ec.resolvers.Query().Perspectives(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["sortBy"].(*domain.PerspectiveSortBy), fc.Args["sortOrder"].(*domain.SortOrder), fc.Args["includeTotalCount"].(*bool), fc.Args["filter"].(*model.PerspectiveFilter))
 		},
 		nil,
-		ec.marshalNPaginatedPerspectives2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedPerspectives,
+		ec.marshalNPaginatedPerspectives2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedPerspectives,
 		true,
 		true,
 	)
@@ -5027,7 +5077,7 @@ func (ec *executionContext) unmarshalInputContentFilter(ctx context.Context, obj
 		switch k {
 		case "contentType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contentType"))
-			data, err := ec.unmarshalOContentType2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentType(ctx, v)
+			data, err := ec.unmarshalOContentType2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5151,7 +5201,7 @@ func (ec *executionContext) unmarshalInputCreatePerspectiveInput(ctx context.Con
 			it.Like = data
 		case "privacy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("privacy"))
-			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx, v)
+			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5186,7 +5236,7 @@ func (ec *executionContext) unmarshalInputCreatePerspectiveInput(ctx context.Con
 			it.Labels = data
 		case "categorizedRatings":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("categorizedRatings"))
-			data, err := ec.unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInputᚄ(ctx, v)
+			data, err := ec.unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5261,7 +5311,7 @@ func (ec *executionContext) unmarshalInputPerspectiveFilter(ctx context.Context,
 			it.ContentID = data
 		case "privacy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("privacy"))
-			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx, v)
+			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5344,7 +5394,7 @@ func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Con
 			it.Like = data
 		case "privacy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("privacy"))
-			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx, v)
+			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5365,7 +5415,7 @@ func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Con
 			it.Category = data
 		case "reviewStatus":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reviewStatus"))
-			data, err := ec.unmarshalOReviewStatus2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐReviewStatus(ctx, v)
+			data, err := ec.unmarshalOReviewStatus2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐReviewStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5386,7 +5436,7 @@ func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Con
 			it.Labels = data
 		case "categorizedRatings":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("categorizedRatings"))
-			data, err := ec.unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInputᚄ(ctx, v)
+			data, err := ec.unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5929,6 +5979,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "users":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_users(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "perspectiveByID":
 			field := field
 
@@ -6411,7 +6483,7 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNCategorizedRating2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRating(ctx context.Context, sel ast.SelectionSet, v *model.CategorizedRating) graphql.Marshaler {
+func (ec *executionContext) marshalNCategorizedRating2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRating(ctx context.Context, sel ast.SelectionSet, v *model.CategorizedRating) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -6421,16 +6493,16 @@ func (ec *executionContext) marshalNCategorizedRating2ᚖgithubᚗcomᚋyourorg�
 	return ec._CategorizedRating(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCategorizedRatingInput2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInput(ctx context.Context, v any) (*model.CategorizedRatingInput, error) {
+func (ec *executionContext) unmarshalNCategorizedRatingInput2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInput(ctx context.Context, v any) (*model.CategorizedRatingInput, error) {
 	res, err := ec.unmarshalInputCategorizedRatingInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNContent2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx context.Context, sel ast.SelectionSet, v model.Content) graphql.Marshaler {
+func (ec *executionContext) marshalNContent2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx context.Context, sel ast.SelectionSet, v model.Content) graphql.Marshaler {
 	return ec._Content(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNContent2ᚕᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Content) graphql.Marshaler {
+func (ec *executionContext) marshalNContent2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Content) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6454,7 +6526,7 @@ func (ec *executionContext) marshalNContent2ᚕᚖgithubᚗcomᚋyourorgᚋpersp
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNContent2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx, sel, v[i])
+			ret[i] = ec.marshalNContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6474,7 +6546,7 @@ func (ec *executionContext) marshalNContent2ᚕᚖgithubᚗcomᚋyourorgᚋpersp
 	return ret
 }
 
-func (ec *executionContext) marshalNContent2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx context.Context, sel ast.SelectionSet, v *model.Content) graphql.Marshaler {
+func (ec *executionContext) marshalNContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx context.Context, sel ast.SelectionSet, v *model.Content) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -6484,17 +6556,17 @@ func (ec *executionContext) marshalNContent2ᚖgithubᚗcomᚋyourorgᚋperspect
 	return ec._Content(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCreateContentFromYouTubeInput2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateContentFromYouTubeInput(ctx context.Context, v any) (model.CreateContentFromYouTubeInput, error) {
+func (ec *executionContext) unmarshalNCreateContentFromYouTubeInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateContentFromYouTubeInput(ctx context.Context, v any) (model.CreateContentFromYouTubeInput, error) {
 	res, err := ec.unmarshalInputCreateContentFromYouTubeInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreatePerspectiveInput2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreatePerspectiveInput(ctx context.Context, v any) (model.CreatePerspectiveInput, error) {
+func (ec *executionContext) unmarshalNCreatePerspectiveInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreatePerspectiveInput(ctx context.Context, v any) (model.CreatePerspectiveInput, error) {
 	res, err := ec.unmarshalInputCreatePerspectiveInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateUserInput(ctx context.Context, v any) (model.CreateUserInput, error) {
+func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateUserInput(ctx context.Context, v any) (model.CreateUserInput, error) {
 	res, err := ec.unmarshalInputCreateUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -6547,7 +6619,7 @@ func (ec *executionContext) marshalNIntID2int(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
+func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -6557,11 +6629,11 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋyourorgᚋperspec
 	return ec._PageInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPaginatedContent2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedContent(ctx context.Context, sel ast.SelectionSet, v model.PaginatedContent) graphql.Marshaler {
+func (ec *executionContext) marshalNPaginatedContent2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedContent(ctx context.Context, sel ast.SelectionSet, v model.PaginatedContent) graphql.Marshaler {
 	return ec._PaginatedContent(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPaginatedContent2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedContent(ctx context.Context, sel ast.SelectionSet, v *model.PaginatedContent) graphql.Marshaler {
+func (ec *executionContext) marshalNPaginatedContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedContent(ctx context.Context, sel ast.SelectionSet, v *model.PaginatedContent) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -6571,11 +6643,11 @@ func (ec *executionContext) marshalNPaginatedContent2ᚖgithubᚗcomᚋyourorg�
 	return ec._PaginatedContent(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPaginatedPerspectives2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedPerspectives(ctx context.Context, sel ast.SelectionSet, v model.PaginatedPerspectives) graphql.Marshaler {
+func (ec *executionContext) marshalNPaginatedPerspectives2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedPerspectives(ctx context.Context, sel ast.SelectionSet, v model.PaginatedPerspectives) graphql.Marshaler {
 	return ec._PaginatedPerspectives(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPaginatedPerspectives2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedPerspectives(ctx context.Context, sel ast.SelectionSet, v *model.PaginatedPerspectives) graphql.Marshaler {
+func (ec *executionContext) marshalNPaginatedPerspectives2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedPerspectives(ctx context.Context, sel ast.SelectionSet, v *model.PaginatedPerspectives) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -6585,11 +6657,11 @@ func (ec *executionContext) marshalNPaginatedPerspectives2ᚖgithubᚗcomᚋyour
 	return ec._PaginatedPerspectives(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPerspective2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx context.Context, sel ast.SelectionSet, v model.Perspective) graphql.Marshaler {
+func (ec *executionContext) marshalNPerspective2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx context.Context, sel ast.SelectionSet, v model.Perspective) graphql.Marshaler {
 	return ec._Perspective(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPerspective2ᚕᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Perspective) graphql.Marshaler {
+func (ec *executionContext) marshalNPerspective2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Perspective) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6613,7 +6685,7 @@ func (ec *executionContext) marshalNPerspective2ᚕᚖgithubᚗcomᚋyourorgᚋp
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPerspective2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx, sel, v[i])
+			ret[i] = ec.marshalNPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6633,7 +6705,7 @@ func (ec *executionContext) marshalNPerspective2ᚕᚖgithubᚗcomᚋyourorgᚋp
 	return ret
 }
 
-func (ec *executionContext) marshalNPerspective2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx context.Context, sel ast.SelectionSet, v *model.Perspective) graphql.Marshaler {
+func (ec *executionContext) marshalNPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx context.Context, sel ast.SelectionSet, v *model.Perspective) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -6643,13 +6715,13 @@ func (ec *executionContext) marshalNPerspective2ᚖgithubᚗcomᚋyourorgᚋpers
 	return ec._Perspective(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPrivacy2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, v any) (domain.Privacy, error) {
+func (ec *executionContext) unmarshalNPrivacy2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, v any) (domain.Privacy, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := domain.Privacy(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPrivacy2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, sel ast.SelectionSet, v domain.Privacy) graphql.Marshaler {
+func (ec *executionContext) marshalNPrivacy2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, sel ast.SelectionSet, v domain.Privacy) graphql.Marshaler {
 	_ = sel
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -6676,16 +6748,60 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNUpdatePerspectiveInput2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUpdatePerspectiveInput(ctx context.Context, v any) (model.UpdatePerspectiveInput, error) {
+func (ec *executionContext) unmarshalNUpdatePerspectiveInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUpdatePerspectiveInput(ctx context.Context, v any) (model.UpdatePerspectiveInput, error) {
 	res, err := ec.unmarshalInputUpdatePerspectiveInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUser2githubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -6978,7 +7094,7 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOCategorizedRating2ᚕᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CategorizedRating) graphql.Marshaler {
+func (ec *executionContext) marshalOCategorizedRating2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CategorizedRating) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7005,7 +7121,7 @@ func (ec *executionContext) marshalOCategorizedRating2ᚕᚖgithubᚗcomᚋyouro
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCategorizedRating2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRating(ctx, sel, v[i])
+			ret[i] = ec.marshalNCategorizedRating2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRating(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7025,7 +7141,7 @@ func (ec *executionContext) marshalOCategorizedRating2ᚕᚖgithubᚗcomᚋyouro
 	return ret
 }
 
-func (ec *executionContext) unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInputᚄ(ctx context.Context, v any) ([]*model.CategorizedRatingInput, error) {
+func (ec *executionContext) unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInputᚄ(ctx context.Context, v any) ([]*model.CategorizedRatingInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7035,7 +7151,7 @@ func (ec *executionContext) unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcom�
 	res := make([]*model.CategorizedRatingInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNCategorizedRatingInput2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNCategorizedRatingInput2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -7043,14 +7159,14 @@ func (ec *executionContext) unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcom�
 	return res, nil
 }
 
-func (ec *executionContext) marshalOContent2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx context.Context, sel ast.SelectionSet, v *model.Content) graphql.Marshaler {
+func (ec *executionContext) marshalOContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx context.Context, sel ast.SelectionSet, v *model.Content) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Content(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOContentFilter2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentFilter(ctx context.Context, v any) (*model.ContentFilter, error) {
+func (ec *executionContext) unmarshalOContentFilter2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentFilter(ctx context.Context, v any) (*model.ContentFilter, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7058,7 +7174,7 @@ func (ec *executionContext) unmarshalOContentFilter2ᚖgithubᚗcomᚋyourorgᚋ
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOContentSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentSortBy(ctx context.Context, v any) (*domain.ContentSortBy, error) {
+func (ec *executionContext) unmarshalOContentSortBy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentSortBy(ctx context.Context, v any) (*domain.ContentSortBy, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7067,7 +7183,7 @@ func (ec *executionContext) unmarshalOContentSortBy2ᚖgithubᚗcomᚋyourorgᚋ
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOContentSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentSortBy(ctx context.Context, sel ast.SelectionSet, v *domain.ContentSortBy) graphql.Marshaler {
+func (ec *executionContext) marshalOContentSortBy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentSortBy(ctx context.Context, sel ast.SelectionSet, v *domain.ContentSortBy) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7077,7 +7193,7 @@ func (ec *executionContext) marshalOContentSortBy2ᚖgithubᚗcomᚋyourorgᚋpe
 	return res
 }
 
-func (ec *executionContext) unmarshalOContentType2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentType(ctx context.Context, v any) (*domain.ContentType, error) {
+func (ec *executionContext) unmarshalOContentType2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentType(ctx context.Context, v any) (*domain.ContentType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7086,7 +7202,7 @@ func (ec *executionContext) unmarshalOContentType2ᚖgithubᚗcomᚋyourorgᚋpe
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOContentType2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentType(ctx context.Context, sel ast.SelectionSet, v *domain.ContentType) graphql.Marshaler {
+func (ec *executionContext) marshalOContentType2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentType(ctx context.Context, sel ast.SelectionSet, v *domain.ContentType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7204,14 +7320,14 @@ func (ec *executionContext) marshalOJSON2map(ctx context.Context, sel ast.Select
 	return res
 }
 
-func (ec *executionContext) marshalOPerspective2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx context.Context, sel ast.SelectionSet, v *model.Perspective) graphql.Marshaler {
+func (ec *executionContext) marshalOPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx context.Context, sel ast.SelectionSet, v *model.Perspective) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Perspective(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOPerspectiveFilter2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveFilter(ctx context.Context, v any) (*model.PerspectiveFilter, error) {
+func (ec *executionContext) unmarshalOPerspectiveFilter2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveFilter(ctx context.Context, v any) (*model.PerspectiveFilter, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7219,7 +7335,7 @@ func (ec *executionContext) unmarshalOPerspectiveFilter2ᚖgithubᚗcomᚋyouror
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOPerspectiveSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPerspectiveSortBy(ctx context.Context, v any) (*domain.PerspectiveSortBy, error) {
+func (ec *executionContext) unmarshalOPerspectiveSortBy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPerspectiveSortBy(ctx context.Context, v any) (*domain.PerspectiveSortBy, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7228,7 +7344,7 @@ func (ec *executionContext) unmarshalOPerspectiveSortBy2ᚖgithubᚗcomᚋyouror
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOPerspectiveSortBy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPerspectiveSortBy(ctx context.Context, sel ast.SelectionSet, v *domain.PerspectiveSortBy) graphql.Marshaler {
+func (ec *executionContext) marshalOPerspectiveSortBy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPerspectiveSortBy(ctx context.Context, sel ast.SelectionSet, v *domain.PerspectiveSortBy) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7238,7 +7354,7 @@ func (ec *executionContext) marshalOPerspectiveSortBy2ᚖgithubᚗcomᚋyourorg�
 	return res
 }
 
-func (ec *executionContext) unmarshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, v any) (*domain.Privacy, error) {
+func (ec *executionContext) unmarshalOPrivacy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, v any) (*domain.Privacy, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7247,7 +7363,7 @@ func (ec *executionContext) unmarshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspe
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, sel ast.SelectionSet, v *domain.Privacy) graphql.Marshaler {
+func (ec *executionContext) marshalOPrivacy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, sel ast.SelectionSet, v *domain.Privacy) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7257,7 +7373,7 @@ func (ec *executionContext) marshalOPrivacy2ᚖgithubᚗcomᚋyourorgᚋperspect
 	return res
 }
 
-func (ec *executionContext) unmarshalOReviewStatus2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐReviewStatus(ctx context.Context, v any) (*domain.ReviewStatus, error) {
+func (ec *executionContext) unmarshalOReviewStatus2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐReviewStatus(ctx context.Context, v any) (*domain.ReviewStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7266,7 +7382,7 @@ func (ec *executionContext) unmarshalOReviewStatus2ᚖgithubᚗcomᚋyourorgᚋp
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOReviewStatus2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐReviewStatus(ctx context.Context, sel ast.SelectionSet, v *domain.ReviewStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOReviewStatus2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐReviewStatus(ctx context.Context, sel ast.SelectionSet, v *domain.ReviewStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7276,7 +7392,7 @@ func (ec *executionContext) marshalOReviewStatus2ᚖgithubᚗcomᚋyourorgᚋper
 	return res
 }
 
-func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐSortOrder(ctx context.Context, v any) (*domain.SortOrder, error) {
+func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐSortOrder(ctx context.Context, v any) (*domain.SortOrder, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7285,7 +7401,7 @@ func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋpers
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOSortOrder2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v *domain.SortOrder) graphql.Marshaler {
+func (ec *executionContext) marshalOSortOrder2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v *domain.SortOrder) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7349,7 +7465,7 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋyourorgᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

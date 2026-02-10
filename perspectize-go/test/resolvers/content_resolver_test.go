@@ -12,11 +12,11 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/yourorg/perspectize-go/internal/adapters/graphql/generated"
-	"github.com/yourorg/perspectize-go/internal/adapters/graphql/resolvers"
-	"github.com/yourorg/perspectize-go/internal/core/domain"
-	portservices "github.com/yourorg/perspectize-go/internal/core/ports/services"
-	"github.com/yourorg/perspectize-go/internal/core/services"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/graphql/generated"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/graphql/resolvers"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
+	portservices "github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/ports/services"
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/services"
 )
 
 // mockContentRepository implements repositories.ContentRepository for testing
@@ -73,6 +73,7 @@ type mockUserRepository struct {
 	getByIDFn       func(ctx context.Context, id int) (*domain.User, error)
 	getByUsernameFn func(ctx context.Context, username string) (*domain.User, error)
 	getByEmailFn    func(ctx context.Context, email string) (*domain.User, error)
+	listAllFn       func(ctx context.Context) ([]*domain.User, error)
 }
 
 func (m *mockUserRepository) Create(ctx context.Context, user *domain.User) (*domain.User, error) {
@@ -102,6 +103,13 @@ func (m *mockUserRepository) GetByEmail(ctx context.Context, email string) (*dom
 		return m.getByEmailFn(ctx, email)
 	}
 	return nil, domain.ErrNotFound
+}
+
+func (m *mockUserRepository) ListAll(ctx context.Context) ([]*domain.User, error) {
+	if m.listAllFn != nil {
+		return m.listAllFn(ctx)
+	}
+	return []*domain.User{}, nil
 }
 
 // mockPerspectiveRepository implements repositories.PerspectiveRepository for testing
