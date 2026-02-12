@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
 	portservices "github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/ports/services"
 	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/services"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // mockContentRepository implements repositories.ContentRepository for testing
