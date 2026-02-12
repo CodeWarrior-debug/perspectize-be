@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/pkg/database"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConnect_ValidDSN(t *testing.T) {

@@ -114,8 +114,8 @@ CORS middleware is configured in `cmd/server/main.go` for local development. Cur
 // 1. Domain enums with UPPERCASE values
 type SortOrder string
 const (
-    SortOrderASC  SortOrder = "ASC"
-    SortOrderDESC SortOrder = "DESC"
+    SortOrderAsc  SortOrder = "ASC"
+    SortOrderDesc SortOrder = "DESC"
 )
 ```
 
@@ -128,7 +128,7 @@ models:
 ```
 
 3. DB-stored enums: add repository converters (lowercase ↔ UPPERCASE).
-4. Use `IntID` scalar (`pkg/graphql/intid.go`) instead of `ID` with `strconv.Atoi`.
+4. Use `IntID` scalar (`pkg/graphql/intid.go`) instead of `ID` with `strconv.Atoi` for filter/input fields. Top-level query/mutation ID params (e.g., `contentByID(id: ID!)`) still use `strconv.Atoi`.
 
 **New enum checklist:** UPPERCASE constants → bind in `gqlgen.yml` → DB converter if stored → `make graphql-gen`
 

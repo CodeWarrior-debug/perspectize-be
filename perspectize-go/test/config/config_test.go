@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/config"
+	"github.com/stretchr/testify/assert"
 )
 
 // clearConfigEnvVars ensures config-relevant env vars are empty so tests

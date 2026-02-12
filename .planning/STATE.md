@@ -80,6 +80,8 @@ Recent decisions affecting current work:
 - [03-02]: Error mapping via string matching (duplicate/already exists, invalid/not found, generic)
 - [03-02]: Dialog stays open on error, closes only on success
 - [03-02]: $effect for form reset when dialog opens (not on close)
+- [05-02]: Backend deployed on Sevalla (URL in SEVALLA_BACKEND_URL env var / .env files)
+- [05-02]: Frontend hosting target: Sevalla Static Sites (not DigitalOcean App Platform)
 - [Infra]: CLAUDE.md split into root + perspectize-go/CLAUDE.md + perspectize-fe/CLAUDE.md for package-level context loading
 - [Infra]: Go module renamed from `github.com/yourorg/perspectize-go` to `github.com/CodeWarrior-debug/perspectize-be/perspectize-go` (30 files, all 78 tests pass)
 - [Infra]: Docs delegated to docs/ directory: VERIFICATION.md, DOMAIN_GUIDE.md, GO_PATTERNS.md, GITHUB_PROJECTS.md, GSD_BRANCHING.md
@@ -91,6 +93,14 @@ Recent decisions affecting current work:
 
 - Phase 02.1 inserted after Phase 2: Mobile Responsive Fixes (URGENT) — P1 issues: header overflow/clipping at 375px, pagination bar broken, table left-shift overflow
 - Phase 03.1 inserted after Phase 3: Dialog UX Polish — Gray overlay too aggressive, modal translucent/hard to read, needs redesign with shadcn best practices
+
+### Project-Level Plan Requirements
+
+All plans that modify frontend or backend source code **must** pass test coverage as a completion gate:
+- **Frontend:** `cd perspectize-fe && pnpm run test:coverage` exits 0 (80% stmts/lines/functions, 75% branches)
+- **Backend:** `cd perspectize-go && make test` exits 0 (all tests pass)
+
+Plans that only modify infrastructure (CI/CD, config) must still verify they don't regress coverage.
 
 ### Pending Todos
 

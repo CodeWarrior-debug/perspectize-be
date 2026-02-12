@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
 	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/services"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // mockUserRepository implements repositories.UserRepository for testing
