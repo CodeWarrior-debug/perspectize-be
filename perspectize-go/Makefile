@@ -1,4 +1,4 @@
-.PHONY: build run dev test docker-up docker-down clean migrate-up migrate-up-n migrate-down migrate-down-n migrate-create graphql-gen fmt lint test-coverage
+.PHONY: build run dev test docker-up docker-down clean migrate-up migrate-up-n migrate-down migrate-down-n migrate-create graphql-gen fmt lint test-coverage install-hooks
 
 # Load .env file if it exists
 ifneq (,$(wildcard .env))
@@ -80,6 +80,11 @@ fmt:
 # Linting (requires golangci-lint)
 lint:
 	golangci-lint run ./...
+
+# Install git hooks
+install-hooks:
+	git config core.hooksPath .githooks
+	@echo "Git hooks installed (.githooks/pre-commit)"
 
 # Test with coverage report
 test-coverage:

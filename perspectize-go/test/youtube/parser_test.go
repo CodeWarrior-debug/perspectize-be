@@ -3,9 +3,9 @@ package youtube_test
 import (
 	"testing"
 
+	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/youtube"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/youtube"
 )
 
 // --- ExtractVideoID Tests ---
