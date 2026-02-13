@@ -20,6 +20,7 @@
       "Bash(rm -rf build:*)",
       "Bash(rm -rf dist:*)",
       "Bash(rm package-lock.json:*)",
+      "Bash(rm -rf /Users/jamesjordan/GitHub/perspectize-be/perspectize-fe/.cursor:*)",
       "Bash(curl:*)",
       "Bash(pwd:*)",
       "Bash(git add:*)",
@@ -33,6 +34,7 @@
       "Bash(git branch:*)",
       "Bash(git push:*)",
       "Bash(git pull:*)",
+      "Bash(git rm:*)",
       "Bash(gh issue:*)",
       "Bash(gh pr:*)",
       "Bash(gh api:*)",
@@ -66,7 +68,20 @@
       "mcp__plugin_figma_figma__create_design_system_rules",
       "mcp__plugin_figma_figma__whoami",
       "mcp__plugin_figma_figma__add_code_connect_map",
-      "mcp__plugin_figma_figma__send_code_connect_mappings"
+      "mcp__plugin_figma_figma__send_code_connect_mappings",
+      "mcp__chrome-devtools__navigate_page",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__take_snapshot",
+      "mcp__chrome-devtools__click",
+      "mcp__chrome-devtools__fill",
+      "mcp__chrome-devtools__press_key",
+      "mcp__chrome-devtools__evaluate_script",
+      "mcp__chrome-devtools__list_console_messages",
+      "mcp__chrome-devtools__resize_page",
+      "mcp__chrome-devtools__list_pages",
+      "mcp__chrome-devtools__hover",
+      "mcp__chrome-devtools__list_network_requests",
+      "mcp__chrome-devtools__get_network_request"
     ]
   },
   "enabledPlugins": {

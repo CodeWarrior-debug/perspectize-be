@@ -17,6 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2.1: Mobile Responsive Fixes** - Fix header overflow, pagination bar, and table layout at 375px (INSERTED)
 - [x] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
 - [ ] **Phase 3.1: Design Token System** - Implement all 27 Figma color variables, Geist + Charter typography, rating colors in code (INSERTED — rescoped)
+- [ ] **Phase 3.2: Activity Page Beta Quality** - Rebuild Activity page to beta quality with server-side ops, new columns, popover dialog, data provenance (INSERTED)
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
 - [ ] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
 
@@ -100,8 +101,25 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 03.1-01-PLAN.md — Complete color token system (27 tokens) + Charter font setup in app.css
-- [ ] 03.1-02-PLAN.md — AG Grid branded theming + visual verification checkpoint
+- [x] 03.1-01-PLAN.md — Complete color token system (27 tokens) + Charter font setup in app.css
+- [x] 03.1-02-PLAN.md — AG Grid branded theming + visual verification checkpoint
+
+### Phase 3.2: Activity Page Beta Quality (INSERTED)
+**Goal**: Get every element on the Activity page — table, header, layout, dialog — to beta quality. Rebuild on top of Phase 3.1 design tokens. Server-side sorting/filtering/pagination, new YouTube columns, popover dialog, data provenance infrastructure. Source-data columns only.
+**Depends on**: Phase 3.1
+**Success Criteria** (what must be TRUE):
+  1. Server-side sorting — column header clicks send sort params to GraphQL API, backend returns pre-sorted data
+  2. Per-column filters — no global search bar; each column header has its own filter control
+  3. Server-side pagination — one page at a time from backend, total count displayed, page size selector (10/25/50)
+  4. 6 default visible columns: Item (title+thumbnail), Type (YouTube icon), Length, Views, Likes, Date (YouTube publish date)
+  5. Column chooser with hidden columns: Channel, Date Added, Date Updated, Tags, Description
+  6. New YouTube fields exposed through GraphQL (view count, like count, channel, publish date, tags)
+  7. Compact rows (~40-48px height) matching Figma reference (node 3:409)
+  8. Sticky page header + sticky table header, table body scrolls independently
+  9. Add Video dialog: popover-near-button pattern (no overlay), page stays interactive while open
+  10. Data provenance visual infrastructure: columns grouped by source, tooltip on header hover, visual tier indicators
+  11. Empty state: "No items yet - add the first one!" in table body area
+**Plans**: TBD
 
 ### Phase 4: Add Perspective Flow
 **Goal**: Users can create perspectives on videos with ratings, Like text, and Review text
@@ -324,7 +342,7 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -332,7 +350,8 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -
 | 2. Data Layer + Activity | 2/2 | Complete | 2026-02-07 |
 | 2.1 Mobile Responsive Fixes | 2/2 | Complete | 2026-02-07 |
 | 3. Add Video Flow | 2/2 | Complete | 2026-02-07 |
-| 3.1 Design Token System | 0/2 | Planned | - |
+| 3.1 Design Token System | 2/2 | Complete | 2026-02-12 |
+| 3.2 Activity Page Beta Quality | 0/0 | Not started | - |
 | 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 1/3 | In progress | - |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
