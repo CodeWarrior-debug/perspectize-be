@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { toast } from 'svelte-sonner';
-	import { Popover, PopoverContent, PopoverTrigger, Button, Input, Label } from '$lib/components/shadcn';
+	import { Popover, PopoverContent, PopoverTrigger, buttonVariants, Button, Input, Label } from '$lib/components/shadcn';
 	import { graphqlClient } from '$lib/queries/client';
 	import { CREATE_CONTENT_FROM_YOUTUBE } from '$lib/queries/content';
 	import { validateYouTubeUrl } from '$lib/utils/youtube';
@@ -63,11 +63,9 @@
 </script>
 
 <Popover bind:open>
-	<PopoverTrigger>
-		<Button>
-			<PlusIcon class="size-4" />
-			Add Video
-		</Button>
+	<PopoverTrigger class={buttonVariants({ size: "default" })}>
+		<PlusIcon class="size-4" />
+		Add Video
 	</PopoverTrigger>
 	<PopoverContent align="end" sideOffset={8}>
 		<form onsubmit={handleSubmit}>
