@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Data Layer + Activity** - TanStack Query integration, AG Grid table, user selector
 - [x] **Phase 2.1: Mobile Responsive Fixes** - Fix header overflow, pagination bar, and table layout at 375px (INSERTED)
 - [x] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
-- [ ] **Phase 3.1: Design Token System** - Implement all 27 Figma color variables, Geist + Charter typography, rating colors in code (INSERTED — rescoped)
+- [x] **Phase 3.1: Design Token System** - Implement all 27 Figma color variables, Geist + Charter typography, rating colors in code (INSERTED — rescoped)
 - [ ] **Phase 3.2: Activity Page Beta Quality** - Rebuild Activity page to beta quality with server-side ops, new columns, popover dialog, data provenance (INSERTED)
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
 - [ ] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
@@ -119,7 +119,13 @@ Plans:
   9. Add Video dialog: popover-near-button pattern (no overlay), page stays interactive while open
   10. Data provenance visual infrastructure: columns grouped by source, tooltip on header hover, visual tier indicators
   11. Empty state: "No items yet - add the first one!" in table body area
-**Plans**: TBD
+**Plans**: 4 plans in 3 waves
+
+Plans:
+- [ ] 03.2-01-PLAN.md — Backend: expose YouTube fields (channelTitle, publishedAt, tags, description) + extend sort/filter
+- [ ] 03.2-02-PLAN.md — Frontend: popover dialog redesign (replace modal with non-modal popover)
+- [ ] 03.2-03-PLAN.md — Frontend: ActivityTable rewrite (server-side pagination, new columns, compact rows, sticky headers, provenance)
+- [ ] 03.2-04-PLAN.md — Integration polish, test coverage, visual verification checkpoint
 
 ### Phase 4: Add Perspective Flow
 **Goal**: Users can create perspectives on videos with ratings, Like text, and Review text
@@ -250,7 +256,7 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
 - [ ] H-07: Race condition on user uniqueness check (TOCTOU)
 - [ ] H-08: YouTube API response stored verbatim (~5KB bloat per item)
 - [ ] M-04: `deletePerspective` uses `ID` scalar instead of `IntID`
-- [ ] M-08: Missing nested field resolvers (perspective→user, perspective→content)
+- [ ] M-08: Missing nested field resolvers (perspective->user, perspective->content)
 - [ ] M-11: Missing input length validation
 - [ ] M-13: Unbounded JSON field (duplicate of H-08)
 - [ ] M-16: Update does not check `RowsAffected`
@@ -263,7 +269,7 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
   1. Authentication middleware validates JWT/session on all mutations (C-01)
   2. Authorization checks on all mutations — users can only modify their own data (C-01)
   3. GraphQL query complexity limit enforced (C-04)
-  4. CORS restricted to explicit frontend origin (C-05 — may already be done in Phase 5)
+  4. CORS restricted to explicit frontend origin (C-05 -- may already be done in Phase 5)
   5. GraphQL playground disabled in production (C-09)
   6. Introspection disabled in production (C-10)
   7. User email addresses only visible to authenticated user for their own account (H-10)
@@ -296,7 +302,7 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
 ### Phase 10: Frontend Quality & Test Coverage
 **Goal**: Fix frontend vulnerabilities, add codegen, error boundaries, and close all test coverage gaps
 **Depends on**: Phase 8 (schema fixes enable codegen; nested resolvers enable frontend cleanup)
-**Source**: CONCERNS.md C-03, H-17, H-18, H-22, H-23, H-24, M-18–M-26, T-01–T-06, L-*
+**Source**: CONCERNS.md C-03, H-17, H-18, H-22, H-23, H-24, M-18-M-26, T-01-T-06, L-*
 **Success Criteria** (what must be TRUE):
   1. AG Grid cellRenderer uses safe DOM APIs, no raw innerHTML interpolation (C-03)
   2. `+error.svelte` error boundary exists with retry UI (H-17, M-23)
@@ -331,7 +337,7 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
 - [ ] M-24: Dead code (`AGGridTest.svelte`)
 - [ ] M-25: HTTP fallback for GraphQL endpoint
 - [ ] M-26: Retry configuration retries all errors (should only retry 5xx)
-- [ ] T-01: `PerspectiveService.Update()` — zero tests
+- [ ] T-01: `PerspectiveService.Update()` -- zero tests
 - [ ] T-02: No resolver tests
 - [ ] T-03: No `helpers.go` conversion tests
 - [ ] T-04: No repository-layer tests
@@ -351,7 +357,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6
 | 2.1 Mobile Responsive Fixes | 2/2 | Complete | 2026-02-07 |
 | 3. Add Video Flow | 2/2 | Complete | 2026-02-07 |
 | 3.1 Design Token System | 2/2 | Complete | 2026-02-12 |
-| 3.2 Activity Page Beta Quality | 0/0 | Not started | - |
+| 3.2 Activity Page Beta Quality | 0/4 | Planned | - |
 | 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 1/3 | In progress | - |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
