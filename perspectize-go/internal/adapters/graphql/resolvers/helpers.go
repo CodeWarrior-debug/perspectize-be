@@ -77,27 +77,30 @@ func domainToModel(c *domain.Content) *model.Content {
 				m.Description = &item.Snippet.Description
 			}
 
-			// Extract statistics
+			// Extract statistics — empty strings from YouTube API default to 0
 			stats := item.Statistics
-			if v, err := strconv.Atoi(stats.ViewCount); err != nil {
-				slog.Warn("failed to parse viewCount", "value", stats.ViewCount, "contentID", c.ID, "error", err)
-			} else {
-				m.ViewCount = &v
-			}
-			if v, err := strconv.Atoi(stats.LikeCount); err != nil {
-				slog.Warn("failed to parse likeCount", "value", stats.LikeCount, "contentID", c.ID, "error", err)
-			} else {
-				m.LikeCount = &v
-			}
-			if v, err := strconv.Atoi(stats.CommentCount); err != nil {
-				slog.Warn("failed to parse commentCount", "value", stats.CommentCount, "contentID", c.ID, "error", err)
-			} else {
-				m.CommentCount = &v
-			}
+			m.ViewCount = parseStatCount(stats.ViewCount, "viewCount", c.ID)
+			m.LikeCount = parseStatCount(stats.LikeCount, "likeCount", c.ID)
+			m.CommentCount = parseStatCount(stats.CommentCount, "commentCount", c.ID)
 		}
 	}
 
 	return m
+}
+
+// parseStatCount parses a YouTube statistics string to *int.
+// Returns pointer to 0 for empty strings, nil for non-numeric values.
+func parseStatCount(value, field string, contentID int) *int {
+	if value == "" {
+		zero := 0
+		return &zero
+	}
+	v, err := strconv.Atoi(value)
+	if err != nil {
+		slog.Warn("failed to parse "+field, "value", value, "contentID", contentID, "error", err)
+		return nil
+	}
+	return &v
 }
 
 // perspectiveDomainToModel converts a domain Perspective to a GraphQL model Perspective
