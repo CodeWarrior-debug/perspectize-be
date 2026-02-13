@@ -34,9 +34,11 @@ type YouTubeAPIResponse struct {
 	Items []struct {
 		ID      string `json:"id"`
 		Snippet struct {
-			Title        string `json:"title"`
-			Description  string `json:"description"`
-			ChannelTitle string `json:"channelTitle"`
+			Title        string   `json:"title"`
+			Description  string   `json:"description"`
+			ChannelTitle string   `json:"channelTitle"`
+			PublishedAt  string   `json:"publishedAt"`
+			Tags         []string `json:"tags"`
 		} `json:"snippet"`
 		ContentDetails struct {
 			Duration string `json:"duration"`

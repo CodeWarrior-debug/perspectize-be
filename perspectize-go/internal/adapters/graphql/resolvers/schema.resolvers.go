@@ -238,6 +238,7 @@ func (r *queryResolver) Content(ctx context.Context, first *int, after *string, 
 		}
 		params.Filter.MinLengthSeconds = filter.MinLengthSeconds
 		params.Filter.MaxLengthSeconds = filter.MaxLengthSeconds
+		params.Filter.Search = filter.Search
 	}
 
 	result, err := r.ContentService.ListContent(ctx, params)
