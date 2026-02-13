@@ -9,7 +9,7 @@ const {
 	mockQueryState,
 } = vi.hoisted(() => ({
 	mockSetSelectedUserId: vi.fn(),
-	mockGetSelectedUserId: vi.fn(() => null),
+	mockGetSelectedUserId: vi.fn((): number | null => null),
 	mockQueryState: {
 		isLoading: false,
 		error: null as Error | null,
