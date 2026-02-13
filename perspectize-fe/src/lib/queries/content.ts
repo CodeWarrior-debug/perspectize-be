@@ -1,11 +1,42 @@
 import { gql } from 'graphql-request';
 
+export interface ContentItem {
+	id: string;
+	name: string;
+	url: string | null;
+	contentType: string;
+	length: number | null;
+	lengthUnits: string | null;
+	viewCount: number | null;
+	likeCount: number | null;
+	channelTitle: string | null;
+	publishedAt: string | null;
+	tags: string[] | null;
+	description: string | null;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface ContentResponse {
+	content: {
+		items: ContentItem[];
+		pageInfo: {
+			hasNextPage: boolean;
+			hasPreviousPage: boolean;
+			startCursor: string | null;
+			endCursor: string | null;
+		};
+		totalCount: number;
+	};
+}
+
 export const LIST_CONTENT = gql`
 	query ListContent(
 		$first: Int
 		$after: String
 		$sortBy: ContentSortBy = UPDATED_AT
 		$sortOrder: SortOrder = DESC
+		$filter: ContentFilter
 		$includeTotalCount: Boolean = true
 	) {
 		content(
@@ -13,6 +44,7 @@ export const LIST_CONTENT = gql`
 			after: $after
 			sortBy: $sortBy
 			sortOrder: $sortOrder
+			filter: $filter
 			includeTotalCount: $includeTotalCount
 		) {
 			items {
@@ -22,11 +54,19 @@ export const LIST_CONTENT = gql`
 				contentType
 				length
 				lengthUnits
+				viewCount
+				likeCount
+				channelTitle
+				publishedAt
+				tags
+				description
 				createdAt
 				updatedAt
 			}
 			pageInfo {
 				hasNextPage
+				hasPreviousPage
+				startCursor
 				endCursor
 			}
 			totalCount
