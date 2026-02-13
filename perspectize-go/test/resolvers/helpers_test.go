@@ -295,10 +295,68 @@ func TestContentByID_NoStatisticsInResponse(t *testing.T) {
 	err := json.Unmarshal(result.Data, &data)
 	require.NoError(t, err)
 
-	// Statistics should be nil when not present
-	assert.Nil(t, data.ContentByID.ViewCount)
-	assert.Nil(t, data.ContentByID.LikeCount)
-	assert.Nil(t, data.ContentByID.CommentCount)
+	// Empty stat strings default to 0
+	require.NotNil(t, data.ContentByID.ViewCount)
+	assert.Equal(t, 0, *data.ContentByID.ViewCount)
+	require.NotNil(t, data.ContentByID.LikeCount)
+	assert.Equal(t, 0, *data.ContentByID.LikeCount)
+	require.NotNil(t, data.ContentByID.CommentCount)
+	assert.Equal(t, 0, *data.ContentByID.CommentCount)
+}
+
+func TestContentByID_EmptyStatisticStrings(t *testing.T) {
+	url := "https://youtube.com/watch?v=test123"
+
+	// YouTube API sometimes returns empty strings for statistics
+	responseJSON := json.RawMessage(`{
+		"items": [{
+			"statistics": {
+				"viewCount": "",
+				"likeCount": "",
+				"commentCount": ""
+			}
+		}]
+	}`)
+
+	repo := &mockContentRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.Content, error) {
+			return &domain.Content{
+				ID:          1,
+				Name:        "Test Video",
+				URL:         &url,
+				ContentType: domain.ContentTypeYouTube,
+				Response:    responseJSON,
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
+			}, nil
+		},
+	}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `{ contentByID(id: "1") { id viewCount likeCount commentCount } }`)
+
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		ContentByID struct {
+			ID           string `json:"id"`
+			ViewCount    *int   `json:"viewCount"`
+			LikeCount    *int   `json:"likeCount"`
+			CommentCount *int   `json:"commentCount"`
+		} `json:"contentByID"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+
+	// Empty strings should default to 0, not cause parse errors
+	require.NotNil(t, data.ContentByID.ViewCount)
+	assert.Equal(t, 0, *data.ContentByID.ViewCount)
+	require.NotNil(t, data.ContentByID.LikeCount)
+	assert.Equal(t, 0, *data.ContentByID.LikeCount)
+	require.NotNil(t, data.ContentByID.CommentCount)
+	assert.Equal(t, 0, *data.ContentByID.CommentCount)
 }
 
 func TestContentByID_EmptyItemsArray(t *testing.T) {
