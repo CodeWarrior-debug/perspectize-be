@@ -34,6 +34,8 @@
 			const name = data?.createContentFromYouTube?.name ?? 'video';
 			toast.success(`Added: ${name}`);
 			queryClient.invalidateQueries({ queryKey: ['content'] });
+			// Dispatch custom event for ActivityTable to refetch
+			window.dispatchEvent(new CustomEvent('content-added'));
 			open = false;
 		},
 		onError: (err: Error) => {
