@@ -26,6 +26,10 @@ type Content struct {
 	ViewCount    *int           `json:"viewCount,omitempty"`
 	LikeCount    *int           `json:"likeCount,omitempty"`
 	CommentCount *int           `json:"commentCount,omitempty"`
+	ChannelTitle *string        `json:"channelTitle,omitempty"`
+	PublishedAt  *string        `json:"publishedAt,omitempty"`
+	Tags         []string       `json:"tags,omitempty"`
+	Description  *string        `json:"description,omitempty"`
 	Response     map[string]any `json:"response,omitempty"`
 	CreatedAt    string         `json:"createdAt"`
 	UpdatedAt    string         `json:"updatedAt"`
@@ -35,6 +39,7 @@ type ContentFilter struct {
 	ContentType      *domain.ContentType `json:"contentType,omitempty"`
 	MinLengthSeconds *int                `json:"minLengthSeconds,omitempty"`
 	MaxLengthSeconds *int                `json:"maxLengthSeconds,omitempty"`
+	Search           *string             `json:"search,omitempty"`
 }
 
 type CreateContentFromYouTubeInput struct {

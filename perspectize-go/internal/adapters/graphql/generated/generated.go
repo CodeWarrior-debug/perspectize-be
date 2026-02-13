@@ -54,15 +54,19 @@ type ComplexityRoot struct {
 	}
 
 	Content struct {
+		ChannelTitle func(childComplexity int) int
 		CommentCount func(childComplexity int) int
 		ContentType  func(childComplexity int) int
 		CreatedAt    func(childComplexity int) int
+		Description  func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Length       func(childComplexity int) int
 		LengthUnits  func(childComplexity int) int
 		LikeCount    func(childComplexity int) int
 		Name         func(childComplexity int) int
+		PublishedAt  func(childComplexity int) int
 		Response     func(childComplexity int) int
+		Tags         func(childComplexity int) int
 		URL          func(childComplexity int) int
 		UpdatedAt    func(childComplexity int) int
 		ViewCount    func(childComplexity int) int
@@ -186,6 +190,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CategorizedRating.Rating(childComplexity), true
 
+	case "Content.channelTitle":
+		if e.complexity.Content.ChannelTitle == nil {
+			break
+		}
+
+		return e.complexity.Content.ChannelTitle(childComplexity), true
 	case "Content.commentCount":
 		if e.complexity.Content.CommentCount == nil {
 			break
@@ -204,6 +214,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Content.CreatedAt(childComplexity), true
+	case "Content.description":
+		if e.complexity.Content.Description == nil {
+			break
+		}
+
+		return e.complexity.Content.Description(childComplexity), true
 	case "Content.id":
 		if e.complexity.Content.ID == nil {
 			break
@@ -234,12 +250,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Content.Name(childComplexity), true
+	case "Content.publishedAt":
+		if e.complexity.Content.PublishedAt == nil {
+			break
+		}
+
+		return e.complexity.Content.PublishedAt(childComplexity), true
 	case "Content.response":
 		if e.complexity.Content.Response == nil {
 			break
 		}
 
 		return e.complexity.Content.Response(childComplexity), true
+	case "Content.tags":
+		if e.complexity.Content.Tags == nil {
+			break
+		}
+
+		return e.complexity.Content.Tags(childComplexity), true
 	case "Content.url":
 		if e.complexity.Content.URL == nil {
 			break
@@ -790,6 +818,10 @@ type Content {
   viewCount: Int
   likeCount: Int
   commentCount: Int
+  channelTitle: String
+  publishedAt: String
+  tags: [String!]
+  description: String
   response: JSON
   createdAt: String!
   updatedAt: String!
@@ -814,6 +846,9 @@ enum ContentSortBy {
   CREATED_AT
   UPDATED_AT
   NAME
+  VIEW_COUNT
+  LIKE_COUNT
+  PUBLISHED_AT
 }
 
 enum SortOrder {
@@ -835,6 +870,7 @@ input ContentFilter {
   contentType: ContentType
   minLengthSeconds: Int
   maxLengthSeconds: Int
+  search: String
 }
 
 # User inputs
@@ -1517,6 +1553,122 @@ func (ec *executionContext) fieldContext_Content_commentCount(_ context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Content_channelTitle(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Content_channelTitle,
+		func(ctx context.Context) (any, error) {
+			return obj.ChannelTitle, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Content_channelTitle(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Content",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Content_publishedAt(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Content_publishedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.PublishedAt, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Content_publishedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Content",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Content_tags(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Content_tags,
+		func(ctx context.Context) (any, error) {
+			return obj.Tags, nil
+		},
+		nil,
+		ec.marshalOString2ᚕstringᚄ,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Content_tags(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Content",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Content_description(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Content_description,
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Content_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Content",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Content_response(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1647,6 +1799,14 @@ func (ec *executionContext) fieldContext_Mutation_createContentFromYouTube(ctx c
 				return ec.fieldContext_Content_likeCount(ctx, field)
 			case "commentCount":
 				return ec.fieldContext_Content_commentCount(ctx, field)
+			case "channelTitle":
+				return ec.fieldContext_Content_channelTitle(ctx, field)
+			case "publishedAt":
+				return ec.fieldContext_Content_publishedAt(ctx, field)
+			case "tags":
+				return ec.fieldContext_Content_tags(ctx, field)
+			case "description":
+				return ec.fieldContext_Content_description(ctx, field)
 			case "response":
 				return ec.fieldContext_Content_response(ctx, field)
 			case "createdAt":
@@ -2089,6 +2249,14 @@ func (ec *executionContext) fieldContext_PaginatedContent_items(_ context.Contex
 				return ec.fieldContext_Content_likeCount(ctx, field)
 			case "commentCount":
 				return ec.fieldContext_Content_commentCount(ctx, field)
+			case "channelTitle":
+				return ec.fieldContext_Content_channelTitle(ctx, field)
+			case "publishedAt":
+				return ec.fieldContext_Content_publishedAt(ctx, field)
+			case "tags":
+				return ec.fieldContext_Content_tags(ctx, field)
+			case "description":
+				return ec.fieldContext_Content_description(ctx, field)
 			case "response":
 				return ec.fieldContext_Content_response(ctx, field)
 			case "createdAt":
@@ -2508,6 +2676,14 @@ func (ec *executionContext) fieldContext_Perspective_content(_ context.Context, 
 				return ec.fieldContext_Content_likeCount(ctx, field)
 			case "commentCount":
 				return ec.fieldContext_Content_commentCount(ctx, field)
+			case "channelTitle":
+				return ec.fieldContext_Content_channelTitle(ctx, field)
+			case "publishedAt":
+				return ec.fieldContext_Content_publishedAt(ctx, field)
+			case "tags":
+				return ec.fieldContext_Content_tags(ctx, field)
+			case "description":
+				return ec.fieldContext_Content_description(ctx, field)
 			case "response":
 				return ec.fieldContext_Content_response(ctx, field)
 			case "createdAt":
@@ -2976,6 +3152,14 @@ func (ec *executionContext) fieldContext_Query_contentByID(ctx context.Context, 
 				return ec.fieldContext_Content_likeCount(ctx, field)
 			case "commentCount":
 				return ec.fieldContext_Content_commentCount(ctx, field)
+			case "channelTitle":
+				return ec.fieldContext_Content_channelTitle(ctx, field)
+			case "publishedAt":
+				return ec.fieldContext_Content_publishedAt(ctx, field)
+			case "tags":
+				return ec.fieldContext_Content_tags(ctx, field)
+			case "description":
+				return ec.fieldContext_Content_description(ctx, field)
 			case "response":
 				return ec.fieldContext_Content_response(ctx, field)
 			case "createdAt":
@@ -5068,7 +5252,7 @@ func (ec *executionContext) unmarshalInputContentFilter(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"contentType", "minLengthSeconds", "maxLengthSeconds"}
+	fieldsInOrder := [...]string{"contentType", "minLengthSeconds", "maxLengthSeconds", "search"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5096,6 +5280,13 @@ func (ec *executionContext) unmarshalInputContentFilter(ctx context.Context, obj
 				return it, err
 			}
 			it.MaxLengthSeconds = data
+		case "search":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Search = data
 		}
 	}
 
@@ -5537,6 +5728,14 @@ func (ec *executionContext) _Content(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Content_likeCount(ctx, field, obj)
 		case "commentCount":
 			out.Values[i] = ec._Content_commentCount(ctx, field, obj)
+		case "channelTitle":
+			out.Values[i] = ec._Content_channelTitle(ctx, field, obj)
+		case "publishedAt":
+			out.Values[i] = ec._Content_publishedAt(ctx, field, obj)
+		case "tags":
+			out.Values[i] = ec._Content_tags(ctx, field, obj)
+		case "description":
+			out.Values[i] = ec._Content_description(ctx, field, obj)
 		case "response":
 			out.Values[i] = ec._Content_response(ctx, field, obj)
 		case "createdAt":
