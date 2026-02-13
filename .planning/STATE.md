@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 ## Current Position
 
 Phase: 3.2 of 5 (Activity Page Beta Quality)
-Plan: 1/4 complete
-Status: Backend YouTube fields and sort/search complete
-Last activity: 2026-02-13 — Completed 03.2-01-PLAN.md
+Plan: 2/4 complete
+Status: Non-modal Add Video popover complete
+Last activity: 2026-02-13 — Completed 03.2-02-PLAN.md
 
-Progress: [████████░░] 78%
+Progress: [████████░░] 83%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
-- Average duration: 4.9 min
-- Total execution time: 1.1 hours
+- Total plans completed: 15
+- Average duration: 5.1 min
+- Total execution time: 1.3 hours
 
 **By Phase:**
 
@@ -31,11 +31,11 @@ Progress: [████████░░] 78%
 | 02-data-layer-activity | 2 | 9 min | 4.5 min |
 | 03-add-video-flow | 2 | 8 min | 4 min |
 | 03.1-design-token-system | 2 | 6 min | 3 min |
-| 03.2-activity-page-beta-quality | 1 | 3 min | 3 min |
+| 03.2-activity-page-beta-quality | 2 | 10 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 3 min, 3 min, 5 min, 3 min, 3 min (avg: 3.4 min)
-- Trend: Excellent — Consistent 3-5 min execution with focused backend work
+- Last 5 plans: 3 min, 5 min, 3 min, 3 min, 7 min (avg: 4.2 min)
+- Trend: Good — Slightly higher duration for popover implementation (bits-ui testing challenges)
 
 *Updated after each plan completion*
 
@@ -91,6 +91,9 @@ Recent decisions affecting current work:
 - [Frontend]: Svelte 5 runes, SvelteKit routing, TanStack Query patterns documented in perspectize-fe/CLAUDE.md
 - [03.2-01]: JSONB extraction for sort fields with NULLS LAST to handle missing statistics
 - [03.2-01]: ILIKE search on name field for case-insensitive text search
+- [03.2-02]: Popover trigger uses buttonVariants() directly (bits-ui 2.x Svelte 5 pattern, no asChild)
+- [03.2-02]: AddVideoPopover self-contained with internal open state (simpler API than bind:open from parent)
+- [03.2-02]: Temporarily keeping AddVideoDialog for coverage threshold (popover portal rendering limits JSDOM testing)
 
 ### Roadmap Evolution
 
@@ -107,15 +110,15 @@ Plans that only modify infrastructure (CI/CD, config) must still verify they don
 
 ### Pending Todos
 
-None yet.
+- **Remove AddVideoDialog (low priority):** After manual verification of AddVideoPopover passes, delete AddVideoDialog.svelte and AddVideoDialog.test.ts (kept temporarily for coverage threshold)
 
 ### Known Bugs
 
-- **Add Video dialog UX (P2):** Full-screen gray overlay too aggressive, modal content translucent/hard to read, poor visual hierarchy. **CRITICAL FIX APPLIED:** Transparent background bug fixed in 03.1-01 (bg-background now resolves to #ffffff). Remaining work: reduce overlay opacity, improve layout spacing (Phase 3.1 plans 02-03).
+None.
 
 ### Blockers/Concerns
 
-None — Phase 3.2 Plan 01 complete, ready for frontend Activity Page enhancements.
+- **AddVideoPopover manual verification pending:** Popover UX (non-modal, positioning, dismissal) needs browser testing (JSDOM limitations prevent comprehensive automated tests). Manual verification planned for Phase 03.2-03 or later.
 
 ## Session Log
 
@@ -245,3 +248,9 @@ Resume file: None
 - perspectize-fe/tests/helpers/TestWrapper.svelte
 
 **Duration:** 3 min
+
+## Session Continuity
+
+Last session: 2026-02-13
+Stopped at: Completed 03.2-02-PLAN.md
+Resume file: None
