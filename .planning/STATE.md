@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 
 ## Current Position
 
-Phase: 3.1 of 5 (Design Token System) — COMPLETE
-Plan: 2/2 complete
-Status: All design tokens implemented, AG Grid branded, visual verification passed 10/10
-Last activity: 2026-02-12 — Phase 3.1 complete
+Phase: 3.2 of 5 (Activity Page Beta Quality)
+Plan: 1/4 complete
+Status: Backend YouTube fields and sort/search complete
+Last activity: 2026-02-13 — Completed 03.2-01-PLAN.md
 
-Progress: [████████░░] 76%
+Progress: [████████░░] 78%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
-- Average duration: 5.1 min
-- Total execution time: 1.0 hours
+- Total plans completed: 14
+- Average duration: 4.9 min
+- Total execution time: 1.1 hours
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: [████████░░] 76%
 | 02-data-layer-activity | 2 | 9 min | 4.5 min |
 | 03-add-video-flow | 2 | 8 min | 4 min |
 | 03.1-design-token-system | 2 | 6 min | 3 min |
+| 03.2-activity-page-beta-quality | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 6 min, 3 min, 3 min, 5 min, 3 min (avg: 4.0 min)
-- Trend: Improving — Phase 3.1 started efficiently with focused CSS work
+- Last 5 plans: 3 min, 3 min, 5 min, 3 min, 3 min (avg: 3.4 min)
+- Trend: Excellent — Consistent 3-5 min execution with focused backend work
 
 *Updated after each plan completion*
 
@@ -88,6 +89,8 @@ Recent decisions affecting current work:
 - [Infra]: qmd .planning/ collection added with stable-vs-live convention
 - [Infra]: All three CLAUDE.md files scored 95/100 (A) quality after optimization
 - [Frontend]: Svelte 5 runes, SvelteKit routing, TanStack Query patterns documented in perspectize-fe/CLAUDE.md
+- [03.2-01]: JSONB extraction for sort fields with NULLS LAST to handle missing statistics
+- [03.2-01]: ILIKE search on name field for case-insensitive text search
 
 ### Roadmap Evolution
 
@@ -112,7 +115,7 @@ None yet.
 
 ### Blockers/Concerns
 
-None — Phase 3 complete, Phase 3.1 (Dialog UX) inserted before Phase 4.
+None — Phase 3.2 Plan 01 complete, ready for frontend Activity Page enhancements.
 
 ## Session Log
 
@@ -157,8 +160,8 @@ None — Phase 3 complete, Phase 3.1 (Dialog UX) inserted before Phase 4.
 
 ## Session Continuity
 
-Last session: 2026-02-12
-Stopped at: Phase 3.1 complete — ready for Phase 3.2 planning
+Last session: 2026-02-13
+Stopped at: Completed 03.2-01-PLAN.md
 Resume file: None
 
 ### 2026-02-07 — Plan 01-05: Test Coverage

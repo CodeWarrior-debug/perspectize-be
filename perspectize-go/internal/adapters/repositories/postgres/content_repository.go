@@ -181,7 +181,7 @@ func decodeCursor(cursor string) (int, error) {
 	return id, nil
 }
 
-// sortColumnName maps a domain sort field to a safe SQL column name
+// sortColumnName maps a domain sort field to a safe SQL column name or JSONB extraction
 func sortColumnName(sortBy domain.ContentSortBy) string {
 	switch sortBy {
 	case domain.ContentSortByUpdatedAt:
@@ -190,6 +190,12 @@ func sortColumnName(sortBy domain.ContentSortBy) string {
 		return "name"
 	case domain.ContentSortByCreatedAt:
 		return "created_at"
+	case domain.ContentSortByViewCount:
+		return "(response->'items'->0->'statistics'->>'viewCount')::BIGINT"
+	case domain.ContentSortByLikeCount:
+		return "(response->'items'->0->'statistics'->>'likeCount')::BIGINT"
+	case domain.ContentSortByPublishedAt:
+		return "response->'items'->0->'snippet'->>'publishedAt'"
 	default:
 		return "created_at"
 	}
@@ -201,6 +207,13 @@ func sortDirection(order domain.SortOrder) string {
 		return "ASC"
 	}
 	return "DESC"
+}
+
+// isJSONBSort returns true if the sort field requires JSONB extraction
+func isJSONBSort(sortBy domain.ContentSortBy) bool {
+	return sortBy == domain.ContentSortByViewCount ||
+		sortBy == domain.ContentSortByLikeCount ||
+		sortBy == domain.ContentSortByPublishedAt
 }
 
 // List retrieves a paginated list of content using cursor-based pagination
@@ -249,6 +262,11 @@ func (r *ContentRepository) List(ctx context.Context, params domain.ContentListP
 			args = append(args, *params.Filter.MaxLengthSeconds)
 			argIdx++
 		}
+		if params.Filter.Search != nil && *params.Filter.Search != "" {
+			conditions = append(conditions, fmt.Sprintf("name ILIKE $%d", argIdx))
+			args = append(args, "%"+*params.Filter.Search+"%")
+			argIdx++
+		}
 	}
 
 	whereClause := ""
@@ -257,12 +275,17 @@ func (r *ContentRepository) List(ctx context.Context, params domain.ContentListP
 	}
 
 	// Fetch limit+1 to determine hasNextPage
+	// Add NULLS LAST for JSONB sorts to handle videos without statistics
+	nullsClause := ""
+	if isJSONBSort(params.SortBy) {
+		nullsClause = " NULLS LAST"
+	}
 	query := fmt.Sprintf(
 		`SELECT id, name, url, content_type, length, length_units, response, created_at, updated_at
 		FROM content %s
-		ORDER BY %s %s, id %s
+		ORDER BY %s %s%s, id %s
 		LIMIT $%d`,
-		whereClause, col, dir, dir, argIdx,
+		whereClause, col, dir, nullsClause, dir, argIdx,
 	)
 	args = append(args, limit+1)
 
@@ -316,6 +339,11 @@ func (r *ContentRepository) List(ctx context.Context, params domain.ContentListP
 			if params.Filter.MaxLengthSeconds != nil {
 				countConditions = append(countConditions, fmt.Sprintf("length <= $%d", countArgIdx))
 				countArgs = append(countArgs, *params.Filter.MaxLengthSeconds)
+				countArgIdx++
+			}
+			if params.Filter.Search != nil && *params.Filter.Search != "" {
+				countConditions = append(countConditions, fmt.Sprintf("name ILIKE $%d", countArgIdx))
+				countArgs = append(countArgs, "%"+*params.Filter.Search+"%")
 				countArgIdx++
 			}
 		}

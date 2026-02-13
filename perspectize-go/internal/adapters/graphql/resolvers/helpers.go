@@ -42,9 +42,15 @@ func domainToModel(c *domain.Content) *model.Content {
 			m.Response = responseMap
 		}
 
-		// Also extract statistics from the YouTube API response
+		// Extract fields from the YouTube API response
 		var resp struct {
 			Items []struct {
+				Snippet struct {
+					ChannelTitle string   `json:"channelTitle"`
+					PublishedAt  string   `json:"publishedAt"`
+					Tags         []string `json:"tags"`
+					Description  string   `json:"description"`
+				} `json:"snippet"`
 				Statistics struct {
 					ViewCount    string `json:"viewCount"`
 					LikeCount    string `json:"likeCount"`
@@ -53,9 +59,26 @@ func domainToModel(c *domain.Content) *model.Content {
 			} `json:"items"`
 		}
 		if err := json.Unmarshal(c.Response, &resp); err != nil {
-			slog.Warn("failed to parse YouTube statistics JSON", "contentID", c.ID, "error", err)
+			slog.Warn("failed to parse YouTube response JSON", "contentID", c.ID, "error", err)
 		} else if len(resp.Items) > 0 {
-			stats := resp.Items[0].Statistics
+			item := resp.Items[0]
+
+			// Extract snippet fields
+			if item.Snippet.ChannelTitle != "" {
+				m.ChannelTitle = &item.Snippet.ChannelTitle
+			}
+			if item.Snippet.PublishedAt != "" {
+				m.PublishedAt = &item.Snippet.PublishedAt
+			}
+			if len(item.Snippet.Tags) > 0 {
+				m.Tags = item.Snippet.Tags
+			}
+			if item.Snippet.Description != "" {
+				m.Description = &item.Snippet.Description
+			}
+
+			// Extract statistics
+			stats := item.Statistics
 			if v, err := strconv.Atoi(stats.ViewCount); err != nil {
 				slog.Warn("failed to parse viewCount", "value", stats.ViewCount, "contentID", c.ID, "error", err)
 			} else {

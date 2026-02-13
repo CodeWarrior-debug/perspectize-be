@@ -73,6 +73,10 @@ type Content {
   viewCount: Int
   likeCount: Int
   commentCount: Int
+  channelTitle: String
+  publishedAt: String
+  tags: [String!]
+  description: String
   response: JSON
   createdAt: String!
   updatedAt: String!
@@ -97,6 +101,9 @@ enum ContentSortBy {
   CREATED_AT
   UPDATED_AT
   NAME
+  VIEW_COUNT
+  LIKE_COUNT
+  PUBLISHED_AT
 }
 
 enum SortOrder {
@@ -118,6 +125,7 @@ input ContentFilter {
   contentType: ContentType
   minLengthSeconds: Int
   maxLengthSeconds: Int
+  search: String
 }
 
 # User inputs

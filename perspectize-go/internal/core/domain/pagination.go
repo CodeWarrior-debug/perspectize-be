@@ -4,9 +4,12 @@ package domain
 type ContentSortBy string
 
 const (
-	ContentSortByCreatedAt ContentSortBy = "CREATED_AT"
-	ContentSortByUpdatedAt ContentSortBy = "UPDATED_AT"
-	ContentSortByName      ContentSortBy = "NAME"
+	ContentSortByCreatedAt   ContentSortBy = "CREATED_AT"
+	ContentSortByUpdatedAt   ContentSortBy = "UPDATED_AT"
+	ContentSortByName        ContentSortBy = "NAME"
+	ContentSortByViewCount   ContentSortBy = "VIEW_COUNT"
+	ContentSortByLikeCount   ContentSortBy = "LIKE_COUNT"
+	ContentSortByPublishedAt ContentSortBy = "PUBLISHED_AT"
 )
 
 // SortOrder represents ascending or descending sort direction
@@ -22,6 +25,7 @@ type ContentFilter struct {
 	ContentType      *ContentType
 	MinLengthSeconds *int
 	MaxLengthSeconds *int
+	Search           *string
 }
 
 // ContentListParams contains parameters for paginated content queries
