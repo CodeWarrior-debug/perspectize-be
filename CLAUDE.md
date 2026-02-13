@@ -135,9 +135,21 @@ Claude Code may use the following tools **without prompting** for this project:
 
 Planning and execution artifacts in `.planning/`: `PROJECT.md`, `ROADMAP.md`, `STATE.md`, `phases/`. Branching: see [docs/GSD_BRANCHING.md](docs/GSD_BRANCHING.md).
 
-## Self-Verification
+## Self-Verification (MANDATORY)
 
-Before marking work complete, verify against plan `must_haves` and capture evidence. See [docs/VERIFICATION.md](docs/VERIFICATION.md) for full checklist and evidence capture workflow.
+**Before claiming work is complete, pushing, or creating a PR**, you MUST run verification. No exceptions.
+
+### Verification checklist
+
+1. **Build**: `go build ./...` in `backend/` — must compile with zero errors
+2. **Backend tests**: `go test ./...` in `backend/` — all must pass
+3. **Frontend tests**: `pnpm run test:run` in `fe/` — all must pass
+4. **Stale references**: If renaming/moving files or paths, grep the entire repo for old names
+5. **Plan must_haves**: If executing a GSD plan, verify each `must_haves.truths` item
+
+Run the relevant subset (e.g., backend-only changes skip step 3). Report results explicitly — don't just say "tests pass", show the output summary.
+
+See [docs/VERIFICATION.md](docs/VERIFICATION.md) for evidence capture workflow.
 
 ### Production Setup (Sevalla/Fly.io)
 
