@@ -282,7 +282,7 @@
 		if (gridApi) {
 			gridApi.setGridOption('loading', loading);
 		}
-	});
+	}
 
 	// Listen for content-added event from AddVideoPopover
 	$effect(() => {
