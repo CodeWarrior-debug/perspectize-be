@@ -283,6 +283,19 @@
 			gridApi.setGridOption('loading', loading);
 		}
 	});
+
+	// Listen for content-added event from AddVideoPopover
+	$effect(() => {
+		const handleContentAdded = () => {
+			// Reset to first page and refetch
+			currentPage = 0;
+			cursors = [null];
+			fetchData();
+		};
+
+		window.addEventListener('content-added', handleContentAdded);
+		return () => window.removeEventListener('content-added', handleContentAdded);
+	});
 </script>
 
 <div class="flex flex-col h-full gap-4">
