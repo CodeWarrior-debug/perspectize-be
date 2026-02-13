@@ -3,6 +3,7 @@
 	import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
 	import { themeQuartz } from '@ag-grid-community/theming';
 	import type { GridApi, GridOptions, SortChangedEvent, FilterChangedEvent, ColDef } from '@ag-grid-community/core';
+	import { onMount } from 'svelte';
 	import { graphqlClient } from '$lib/queries/client';
 	import { LIST_CONTENT, type ContentItem, type ContentResponse } from '$lib/queries/content';
 	import {
@@ -285,7 +286,7 @@
 	}
 
 	// Listen for content-added event from AddVideoPopover
-	$effect(() => {
+	onMount(() => {
 		const handleContentAdded = () => {
 			// Reset to first page and refetch
 			currentPage = 0;
