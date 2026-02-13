@@ -36,7 +36,7 @@ export const LIST_CONTENT = gql`
 		$after: String
 		$sortBy: ContentSortBy = UPDATED_AT
 		$sortOrder: SortOrder = DESC
-		$filter: String
+		$filter: ContentFilter
 		$includeTotalCount: Boolean = true
 	) {
 		content(

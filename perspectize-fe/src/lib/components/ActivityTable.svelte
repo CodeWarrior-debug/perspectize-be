@@ -234,7 +234,7 @@
 				after: cursors[currentPage],
 				sortBy,
 				sortOrder,
-				filter: filterText || undefined,
+				filter: filterText ? { search: filterText } : undefined,
 				includeTotalCount: true
 			});
 
