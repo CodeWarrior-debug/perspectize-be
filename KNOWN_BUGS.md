@@ -86,7 +86,7 @@ Issues discovered during development, testing, and codebase review (2026-02-07).
 | ID | Stack | Summary | Location | Source |
 |----|-------|---------|----------|--------|
 | L-01 | Go | `log` package used instead of `slog` (docs say structured logging) | `cmd/server/main.go` | Arch, Code |
-| L-02 | Go | Tests in external `test/` directory instead of co-located `_test.go` | `perspectize-go/test/` | Arch |
+| L-02 | Go | Tests in external `test/` directory instead of co-located `_test.go` | `backend/test/` | Arch |
 | L-03 | Go | `config.example.json` used as runtime config name | `cmd/server/main.go:27` | Arch |
 | L-04 | Go | No database indexes on `user_id`/`content_id` foreign keys in perspectives | `migrations/000004` | Arch |
 | L-05 | Go | `content.name` UNIQUE constraint too restrictive — two videos can share a title | `migrations/000001:11` | Arch |

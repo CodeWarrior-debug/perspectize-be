@@ -15,7 +15,7 @@ To recreate this project with the same configuration:
 
 ```sh
 # recreate this project
-npx sv create --template minimal --types ts --install npm perspectize-fe
+npx sv create --template minimal --types ts --install npm fe
 ```
 
 ## Developing

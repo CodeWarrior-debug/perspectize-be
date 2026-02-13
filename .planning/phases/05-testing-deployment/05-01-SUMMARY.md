@@ -29,8 +29,8 @@ Tests added during Phases 2–3 brought coverage above all enforced thresholds. 
 ## Verification
 
 ```
-cd perspectize-fe && pnpm run test:coverage  # exits 0, all thresholds pass
-cd perspectize-go && make test               # 78 tests pass
+cd fe && pnpm run test:coverage  # exits 0, all thresholds pass
+cd backend && make test               # 78 tests pass
 ```
 
 ---

@@ -25,16 +25,16 @@ tech-stack:
 
 key-files:
   created:
-    - perspectize-fe/tests/helpers/render.ts
-    - perspectize-fe/tests/unit/utils.test.ts
-    - perspectize-fe/tests/unit/queries-client.test.ts
-    - perspectize-fe/tests/unit/queries-content.test.ts
-    - perspectize-fe/tests/unit/shadcn-barrel.test.ts
-    - perspectize-fe/tests/components/Header.test.ts
-    - perspectize-fe/tests/components/PageWrapper.test.ts
+    - fe/tests/helpers/render.ts
+    - fe/tests/unit/utils.test.ts
+    - fe/tests/unit/queries-client.test.ts
+    - fe/tests/unit/queries-content.test.ts
+    - fe/tests/unit/shadcn-barrel.test.ts
+    - fe/tests/components/Header.test.ts
+    - fe/tests/components/PageWrapper.test.ts
   modified:
-    - perspectize-fe/tests/setup.ts
-    - perspectize-fe/vite.config.ts
+    - fe/tests/setup.ts
+    - fe/vite.config.ts
 
 key-decisions:
   - "Use createRawSnippet from svelte for testing components with children props"
@@ -79,15 +79,15 @@ Each task was committed atomically:
 2. **Task 2: Create Svelte component tests and configure coverage thresholds** - `828617a` (feat)
 
 ## Files Created/Modified
-- `perspectize-fe/tests/helpers/render.ts` - Shared test helpers (renderComponent, expectClasses)
-- `perspectize-fe/tests/unit/utils.test.ts` - cn() utility tests (9 test cases)
-- `perspectize-fe/tests/unit/queries-client.test.ts` - GraphQL client export verification
-- `perspectize-fe/tests/unit/queries-content.test.ts` - GraphQL query structure tests (LIST_CONTENT, GET_CONTENT)
-- `perspectize-fe/tests/unit/shadcn-barrel.test.ts` - shadcn barrel export tests
-- `perspectize-fe/tests/components/Header.test.ts` - Header component tests (9 test cases including click handler)
-- `perspectize-fe/tests/components/PageWrapper.test.ts` - PageWrapper component tests (6 test cases with children snippets)
-- `perspectize-fe/tests/setup.ts` - Updated with $app/stores and favicon.svg mocks
-- `perspectize-fe/vite.config.ts` - Added browser resolve condition and coverage thresholds
+- `fe/tests/helpers/render.ts` - Shared test helpers (renderComponent, expectClasses)
+- `fe/tests/unit/utils.test.ts` - cn() utility tests (9 test cases)
+- `fe/tests/unit/queries-client.test.ts` - GraphQL client export verification
+- `fe/tests/unit/queries-content.test.ts` - GraphQL query structure tests (LIST_CONTENT, GET_CONTENT)
+- `fe/tests/unit/shadcn-barrel.test.ts` - shadcn barrel export tests
+- `fe/tests/components/Header.test.ts` - Header component tests (9 test cases including click handler)
+- `fe/tests/components/PageWrapper.test.ts` - PageWrapper component tests (6 test cases with children snippets)
+- `fe/tests/setup.ts` - Updated with $app/stores and favicon.svg mocks
+- `fe/vite.config.ts` - Added browser resolve condition and coverage thresholds
 
 ## Decisions Made
 
@@ -117,7 +117,7 @@ Each task was committed atomically:
 - **Found during:** Task 2 (Component tests execution)
 - **Issue:** Component tests failed with Svelte lifecycle error "mount(...) is not available on the server"
 - **Fix:** Added `resolve: { conditions: ['browser'] }` to vite.config.ts to force client-side Svelte exports
-- **Files modified:** perspectize-fe/vite.config.ts
+- **Files modified:** fe/vite.config.ts
 - **Verification:** All 42 tests pass with component rendering
 - **Committed in:** 828617a (Task 2 commit)
 
@@ -125,7 +125,7 @@ Each task was committed atomically:
 - **Found during:** Task 2 (Header component tests)
 - **Issue:** Header handleAddVideo() calls toast.info() but no mock existed, preventing function coverage
 - **Fix:** Added vi.mock('svelte-sonner') and fireEvent.click test to verify handler execution
-- **Files modified:** perspectize-fe/tests/components/Header.test.ts
+- **Files modified:** fe/tests/components/Header.test.ts
 - **Verification:** Header reaches 100% branch/function coverage
 - **Committed in:** 828617a (Task 2 commit)
 
@@ -133,7 +133,7 @@ Each task was committed atomically:
 - **Found during:** Task 2 (Coverage verification)
 - **Issue:** PageWrapper default parameter creates Svelte compiler branch that cannot be meaningfully tested
 - **Fix:** Changed branch threshold to 75% while maintaining 80% for lines/functions/statements
-- **Files modified:** perspectize-fe/vite.config.ts
+- **Files modified:** fe/vite.config.ts
 - **Verification:** Coverage passes with all meaningful code tested
 - **Committed in:** 828617a (Task 2 commit)
 

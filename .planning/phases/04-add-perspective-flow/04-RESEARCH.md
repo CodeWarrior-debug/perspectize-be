@@ -63,7 +63,7 @@ pnpm dlx shadcn-svelte@latest add textarea
 
 ### Recommended Project Structure
 ```
-perspectize-fe/src/lib/
+fe/src/lib/
 ├── components/
 │   ├── AddPerspectiveDialog.svelte    # Main form dialog
 │   ├── RatingInput.svelte             # Reusable rating input + progress bar

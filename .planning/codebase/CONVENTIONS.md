@@ -76,7 +76,7 @@
 - Imports: Organized in three groups separated by blank lines:
   1. Standard library: `"context"`, `"encoding/json"`, `"errors"`, `"fmt"`
   2. Third-party: `"github.com/stretchr/testify/assert"`
-  3. Local project: `"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/..."`
+  3. Local project: `"github.com/CodeWarrior-debug/perspectize/backend/internal/..."`
 - Example from `internal/core/services/content_service.go`:
   ```go
   import (
@@ -84,9 +84,9 @@
       "errors"
       "fmt"
 
-      "github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
-      "github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/ports/repositories"
-      portservices "github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/ports/services"
+      "github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
+      "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/repositories"
+      portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
   )
   ```
 
@@ -112,11 +112,11 @@
 **Order (enforced by go fmt):**
 1. Standard library: `"context"`, `"fmt"`, `"errors"`
 2. Third-party: `"github.com/stretchr/testify/assert"`
-3. Local: `"github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/..."`
+3. Local: `"github.com/CodeWarrior-debug/perspectize/backend/internal/..."`
 
 **Aliases:** Use for clarity when importing multiple ports packages
 ```go
-portservices "github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/ports/services"
+portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
 ```
 
 ### TypeScript/Svelte

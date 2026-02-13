@@ -19,7 +19,7 @@ This is a SvelteKit 2 + Svelte 5 project with TypeScript, using Tailwind CSS v4 
 ## Folder Structure
 
 ```
-perspectize-fe/
+fe/
 ├── src/
 │   ├── routes/              # SvelteKit file-based routing
 │   │   ├── +page.svelte     # Home page
@@ -247,4 +247,4 @@ pnpm run check     # Type-check with svelte-check
 1. Add TanStack Query and configure QueryClientProvider
 2. Add TanStack Form for perspective submission
 3. Install AG Grid Svelte wrapper and create PerspectiveGrid component
-4. Connect to GraphQL API (perspectize-go backend)
+4. Connect to GraphQL API (backend backend)

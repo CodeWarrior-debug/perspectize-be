@@ -21,8 +21,8 @@ tech-stack:
   patterns: [TanStack Query thunk syntax for reactivity, browser-only query execution for SSG]
 
 key-files:
-  created: [perspectize-fe/src/lib/queries/client.ts, perspectize-fe/src/lib/queries/content.ts, perspectize-fe/tests/setup.ts, perspectize-fe/tests/unit/example.test.ts]
-  modified: [perspectize-fe/vite.config.ts, perspectize-fe/src/routes/+layout.svelte, perspectize-fe/src/routes/+page.svelte, perspectize-fe/package.json]
+  created: [fe/src/lib/queries/client.ts, fe/src/lib/queries/content.ts, fe/tests/setup.ts, fe/tests/unit/example.test.ts]
+  modified: [fe/vite.config.ts, fe/src/routes/+layout.svelte, fe/src/routes/+page.svelte, fe/package.json]
 
 key-decisions:
   - "Used enabled: browser in QueryClient defaults to prevent server-side query execution after SSG"
@@ -69,17 +69,17 @@ Each task was committed atomically:
 ## Files Created/Modified
 
 **Created:**
-- `perspectize-fe/src/lib/queries/client.ts` - GraphQL client with configurable backend URL
-- `perspectize-fe/src/lib/queries/content.ts` - Example content queries (LIST_CONTENT, GET_CONTENT)
-- `perspectize-fe/tests/setup.ts` - SvelteKit mocks for $app/environment and $app/navigation
-- `perspectize-fe/tests/unit/example.test.ts` - Example test suite demonstrating Vitest setup
-- `perspectize-fe/tests/fixtures/.gitkeep` - Placeholder for future test fixtures
+- `fe/src/lib/queries/client.ts` - GraphQL client with configurable backend URL
+- `fe/src/lib/queries/content.ts` - Example content queries (LIST_CONTENT, GET_CONTENT)
+- `fe/tests/setup.ts` - SvelteKit mocks for $app/environment and $app/navigation
+- `fe/tests/unit/example.test.ts` - Example test suite demonstrating Vitest setup
+- `fe/tests/fixtures/.gitkeep` - Placeholder for future test fixtures
 
 **Modified:**
-- `perspectize-fe/vite.config.ts` - Added Vitest configuration (jsdom, globals, coverage)
-- `perspectize-fe/src/routes/+layout.svelte` - Added Toaster component (note: QueryClientProvider added by 01-02)
-- `perspectize-fe/src/routes/+page.svelte` - Added toast test buttons (success, error, info)
-- `perspectize-fe/package.json` - Added dependencies and test scripts
+- `fe/vite.config.ts` - Added Vitest configuration (jsdom, globals, coverage)
+- `fe/src/routes/+layout.svelte` - Added Toaster component (note: QueryClientProvider added by 01-02)
+- `fe/src/routes/+page.svelte` - Added toast test buttons (success, error, info)
+- `fe/package.json` - Added dependencies and test scripts
 
 ## Decisions Made
 

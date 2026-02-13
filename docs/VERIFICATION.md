@@ -6,10 +6,10 @@ Before marking any work complete, run interactive verification.
 
 ```bash
 # Terminal 1: Backend
-cd perspectize-go && make run
+cd backend && make run
 
 # Terminal 2: Frontend
-cd perspectize-fe && pnpm run dev
+cd fe && pnpm run dev
 ```
 
 ## 2. Verify Backend

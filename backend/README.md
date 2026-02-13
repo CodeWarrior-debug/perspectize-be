@@ -82,7 +82,7 @@ make docker-down    # Stop Docker containers
 ### Project Structure
 
 ```
-perspectize-go/
+backend/
 ├── cmd/server/          # Application entry point
 ├── internal/            # Private application code
 │   ├── config/          # Configuration loading

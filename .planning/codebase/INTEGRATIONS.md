@@ -36,7 +36,7 @@
   - Max open: 25
   - Max idle: 5
   - Max lifetime: 5 minutes
-- **Migrations:** Located in `perspectize-go/migrations/`
+- **Migrations:** Located in `backend/migrations/`
   - Tool: golang-migrate
   - Format: `{sequence}_{description}.{up|down}.sql`
   - Current: 5 migrations (create content, update response jsonb, update length numeric, add perspectives/users, add user timestamps)
@@ -110,7 +110,7 @@
 - Environment variables passed via deployment platform (Fly.io secrets, Sevalla env vars)
 - Config file `config/config.example.json` for non-secret defaults
 
-**Config file structure (`perspectize-go/config/config.example.json`):**
+**Config file structure (`backend/config/config.example.json`):**
 ```json
 {
   "server": {

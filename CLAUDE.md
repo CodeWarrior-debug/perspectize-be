@@ -7,8 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Perspectize** — Platform for storing, refining, and sharing perspectives on content (initially YouTube videos).
 
 Monorepo with two stacks:
-- **Backend:** `perspectize-go/` — Go GraphQL API (see `perspectize-go/CLAUDE.md`)
-- **Frontend:** `perspectize-fe/` — SvelteKit web app (see `perspectize-fe/CLAUDE.md`)
+- **Backend:** `backend/` — Go GraphQL API (see `backend/CLAUDE.md`)
+- **Frontend:** `fe/` — SvelteKit web app (see `fe/CLAUDE.md`)
 
 **CLAUDE.md structure:** Root file (this) contains shared concerns. Package-level files contain stack-specific instructions. Claude loads root + the relevant package file per session.
 
@@ -24,15 +24,15 @@ gh pr view 123
 gh pr merge 123
 
 # Edit PR (use API — gh pr edit fails with Projects Classic deprecation)
-gh api repos/CodeWarrior-debug/perspectize-be/pulls/123 -X PATCH -f body="New description"
+gh api repos/CodeWarrior-debug/perspectize/pulls/123 -X PATCH -f body="New description"
 
 # Issues (use API — gh issue view fails with Projects Classic deprecation)
 gh issue create --title "Title" --body "..."  # Use issue templates (see below)
 gh issue list
-gh api repos/CodeWarrior-debug/perspectize-be/issues/123 --jq '.title, .html_url'
+gh api repos/CodeWarrior-debug/perspectize/issues/123 --jq '.title, .html_url'
 
 # API access
-gh api repos/CodeWarrior-debug/perspectize-be/pulls/123/comments
+gh api repos/CodeWarrior-debug/perspectize/pulls/123/comments
 ```
 
 ### GitHub Templates
@@ -110,8 +110,8 @@ Types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`
 Claude Code may use the following tools **without prompting** for this project:
 
 ### File Operations
-- **Read**: Any file in `.planning/`, `perspectize-fe/src/`, `perspectize-go/`, `docs/`
-- **Edit/Write**: Any file in `.planning/` (design specs, roadmaps, plans), `perspectize-fe/src/`, `perspectize-go/` (excluding sensitive files)
+- **Read**: Any file in `.planning/`, `fe/src/`, `backend/`, `docs/`
+- **Edit/Write**: Any file in `.planning/` (design specs, roadmaps, plans), `fe/src/`, `backend/` (excluding sensitive files)
 - **Glob/Grep**: Unlimited search across the codebase
 
 ### Bash Commands
@@ -123,7 +123,7 @@ Claude Code may use the following tools **without prompting** for this project:
 ### Figma MCP Tools
 - **Design context**: `get_screenshot`, `get_design_context`, `get_metadata` — all Figma MCP tools auto-approved
 - **Design system**: `get_variable_defs`, `create_design_system_rules`
-- **File keys**: Design 1 (`K1HaZLeNwCckWvhoyAfRhj`), Radix 3.0 (`SyvrP9yYbrmCorofJK4Co8`), App 1 (`dAiiWM7FOsob5upzUjtocY`) — see [perspectize-fe/docs/FIGMA.md](perspectize-fe/docs/FIGMA.md)
+- **File keys**: Design 1 (`K1HaZLeNwCckWvhoyAfRhj`), Radix 3.0 (`SyvrP9yYbrmCorofJK4Co8`), App 1 (`dAiiWM7FOsob5upzUjtocY`) — see [fe/docs/FIGMA.md](fe/docs/FIGMA.md)
 
 ### Task & Execution Tools
 - **TaskCreate/TaskUpdate**: Creating and updating tasks from conversations
@@ -153,9 +153,9 @@ Use `DATABASE_URL` with external endpoint from hosting provider. Note: Sevalla c
 - [Go Patterns](docs/GO_PATTERNS.md) — Error handling and DB query patterns
 
 **Frontend docs:**
-- [Frontend CLAUDE.md](perspectize-fe/CLAUDE.md) — SvelteKit, Svelte 5, TanStack Query patterns
-- [Design Spec](perspectize-fe/docs/DESIGN_SPEC.md) — Figma design system, color tokens, typography, component specs
-- [Figma Reference](perspectize-fe/docs/FIGMA.md) — File keys, pages, variables, code↔Figma mapping
+- [Frontend CLAUDE.md](fe/CLAUDE.md) — SvelteKit, Svelte 5, TanStack Query patterns
+- [Design Spec](fe/docs/DESIGN_SPEC.md) — Figma design system, color tokens, typography, component specs
+- [Figma Reference](fe/docs/FIGMA.md) — File keys, pages, variables, code↔Figma mapping
 
 **Planning & backlog:**
 - [Feature Backlog](FEATURE_BACKLOG.md) — Future ideas and enhancements not tied to any milestone. Capture ideas here during development; evaluate when planning new work.

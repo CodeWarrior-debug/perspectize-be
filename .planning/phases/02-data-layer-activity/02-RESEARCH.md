@@ -81,7 +81,7 @@ src/
 **When to use:** Fetching paginated data from GraphQL API
 **Example:**
 ```typescript
-// Source: Existing pattern in perspectize-fe (simplified)
+// Source: Existing pattern in fe (simplified)
 import { createQuery } from '@tanstack/svelte-query';
 import { graphqlClient } from '$lib/queries/client';
 import { LIST_CONTENT } from '$lib/queries/content';
@@ -107,7 +107,7 @@ const contentQuery = createQuery({
 **When to use:** Displaying tabular data with sorting/filtering/pagination
 **Example:**
 ```svelte
-<!-- Source: perspectize-fe/src/lib/components/AGGridTest.svelte -->
+<!-- Source: fe/src/lib/components/AGGridTest.svelte -->
 <script lang="ts">
   import AgGridSvelte5Component from 'ag-grid-svelte5';
   import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
@@ -218,7 +218,7 @@ $effect(() => {
 **When to use:** All GraphQL operations
 **Example:**
 ```typescript
-// Source: perspectize-fe/src/lib/queries/content.ts (existing pattern)
+// Source: fe/src/lib/queries/content.ts (existing pattern)
 import { gql } from 'graphql-request';
 
 export const LIST_USERS = gql`
@@ -312,7 +312,7 @@ Verified patterns from official sources:
 
 ### TanStack Query with GraphQL Request (Existing Pattern)
 ```typescript
-// Source: perspectize-fe/src/lib/queries/content.ts + client.ts
+// Source: fe/src/lib/queries/content.ts + client.ts
 import { createQuery } from '@tanstack/svelte-query';
 import { graphqlClient } from '$lib/queries/client';
 import { LIST_CONTENT } from '$lib/queries/content';
@@ -455,12 +455,12 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- [GraphQL Schema](file:///Users/jamesjordan/GitHub/perspectize-be/perspectize-go/schema.graphql) - Backend schema with Content, User, Perspective types
-- [TanStack Query Client](file:///Users/jamesjordan/GitHub/perspectize-be/perspectize-fe/src/lib/queries/client.ts) - Existing GraphQL client setup
-- [Content Queries](file:///Users/jamesjordan/GitHub/perspectize-be/perspectize-fe/src/lib/queries/content.ts) - Existing query pattern
-- [AG Grid Test Component](file:///Users/jamesjordan/GitHub/perspectize-be/perspectize-fe/src/lib/components/AGGridTest.svelte) - Validated AG Grid integration
-- [GraphQL Resolvers](file:///Users/jamesjordan/GitHub/perspectize-be/perspectize-go/internal/adapters/graphql/resolvers/schema.resolvers.go) - Backend resolver patterns
-- [Frontend CLAUDE.md](file:///Users/jamesjordan/GitHub/perspectize-be/perspectize-fe/CLAUDE.md) - Established patterns and conventions
+- [GraphQL Schema](file:///Users/jamesjordan/GitHub/perspectize/backend/schema.graphql) - Backend schema with Content, User, Perspective types
+- [TanStack Query Client](file:///Users/jamesjordan/GitHub/perspectize/fe/src/lib/queries/client.ts) - Existing GraphQL client setup
+- [Content Queries](file:///Users/jamesjordan/GitHub/perspectize/fe/src/lib/queries/content.ts) - Existing query pattern
+- [AG Grid Test Component](file:///Users/jamesjordan/GitHub/perspectize/fe/src/lib/components/AGGridTest.svelte) - Validated AG Grid integration
+- [GraphQL Resolvers](file:///Users/jamesjordan/GitHub/perspectize/backend/internal/adapters/graphql/resolvers/schema.resolvers.go) - Backend resolver patterns
+- [Frontend CLAUDE.md](file:///Users/jamesjordan/GitHub/perspectize/fe/CLAUDE.md) - Established patterns and conventions
 - [AG Grid Quick Filter Documentation](https://www.ag-grid.com/javascript-data-grid/filter-quick/) - Official AG Grid feature documentation
 - [Svelte 5 Runes Documentation](https://svelte.dev/docs/svelte/$state) - Official Svelte 5 state management
 - [TanStack Query GraphQL Guide](https://tanstack.com/query/latest/docs/framework/react/graphql) - Official integration guide

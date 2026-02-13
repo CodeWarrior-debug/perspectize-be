@@ -36,7 +36,7 @@ Perspectize uses schema-first GraphQL with gqlgen. The workflow is:
 ## File Structure
 
 ```
-perspectize-go/
+backend/
 ├── schema.graphql              # GraphQL schema
 ├── gqlgen.yml                  # gqlgen configuration
 └── internal/adapters/graphql/
