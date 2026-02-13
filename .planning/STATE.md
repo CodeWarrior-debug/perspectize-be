@@ -9,18 +9,18 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 
 ## Current Position
 
-Phase: 3 of 5 (Add Video Flow) — COMPLETE
-Plan: 2/2 complete
-Status: Add Video flow fully working (dialog, mutation, validation, error handling, duplicate detection)
-Last activity: 2026-02-07 — Completed 03-02-PLAN.md (self-verified via Chrome DevTools MCP)
+Phase: 3.1 of 5 (Design Token System) — IN PROGRESS
+Plan: 1/3 complete
+Status: Design token foundation established (27 color tokens, Charter font, dual typography)
+Last activity: 2026-02-10 — Completed 03.1-01-PLAN.md
 
-Progress: [███████░░░] 70%
+Progress: [███████░░░] 71%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: 5.3 min
+- Total plans completed: 12
+- Average duration: 5.1 min
 - Total execution time: 1.0 hours
 
 **By Phase:**
@@ -30,10 +30,11 @@ Progress: [███████░░░] 70%
 | 01-foundation | 5 | 36 min | 7 min |
 | 02-data-layer-activity | 2 | 9 min | 4.5 min |
 | 03-add-video-flow | 2 | 8 min | 4 min |
+| 03.1-design-token-system | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 5 min, 6 min, 3 min, 3 min, 5 min (avg: 4.4 min)
-- Trend: Steady — Phase 3 executed efficiently with self-verification
+- Last 5 plans: 6 min, 3 min, 3 min, 5 min, 3 min (avg: 4.0 min)
+- Trend: Improving — Phase 3.1 started efficiently with focused CSS work
 
 *Updated after each plan completion*
 
@@ -49,7 +50,11 @@ Recent decisions affecting current work:
 - [Stack]: SvelteKit + TanStack Query + TanStack Form + AG Grid + shadcn-svelte + Tailwind CSS
 - [01-01]: Downgraded Vite from 7.3.1 to 6.4.1 for Tailwind CSS v4 compatibility
 - [01-01]: Upgraded Tailwind CSS from 4.0.0 to 4.1.18 to fix build errors
-- [01-01]: Custom navy primary color: oklch(0.216 0.006 56.043) = #1a365d
+- [01-01]: Custom navy primary color: oklch(0.216 0.006 56.043) = #1a365d (CORRECTED in 03.1-01: hex #1a365d, not oklch)
+- [03.1-01]: Hex color tokens (not oklch) — AI-generated oklch values unreliable, DESIGN_SPEC.md hex is source of truth
+- [03.1-01]: Dual-font system: Geist (sans) for UI/headings, Charter (serif) for body/content text
+- [03.1-01]: Charter font from charter-webfont npm package (official Matthew Carter distribution)
+- [03.1-01]: disabled opacity via utility class (disabled:opacity-50) not @theme token
 - [01-01]: Type-based organization over feature-based for flat structure
 - [01-02]: Header height fixed at h-16 for consistency
 - [01-02]: PageWrapper is opt-in for pages, not forced in layout
@@ -103,7 +108,7 @@ None yet.
 
 ### Known Bugs
 
-- **Add Video dialog UX (P2):** Full-screen gray overlay too aggressive, modal content translucent/hard to read, poor visual hierarchy. Needs redesign with solid backgrounds, reduced overlay, and polished shadcn-svelte patterns. See Phase 3.1.
+- **Add Video dialog UX (P2):** Full-screen gray overlay too aggressive, modal content translucent/hard to read, poor visual hierarchy. **CRITICAL FIX APPLIED:** Transparent background bug fixed in 03.1-01 (bg-background now resolves to #ffffff). Remaining work: reduce overlay opacity, improve layout spacing (Phase 3.1 plans 02-03).
 
 ### Blockers/Concerns
 
@@ -152,8 +157,8 @@ None — Phase 3 complete, Phase 3.1 (Dialog UX) inserted before Phase 4.
 
 ## Session Continuity
 
-Last session: 2026-02-07
-Stopped at: Phase 3 complete, docs committed
+Last session: 2026-02-10
+Stopped at: Completed 03.1-01-PLAN.md (Design Token System foundation)
 Resume file: None
 
 ### 2026-02-07 — Plan 01-05: Test Coverage

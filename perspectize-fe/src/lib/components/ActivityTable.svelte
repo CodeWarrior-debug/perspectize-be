@@ -27,9 +27,20 @@
 	const modules = [ClientSideRowModelModule];
 
 	const theme = themeQuartz.withParams({
-		fontFamily: 'Inter, sans-serif',
+		fontFamily: "'Geist', system-ui, sans-serif",
 		fontSize: 14,
-		headerFontSize: 14,
+		headerBackgroundColor: '#1a365d',
+		headerTextColor: '#ffffff',
+		headerFontWeight: 600,
+		oddRowBackgroundColor: '#f7fafc',
+		rowHoverColor: 'rgba(26, 54, 93, 0.06)',
+		borderColor: '#d4d4d4',
+		accentColor: '#1a365d',
+		foregroundColor: '#171717',
+		backgroundColor: '#ffffff',
+		selectedRowBackgroundColor: 'rgba(26, 54, 93, 0.08)',
+		columnHoverColor: 'rgba(26, 54, 93, 0.04)',
+		headerColumnResizeHandleColor: 'rgba(255, 255, 255, 0.5)',
 	});
 
 	const gridOptions: GridOptions<ContentRow> = {

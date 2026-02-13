@@ -105,6 +105,32 @@ Optional body explaining why, not what.
 ```
 Types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`
 
+## Approved Tools & Permissions
+
+Claude Code may use the following tools **without prompting** for this project:
+
+### File Operations
+- **Read**: Any file in `.planning/`, `perspectize-fe/src/`, `perspectize-go/`, `docs/`
+- **Edit/Write**: Any file in `.planning/` (design specs, roadmaps, plans), `perspectize-fe/src/`, `perspectize-go/` (excluding sensitive files)
+- **Glob/Grep**: Unlimited search across the codebase
+
+### Bash Commands
+- **Safe navigation**: `git`, `pnpm`, `npm`, `ls`, `pwd`, `cd`, `cat`, `head`, `tail`
+- **Git operations**: All git commands (clone, checkout, pull, push, commit, log, diff)
+- **Package management**: `pnpm install`, `pnpm run`
+- **Forbidden**: `rm -rf`, `sudo`, `chmod 777` (these require explicit permission)
+
+### Figma MCP Tools
+- **Design context**: `get_screenshot`, `get_design_context`, `get_metadata` — all Figma MCP tools auto-approved
+- **Design system**: `get_variable_defs`, `create_design_system_rules`
+- **File keys**: Design 1 (`K1HaZLeNwCckWvhoyAfRhj`), Radix 3.0 (`SyvrP9yYbrmCorofJK4Co8`), App 1 (`dAiiWM7FOsob5upzUjtocY`) — see [perspectize-fe/docs/FIGMA.md](perspectize-fe/docs/FIGMA.md)
+
+### Task & Execution Tools
+- **TaskCreate/TaskUpdate**: Creating and updating tasks from conversations
+- **Agents**: Launching Task tool subagents for exploration, planning, code review
+
+**Rationale:** These tools are safe for this workflow. The project uses GSD planning, TanStack + Svelte 5 stack, and Figma for design. File reads/edits focus on spec updates and source code. Bash is limited to safe operations.
+
 ## GSD Workflow
 
 Planning and execution artifacts in `.planning/`: `PROJECT.md`, `ROADMAP.md`, `STATE.md`, `phases/`. Branching: see [docs/GSD_BRANCHING.md](docs/GSD_BRANCHING.md).
@@ -119,9 +145,20 @@ Use `DATABASE_URL` with external endpoint from hosting provider. Note: Sevalla c
 
 ## Resources
 
+**Monorepo docs:**
 - [Architecture](docs/ARCHITECTURE.md) — System design and hexagonal architecture
 - [Local Development](docs/LOCAL_DEVELOPMENT.md) — Setup guide
 - [Agent Routing](docs/AGENTS.md) — AI agent navigation guide
 - [Domain Guide](docs/DOMAIN_GUIDE.md) — Domain layer rules and patterns
 - [Go Patterns](docs/GO_PATTERNS.md) — Error handling and DB query patterns
+
+**Frontend docs:**
+- [Frontend CLAUDE.md](perspectize-fe/CLAUDE.md) — SvelteKit, Svelte 5, TanStack Query patterns
+- [Design Spec](perspectize-fe/docs/DESIGN_SPEC.md) — Figma design system, color tokens, typography, component specs
+- [Figma Reference](perspectize-fe/docs/FIGMA.md) — File keys, pages, variables, code↔Figma mapping
+
+**Planning & backlog:**
+- [Feature Backlog](FEATURE_BACKLOG.md) — Future ideas and enhancements not tied to any milestone. Capture ideas here during development; evaluate when planning new work.
+
+**External references:**
 - [gqlgen](https://gqlgen.com/) | [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/) | [Effective Go](https://go.dev/doc/effective_go) | [PostgreSQL 17](https://www.postgresql.org/docs/17/)

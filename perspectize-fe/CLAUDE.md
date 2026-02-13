@@ -106,6 +106,30 @@ Queries use `graphql-request` with TanStack Svelte Query.
 
 **Do NOT:** Use `$query.data` (stores syntax) · Pass options object directly to `createQuery({...})` (must be function wrapper)
 
+## Icons (Lucide)
+
+Per-icon imports from `@lucide/svelte` for tree-shaking:
+
+```svelte
+<script lang="ts">
+  import XIcon from '@lucide/svelte/icons/x';
+  import PlusIcon from '@lucide/svelte/icons/plus';
+</script>
+
+<XIcon class="size-4" />
+```
+
+- Import path: `@lucide/svelte/icons/{kebab-case-name}`
+- Default size in buttons: `size-4` (applied via button base). Override with explicit `size-*` class.
+
+## Design Tokens
+
+All tokens defined in `src/app.css` under `@theme`. Full set: primary, secondary, muted, accent, destructive, card, popover, border, input, ring, rating colors, brand.
+
+- **Fonts:** Geist (UI/headings) + Charter (body/reading text)
+- **Colors:** Hex values in `--color-*` custom properties (Tailwind v4 convention)
+- **No external token pipeline** — tokens defined directly in CSS, consumed via Tailwind utilities
+
 ## AG Grid Svelte 5 Setup (CRITICAL)
 
 The `ag-grid-svelte5` wrapper bundles AG Grid v32.x internally. **Do NOT install `ag-grid-community` separately** — it causes version conflicts.
@@ -132,6 +156,11 @@ pnpm add ag-grid-svelte5 @ag-grid-community/core@32.2.1 @ag-grid-community/clien
 ```
 
 **Do NOT:** Import from `ag-grid-community` (use `@ag-grid-community/*`) · Import AG Grid CSS (use `themeQuartz.withParams()`) · Use `AgGridSvelte` (use `AgGridSvelte5Component`)
+
+## Figma Design Workflow
+
+- **[docs/FIGMA.md](docs/FIGMA.md)** — Figma file reference (file key, pages, variables, code↔Figma mapping)
+- **[docs/FIGMA_VERIFICATION.md](docs/FIGMA_VERIFICATION.md)** — Verification guide for Figma Make outputs
 
 ## Self-Verification (Chrome DevTools MCP)
 

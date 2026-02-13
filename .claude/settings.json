@@ -56,7 +56,17 @@
       "Bash(kill:*)",
       "Bash(pkill:*)",
       "Bash(lsof:*)",
-      "WebFetch"
+      "WebFetch",
+      "mcp__plugin_figma_figma__get_screenshot",
+      "mcp__plugin_figma_figma__get_design_context",
+      "mcp__plugin_figma_figma__get_metadata",
+      "mcp__plugin_figma_figma__get_variable_defs",
+      "mcp__plugin_figma_figma__get_code_connect_map",
+      "mcp__plugin_figma_figma__get_code_connect_suggestions",
+      "mcp__plugin_figma_figma__create_design_system_rules",
+      "mcp__plugin_figma_figma__whoami",
+      "mcp__plugin_figma_figma__add_code_connect_map",
+      "mcp__plugin_figma_figma__send_code_connect_mappings"
     ]
   },
   "enabledPlugins": {
@@ -81,6 +91,7 @@
     "figma@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,
-    "context7@claude-plugins-official": true
+    "context7@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true
   }
 }

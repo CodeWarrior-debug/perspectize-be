@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Data Layer + Activity** - TanStack Query integration, AG Grid table, user selector
 - [x] **Phase 2.1: Mobile Responsive Fixes** - Fix header overflow, pagination bar, and table layout at 375px (INSERTED)
 - [x] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
-- [ ] **Phase 3.1: Dialog UX Polish** - Redesign dialog with solid backgrounds, reduced overlay, polished shadcn patterns (INSERTED)
+- [ ] **Phase 3.1: Design Token System** - Implement all 27 Figma color variables, Geist + Charter typography, rating colors in code (INSERTED — rescoped)
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
 - [ ] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
 
@@ -88,22 +88,20 @@ Plans:
 - [x] 03-01-PLAN.md — YouTube URL validation utility, mutation definition, shadcn Dialog/Input/Label setup
 - [x] 03-02-PLAN.md — AddVideoDialog component with mutation, error handling, Header wiring, visual checkpoint
 
-### Phase 3.1: Dialog UX Polish (INSERTED)
-**Goal**: Redesign Add Video dialog (and establish dialog patterns for Phase 4) with solid backgrounds, proper overlay, and polished shadcn-svelte styling informed by best-practice examples
+### Phase 3.1: Design Token System (INSERTED — rescoped from Dialog UX Polish)
+**Goal**: Implement all Figma design tokens in code — 27 color variables, Geist + Charter dual-font typography, rating colors — so that all shadcn components render correctly and Phase 3.2+ can build on a complete token foundation
 **Depends on**: Phase 3
 **Success Criteria** (what must be TRUE):
-  1. Dialog has solid opaque background — no translucency, no bleed-through of table content
-  2. Overlay is subtle (not full-screen dark gray) or replaced with alternative pattern
-  3. Form content is clearly readable with proper visual hierarchy
-  4. Dialog pattern established for reuse in Phase 4 (Add Perspective)
-  5. Mobile 375px dialog is usable and well-styled
-**Plans**: 0 plans
+  1. All 22 Theme/Light color tokens from DESIGN_SPEC.md are defined in app.css and usable via Tailwind classes (bg-background, text-foreground, etc.)
+  2. All 4 rating color tokens are defined (rating-positive, rating-neutral, rating-negative, rating-undecided)
+  3. Charter font is loaded and available via font-serif utility class
+  4. Geist + Charter dual-font system works (Geist for UI, Charter for body/content)
+  5. Existing components (Dialog, Header, shadcn primitives) render correctly with the new tokens — no visual regressions
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 3.1 to break down)
-
-**Details:**
-Research well-regarded shadcn dialog implementations, gather user preferences on desired look/feel, and implement polished dialog UX that sets the pattern for all future dialogs.
+- [ ] 03.1-01-PLAN.md — Complete color token system (27 tokens) + Charter font setup in app.css
+- [ ] 03.1-02-PLAN.md — AG Grid branded theming + visual verification checkpoint
 
 ### Phase 4: Add Perspective Flow
 **Goal**: Users can create perspectives on videos with ratings, Like text, and Review text
@@ -334,7 +332,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 4 -> 5 -> 6 -> 7 -
 | 2. Data Layer + Activity | 2/2 | Complete | 2026-02-07 |
 | 2.1 Mobile Responsive Fixes | 2/2 | Complete | 2026-02-07 |
 | 3. Add Video Flow | 2/2 | Complete | 2026-02-07 |
-| 3.1 Dialog UX Polish | 0/0 | Not planned | - |
+| 3.1 Design Token System | 0/2 | Planned | - |
 | 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 1/3 | In progress | - |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |

@@ -7,12 +7,85 @@
 	font-display: swap;
 }
 
-@theme {
-	--default-font-family: 'Geist', system-ui, -apple-system, sans-serif;
+@font-face {
+	font-family: 'Charter';
+	src: url('/fonts/Charter-Regular.woff2') format('woff2');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
 
-	/* Custom navy primary color */
-	--color-primary: oklch(0.333 0.077 257.109); /* #1a365d */
-	--color-primary-foreground: oklch(0.983 0.004 236.862);
+@font-face {
+	font-family: 'Charter';
+	src: url('/fonts/Charter-Italic.woff2') format('woff2');
+	font-weight: 400;
+	font-style: italic;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Charter';
+	src: url('/fonts/Charter-Bold.woff2') format('woff2');
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
+}
+
+@theme {
+	/* Typography */
+	--default-font-family: 'Geist', system-ui, -apple-system, sans-serif;
+	--font-family-serif: 'Charter', 'Georgia', 'Times New Roman', serif;
+
+	/* Theme/Light — Base */
+	--color-background: #ffffff;
+	--color-foreground: #171717;
+
+	/* Theme/Light — Card */
+	--color-card: #ffffff;
+	--color-card-foreground: #171717;
+
+	/* Theme/Light — Popover */
+	--color-popover: #ffffff;
+	--color-popover-foreground: #171717;
+
+	/* Theme/Light — Primary */
+	--color-primary: #1a365d;
+	--color-primary-hover: #2d3748;
+	--color-primary-foreground: #ffffff;
+
+	/* Theme/Light — Secondary */
+	--color-secondary: #f5f5f5;
+	--color-secondary-hover: rgba(245, 245, 245, 0.8);
+	--color-secondary-foreground: #525252;
+
+	/* Theme/Light — Muted */
+	--color-muted: #f5f5f5;
+	--color-muted-foreground: #525252;
+
+	/* Theme/Light — Accent */
+	--color-accent: #f7fafc;
+	--color-accent-foreground: #2d3748;
+
+	/* Theme/Light — Destructive */
+	--color-destructive: #dc2626;
+	--color-destructive-hover: #b91c1c;
+	--color-destructive-foreground: #ffffff;
+
+	/* Theme/Light — Borders & Input */
+	--color-border: #d4d4d4;
+	--color-input: #d4d4d4;
+
+	/* Theme/Light — Focus Ring */
+	--color-ring: #1a365d;
+
+	/* Rating Colors */
+	--color-rating-positive: #16a34a;
+	--color-rating-neutral: #ca8a04;
+	--color-rating-negative: #dc2626;
+	--color-rating-undecided: #64748b;
+
+	/* Brand */
+	--color-logo-purple: #8b5cf6;
 }
 
 /* AG Grid pagination mobile responsive fix (GitHub issue #9239) */
