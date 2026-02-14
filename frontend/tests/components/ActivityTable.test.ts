@@ -116,7 +116,7 @@ describe('ActivityTable', () => {
 		// - queryKeys.content.list() with all params (sortBy, sortOrder, search, first, after)
 		// - Derived values for rowData, totalCount, loading
 		// - No manual fetchData() function
-		// - No content-added event listener
+		// - Query invalidation for cache updates (no custom events)
 		expect(true).toBe(true);
 	});
 });
