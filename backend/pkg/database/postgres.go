@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
 	"strconv"
@@ -9,6 +10,8 @@ import (
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
+	gormPostgres "gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 // PoolConfig holds database connection pool configuration
@@ -77,5 +80,44 @@ func Ping(ctx context.Context, db *sqlx.DB) error {
 		return fmt.Errorf("database ping failed: %w", err)
 	}
 
+	return nil
+}
+
+// ConnectGORM creates a new PostgreSQL database connection using GORM
+func ConnectGORM(dsn string, pool PoolConfig) (*gorm.DB, error) {
+	// Open raw sql.DB with pgx driver (reuse existing driver)
+	sqlDB, err := sql.Open("pgx", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
+
+	// Configure pool on the raw connection
+	sqlDB.SetMaxOpenConns(pool.MaxOpenConns)
+	sqlDB.SetMaxIdleConns(pool.MaxIdleConns)
+	sqlDB.SetConnMaxLifetime(pool.ConnMaxLifetime)
+
+	// Wrap with GORM
+	gormDB, err := gorm.Open(gormPostgres.New(gormPostgres.Config{
+		Conn: sqlDB,
+	}), &gorm.Config{})
+	if err != nil {
+		sqlDB.Close()
+		return nil, fmt.Errorf("failed to initialize GORM: %w", err)
+	}
+
+	return gormDB, nil
+}
+
+// PingGORM checks if the GORM database connection is alive
+func PingGORM(ctx context.Context, db *gorm.DB) error {
+	sqlDB, err := db.DB()
+	if err != nil {
+		return fmt.Errorf("failed to get underlying DB: %w", err)
+	}
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	if err := sqlDB.PingContext(ctx); err != nil {
+		return fmt.Errorf("database ping failed: %w", err)
+	}
 	return nil
 }
