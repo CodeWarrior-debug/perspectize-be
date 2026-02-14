@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 
 ## Current Position
 
-Phase: 7 of 5 (Backend Architecture)
-Plan: 3/3 complete
-Status: Phase 7 backend architecture hardening complete
-Last activity: 2026-02-14 — Completed 07-03-PLAN.md
+Phase: 7.1 of 5 (ORM Migration - sqlx to GORM)
+Plan: 1/3 complete
+Status: In progress — GORM foundation established
+Last activity: 2026-02-14 — Completed 07.1-01-PLAN.md
 
-Progress: [██████████] 100%
+Progress: [████████████░] 95%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 18
-- Average duration: 4.7 min
-- Total execution time: 1.4 hours
+- Total plans completed: 19
+- Average duration: 4.5 min
+- Total execution time: 1.5 hours
 
 **By Phase:**
 
@@ -33,10 +33,11 @@ Progress: [██████████] 100%
 | 03.1-design-token-system | 2 | 6 min | 3 min |
 | 03.2-activity-page-beta-quality | 3 | 16 min | 5.3 min |
 | 07-backend-architecture | 3 | 7 min | 2.3 min |
+| 07.1-orm-migration-sqlx-to-gorm | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 3 min, 7 min, 6 min, 3 min, 1 min (avg: 4 min)
-- Trend: Excellent — Consistent fast execution across backend and frontend work
+- Last 5 plans: 7 min, 6 min, 3 min, 1 min, 2 min (avg: 3.8 min)
+- Trend: Excellent — Fast execution continues with GORM migration
 
 *Updated after each plan completion*
 
@@ -112,6 +113,12 @@ Recent decisions affecting current work:
 - [07-03]: chi router with middleware stack (RequestID, RealIP, Logger, Recoverer)
 - [07-03]: Separate liveness (/health) and readiness (/ready with DB ping) endpoints
 - [07-03]: 30s graceful shutdown timeout on SIGTERM/SIGINT
+- [07.1-01]: Hex-clean GORM pattern: separate GORM models from domain models with bidirectional mappers
+- [07.1-01]: GORM models use custom StringArray/Int64Array/JSONBArray types (not lib/pq)
+- [07.1-01]: Privacy/ReviewStatus enums stored lowercase in DB, UPPERCASE in domain (mappers handle conversion)
+- [07.1-01]: Parts array stored as int64[] in DB, converted to []int in domain
+- [07.1-01]: CategorizedRatings stored as jsonb[] with JSON marshal/unmarshal in mappers
+- [07.1-01]: ConnectGORM uses same pgx driver as sqlx for consistency
 
 ### Roadmap Evolution
 
@@ -273,5 +280,5 @@ Resume file: None
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 07-02-PLAN.md
+Stopped at: Completed 07.1-01-PLAN.md
 Resume file: None
