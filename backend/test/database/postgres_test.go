@@ -8,12 +8,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestConnect_ValidDSN(t *testing.T) {
+func TestConnectGORM_ValidDSN(t *testing.T) {
 	// Use test database connection
 	dsn := "host=localhost port=5432 user=testuser password=testpass dbname=testdb sslmode=disable"
 	poolCfg := database.DefaultPoolConfig()
 
-	db, err := database.Connect(dsn, poolCfg)
+	db, err := database.ConnectGORM(dsn, poolCfg)
 
 	if err != nil {
 		t.Skip("Skipping test - PostgreSQL not available. Run 'make docker-up' to start database.")
@@ -22,38 +22,40 @@ func TestConnect_ValidDSN(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, db)
 
-	defer db.Close()
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
 
 	// Verify connection works
-	err = database.Ping(context.Background(), db)
+	err = database.PingGORM(context.Background(), db)
 	assert.NoError(t, err)
 }
 
-func TestConnect_InvalidDSN(t *testing.T) {
+func TestConnectGORM_InvalidDSN(t *testing.T) {
 	dsn := "host=invalid port=9999 user=fake password=fake dbname=fake sslmode=disable"
 	poolCfg := database.DefaultPoolConfig()
 
-	db, err := database.Connect(dsn, poolCfg)
+	db, err := database.ConnectGORM(dsn, poolCfg)
 
 	assert.Error(t, err)
 	assert.Nil(t, db)
-	assert.Contains(t, err.Error(), "failed to connect to database")
+	assert.Contains(t, err.Error(), "failed to initialize GORM")
 }
 
-func TestPing_Success(t *testing.T) {
+func TestPingGORM_Success(t *testing.T) {
 	dsn := "host=localhost port=5432 user=testuser password=testpass dbname=testdb sslmode=disable"
 	poolCfg := database.DefaultPoolConfig()
 
-	db, err := database.Connect(dsn, poolCfg)
+	db, err := database.ConnectGORM(dsn, poolCfg)
 
 	if err != nil {
 		t.Skip("Skipping test - PostgreSQL not available")
 	}
 
-	defer db.Close()
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
 
 	ctx := context.Background()
-	err = database.Ping(ctx, db)
+	err = database.PingGORM(ctx, db)
 
 	assert.NoError(t, err)
 }

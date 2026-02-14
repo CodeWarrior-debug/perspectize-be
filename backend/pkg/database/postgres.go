@@ -9,7 +9,6 @@ import (
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/jmoiron/sqlx"
 	gormPostgres "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -53,34 +52,6 @@ func PoolConfigFromEnv() PoolConfig {
 	}
 
 	return cfg
-}
-
-// Connect creates a new PostgreSQL database connection
-func Connect(dsn string, pool PoolConfig) (*sqlx.DB, error) {
-	// *TEMP* - pgx is the PostgreSQL driver, sqlx wraps database/sql with convenience methods
-	db, err := sqlx.Connect("pgx", dsn)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
-	}
-
-	// Configure connection pool
-	db.SetMaxOpenConns(pool.MaxOpenConns)
-	db.SetMaxIdleConns(pool.MaxIdleConns)
-	db.SetConnMaxLifetime(pool.ConnMaxLifetime)
-
-	return db, nil
-}
-
-// Ping checks if the database connection is alive
-func Ping(ctx context.Context, db *sqlx.DB) error {
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-
-	if err := db.PingContext(ctx); err != nil {
-		return fmt.Errorf("database ping failed: %w", err)
-	}
-
-	return nil
 }
 
 // ConnectGORM creates a new PostgreSQL database connection using GORM
