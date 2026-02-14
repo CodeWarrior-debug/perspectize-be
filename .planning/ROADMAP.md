@@ -174,8 +174,8 @@ Plans:
 
 Plans:
 - [x] 05-01-PLAN.md — Coverage verification — SKIPPED (thresholds already met: 87.6% stmts, 90.1% lines)
-- [ ] 05-02-PLAN.md — DigitalOcean App Platform static site deployment (cleanup GitHub Pages artifacts, deploy frontend)
-- [ ] 05-03-PLAN.md — CORS configuration with rs/cors and DigitalOcean App Platform frontend origin
+- [x] 05-02-PLAN.md — Sevalla static site deployment (cleanup GitHub Pages artifacts, deploy frontend) — COMPLETED (deployed manually)
+- [ ] 05-03-PLAN.md — CORS configuration with rs/cors and Sevalla frontend origin
 
 ---
 
@@ -185,7 +185,7 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
 
 - [ ] **Phase 6: Error Handling & Data Integrity** - Fix silent failures, error leakage, and config validation
 - [x] **Phase 7: Backend Architecture** - Hexagonal cleanup, dependency injection, server infrastructure
-- [ ] **Phase 7.1: ORM Migration — sqlx to GORM** - Replace sqlx with GORM using hex-clean separate model pattern, gorm-cursor-paginator (INSERTED)
+- [x] **Phase 7.1: ORM Migration — sqlx to GORM** - Replace sqlx with GORM using hex-clean separate model pattern, gorm-cursor-paginator (INSERTED)
 - [ ] **Phase 8: API & Schema Quality** - Fix pagination, GraphQL types, race conditions, nested resolvers
 - [ ] **Phase 9: Security Hardening** - Authentication, rate limiting, query complexity, headers, HTTPS
 - [ ] **Phase 10: Frontend Quality & Test Coverage** - XSS fix, codegen, error boundaries, cleanup, test gaps
@@ -270,9 +270,9 @@ Plans:
 **Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 07.1-01-PLAN.md — GORM deps, models, mappers, ConnectGORM, GormUserRepository
-- [ ] 07.1-02-PLAN.md — GormContentRepository + GormPerspectiveRepository (pagination, JSONB sort, dynamic filters)
-- [ ] 07.1-03-PLAN.md — Wire GORM in main.go, archive sqlx files, remove sqlx dependency, verify
+- [x] 07.1-01-PLAN.md — GORM deps, models, mappers, ConnectGORM, GormUserRepository
+- [x] 07.1-02-PLAN.md — GormContentRepository + GormPerspectiveRepository (pagination, JSONB sort, dynamic filters)
+- [x] 07.1-03-PLAN.md — Wire GORM in main.go, archive sqlx files, remove sqlx dependency, verify
 
 **Architecture decision:**
 - **Chosen:** GORM with separate GORM models (hex-clean)
@@ -423,7 +423,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6
 | 5. Testing + Deployment | 1/3 | In progress | - |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
 | 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |
-| 7.1 ORM Migration (sqlx → GORM) | 0/3 | Planned | - |
+| 7.1 ORM Migration (sqlx → GORM) | 3/3 | Complete | 2026-02-14 |
 | 8. API & Schema Quality | 0/0 | Not started | - |
 | 9. Security Hardening | 0/0 | Not started | - |
 | 10. Frontend Quality & Test Coverage | 0/0 | Not started | - |
