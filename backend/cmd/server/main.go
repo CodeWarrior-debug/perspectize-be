@@ -31,10 +31,21 @@ func main() {
 		}
 	}
 
-	// Load config
-	cfg, err := config.Load("config/config.example.json")
+	// Load config (path from env or default)
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		configPath = "config/config.example.json"
+	}
+	cfg, err := config.Load(configPath)
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	// Validate DATABASE_URL if set
+	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
+		if err := config.ValidateDatabaseURL(dbURL); err != nil {
+			log.Fatalf("Invalid DATABASE_URL: %v", err)
+		}
 	}
 
 	dsn := cfg.Database.GetDSN()
@@ -46,16 +57,17 @@ func main() {
 		slog.Info("connecting to database", "host", cfg.Database.Host, "port", cfg.Database.Port, "name", cfg.Database.Name)
 	}
 
-	// Connect to database
-	db, err := database.Connect(dsn)
+	// Connect to database with configurable pool
+	poolCfg := database.PoolConfigFromEnv()
+	db, err := database.Connect(dsn, poolCfg)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatalf("Failed to connect to database %s: %v", config.SanitizeDSN(dsn), err)
 	}
 	defer db.Close()
 
 	// Test connection
 	if err := database.Ping(context.Background(), db); err != nil {
-		log.Fatalf("Database ping failed: %v", err)
+		log.Fatalf("Database ping failed for %s: %v", config.SanitizeDSN(dsn), err)
 	}
 
 	slog.Info("successfully connected to database")

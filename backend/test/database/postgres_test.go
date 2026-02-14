@@ -11,8 +11,9 @@ import (
 func TestConnect_ValidDSN(t *testing.T) {
 	// Use test database connection
 	dsn := "host=localhost port=5432 user=testuser password=testpass dbname=testdb sslmode=disable"
+	poolCfg := database.DefaultPoolConfig()
 
-	db, err := database.Connect(dsn)
+	db, err := database.Connect(dsn, poolCfg)
 
 	if err != nil {
 		t.Skip("Skipping test - PostgreSQL not available. Run 'make docker-up' to start database.")
@@ -30,8 +31,9 @@ func TestConnect_ValidDSN(t *testing.T) {
 
 func TestConnect_InvalidDSN(t *testing.T) {
 	dsn := "host=invalid port=9999 user=fake password=fake dbname=fake sslmode=disable"
+	poolCfg := database.DefaultPoolConfig()
 
-	db, err := database.Connect(dsn)
+	db, err := database.Connect(dsn, poolCfg)
 
 	assert.Error(t, err)
 	assert.Nil(t, db)
@@ -40,8 +42,9 @@ func TestConnect_InvalidDSN(t *testing.T) {
 
 func TestPing_Success(t *testing.T) {
 	dsn := "host=localhost port=5432 user=testuser password=testpass dbname=testdb sslmode=disable"
+	poolCfg := database.DefaultPoolConfig()
 
-	db, err := database.Connect(dsn)
+	db, err := database.Connect(dsn, poolCfg)
 
 	if err != nil {
 		t.Skip("Skipping test - PostgreSQL not available")
