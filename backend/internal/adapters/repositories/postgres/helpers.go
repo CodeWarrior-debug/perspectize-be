@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
+	paginator "github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 )
 
 // JSONBArray is a custom type for PostgreSQL jsonb[] columns.
@@ -158,4 +159,117 @@ func intSliceToInt64Array(ints []int) Int64Array {
 		result[i] = int64(v)
 	}
 	return result
+}
+
+// buildContentSortRules builds paginator rules for content sorting
+// Returns slice with primary sort rule + ID tie-breaker rule
+func buildContentSortRules(sortBy domain.ContentSortBy, order domain.SortOrder) []paginator.Rule {
+	// Map domain.SortOrder to paginator.Order
+	var paginatorOrder paginator.Order
+	if order == domain.SortOrderAsc {
+		paginatorOrder = paginator.ASC
+	} else {
+		paginatorOrder = paginator.DESC
+	}
+
+	var primaryRule paginator.Rule
+
+	switch sortBy {
+	case domain.ContentSortByViewCount:
+		primaryRule = paginator.Rule{
+			Key:             "ViewCount",
+			Order:           paginatorOrder,
+			SQLRepr:         "(response->'items'->0->'statistics'->>'viewCount')::BIGINT",
+			NULLReplacement: int64(0),
+		}
+	case domain.ContentSortByLikeCount:
+		primaryRule = paginator.Rule{
+			Key:             "LikeCount",
+			Order:           paginatorOrder,
+			SQLRepr:         "(response->'items'->0->'statistics'->>'likeCount')::BIGINT",
+			NULLReplacement: int64(0),
+		}
+	case domain.ContentSortByPublishedAt:
+		primaryRule = paginator.Rule{
+			Key:             "PublishedAt",
+			Order:           paginatorOrder,
+			SQLRepr:         "response->'items'->0->'snippet'->>'publishedAt'",
+			NULLReplacement: "",
+		}
+	case domain.ContentSortByUpdatedAt:
+		primaryRule = paginator.Rule{
+			Key:   "UpdatedAt",
+			Order: paginatorOrder,
+		}
+	case domain.ContentSortByName:
+		primaryRule = paginator.Rule{
+			Key:   "Name",
+			Order: paginatorOrder,
+		}
+	case domain.ContentSortByCreatedAt:
+		primaryRule = paginator.Rule{
+			Key:   "CreatedAt",
+			Order: paginatorOrder,
+		}
+	default:
+		// Default to CreatedAt DESC
+		primaryRule = paginator.Rule{
+			Key:   "CreatedAt",
+			Order: paginator.DESC,
+		}
+	}
+
+	// Tie-breaker: ID with same sort direction as primary
+	tieBreaker := paginator.Rule{
+		Key:   "ID",
+		Order: paginatorOrder,
+	}
+
+	return []paginator.Rule{primaryRule, tieBreaker}
+}
+
+// buildPerspectiveSortRules builds paginator rules for perspective sorting
+// Returns slice with primary sort rule + ID tie-breaker rule
+func buildPerspectiveSortRules(sortBy domain.PerspectiveSortBy, order domain.SortOrder) []paginator.Rule {
+	// Map domain.SortOrder to paginator.Order
+	var paginatorOrder paginator.Order
+	if order == domain.SortOrderAsc {
+		paginatorOrder = paginator.ASC
+	} else {
+		paginatorOrder = paginator.DESC
+	}
+
+	var primaryRule paginator.Rule
+
+	switch sortBy {
+	case domain.PerspectiveSortByUpdatedAt:
+		primaryRule = paginator.Rule{
+			Key:   "UpdatedAt",
+			Order: paginatorOrder,
+		}
+	case domain.PerspectiveSortByClaim:
+		primaryRule = paginator.Rule{
+			Key:   "Claim",
+			Order: paginatorOrder,
+		}
+	case domain.PerspectiveSortByCreatedAt:
+		primaryRule = paginator.Rule{
+			Key:   "CreatedAt",
+			Order: paginatorOrder,
+		}
+	default:
+		// Default to CreatedAt DESC
+		primaryRule = paginator.Rule{
+			Key:   "CreatedAt",
+			Order: paginator.DESC,
+		}
+	}
+
+	// Tie-breaker: ID with same sort direction as primary
+	tieBreaker := paginator.Rule{
+		Key:   "ID",
+		Order: paginatorOrder,
+	}
+
+	return []paginator.Rule{primaryRule, tieBreaker}
 }
