@@ -104,3 +104,8 @@ func (c *Client) GetVideoMetadata(ctx context.Context, videoID string) (*service
 		Response:    body,
 	}, nil
 }
+
+// ExtractVideoID extracts the video ID from a YouTube URL
+func (c *Client) ExtractVideoID(url string) (string, error) {
+	return ExtractVideoID(url)
+}

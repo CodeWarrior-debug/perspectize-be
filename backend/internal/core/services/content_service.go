@@ -25,7 +25,7 @@ func NewContentService(repo repositories.ContentRepository, yt portservices.YouT
 }
 
 // CreateFromYouTube creates content from a YouTube URL
-func (s *ContentService) CreateFromYouTube(ctx context.Context, url string, extractVideoID func(string) (string, error)) (*domain.Content, error) {
+func (s *ContentService) CreateFromYouTube(ctx context.Context, url string) (*domain.Content, error) {
 	// Check if content already exists for this URL
 	existing, err := s.repo.GetByURL(ctx, url)
 	if err == nil && existing != nil {
@@ -36,7 +36,7 @@ func (s *ContentService) CreateFromYouTube(ctx context.Context, url string, extr
 	}
 
 	// Extract video ID from URL
-	videoID, err := extractVideoID(url)
+	videoID, err := s.youtubeClient.ExtractVideoID(url)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", domain.ErrInvalidURL, err)
 	}
