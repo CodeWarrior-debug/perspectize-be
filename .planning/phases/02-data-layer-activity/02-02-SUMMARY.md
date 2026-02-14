@@ -27,15 +27,15 @@ tech-stack:
 
 key-files:
   created:
-    - perspectize-fe/src/lib/components/ActivityTable.svelte
-    - perspectize-fe/src/lib/components/UserSelector.svelte
-    - perspectize-fe/tests/components/ActivityTable.test.ts
-    - perspectize-fe/tests/components/UserSelector.test.ts
-    - perspectize-fe/tests/helpers/TestWrapper.svelte
+    - fe/src/lib/components/ActivityTable.svelte
+    - fe/src/lib/components/UserSelector.svelte
+    - fe/tests/components/ActivityTable.test.ts
+    - fe/tests/components/UserSelector.test.ts
+    - fe/tests/helpers/TestWrapper.svelte
   modified:
-    - perspectize-fe/src/routes/+page.svelte (replaced placeholder with real Activity page)
-    - perspectize-fe/src/lib/components/Header.svelte (added UserSelector)
-    - perspectize-fe/tests/components/Header.test.ts (mocked UserSelector)
+    - fe/src/routes/+page.svelte (replaced placeholder with real Activity page)
+    - fe/src/lib/components/Header.svelte (added UserSelector)
+    - fe/tests/components/Header.test.ts (mocked UserSelector)
 
 key-decisions:
   - "TanStack Query function wrapper pattern for Svelte 5 compatibility"
@@ -83,16 +83,16 @@ Each task was committed atomically:
 ## Files Created/Modified
 
 ### Created
-- `perspectize-fe/src/lib/components/ActivityTable.svelte` - AG Grid wrapper with 5 columns, pagination, Quick Filter
-- `perspectize-fe/src/lib/components/UserSelector.svelte` - User dropdown with TanStack Query
-- `perspectize-fe/tests/components/ActivityTable.test.ts` - 4 tests
-- `perspectize-fe/tests/components/UserSelector.test.ts` - 2 tests
-- `perspectize-fe/tests/helpers/TestWrapper.svelte` - QueryClientProvider wrapper for testing
+- `fe/src/lib/components/ActivityTable.svelte` - AG Grid wrapper with 5 columns, pagination, Quick Filter
+- `fe/src/lib/components/UserSelector.svelte` - User dropdown with TanStack Query
+- `fe/tests/components/ActivityTable.test.ts` - 4 tests
+- `fe/tests/components/UserSelector.test.ts` - 2 tests
+- `fe/tests/helpers/TestWrapper.svelte` - QueryClientProvider wrapper for testing
 
 ### Modified
-- `perspectize-fe/src/routes/+page.svelte` - Replaced placeholder with real Activity page (TanStack Query + ActivityTable)
-- `perspectize-fe/src/lib/components/Header.svelte` - Added UserSelector before Add Video button
-- `perspectize-fe/tests/components/Header.test.ts` - Mocked UserSelector to avoid QueryClient dependency
+- `fe/src/routes/+page.svelte` - Replaced placeholder with real Activity page (TanStack Query + ActivityTable)
+- `fe/src/lib/components/Header.svelte` - Added UserSelector before Add Video button
+- `fe/tests/components/Header.test.ts` - Mocked UserSelector to avoid QueryClient dependency
 
 ## Decisions Made
 
@@ -112,7 +112,7 @@ Each task was committed atomically:
 - **Found during:** Task 2 (Type checking)
 - **Issue:** TanStack Query v6 for Svelte 5 requires function wrapper `createQuery(() => ({ ... }))` not direct object `createQuery({ ... })`
 - **Fix:** Updated UserSelector and +page.svelte to use function wrapper pattern
-- **Files modified:** `perspectize-fe/src/lib/components/UserSelector.svelte`, `perspectize-fe/src/routes/+page.svelte`
+- **Files modified:** `fe/src/lib/components/UserSelector.svelte`, `fe/src/routes/+page.svelte`
 - **Verification:** All 61 tests passing
 - **Committed in:** 45c3af2 (Task 2 commit)
 
@@ -120,7 +120,7 @@ Each task was committed atomically:
 - **Found during:** Task 2 (Type checking)
 - **Issue:** TanStack Query in Svelte 5 returns reactive object, not a Svelte store - access with `query.data` not `$query.data`
 - **Fix:** Removed $ prefix from all query result accesses
-- **Files modified:** `perspectize-fe/src/routes/+page.svelte`, `perspectize-fe/src/lib/components/UserSelector.svelte`
+- **Files modified:** `fe/src/routes/+page.svelte`, `fe/src/lib/components/UserSelector.svelte`
 - **Verification:** Type checking passes, tests pass
 - **Committed in:** 45c3af2 (Task 2 commit)
 
@@ -128,7 +128,7 @@ Each task was committed atomically:
 - **Found during:** Task 2 (Type checking warning)
 - **Issue:** Loading prop passed to gridOptions captured initial value only (not reactive)
 - **Fix:** Moved loading state update to separate `$effect` that watches the loading prop
-- **Files modified:** `perspectize-fe/src/lib/components/ActivityTable.svelte`
+- **Files modified:** `fe/src/lib/components/ActivityTable.svelte`
 - **Verification:** Component works correctly with reactive loading state
 - **Committed in:** 45c3af2 (Task 2 commit)
 

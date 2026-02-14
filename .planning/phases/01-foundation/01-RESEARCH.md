@@ -51,9 +51,9 @@ The established libraries/tools for this domain:
 **Installation:**
 ```bash
 # Create SvelteKit project with Svelte 5 and TypeScript
-npx sv create perspectize-fe --template minimal --types typescript --no-add-ons
+npx sv create fe --template minimal --types typescript --no-add-ons
 
-cd perspectize-fe
+cd fe
 
 # Add Tailwind CSS v4
 npx sv add tailwindcss
@@ -79,7 +79,7 @@ npm install -D @testing-library/svelte jsdom vitest-svelte
 ### Recommended Project Structure
 
 ```
-perspectize-fe/
+fe/
 ├── src/
 │   ├── lib/
 │   │   ├── components/        # All reusable UI components (flat structure)

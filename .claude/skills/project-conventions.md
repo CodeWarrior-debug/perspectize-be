@@ -291,8 +291,8 @@ import (
     "github.com/jmoiron/sqlx"
 
     // Internal
-    "github.com/codewarrior-debug/perspectize-be/internal/core/domain"
-    "github.com/codewarrior-debug/perspectize-be/internal/core/services"
+    "github.com/codewarrior-debug/perspectize/backend/internal/core/domain"
+    "github.com/codewarrior-debug/perspectize/backend/internal/core/services"
 )
 ```
 

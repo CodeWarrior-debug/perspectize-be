@@ -9,10 +9,10 @@ conditions:
     pattern: rm\s+-rf
   - field: command
     operator: not_contains
-    pattern: perspectize-fe
+    pattern: fe
   - field: command
     operator: not_contains
-    pattern: perspectize-go
+    pattern: backend
   - field: command
     operator: not_contains
     pattern: node_modules
@@ -30,8 +30,8 @@ conditions:
 🚫 **BLOCKED: rm -rf outside safe directories**
 
 `rm -rf` is only allowed in these safe directories:
-- `perspectize-fe/` (frontend project)
-- `perspectize-go/` (backend project)
+- `fe/` (frontend project)
+- `backend/` (backend project)
 - `node_modules/` (dependencies)
 - `.svelte-kit/` (SvelteKit cache)
 - `build/` or `dist/` (build outputs)

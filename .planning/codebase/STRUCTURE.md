@@ -5,8 +5,8 @@
 ## Directory Layout
 
 ```
-perspectize-be/ (repository root)
-├── perspectize-go/                 # Go GraphQL backend (ACTIVE)
+perspectize/ (repository root)
+├── backend/                 # Go GraphQL backend (ACTIVE)
 │   ├── cmd/server/
 │   │   └── main.go                 # Server entry point, dependency wiring
 │   │
@@ -87,7 +87,7 @@ perspectize-be/ (repository root)
 │   └── README.md
 │
 │
-├── perspectize-fe/                 # SvelteKit frontend (ACTIVE)
+├── fe/                 # SvelteKit frontend (ACTIVE)
 │   ├── src/
 │   │   ├── routes/                 # SvelteKit file-based routing
 │   │   │   ├── +layout.svelte      # Root layout (QueryClientProvider, Header, Toaster)
@@ -144,7 +144,7 @@ perspectize-be/ (repository root)
 │   └── README.md
 │
 │
-├── perspectize-be/                 # Legacy C# (DEPRECATED - ignore)
+├── perspectize/                 # Legacy C# (DEPRECATED - ignore)
 │   ├── Services/
 │   ├── controllers/
 │   └── ... (legacy code)
@@ -182,7 +182,7 @@ perspectize-be/ (repository root)
 
 ## Directory Purposes
 
-### Backend (perspectize-go/)
+### Backend (backend/)
 
 **`cmd/server/`**
 - Entry point for the application
@@ -231,7 +231,7 @@ perspectize-be/ (repository root)
 - Configuration files
 - `config.example.json` — Configuration template
 
-### Frontend (perspectize-fe/)
+### Frontend (fe/)
 
 **`src/routes/`**
 - SvelteKit file-based routing
@@ -271,59 +271,59 @@ perspectize-be/ (repository root)
 ## Key File Locations
 
 ### Backend Entry Points
-- `perspectize-go/cmd/server/main.go` — Application startup
-- `perspectize-go/schema.graphql` — GraphQL schema definition
-- `perspectize-go/gqlgen.yml` — gqlgen code generation config
+- `backend/cmd/server/main.go` — Application startup
+- `backend/schema.graphql` — GraphQL schema definition
+- `backend/gqlgen.yml` — gqlgen code generation config
 
 ### Backend Configuration
-- `perspectize-go/config/config.example.json` — Config template
-- `perspectize-go/.env.example` — Environment variables template
-- `perspectize-go/Makefile` — Build commands and targets
+- `backend/config/config.example.json` — Config template
+- `backend/.env.example` — Environment variables template
+- `backend/Makefile` — Build commands and targets
 
 ### Backend Domain Models
-- `perspectize-go/internal/core/domain/content.go`
-- `perspectize-go/internal/core/domain/perspective.go`
-- `perspectize-go/internal/core/domain/user.go`
-- `perspectize-go/internal/core/domain/pagination.go`
-- `perspectize-go/internal/core/domain/errors.go`
+- `backend/internal/core/domain/content.go`
+- `backend/internal/core/domain/perspective.go`
+- `backend/internal/core/domain/user.go`
+- `backend/internal/core/domain/pagination.go`
+- `backend/internal/core/domain/errors.go`
 
 ### Backend Services
-- `perspectize-go/internal/core/services/content_service.go`
-- `perspectize-go/internal/core/services/perspective_service.go`
-- `perspectize-go/internal/core/services/user_service.go`
+- `backend/internal/core/services/content_service.go`
+- `backend/internal/core/services/perspective_service.go`
+- `backend/internal/core/services/user_service.go`
 
 ### Backend Repositories
-- `perspectize-go/internal/adapters/repositories/postgres/content_repository.go`
-- `perspectize-go/internal/adapters/repositories/postgres/perspective_repository.go`
-- `perspectize-go/internal/adapters/repositories/postgres/user_repository.go`
+- `backend/internal/adapters/repositories/postgres/content_repository.go`
+- `backend/internal/adapters/repositories/postgres/perspective_repository.go`
+- `backend/internal/adapters/repositories/postgres/user_repository.go`
 
 ### Backend GraphQL
-- `perspectize-go/schema.graphql` — Schema definition
-- `perspectize-go/internal/adapters/graphql/resolvers/resolver.go` — Resolver DI container
-- `perspectize-go/internal/adapters/graphql/generated/generated.go` — Auto-generated (do not edit)
+- `backend/schema.graphql` — Schema definition
+- `backend/internal/adapters/graphql/resolvers/resolver.go` — Resolver DI container
+- `backend/internal/adapters/graphql/generated/generated.go` — Auto-generated (do not edit)
 
 ### Frontend Entry Points
-- `perspectize-fe/src/routes/+layout.svelte` — Root layout
-- `perspectize-fe/src/routes/+page.svelte` — Home page
-- `perspectize-fe/src/app.html` — HTML shell
+- `fe/src/routes/+layout.svelte` — Root layout
+- `fe/src/routes/+page.svelte` — Home page
+- `fe/src/app.html` — HTML shell
 
 ### Frontend Configuration
-- `perspectize-fe/svelte.config.js` — SvelteKit config
-- `perspectize-fe/vite.config.ts` — Vite config
-- `perspectize-fe/tailwind.config.ts` — Tailwind v4 theme
-- `perspectize-fe/components.json` — shadcn-svelte config
-- `perspectize-fe/tsconfig.json` — TypeScript config
+- `fe/svelte.config.js` — SvelteKit config
+- `fe/vite.config.ts` — Vite config
+- `fe/tailwind.config.ts` — Tailwind v4 theme
+- `fe/components.json` — shadcn-svelte config
+- `fe/tsconfig.json` — TypeScript config
 
 ### Frontend Components
-- `perspectize-fe/src/lib/components/Header.svelte` — Top navigation
-- `perspectize-fe/src/lib/components/ActivityTable.svelte` — Content grid
-- `perspectize-fe/src/lib/components/UserSelector.svelte` — User filter
-- `perspectize-fe/src/lib/components/PageWrapper.svelte` — Page wrapper
+- `fe/src/lib/components/Header.svelte` — Top navigation
+- `fe/src/lib/components/ActivityTable.svelte` — Content grid
+- `fe/src/lib/components/UserSelector.svelte` — User filter
+- `fe/src/lib/components/PageWrapper.svelte` — Page wrapper
 
 ### Frontend Queries
-- `perspectize-fe/src/lib/queries/client.ts` — GraphQL client
-- `perspectize-fe/src/lib/queries/content.ts` — Content queries
-- `perspectize-fe/src/lib/queries/users.ts` — User queries
+- `fe/src/lib/queries/client.ts` — GraphQL client
+- `fe/src/lib/queries/content.ts` — Content queries
+- `fe/src/lib/queries/users.ts` — User queries
 
 ## Naming Conventions
 
@@ -432,7 +432,7 @@ perspectize-be/ (repository root)
 ### Adding a Migration
 
 ```bash
-cd perspectize-go
+cd backend
 make migrate-create
 # Prompts for name, creates numbered files
 # Edit .up.sql and .down.sql
@@ -447,40 +447,40 @@ make migrate-down    # Test rollback
 - Committed: Yes
 - Generated: No (manually created via /gsd:map-codebase)
 
-**`perspectize-go/migrations/`**
+**`backend/migrations/`**
 - Purpose: Version-controlled SQL migrations
 - Committed: Yes
 - Generated: No (manually created)
 - Tool: golang-migrate (make migrate-*)
 
-**`perspectize-go/internal/adapters/graphql/generated/`**
+**`backend/internal/adapters/graphql/generated/`**
 - Purpose: gqlgen auto-generated code
 - Committed: Yes
 - Generated: Yes (make graphql-gen)
 - Edit: Never (changes only via schema.graphql)
 
-**`perspectize-go/internal/adapters/graphql/model/`**
+**`backend/internal/adapters/graphql/model/`**
 - Purpose: GraphQL model types auto-generated from schema
 - Committed: Yes
 - Generated: Yes (make graphql-gen)
 - Edit: Never
 
-**`perspectize-fe/.svelte-kit/`**
+**`fe/.svelte-kit/`**
 - Purpose: SvelteKit build cache and generated types
 - Committed: No (.gitignore)
 - Generated: Yes
 
-**`perspectize-fe/build/`**
+**`fe/build/`**
 - Purpose: Production build output
 - Committed: No (.gitignore)
 - Generated: Yes (pnpm run build)
 
-**`perspectize-fe/coverage/`**
+**`fe/coverage/`**
 - Purpose: Test coverage reports
 - Committed: No (.gitignore)
 - Generated: Yes (pnpm run test:coverage)
 
-**`perspectize-fe/node_modules/`**
+**`fe/node_modules/`**
 - Purpose: npm dependencies
 - Committed: No (.gitignore)
 - Generated: Yes (pnpm install)

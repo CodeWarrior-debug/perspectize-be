@@ -18,6 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
 - [x] **Phase 3.1: Design Token System** - Implement all 27 Figma color variables, Geist + Charter typography, rating colors in code (INSERTED — rescoped)
 - [ ] **Phase 3.2: Activity Page Beta Quality** - Rebuild Activity page to beta quality with server-side ops, new columns, popover dialog, data provenance (INSERTED)
+- [ ] **Phase 3.3: Repository Rename & Folder Restructure** - Rename repo to perspectize, backend → backend, fe → fe, update imports and Sevalla (INSERTED)
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
 - [ ] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
 
@@ -126,6 +127,23 @@ Plans:
 - [ ] 03.2-02-PLAN.md — Frontend: popover dialog redesign (replace modal with non-modal popover)
 - [ ] 03.2-03-PLAN.md — Frontend: ActivityTable rewrite (server-side pagination, new columns, compact rows, sticky headers, provenance)
 - [ ] 03.2-04-PLAN.md — Integration polish, test coverage, visual verification checkpoint
+
+### Phase 3.3: Repository Rename & Folder Restructure (INSERTED)
+**Goal**: Rename repository from perspectize to perspectize, restructure folders (backend → backend, fe → fe), update all Go imports, fix CI/CD and Sevalla deployment pointers
+**Depends on**: Phase 3.2
+**Success Criteria** (what must be TRUE):
+  1. GitHub repository renamed to `perspectize`
+  2. `backend/` renamed to `backend/` with all Go import paths updated and tests passing
+  3. `fe/` renamed to `fe/` with all config paths updated and build passing
+  4. Sevalla deployment updated to point to new directory structure
+  5. All CLAUDE.md files, docs, and planning references updated to reflect new paths
+  6. CI/CD (if any) updated for new paths
+**Plans**: 3 plans in 3 waves
+
+Plans:
+- [ ] 03.3-01-PLAN.md — GitHub repo rename (checkpoint) + Go module path refactor (imports, gqlgen.yml, tests)
+- [ ] 03.3-02-PLAN.md — Folder rename (git mv) + bulk path updates across CI/CD, CLAUDE.md, docs, planning
+- [ ] 03.3-03-PLAN.md — Deployment config update (checkpoint) + push to GitHub + CI/CD verification
 
 ### Phase 4: Add Perspective Flow
 **Goal**: Users can create perspectives on videos with ratings, Like text, and Review text
@@ -348,7 +366,7 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -358,6 +376,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6
 | 3. Add Video Flow | 2/2 | Complete | 2026-02-07 |
 | 3.1 Design Token System | 2/2 | Complete | 2026-02-12 |
 | 3.2 Activity Page Beta Quality | 0/4 | Planned | - |
+| 3.3 Repository Rename & Restructure | 0/3 | Planned | - |
 | 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 1/3 | In progress | - |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |

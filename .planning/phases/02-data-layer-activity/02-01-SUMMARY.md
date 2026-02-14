@@ -25,18 +25,18 @@ tech-stack:
 
 key-files:
   created:
-    - perspectize-go/internal/core/ports/repositories/user_repository.go (ListAll port)
-    - perspectize-go/internal/adapters/repositories/postgres/user_repository.go (ListAll impl)
-    - perspectize-fe/src/lib/queries/users.ts (LIST_USERS query)
-    - perspectize-fe/src/lib/stores/userSelection.svelte.ts (session-persistent store)
-    - perspectize-fe/tests/unit/queries-users.test.ts
-    - perspectize-fe/tests/unit/stores-userSelection.test.ts
+    - backend/internal/core/ports/repositories/user_repository.go (ListAll port)
+    - backend/internal/adapters/repositories/postgres/user_repository.go (ListAll impl)
+    - fe/src/lib/queries/users.ts (LIST_USERS query)
+    - fe/src/lib/stores/userSelection.svelte.ts (session-persistent store)
+    - fe/tests/unit/queries-users.test.ts
+    - fe/tests/unit/stores-userSelection.test.ts
   modified:
-    - perspectize-go/schema.graphql (added users query)
-    - perspectize-go/internal/core/services/user_service.go (ListAll service method)
-    - perspectize-go/internal/adapters/graphql/resolvers/schema.resolvers.go (Users resolver)
-    - perspectize-fe/src/lib/queries/content.ts (added sort params, length fields)
-    - perspectize-fe/tests/unit/queries-content.test.ts (added sort parameter tests)
+    - backend/schema.graphql (added users query)
+    - backend/internal/core/services/user_service.go (ListAll service method)
+    - backend/internal/adapters/graphql/resolvers/schema.resolvers.go (Users resolver)
+    - fe/src/lib/queries/content.ts (added sort params, length fields)
+    - fe/tests/unit/queries-content.test.ts (added sort parameter tests)
 
 key-decisions:
   - "Used setter-based session sync instead of $effect for Svelte 5 store testability"
@@ -84,23 +84,23 @@ Each task was committed atomically:
 ## Files Created/Modified
 
 ### Backend
-- `perspectize-go/schema.graphql` - Added `users: [User!]!` query
-- `perspectize-go/internal/core/ports/repositories/user_repository.go` - Added ListAll port method
-- `perspectize-go/internal/adapters/repositories/postgres/user_repository.go` - Implemented ListAll with ORDER BY username ASC
-- `perspectize-go/internal/core/services/user_service.go` - Added ListAll service method
-- `perspectize-go/internal/adapters/graphql/resolvers/schema.resolvers.go` - Implemented Users resolver
-- `perspectize-go/internal/adapters/graphql/generated/generated.go` - Generated resolver interface
-- `perspectize-go/test/resolvers/content_resolver_test.go` - Updated mock with ListAll
-- `perspectize-go/test/services/user_service_test.go` - Updated mock with ListAll
-- `perspectize-go/test/services/perspective_service_test.go` - Updated mock with ListAll
+- `backend/schema.graphql` - Added `users: [User!]!` query
+- `backend/internal/core/ports/repositories/user_repository.go` - Added ListAll port method
+- `backend/internal/adapters/repositories/postgres/user_repository.go` - Implemented ListAll with ORDER BY username ASC
+- `backend/internal/core/services/user_service.go` - Added ListAll service method
+- `backend/internal/adapters/graphql/resolvers/schema.resolvers.go` - Implemented Users resolver
+- `backend/internal/adapters/graphql/generated/generated.go` - Generated resolver interface
+- `backend/test/resolvers/content_resolver_test.go` - Updated mock with ListAll
+- `backend/test/services/user_service_test.go` - Updated mock with ListAll
+- `backend/test/services/perspective_service_test.go` - Updated mock with ListAll
 
 ### Frontend
-- `perspectize-fe/src/lib/queries/users.ts` - Created LIST_USERS query (id, username, email)
-- `perspectize-fe/src/lib/queries/content.ts` - Updated with sortBy, sortOrder, includeTotalCount params; added length/lengthUnits fields
-- `perspectize-fe/src/lib/stores/userSelection.svelte.ts` - Created session-persistent store with Svelte 5 runes
-- `perspectize-fe/tests/unit/queries-users.test.ts` - Unit tests for LIST_USERS query
-- `perspectize-fe/tests/unit/queries-content.test.ts` - Updated with sort parameter tests
-- `perspectize-fe/tests/unit/stores-userSelection.test.ts` - Unit tests for user selection store
+- `fe/src/lib/queries/users.ts` - Created LIST_USERS query (id, username, email)
+- `fe/src/lib/queries/content.ts` - Updated with sortBy, sortOrder, includeTotalCount params; added length/lengthUnits fields
+- `fe/src/lib/stores/userSelection.svelte.ts` - Created session-persistent store with Svelte 5 runes
+- `fe/tests/unit/queries-users.test.ts` - Unit tests for LIST_USERS query
+- `fe/tests/unit/queries-content.test.ts` - Updated with sort parameter tests
+- `fe/tests/unit/stores-userSelection.test.ts` - Unit tests for user selection store
 
 ## Decisions Made
 
@@ -128,7 +128,7 @@ Each task was committed atomically:
 - **Found during:** Task 3 (Frontend tests execution)
 - **Issue:** Svelte 5 `$effect()` rune used in module scope caused `effect_orphan` error in Vitest - can only be used in component initialization
 - **Fix:** Changed from `$effect()` auto-sync to manual `syncToSession()` called in setters
-- **Files modified:** `perspectize-fe/src/lib/stores/userSelection.svelte.ts`
+- **Files modified:** `fe/src/lib/stores/userSelection.svelte.ts`
 - **Verification:** All 55 frontend tests passing
 - **Committed in:** c003722 (Task 3 commit)
 

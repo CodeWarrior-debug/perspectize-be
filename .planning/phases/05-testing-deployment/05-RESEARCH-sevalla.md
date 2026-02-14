@@ -6,21 +6,21 @@
 
 ## Summary
 
-**CRITICAL CLARIFICATION:** Despite the user referring to "Sevalla," the backend is deployed at `perspectize-go-dz3qa.ondigitalocean.app`, which is a **DigitalOcean App Platform** URL. Sevalla is a separate Kinsta product with distinct infrastructure and URLs. The correct platform for this research is **DigitalOcean App Platform**, not Sevalla.
+**CRITICAL CLARIFICATION:** Despite the user referring to "Sevalla," the backend is deployed at `backend-dz3qa.ondigitalocean.app`, which is a **DigitalOcean App Platform** URL. Sevalla is a separate Kinsta product with distinct infrastructure and URLs. The correct platform for this research is **DigitalOcean App Platform**, not Sevalla.
 
 The backend is already deployed on DigitalOcean App Platform. The frontend needs to be deployed as a static site on the same platform to enable proper CORS configuration. DigitalOcean App Platform provides automatic GitHub integration, build pipeline, CDN distribution, and `.ondigitalocean.app` subdomain URLs for deployed apps.
 
-The previous implementation incorrectly targeted GitHub Pages, leaving artifacts in the codebase (base path `/perspectize-be`, `.nojekyll` file, GitHub Actions workflow). These must be removed/reverted before deploying to DigitalOcean App Platform.
+The previous implementation incorrectly targeted GitHub Pages, leaving artifacts in the codebase (base path `/perspectize`, `.nojekyll` file, GitHub Actions workflow). These must be removed/reverted before deploying to DigitalOcean App Platform.
 
 **Key findings:**
 - DigitalOcean App Platform auto-detects pnpm from `pnpm-lock.yaml` and uses it for builds
 - Static sites get assigned URLs like `app-name-xxxxx.ondigitalocean.app` (randomized subdomain)
-- Monorepos supported via Source Directory configuration (set to `perspectize-fe/`)
+- Monorepos supported via Source Directory configuration (set to `fe/`)
 - Environment variables must be scoped `BUILD_TIME` for Vite to embed them in static output
 - CORS must be configured on backend with the exact frontend `.ondigitalocean.app` origin URL
 - SvelteKit adapter-static requires `base: ''` (root path) for standard hosting
 
-**Primary recommendation:** Deploy frontend to DigitalOcean App Platform as a static site component using monorepo source directory `perspectize-fe/`, configure `VITE_GRAPHQL_URL` as build-time environment variable, then update backend `ALLOWED_ORIGINS` with the assigned `.ondigitalocean.app` URL.
+**Primary recommendation:** Deploy frontend to DigitalOcean App Platform as a static site component using monorepo source directory `fe/`, configure `VITE_GRAPHQL_URL` as build-time environment variable, then update backend `ALLOWED_ORIGINS` with the assigned `.ondigitalocean.app` URL.
 
 ## Standard Stack
 
@@ -55,13 +55,13 @@ No additional libraries needed. Uses existing SvelteKit + adapter-static setup.
 ```
 DigitalOcean App Platform App: "perspectize"
 ├── Backend Service (already deployed)
-│   ├── URL: https://perspectize-go-dz3qa.ondigitalocean.app
-│   ├── Source Directory: perspectize-go/
+│   ├── URL: https://backend-dz3qa.ondigitalocean.app
+│   ├── Source Directory: backend/
 │   └── Type: Web Service (Go)
 │
 └── Frontend Static Site (to be added)
-    ├── URL: https://perspectize-fe-xxxxx.ondigitalocean.app (assigned)
-    ├── Source Directory: perspectize-fe/
+    ├── URL: https://fe-xxxxx.ondigitalocean.app (assigned)
+    ├── Source Directory: fe/
     ├── Build Command: pnpm run build
     ├── Output Directory: build
     └── Environment Variables:
@@ -77,27 +77,27 @@ DigitalOcean App Platform App: "perspectize"
 **Configuration:**
 ```yaml
 # App Platform configuration (via UI or .do/app.yaml)
-name: perspectize-fe
+name: fe
 static_sites:
-  - name: perspectize-fe
-    source_dir: perspectize-fe/
+  - name: fe
+    source_dir: fe/
     github:
-      repo: CodeWarrior-debug/perspectize-be
+      repo: CodeWarrior-debug/perspectize
       branch: main
     build_command: pnpm run build
     output_dir: build
     envs:
       - key: VITE_GRAPHQL_URL
-        value: https://perspectize-go-dz3qa.ondigitalocean.app/graphql
+        value: https://backend-dz3qa.ondigitalocean.app/graphql
         scope: BUILD_TIME
 ```
 
 **How it works:**
 - DigitalOcean clones entire repo to `/workspace`
-- Sets working directory to `/workspace/perspectize-fe/`
+- Sets working directory to `/workspace/fe/`
 - Detects `pnpm-lock.yaml` and uses pnpm automatically
 - Runs `pnpm install` then `pnpm run build`
-- Serves files from `perspectize-fe/build/` via CDN
+- Serves files from `fe/build/` via CDN
 
 ### Pattern 2: Build-Time Environment Variables for Vite
 
@@ -109,7 +109,7 @@ static_sites:
 
 **Example:**
 ```typescript
-// perspectize-fe/src/lib/queries/client.ts
+// fe/src/lib/queries/client.ts
 const GRAPHQL_URL = import.meta.env.VITE_GRAPHQL_URL || 'http://localhost:8080/graphql';
 export const graphqlClient = new GraphQLClient(GRAPHQL_URL);
 ```
@@ -118,14 +118,14 @@ export const graphqlClient = new GraphQLClient(GRAPHQL_URL);
 ```yaml
 envs:
   - key: VITE_GRAPHQL_URL
-    value: https://perspectize-go-dz3qa.ondigitalocean.app/graphql
+    value: https://backend-dz3qa.ondigitalocean.app/graphql
     scope: BUILD_TIME  # CRITICAL: Must be BUILD_TIME for static sites
 ```
 
 **Verification:**
 After deployment, inspect bundled JS to confirm URL is embedded:
 ```bash
-curl https://perspectize-fe-xxxxx.ondigitalocean.app/_app/immutable/chunks/client.xxx.js | grep -o 'https://perspectize-go[^"]*'
+curl https://fe-xxxxx.ondigitalocean.app/_app/immutable/chunks/client.xxx.js | grep -o 'https://backend[^"]*'
 ```
 
 ### Pattern 3: CORS Configuration for Same-Platform Cross-Origin Requests
@@ -136,7 +136,7 @@ curl https://perspectize-fe-xxxxx.ondigitalocean.app/_app/immutable/chunks/clien
 
 **Backend configuration:**
 ```go
-// perspectize-go/cmd/server/main.go
+// backend/cmd/server/main.go
 allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
 if allowedOrigins == "" {
     allowedOrigins = "*" // Local development default
@@ -155,7 +155,7 @@ c := cors.New(cors.Options{
 ```yaml
 envs:
   - key: ALLOWED_ORIGINS
-    value: https://perspectize-fe-xxxxx.ondigitalocean.app
+    value: https://fe-xxxxx.ondigitalocean.app
     scope: RUN_TIME  # Backend needs runtime access
 ```
 
@@ -173,7 +173,7 @@ envs:
 
 - **Wildcard CORS in production:** While `ALLOWED_ORIGINS=*` works for development, production should restrict to the exact frontend origin. However, since both apps use dynamic `.ondigitalocean.app` subdomains, you must configure this AFTER frontend deployment when the URL is known.
 
-- **Using `cd` in build commands for monorepo:** Don't use `cd perspectize-fe && pnpm build`. Set Source Directory to `perspectize-fe/` instead. The Source Directory field sets the working directory automatically.
+- **Using `cd` in build commands for monorepo:** Don't use `cd fe && pnpm build`. Set Source Directory to `fe/` instead. The Source Directory field sets the working directory automatically.
 
 ## Don't Hand-Roll
 
@@ -191,19 +191,19 @@ envs:
 
 ### Pitfall 1: Forgetting to Remove GitHub Pages Artifacts
 
-**What goes wrong:** Deploying to DigitalOcean App Platform with `base: '/perspectize-be'` in svelte.config.js causes all internal links to point to wrong URLs (e.g., `https://app.ondigitalocean.app/perspectize-be/page` returns 404).
+**What goes wrong:** Deploying to DigitalOcean App Platform with `base: '/perspectize'` in svelte.config.js causes all internal links to point to wrong URLs (e.g., `https://app.ondigitalocean.app/perspectize/page` returns 404).
 
 **Why it happens:** GitHub Pages hosts repos at `username.github.io/repo-name`, requiring a base path. DigitalOcean App Platform hosts at root domain.
 
 **How to avoid:**
-1. Remove `base: dev ? '' : '/perspectize-be'` from svelte.config.js, change to `base: ''`
-2. Delete `perspectize-fe/static/.nojekyll` (GitHub Pages-specific file)
+1. Remove `base: dev ? '' : '/perspectize'` from svelte.config.js, change to `base: ''`
+2. Delete `fe/static/.nojekyll` (GitHub Pages-specific file)
 3. Delete or archive `.github/workflows/frontend-deploy.yml` (GitHub Pages deploy workflow)
 4. Optionally keep `.github/workflows/frontend-test.yml` (platform-independent PR checks)
 
 **Warning signs:**
 - Links work in dev (`pnpm run dev`) but 404 in production
-- Browser console shows "Failed to load module" errors with `/perspectize-be` in paths
+- Browser console shows "Failed to load module" errors with `/perspectize` in paths
 - Static assets (CSS, JS) return 404
 
 ### Pitfall 2: Wrong Environment Variable Scope
@@ -221,7 +221,7 @@ envs:
 
 ### Pitfall 3: CORS Configuration Timing
 
-**What goes wrong:** Deploying backend with `ALLOWED_ORIGINS=https://perspectize-fe-xxxxx.ondigitalocean.app` BEFORE deploying frontend fails because the frontend URL doesn't exist yet. Or deploying both simultaneously means you don't know the frontend URL to configure.
+**What goes wrong:** Deploying backend with `ALLOWED_ORIGINS=https://fe-xxxxx.ondigitalocean.app` BEFORE deploying frontend fails because the frontend URL doesn't exist yet. Or deploying both simultaneously means you don't know the frontend URL to configure.
 
 **Why it happens:** DigitalOcean App Platform assigns random subdomains (the `xxxxx` part) at deployment time. You can't predict the URL beforehand.
 
@@ -297,7 +297,7 @@ Verified patterns from official sources:
 **Source:** [SvelteKit adapter-static docs](https://svelte.dev/docs/kit/adapter-static)
 
 ```typescript
-// perspectize-fe/svelte.config.js
+// fe/svelte.config.js
 import adapter from '@sveltejs/adapter-static';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -310,7 +310,7 @@ const config = {
 			strict: true
 		}),
 		paths: {
-			base: '' // EMPTY for root path hosting (not '/perspectize-be')
+			base: '' // EMPTY for root path hosting (not '/perspectize')
 		}
 	}
 };
@@ -323,7 +323,7 @@ export default config;
 **Source:** [Vite env variables docs](https://vite.dev/guide/env-and-mode.html)
 
 ```typescript
-// perspectize-fe/src/lib/queries/client.ts
+// fe/src/lib/queries/client.ts
 import { GraphQLClient } from 'graphql-request';
 
 // Vite exposes VITE_* env vars via import.meta.env at build time
@@ -342,18 +342,18 @@ name: perspectize
 region: nyc
 
 static_sites:
-  - name: perspectize-fe
+  - name: fe
     github:
-      repo: CodeWarrior-debug/perspectize-be
+      repo: CodeWarrior-debug/perspectize
       branch: main
       deploy_on_push: true
-    source_dir: perspectize-fe/
+    source_dir: fe/
     build_command: pnpm run build
     output_dir: build
     environment_slug: node-js
     envs:
       - key: VITE_GRAPHQL_URL
-        value: https://perspectize-go-dz3qa.ondigitalocean.app/graphql
+        value: https://backend-dz3qa.ondigitalocean.app/graphql
         scope: BUILD_TIME
     routes:
       - path: /
@@ -365,7 +365,7 @@ static_sites:
 
 ```json
 {
-  "name": "perspectize-fe",
+  "name": "fe",
   "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=20.0.0",
@@ -379,7 +379,7 @@ static_sites:
 
 ### Go Backend CORS Configuration for App Platform
 
-**Source:** Backend already implemented in `perspectize-go/cmd/server/main.go`
+**Source:** Backend already implemented in `backend/cmd/server/main.go`
 
 ```go
 // Fetch allowed origins from environment variable
@@ -407,7 +407,7 @@ handler := c.Handler(graphqlHandler)
 # After frontend deployment, update backend env var:
 envs:
   - key: ALLOWED_ORIGINS
-    value: https://perspectize-fe-xxxxx.ondigitalocean.app
+    value: https://fe-xxxxx.ondigitalocean.app
     scope: RUN_TIME
 ```
 
@@ -417,7 +417,7 @@ envs:
 |--------------|------------------|--------------|--------|
 | GitHub Pages deployment | DigitalOcean App Platform static sites | 2026-02 (this research) | Unified platform for backend + frontend, simpler CORS, build-time env vars |
 | npm | pnpm with workspaces | 2025 | Faster installs, better monorepo support, App Platform auto-detects |
-| adapter-static with base path | adapter-static with root path | 2026-02 (this fix) | Links work correctly, no /perspectize-be prefix needed |
+| adapter-static with base path | adapter-static with root path | 2026-02 (this fix) | Links work correctly, no /perspectize prefix needed |
 | Static env vars in code | Vite VITE_* environment variables | Standard Vite pattern | Build-time configuration, different values per environment |
 
 **Deprecated/outdated:**
@@ -430,7 +430,7 @@ envs:
 Things that couldn't be fully resolved:
 
 1. **Exact frontend URL format after deployment**
-   - What we know: Will be `https://perspectize-fe-xxxxx.ondigitalocean.app` where `xxxxx` is a random hash assigned at deployment
+   - What we know: Will be `https://fe-xxxxx.ondigitalocean.app` where `xxxxx` is a random hash assigned at deployment
    - What's unclear: The exact hash value (can't predict before deployment)
    - Recommendation: Deploy frontend first, copy URL from deployment output, then configure CORS
 
@@ -464,11 +464,11 @@ Things that couldn't be fully resolved:
 - **Ownership:** DigitalOcean (cloud infrastructure company)
 - **Launch:** ~2020 as DigitalOcean's PaaS offering
 - **URL format:** Uses `*.ondigitalocean.app` domains
-- **Current deployment:** Backend is at `perspectize-go-dz3qa.ondigitalocean.app` (CONFIRMED DigitalOcean)
+- **Current deployment:** Backend is at `backend-dz3qa.ondigitalocean.app` (CONFIRMED DigitalOcean)
 - **Relationship to Sevalla:** None - competing PaaS platforms
 
 ### Conclusion
-The backend URL `perspectize-go-dz3qa.ondigitalocean.app` **definitively proves** the deployment is on **DigitalOcean App Platform**, not Sevalla. All research and recommendations in this document are for DigitalOcean App Platform.
+The backend URL `backend-dz3qa.ondigitalocean.app` **definitively proves** the deployment is on **DigitalOcean App Platform**, not Sevalla. All research and recommendations in this document are for DigitalOcean App Platform.
 
 **Recommendation:** Confirm with user whether there's a planned migration to Sevalla, or if "Sevalla" was used interchangeably with "DigitalOcean App Platform" due to platform confusion. For Phase 5, proceed with DigitalOcean App Platform to match existing backend deployment.
 

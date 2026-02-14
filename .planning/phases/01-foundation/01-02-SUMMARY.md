@@ -25,12 +25,12 @@ tech-stack:
 
 key-files:
   created:
-    - perspectize-fe/src/lib/components/Header.svelte
-    - perspectize-fe/src/lib/components/PageWrapper.svelte
+    - fe/src/lib/components/Header.svelte
+    - fe/src/lib/components/PageWrapper.svelte
   modified:
-    - perspectize-fe/src/routes/+layout.svelte
-    - perspectize-fe/src/routes/+page.svelte
-    - perspectize-fe/STRUCTURE.md
+    - fe/src/routes/+layout.svelte
+    - fe/src/routes/+page.svelte
+    - fe/STRUCTURE.md
 
 key-decisions:
   - "Header height fixed at h-16 for consistency"
@@ -75,11 +75,11 @@ Each task was committed atomically:
 3. **Task 3: Test responsive behavior at key breakpoints** - `d6d31b3` (docs)
 
 ## Files Created/Modified
-- `perspectize-fe/src/lib/components/Header.svelte` - App header with responsive padding (px-4/md:px-6/lg:px-8), navigation slot for Plan 04
-- `perspectize-fe/src/lib/components/PageWrapper.svelte` - Page wrapper with responsive padding and max-w-screen-xl centering
-- `perspectize-fe/src/routes/+layout.svelte` - Root layout with Header integration and min-h-screen wrapper
-- `perspectize-fe/src/routes/+page.svelte` - Test page using PageWrapper with viewport width debug display
-- `perspectize-fe/STRUCTURE.md` - Added responsive design pattern documentation
+- `fe/src/lib/components/Header.svelte` - App header with responsive padding (px-4/md:px-6/lg:px-8), navigation slot for Plan 04
+- `fe/src/lib/components/PageWrapper.svelte` - Page wrapper with responsive padding and max-w-screen-xl centering
+- `fe/src/routes/+layout.svelte` - Root layout with Header integration and min-h-screen wrapper
+- `fe/src/routes/+page.svelte` - Test page using PageWrapper with viewport width debug display
+- `fe/STRUCTURE.md` - Added responsive design pattern documentation
 
 ## Decisions Made
 
@@ -111,7 +111,7 @@ Each task was committed atomically:
 - **Found during:** Task 2 (updating +layout.svelte)
 - **Issue:** Parallel work added TanStack Query QueryClientProvider to layout
 - **Fix:** Preserved QueryClientProvider wrapper when adding Header
-- **Files modified:** perspectize-fe/src/routes/+layout.svelte
+- **Files modified:** fe/src/routes/+layout.svelte
 - **Verification:** Layout structure maintained with both Header and QueryClientProvider
 - **Committed in:** a40e128 (Task 2 commit)
 
