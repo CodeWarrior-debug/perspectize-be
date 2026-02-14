@@ -32,6 +32,23 @@ Phase 7.1 research recommended [gorm-cursor-paginator](https://github.com/pilago
 
 ---
 
+## Authentication Architecture Design
+
+Discovered during frontend caching review (2026-02-14). The GraphQL client (`frontend/src/lib/queries/client.ts`) has empty `headers: {}` — no auth tokens, no CSRF protection, no per-user cache scoping. Designing the auth architecture involves:
+
+- **Token strategy:** JWT vs session cookies vs OAuth2
+- **GraphQL client auth hook:** Dynamic header injection via `requestMiddleware` or client factory
+- **Cache scoping:** TanStack Query keys need user identity dimension (e.g., `['content', userId]`)
+- **Cache invalidation on logout:** `queryClient.clear()` to prevent data leakage between users
+- **CSRF protection:** Backend middleware + frontend token handling
+- **Secure token storage:** httpOnly cookies preferred over localStorage/sessionStorage
+
+**Dependencies:** Should be planned alongside Phase 9 (Security Hardening) which covers backend auth middleware.
+
+**Source:** Frontend caching review Finding #4 (CVSS 8.1), Finding #2 (no auth).
+
+---
+
 ## AG Grid Power Features Toolbar
 
 Add a toolbar above `ActivityTable` with power-user grid controls. All features below use **AG Grid Community APIs** — no Enterprise license needed.

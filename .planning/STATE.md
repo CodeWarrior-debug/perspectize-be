@@ -145,6 +145,7 @@ Recent decisions affecting current work:
 - Phase 03.3 inserted after Phase 3.2: Repository Rename & Folder Restructure — Rename repo perspectize → perspectize, folders backend → backend, fe → fe, update all imports and Sevalla pointers
 - Phase 07.1 inserted after Phase 7: ORM Migration (sqlx → GORM) — Replace sqlx with GORM using hex-clean separate model pattern. ~35% repository code reduction. Prototype in gorm_*.go files.
 - Phase 07.2 inserted after Phase 7.1: gorm-cursor-paginator Integration (URGENT) — Fix C-02 cursor pagination broken for non-ID sorts. Replace hand-rolled encodeCursor/decodeCursor with library. Was originally planned for 7.1 but skipped during execution.
+- Phase 07.3 inserted after Phase 7.2: Frontend Caching Remediation (URGENT) — Comprehensive caching review found ActivityTable bypasses TanStack Query entirely, eruda debug console in production, dual-signal anti-pattern, PII over-fetching, missing CSP. Auth architecture design deferred to FEATURE_BACKLOG.md.
 
 ### Project-Level Plan Requirements
 
