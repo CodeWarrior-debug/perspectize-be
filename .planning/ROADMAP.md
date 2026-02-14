@@ -186,7 +186,7 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
 - [ ] **Phase 6: Error Handling & Data Integrity** - Fix silent failures, error leakage, and config validation
 - [x] **Phase 7: Backend Architecture** - Hexagonal cleanup, dependency injection, server infrastructure
 - [x] **Phase 7.1: ORM Migration — sqlx to GORM** - Replace sqlx with GORM using hex-clean separate model pattern (INSERTED)
-- [ ] **Phase 7.2: gorm-cursor-paginator Integration** - Fix C-02 cursor pagination for non-ID sorts, replace hand-rolled cursor encoding (INSERTED)
+- [x] **Phase 7.2: gorm-cursor-paginator Integration** - Fix C-02 cursor pagination for non-ID sorts, replace hand-rolled cursor encoding (INSERTED)
 - [ ] **Phase 8: API & Schema Quality** - Fix GraphQL types, race conditions, nested resolvers
 - [ ] **Phase 9: Security Hardening** - Authentication, rate limiting, query complexity, headers, HTTPS
 - [ ] **Phase 10: Frontend Quality & Test Coverage** - XSS fix, codegen, error boundaries, cleanup, test gaps
@@ -443,7 +443,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
 | 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |
 | 7.1 ORM Migration (sqlx → GORM) | 3/3 | Complete | 2026-02-14 |
-| 7.2 gorm-cursor-paginator | 0/2 | Planned | - |
+| 7.2 gorm-cursor-paginator | 2/2 | Complete | 2026-02-14 |
 | 8. API & Schema Quality | 0/0 | Not started | - |
 | 9. Security Hardening | 0/0 | Not started | - |
 | 10. Frontend Quality & Test Coverage | 0/0 | Not started | - |
