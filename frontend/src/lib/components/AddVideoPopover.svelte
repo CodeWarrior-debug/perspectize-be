@@ -1,9 +1,6 @@
 <script lang="ts">
-	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
-	import { toast } from 'svelte-sonner';
 	import { Popover, PopoverContent, PopoverTrigger, buttonVariants, Button, Input, Label } from '$lib/components/shadcn';
-	import { graphqlClient } from '$lib/queries/client';
-	import { CREATE_CONTENT_FROM_YOUTUBE } from '$lib/queries/content';
+	import { useAddVideo } from '$lib/queries/hooks/useAddVideo';
 	import { validateYouTubeUrl } from '$lib/utils/youtube';
 	import PlusIcon from '@lucide/svelte/icons/plus';
 
@@ -20,35 +17,15 @@
 		}
 	});
 
-	// Query client for cache invalidation
-	const queryClient = useQueryClient();
+	// Shared mutation hook
+	const mutation = useAddVideo();
 
-	// TanStack Query mutation
-	const mutation = createMutation(() => ({
-		mutationFn: async (videoUrl: string) => {
-			return graphqlClient.request(CREATE_CONTENT_FROM_YOUTUBE, {
-				input: { url: videoUrl }
-			});
-		},
-		onSuccess: (data: any) => {
-			const name = data?.createContentFromYouTube?.name ?? 'video';
-			toast.success(`Added: ${name}`);
-			queryClient.invalidateQueries({ queryKey: ['content'] });
-			// Dispatch custom event for ActivityTable to refetch
-			window.dispatchEvent(new CustomEvent('content-added'));
+	// Close popover on success
+	$effect(() => {
+		if (mutation.isSuccess) {
 			open = false;
-		},
-		onError: (err: Error) => {
-			const message = err.message.toLowerCase();
-			if (message.includes('already exists')) {
-				toast.error('This video has already been added');
-			} else if (message.includes('invalid youtube url') || message.includes('video not found')) {
-				toast.error('Invalid YouTube URL or video not found');
-			} else {
-				toast.error('Failed to add video. Please try again.');
-			}
 		}
-	}));
+	});
 
 	// Form submission handler
 	function handleSubmit(e: Event) {
