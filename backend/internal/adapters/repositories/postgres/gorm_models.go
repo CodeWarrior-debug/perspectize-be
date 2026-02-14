@@ -39,24 +39,24 @@ func (ContentModel) TableName() string {
 
 // PerspectiveModel is the GORM persistence model for perspectives table
 type PerspectiveModel struct {
-	ID                 int        `gorm:"primaryKey;autoIncrement"`
-	Claim              string     `gorm:"not null;size:255"`
-	UserID             int        `gorm:"not null"`
-	ContentID          *int       `gorm:""`
-	Like               *string    `gorm:"column:like"`
-	Quality            *int       `gorm:""`
-	Agreement          *int       `gorm:""`
-	Importance         *int       `gorm:""`
-	Confidence         *int       `gorm:""`
-	Privacy            *string    `gorm:""`
-	Parts              Int64Array `gorm:"type:integer[]"`
-	Category           *string    `gorm:""`
+	ID                 int         `gorm:"primaryKey;autoIncrement"`
+	Claim              string      `gorm:"not null;size:255"`
+	UserID             int         `gorm:"not null"`
+	ContentID          *int        `gorm:""`
+	Like               *string     `gorm:"column:like"`
+	Quality            *int        `gorm:""`
+	Agreement          *int        `gorm:""`
+	Importance         *int        `gorm:""`
+	Confidence         *int        `gorm:""`
+	Privacy            *string     `gorm:""`
+	Parts              Int64Array  `gorm:"type:integer[]"`
+	Category           *string     `gorm:""`
 	Labels             StringArray `gorm:"type:text[]"`
-	Description        *string    `gorm:""`
-	ReviewStatus       *string    `gorm:""`
-	CategorizedRatings JSONBArray `gorm:"type:jsonb[];column:categorized_ratings"`
-	CreatedAt          time.Time  `gorm:"autoCreateTime"`
-	UpdatedAt          time.Time  `gorm:"autoUpdateTime"`
+	Description        *string     `gorm:""`
+	ReviewStatus       *string     `gorm:""`
+	CategorizedRatings JSONBArray  `gorm:"type:jsonb[];column:categorized_ratings"`
+	CreatedAt          time.Time   `gorm:"autoCreateTime"`
+	UpdatedAt          time.Time   `gorm:"autoUpdateTime"`
 }
 
 // TableName returns the table name for PerspectiveModel
