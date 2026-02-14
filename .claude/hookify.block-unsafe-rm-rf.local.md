@@ -30,7 +30,7 @@ conditions:
 🚫 **BLOCKED: rm -rf outside safe directories**
 
 `rm -rf` is only allowed in these safe directories:
-- `fe/` (frontend project)
+- `frontend/` (frontend project)
 - `backend/` (backend project)
 - `node_modules/` (dependencies)
 - `.svelte-kit/` (SvelteKit cache)

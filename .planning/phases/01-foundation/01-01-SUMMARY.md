@@ -37,17 +37,17 @@ tech-stack:
 
 key-files:
   created:
-    - fe/svelte.config.js (adapter-static configuration)
-    - fe/src/app.css (Tailwind imports and theme tokens)
-    - fe/src/routes/+layout.ts (SSG prerender config)
-    - fe/src/lib/utils.ts (cn utility and WithElementRef type)
-    - fe/src/lib/components/ui/button/ (shadcn Button component)
-    - fe/STRUCTURE.md (folder structure documentation)
-    - fe/static/fonts/Inter-Variable.woff2 (variable font)
+    - frontend/svelte.config.js (adapter-static configuration)
+    - frontend/src/app.css (Tailwind imports and theme tokens)
+    - frontend/src/routes/+layout.ts (SSG prerender config)
+    - frontend/src/lib/utils.ts (cn utility and WithElementRef type)
+    - frontend/src/lib/components/ui/button/ (shadcn Button component)
+    - frontend/STRUCTURE.md (folder structure documentation)
+    - frontend/static/fonts/Inter-Variable.woff2 (variable font)
   modified:
-    - fe/vite.config.ts (added Tailwind plugin)
-    - fe/src/app.html (font preload link)
-    - fe/src/routes/+layout.svelte (app.css import)
+    - frontend/vite.config.ts (added Tailwind plugin)
+    - frontend/src/app.html (font preload link)
+    - frontend/src/routes/+layout.svelte (app.css import)
 
 key-decisions:
   - "Downgraded Vite from 7.3.1 to 6.4.1 for Tailwind CSS v4 compatibility"
@@ -99,35 +99,35 @@ Each task was committed atomically:
 ## Files Created/Modified
 
 **Project Structure:**
-- `fe/package.json` - Dependencies (SvelteKit, Tailwind, shadcn-svelte)
-- `fe/svelte.config.js` - SvelteKit config with adapter-static
-- `fe/vite.config.ts` - Vite config with Tailwind plugin
-- `fe/tailwind.config.ts` - Tailwind CSS v4 config (content paths)
-- `fe/components.json` - shadcn-svelte config
+- `frontend/package.json` - Dependencies (SvelteKit, Tailwind, shadcn-svelte)
+- `frontend/svelte.config.js` - SvelteKit config with adapter-static
+- `frontend/vite.config.ts` - Vite config with Tailwind plugin
+- `frontend/tailwind.config.ts` - Tailwind CSS v4 config (content paths)
+- `frontend/components.json` - shadcn-svelte config
 
 **Styling:**
-- `fe/src/app.css` - Tailwind imports, @font-face, @theme with navy primary
-- `fe/src/app.html` - HTML shell with font preload
+- `frontend/src/app.css` - Tailwind imports, @font-face, @theme with navy primary
+- `frontend/src/app.html` - HTML shell with font preload
 
 **Components:**
-- `fe/src/lib/utils.ts` - cn() utility and WithElementRef type
-- `fe/src/lib/components/ui/button/` - shadcn Button component
+- `frontend/src/lib/utils.ts` - cn() utility and WithElementRef type
+- `frontend/src/lib/components/ui/button/` - shadcn Button component
 
 **Routes:**
-- `fe/src/routes/+layout.ts` - SSG prerender config
-- `fe/src/routes/+layout.svelte` - Root layout (app.css import)
-- `fe/src/routes/+page.svelte` - Test page verifying theme
+- `frontend/src/routes/+layout.ts` - SSG prerender config
+- `frontend/src/routes/+layout.svelte` - Root layout (app.css import)
+- `frontend/src/routes/+page.svelte` - Test page verifying theme
 
 **Assets:**
-- `fe/static/fonts/Inter-Variable.woff2` - Inter variable font (344KB)
+- `frontend/static/fonts/Inter-Variable.woff2` - Inter variable font (344KB)
 
 **Documentation:**
-- `fe/STRUCTURE.md` - Folder structure, naming conventions, tech stack (235 lines)
+- `frontend/STRUCTURE.md` - Folder structure, naming conventions, tech stack (235 lines)
 
 **Folder Structure:**
-- `fe/src/lib/components/` - Application components (flat)
-- `fe/src/lib/queries/` - TanStack Query definitions
-- `fe/src/lib/utils/` - Utility functions
+- `frontend/src/lib/components/` - Application components (flat)
+- `frontend/src/lib/queries/` - TanStack Query definitions
+- `frontend/src/lib/utils/` - Utility functions
 
 ## Decisions Made
 
@@ -166,7 +166,7 @@ Each task was committed atomically:
     children?: any;
   };
   ```
-- **Files modified:** `fe/src/lib/utils.ts`
+- **Files modified:** `frontend/src/lib/utils.ts`
 - **Verification:** `pnpm run check` passes with 0 errors
 - **Committed in:** `a81629b` (Task 1 commit)
 
@@ -174,7 +174,7 @@ Each task was committed atomically:
 - **Found during:** Task 3 (first build attempt)
 - **Issue:** Build failed with "[@tailwindcss/vite:generate:build] Cannot convert undefined or null to object" error using Tailwind CSS v4.0.0
 - **Fix:** Upgraded to latest Tailwind CSS v4.1.18: `pnpm add -D tailwindcss@latest @tailwindcss/vite@latest`
-- **Files modified:** `fe/package.json`, `fe/pnpm-lock.yaml`
+- **Files modified:** `frontend/package.json`, `frontend/pnpm-lock.yaml`
 - **Verification:** `pnpm run build` succeeds, static site generated in `build/`
 - **Committed in:** `e36b142` (Task 3 commit)
 
@@ -182,7 +182,7 @@ Each task was committed atomically:
 - **Found during:** Task 3 (attempting to fix Tailwind build error)
 - **Issue:** @tailwindcss/vite 4.0.0 has peer dependency requiring Vite ^5.2.0 || ^6, but project was initialized with Vite 7.3.1
 - **Fix:** Downgraded Vite: `pnpm add -D vite@^6.0.0`
-- **Files modified:** `fe/package.json`, `fe/pnpm-lock.yaml`
+- **Files modified:** `frontend/package.json`, `frontend/pnpm-lock.yaml`
 - **Verification:** Build succeeds with Vite 6.4.1 + Tailwind CSS v4.1.18
 - **Committed in:** `e36b142` (Task 3 commit)
 
@@ -204,7 +204,7 @@ Each task was committed atomically:
 - **Prevention:** Use latest stable version of newly released tools (v4 is still new)
 
 **3. shadcn-svelte init requires clean working directory**
-- **Problem:** `npx sv add tailwindcss` and `npx shadcn-svelte init` failed because `fe/` was untracked
+- **Problem:** `npx sv add tailwindcss` and `npx shadcn-svelte init` failed because `frontend/` was untracked
 - **Resolution:** Manually installed Tailwind and created `components.json` config
 - **Prevention:** Either commit before running `sv` commands, or use manual installation approach
 

@@ -66,7 +66,7 @@ When sorting by `CREATED_AT` or `NAME`, the next page query uses the last ID but
 
 **Risk:** User-controlled data interpolated into HTML without escaping.
 
-**Files:** `fe/src/lib/components/ActivityTable.svelte:64-70`
+**Files:** `frontend/src/lib/components/ActivityTable.svelte:64-70`
 
 **Problem:**
 ```svelte
@@ -132,7 +132,7 @@ A malicious website can make requests to the GraphQL API on behalf of your users
 **Fix approach:**
 1. Replace wildcard with explicit frontend URL (e.g., `https://perspectize.com`)
 2. Use environment variable for origin (dev = `http://localhost:5173`, prod = frontend domain)
-3. Update `fe/CLAUDE.md` to document required CORS setup
+3. Update `frontend/CLAUDE.md` to document required CORS setup
 
 ---
 
@@ -554,8 +554,8 @@ return nil, fmt.Errorf("failed to find content: %w", err)
 **Risk:** Unhandled errors show blank page or default error.
 
 **Files:**
-- `fe/src/routes/` (missing `+error.svelte`)
-- `fe/src/` (missing `hooks.client.ts`, `hooks.server.ts`)
+- `frontend/src/routes/` (missing `+error.svelte`)
+- `frontend/src/` (missing `hooks.client.ts`, `hooks.server.ts`)
 
 **Problem:** No error boundary component. Errors outside TanStack Query are invisible to users.
 
@@ -614,7 +614,7 @@ If `WriteString` fails, no error is returned. Response may be incomplete.
 
 **Risk:** Architectural mismatch.
 
-**Files:** `fe/src/routes/+layout.ts:1`
+**Files:** `frontend/src/routes/+layout.ts:1`
 
 **Problem:**
 ```typescript
@@ -635,7 +635,7 @@ With `adapter-static`, this tells SvelteKit to prerender all routes as static HT
 
 **Risk:** Manual duplication and drift.
 
-**Files:** `fe/src/lib/components/` (all component files)
+**Files:** `frontend/src/lib/components/` (all component files)
 
 **Problem:** Type definitions for GraphQL responses are manually written in Svelte components:
 ```typescript
@@ -662,7 +662,7 @@ No code generation from schema. Changes to GraphQL schema require manual updates
 
 **Risk:** No error recovery, no timeout protection.
 
-**Files:** `fe/src/lib/queries/client.ts:1-7`
+**Files:** `frontend/src/lib/queries/client.ts:1-7`
 
 **Problem:**
 ```typescript
@@ -689,7 +689,7 @@ Client has no:
 
 **Risk:** XSS/injection attacks.
 
-**Files:** `fe/app.html` (no CSP header)
+**Files:** `frontend/app.html` (no CSP header)
 
 **Problem:** No CSP header restricts what scripts can run. Combined with C-05 (innerHTML XSS), attacks easier.
 
@@ -930,7 +930,7 @@ w.Header().Set("Strict-Transport-Security", "max-age=31536000")
 
 **Issue:** ContentItem, ContentRow, User types manually defined in multiple files.
 
-**Files:** `fe/src/lib/components/ActivityTable.svelte`, `+page.svelte`, `UserSelector.svelte`
+**Files:** `frontend/src/lib/components/ActivityTable.svelte`, `+page.svelte`, `UserSelector.svelte`
 
 **Fix:** See H-23 (use codegen).
 
@@ -940,7 +940,7 @@ w.Header().Set("Strict-Transport-Security", "max-age=31536000")
 
 **Issue:** Content query hard-codes 100 items fetch.
 
-**Files:** `fe/src/routes/+page.svelte:33-34`
+**Files:** `frontend/src/routes/+page.svelte:33-34`
 
 **Problem:**
 ```typescript
@@ -959,7 +959,7 @@ AG Grid pagination not integrated with server. Fetches all 100 items then pagina
 
 **Issue:** Wired but never used.
 
-**Files:** `fe/src/lib/stores/userSelection.svelte.ts`, `src/routes/+page.svelte`
+**Files:** `frontend/src/lib/stores/userSelection.svelte.ts`, `src/routes/+page.svelte`
 
 **Fix:** Either use in content query filter or remove.
 
@@ -969,7 +969,7 @@ AG Grid pagination not integrated with server. Fetches all 100 items then pagina
 
 **Issue:** ContentResponse/ContentItem interfaces declared but never used as type guards.
 
-**Files:** `fe/src/routes/+page.svelte:8-28`
+**Files:** `frontend/src/routes/+page.svelte:8-28`
 
 **Fix:** Remove unused types or implement runtime validation.
 
@@ -979,7 +979,7 @@ AG Grid pagination not integrated with server. Fetches all 100 items then pagina
 
 **Issue:** AG Grid filter triggered on every keystroke.
 
-**Files:** `fe/src/routes/+page.svelte:30`, `ActivityTable.svelte:130-133`
+**Files:** `frontend/src/routes/+page.svelte:30`, `ActivityTable.svelte:130-133`
 
 **Impact:** Excessive queries sent to server.
 
@@ -991,7 +991,7 @@ AG Grid pagination not integrated with server. Fetches all 100 items then pagina
 
 **Issue:** Error states have no retry button.
 
-**Files:** `fe/src/routes/+page.svelte:70-73`, `UserSelector.svelte:37-40`
+**Files:** `frontend/src/routes/+page.svelte:70-73`, `UserSelector.svelte:37-40`
 
 **Fix:** Add retry button on error, call `query.refetch()`.
 
@@ -1001,7 +1001,7 @@ AG Grid pagination not integrated with server. Fetches all 100 items then pagina
 
 **Issue:** AGGridTest.svelte never imported but in component tree.
 
-**Files:** `fe/src/lib/components/AGGridTest.svelte`
+**Files:** `frontend/src/lib/components/AGGridTest.svelte`
 
 **Fix:** Delete or comment.
 
@@ -1011,7 +1011,7 @@ AG Grid pagination not integrated with server. Fetches all 100 items then pagina
 
 **Issue:** Fallback uses HTTP not HTTPS.
 
-**Files:** `fe/src/lib/queries/client.ts:3`
+**Files:** `frontend/src/lib/queries/client.ts:3`
 
 **Problem:**
 ```typescript
@@ -1026,7 +1026,7 @@ const endpoint = process.env.VITE_GRAPHQL_URL || "http://localhost:8080/graphql"
 
 **Issue:** `retry: 1` retries 4xx errors (should only retry network/5xx).
 
-**Files:** `fe/src/routes/+layout.svelte:15`, `+page.svelte:40`
+**Files:** `frontend/src/routes/+layout.svelte:15`, `+page.svelte:40`
 
 **Fix:** Use `shouldRetry: (failureCount, error) => error.status >= 500 || !error.response`
 
@@ -1036,7 +1036,7 @@ const endpoint = process.env.VITE_GRAPHQL_URL || "http://localhost:8080/graphql"
 
 **Issue:** Bad input produces "Invalid Date" string instead of error.
 
-**Files:** `fe/src/lib/components/ActivityTable.svelte:48-53`
+**Files:** `frontend/src/lib/components/ActivityTable.svelte:48-53`
 
 **Fix:** Add validation or return fallback with warning.
 

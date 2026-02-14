@@ -91,7 +91,7 @@ backend/test/
 - Tests in `tests/` directory mirroring `src/` structure
 - Co-located with source for unit tests or in `tests/{category}/`
   ```
-  fe/
+  frontend/
   ├── src/lib/utils.ts
   ├── tests/unit/utils.test.ts
   ├── src/lib/stores/userSelection.svelte.ts
@@ -106,7 +106,7 @@ backend/test/
 
 **Directory Structure:**
 ```
-fe/tests/
+frontend/tests/
 ├── setup.ts
 ├── unit/
 │   ├── utils.test.ts

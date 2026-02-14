@@ -19,7 +19,7 @@ This is a SvelteKit 2 + Svelte 5 project with TypeScript, using Tailwind CSS v4 
 ## Folder Structure
 
 ```
-fe/
+frontend/
 ├── src/
 │   ├── routes/              # SvelteKit file-based routing
 │   │   ├── +page.svelte     # Home page

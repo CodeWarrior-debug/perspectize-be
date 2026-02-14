@@ -5,7 +5,7 @@ SvelteKit web app with Svelte 5, TanStack Query, AG Grid, shadcn-svelte, and Tai
 ## Architecture
 
 ```
-fe/src/
+frontend/src/
 ├── routes/              # SvelteKit file-based routing
 │   ├── +layout.svelte   # Root layout (QueryClientProvider, Header, Toaster)
 │   ├── +layout.ts       # Layout config (prerender = true)

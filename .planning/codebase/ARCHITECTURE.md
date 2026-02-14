@@ -9,7 +9,7 @@ Perspectize is a **two-stack monorepo** with active development on both frontend
 ```
 perspectize/ (repository root)
 ├── backend/     # Go GraphQL API backend (ACTIVE)
-├── fe/     # SvelteKit web app frontend (ACTIVE)
+├── frontend/     # SvelteKit web app frontend (ACTIVE)
 └── perspectize/     # Legacy C# (DEPRECATED - ignore)
 ```
 
@@ -125,7 +125,7 @@ The Go backend implements **Hexagonal Architecture** with strict dependency inve
 - **Behavior:** Load `config/config.example.json` + environment variable overrides
 - **Critical variables:** DATABASE_URL, YOUTUBE_API_KEY
 
-## Frontend Architecture (fe/)
+## Frontend Architecture (frontend/)
 
 ### Pattern: SvelteKit File-Based Routing + TanStack Query
 

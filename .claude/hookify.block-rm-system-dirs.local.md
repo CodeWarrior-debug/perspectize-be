@@ -18,6 +18,6 @@ You attempted to remove files from a protected system location.
 - `~` (home directory, except ~/GitHub)
 
 **If you need to remove files:**
-1. Use explicit paths within the project: `fe/` or `backend/`
+1. Use explicit paths within the project: `frontend/` or `backend/`
 2. Ask the user for confirmation first
 3. Never use wildcards with system paths

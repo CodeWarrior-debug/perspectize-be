@@ -87,7 +87,7 @@ perspectize/ (repository root)
 │   └── README.md
 │
 │
-├── fe/                 # SvelteKit frontend (ACTIVE)
+├── frontend/                 # SvelteKit frontend (ACTIVE)
 │   ├── src/
 │   │   ├── routes/                 # SvelteKit file-based routing
 │   │   │   ├── +layout.svelte      # Root layout (QueryClientProvider, Header, Toaster)
@@ -231,7 +231,7 @@ perspectize/ (repository root)
 - Configuration files
 - `config.example.json` — Configuration template
 
-### Frontend (fe/)
+### Frontend (frontend/)
 
 **`src/routes/`**
 - SvelteKit file-based routing
@@ -303,27 +303,27 @@ perspectize/ (repository root)
 - `backend/internal/adapters/graphql/generated/generated.go` — Auto-generated (do not edit)
 
 ### Frontend Entry Points
-- `fe/src/routes/+layout.svelte` — Root layout
-- `fe/src/routes/+page.svelte` — Home page
-- `fe/src/app.html` — HTML shell
+- `frontend/src/routes/+layout.svelte` — Root layout
+- `frontend/src/routes/+page.svelte` — Home page
+- `frontend/src/app.html` — HTML shell
 
 ### Frontend Configuration
-- `fe/svelte.config.js` — SvelteKit config
-- `fe/vite.config.ts` — Vite config
-- `fe/tailwind.config.ts` — Tailwind v4 theme
-- `fe/components.json` — shadcn-svelte config
-- `fe/tsconfig.json` — TypeScript config
+- `frontend/svelte.config.js` — SvelteKit config
+- `frontend/vite.config.ts` — Vite config
+- `frontend/tailwind.config.ts` — Tailwind v4 theme
+- `frontend/components.json` — shadcn-svelte config
+- `frontend/tsconfig.json` — TypeScript config
 
 ### Frontend Components
-- `fe/src/lib/components/Header.svelte` — Top navigation
-- `fe/src/lib/components/ActivityTable.svelte` — Content grid
-- `fe/src/lib/components/UserSelector.svelte` — User filter
-- `fe/src/lib/components/PageWrapper.svelte` — Page wrapper
+- `frontend/src/lib/components/Header.svelte` — Top navigation
+- `frontend/src/lib/components/ActivityTable.svelte` — Content grid
+- `frontend/src/lib/components/UserSelector.svelte` — User filter
+- `frontend/src/lib/components/PageWrapper.svelte` — Page wrapper
 
 ### Frontend Queries
-- `fe/src/lib/queries/client.ts` — GraphQL client
-- `fe/src/lib/queries/content.ts` — Content queries
-- `fe/src/lib/queries/users.ts` — User queries
+- `frontend/src/lib/queries/client.ts` — GraphQL client
+- `frontend/src/lib/queries/content.ts` — Content queries
+- `frontend/src/lib/queries/users.ts` — User queries
 
 ## Naming Conventions
 
@@ -465,22 +465,22 @@ make migrate-down    # Test rollback
 - Generated: Yes (make graphql-gen)
 - Edit: Never
 
-**`fe/.svelte-kit/`**
+**`frontend/.svelte-kit/`**
 - Purpose: SvelteKit build cache and generated types
 - Committed: No (.gitignore)
 - Generated: Yes
 
-**`fe/build/`**
+**`frontend/build/`**
 - Purpose: Production build output
 - Committed: No (.gitignore)
 - Generated: Yes (pnpm run build)
 
-**`fe/coverage/`**
+**`frontend/coverage/`**
 - Purpose: Test coverage reports
 - Committed: No (.gitignore)
 - Generated: Yes (pnpm run test:coverage)
 
-**`fe/node_modules/`**
+**`frontend/node_modules/`**
 - Purpose: npm dependencies
 - Committed: No (.gitignore)
 - Generated: Yes (pnpm install)

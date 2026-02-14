@@ -27,15 +27,15 @@ tech-stack:
 
 key-files:
   created:
-    - fe/src/lib/components/ActivityTable.svelte
-    - fe/src/lib/components/UserSelector.svelte
-    - fe/tests/components/ActivityTable.test.ts
-    - fe/tests/components/UserSelector.test.ts
-    - fe/tests/helpers/TestWrapper.svelte
+    - frontend/src/lib/components/ActivityTable.svelte
+    - frontend/src/lib/components/UserSelector.svelte
+    - frontend/tests/components/ActivityTable.test.ts
+    - frontend/tests/components/UserSelector.test.ts
+    - frontend/tests/helpers/TestWrapper.svelte
   modified:
-    - fe/src/routes/+page.svelte (replaced placeholder with real Activity page)
-    - fe/src/lib/components/Header.svelte (added UserSelector)
-    - fe/tests/components/Header.test.ts (mocked UserSelector)
+    - frontend/src/routes/+page.svelte (replaced placeholder with real Activity page)
+    - frontend/src/lib/components/Header.svelte (added UserSelector)
+    - frontend/tests/components/Header.test.ts (mocked UserSelector)
 
 key-decisions:
   - "TanStack Query function wrapper pattern for Svelte 5 compatibility"
@@ -83,16 +83,16 @@ Each task was committed atomically:
 ## Files Created/Modified
 
 ### Created
-- `fe/src/lib/components/ActivityTable.svelte` - AG Grid wrapper with 5 columns, pagination, Quick Filter
-- `fe/src/lib/components/UserSelector.svelte` - User dropdown with TanStack Query
-- `fe/tests/components/ActivityTable.test.ts` - 4 tests
-- `fe/tests/components/UserSelector.test.ts` - 2 tests
-- `fe/tests/helpers/TestWrapper.svelte` - QueryClientProvider wrapper for testing
+- `frontend/src/lib/components/ActivityTable.svelte` - AG Grid wrapper with 5 columns, pagination, Quick Filter
+- `frontend/src/lib/components/UserSelector.svelte` - User dropdown with TanStack Query
+- `frontend/tests/components/ActivityTable.test.ts` - 4 tests
+- `frontend/tests/components/UserSelector.test.ts` - 2 tests
+- `frontend/tests/helpers/TestWrapper.svelte` - QueryClientProvider wrapper for testing
 
 ### Modified
-- `fe/src/routes/+page.svelte` - Replaced placeholder with real Activity page (TanStack Query + ActivityTable)
-- `fe/src/lib/components/Header.svelte` - Added UserSelector before Add Video button
-- `fe/tests/components/Header.test.ts` - Mocked UserSelector to avoid QueryClient dependency
+- `frontend/src/routes/+page.svelte` - Replaced placeholder with real Activity page (TanStack Query + ActivityTable)
+- `frontend/src/lib/components/Header.svelte` - Added UserSelector before Add Video button
+- `frontend/tests/components/Header.test.ts` - Mocked UserSelector to avoid QueryClient dependency
 
 ## Decisions Made
 
@@ -112,7 +112,7 @@ Each task was committed atomically:
 - **Found during:** Task 2 (Type checking)
 - **Issue:** TanStack Query v6 for Svelte 5 requires function wrapper `createQuery(() => ({ ... }))` not direct object `createQuery({ ... })`
 - **Fix:** Updated UserSelector and +page.svelte to use function wrapper pattern
-- **Files modified:** `fe/src/lib/components/UserSelector.svelte`, `fe/src/routes/+page.svelte`
+- **Files modified:** `frontend/src/lib/components/UserSelector.svelte`, `frontend/src/routes/+page.svelte`
 - **Verification:** All 61 tests passing
 - **Committed in:** 45c3af2 (Task 2 commit)
 
@@ -120,7 +120,7 @@ Each task was committed atomically:
 - **Found during:** Task 2 (Type checking)
 - **Issue:** TanStack Query in Svelte 5 returns reactive object, not a Svelte store - access with `query.data` not `$query.data`
 - **Fix:** Removed $ prefix from all query result accesses
-- **Files modified:** `fe/src/routes/+page.svelte`, `fe/src/lib/components/UserSelector.svelte`
+- **Files modified:** `frontend/src/routes/+page.svelte`, `frontend/src/lib/components/UserSelector.svelte`
 - **Verification:** Type checking passes, tests pass
 - **Committed in:** 45c3af2 (Task 2 commit)
 
@@ -128,7 +128,7 @@ Each task was committed atomically:
 - **Found during:** Task 2 (Type checking warning)
 - **Issue:** Loading prop passed to gridOptions captured initial value only (not reactive)
 - **Fix:** Moved loading state update to separate `$effect` that watches the loading prop
-- **Files modified:** `fe/src/lib/components/ActivityTable.svelte`
+- **Files modified:** `frontend/src/lib/components/ActivityTable.svelte`
 - **Verification:** Component works correctly with reactive loading state
 - **Committed in:** 45c3af2 (Task 2 commit)
 

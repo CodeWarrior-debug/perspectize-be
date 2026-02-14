@@ -79,7 +79,7 @@ npm install -D @testing-library/svelte jsdom vitest-svelte
 ### Recommended Project Structure
 
 ```
-fe/
+frontend/
 ├── src/
 │   ├── lib/
 │   │   ├── components/        # All reusable UI components (flat structure)
