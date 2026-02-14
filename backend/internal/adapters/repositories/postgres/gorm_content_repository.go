@@ -8,6 +8,7 @@ import (
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/repositories"
+	paginator "github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"gorm.io/gorm"
 )
 
@@ -70,10 +71,21 @@ func (r *GormContentRepository) List(ctx context.Context, params domain.ContentL
 		limit = *params.First
 	}
 
-	col := sortColumnName(params.SortBy)
-	dir := sortDirection(params.SortOrder)
+	// Build sort rules using helper from helpers.go
+	rules := buildContentSortRules(params.SortBy, params.SortOrder)
 
-	// Start query with context
+	// Configure paginator options
+	opts := []paginator.Option{
+		paginator.WithRules(rules...),
+		paginator.WithLimit(limit),
+		paginator.WithAllowTupleCmp(paginator.TRUE),
+	}
+	if params.After != nil {
+		opts = append(opts, paginator.WithAfter(*params.After))
+	}
+	p := paginator.New(opts...)
+
+	// Start query with context and apply filters BEFORE pagination
 	query := r.db.WithContext(ctx).Model(&ContentModel{})
 
 	// Apply filters via GORM chaining
@@ -95,50 +107,24 @@ func (r *GormContentRepository) List(ctx context.Context, params domain.ContentL
 	// Total count (before cursor/limit — respects filters only)
 	var totalCountInt *int
 	if params.IncludeTotalCount {
+		// Clone query to avoid Paginate() modifying count query
+		countQuery := query.Session(&gorm.Session{})
 		var count int64
-		if err := query.Count(&count).Error; err != nil {
+		if err := countQuery.Count(&count).Error; err != nil {
 			return nil, fmt.Errorf("failed to count content: %w", err)
 		}
 		countInt := int(count)
 		totalCountInt = &countInt
 	}
 
-	// Cursor pagination
-	if params.After != nil {
-		cursorID, err := decodeCursor(*params.After)
-		if err != nil {
-			return nil, fmt.Errorf("invalid after cursor: %w", err)
-		}
-		if dir == "DESC" {
-			query = query.Where("id < ?", cursorID)
-		} else {
-			query = query.Where("id > ?", cursorID)
-		}
-	}
-
-	// Dynamic ORDER BY with JSONB support
-	nullsClause := ""
-	if isJSONBSort(params.SortBy) {
-		nullsClause = " NULLS LAST"
-	}
-	orderClause := col + " " + dir + nullsClause + ", id " + dir
-	query = query.Order(gorm.Expr(orderClause))
-
-	// Fetch limit+1 for hasNextPage detection
-	query = query.Limit(limit + 1)
+	// Execute pagination
 	var models []ContentModel
-	if err := query.Find(&models).Error; err != nil {
+	_, cursor, err := p.Paginate(query, &models)
+	if err != nil {
 		return nil, fmt.Errorf("failed to list content: %w", err)
 	}
 
-	// Build PaginatedContent result
-	hasNext := len(models) > limit
-	if hasNext {
-		models = models[:limit]
-	}
-
-	hasPrev := params.After != nil
-
+	// Map results to domain
 	items := make([]*domain.Content, len(models))
 	for i := range models {
 		items[i] = contentModelToDomain(&models[i])
@@ -146,17 +132,14 @@ func (r *GormContentRepository) List(ctx context.Context, params domain.ContentL
 
 	result := &domain.PaginatedContent{
 		Items:      items,
-		HasNext:    hasNext,
-		HasPrev:    hasPrev,
+		HasNext:    cursor.After != nil,
+		HasPrev:    cursor.Before != nil,
 		TotalCount: totalCountInt,
 	}
 
-	if len(items) > 0 {
-		start := encodeCursor(items[0].ID)
-		end := encodeCursor(items[len(items)-1].ID)
-		result.StartCursor = &start
-		result.EndCursor = &end
-	}
+	// StartCursor = cursor.Before, EndCursor = cursor.After
+	result.StartCursor = cursor.Before
+	result.EndCursor = cursor.After
 
 	return result, nil
 }
