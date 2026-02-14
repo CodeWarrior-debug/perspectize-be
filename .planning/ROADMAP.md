@@ -185,8 +185,9 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
 
 - [ ] **Phase 6: Error Handling & Data Integrity** - Fix silent failures, error leakage, and config validation
 - [x] **Phase 7: Backend Architecture** - Hexagonal cleanup, dependency injection, server infrastructure
-- [x] **Phase 7.1: ORM Migration — sqlx to GORM** - Replace sqlx with GORM using hex-clean separate model pattern, gorm-cursor-paginator (INSERTED)
-- [ ] **Phase 8: API & Schema Quality** - Fix pagination, GraphQL types, race conditions, nested resolvers
+- [x] **Phase 7.1: ORM Migration — sqlx to GORM** - Replace sqlx with GORM using hex-clean separate model pattern (INSERTED)
+- [ ] **Phase 7.2: gorm-cursor-paginator Integration** - Fix C-02 cursor pagination for non-ID sorts, replace hand-rolled cursor encoding (INSERTED)
+- [ ] **Phase 8: API & Schema Quality** - Fix GraphQL types, race conditions, nested resolvers
 - [ ] **Phase 9: Security Hardening** - Authentication, rate limiting, query complexity, headers, HTTPS
 - [ ] **Phase 10: Frontend Quality & Test Coverage** - XSS fix, codegen, error boundaries, cleanup, test gaps
 
@@ -290,9 +291,27 @@ Plans:
 
 (Includes shared gorm_models.go ~85 lines + gorm_mappers.go ~140 lines)
 
+### Phase 7.2: gorm-cursor-paginator Integration (INSERTED)
+**Goal**: Replace hand-rolled cursor encoding with `gorm-cursor-paginator` library to fix C-02 (cursor pagination broken for non-ID sorts) and simplify pagination code in all GORM repositories
+**Depends on**: Phase 7.1 (GORM migration must be complete)
+**Source**: CONCERNS.md C-02, FEATURE_BACKLOG.md (HIGH PRIORITY)
+**Success Criteria** (what must be TRUE):
+  1. `gorm-cursor-paginator` library added as dependency
+  2. Cursor pagination works correctly for all sort columns (created_at, updated_at, name, JSONB fields), not just ID
+  3. Hand-rolled `encodeCursor`/`decodeCursor` replaced with library's built-in cursor handling
+  4. Content List and Perspective List methods use library paginator
+  5. Compound keyset pagination: cursors encode both sort column value + ID (fixes C-02)
+  6. All existing tests pass — no behavior regression
+  7. Frontend cursor contract preserved (opaque base64 strings, hasNext/hasPrev, startCursor/endCursor)
+**Plans**: 2 plans in 2 waves
+
+Plans:
+- [ ] 07.2-01-PLAN.md — Add gorm-cursor-paginator dep, dummy GORM model fields, sort rule builder functions
+- [ ] 07.2-02-PLAN.md — Rewrite Content + Perspective List() to use paginator, delete old cursor functions
+
 ### Phase 8: API & Schema Quality
 **Goal**: Fix GraphQL schema types, pagination bugs, race conditions, and missing resolvers
-**Depends on**: Phase 7.1 (GORM migration simplifies pagination fixes)
+**Depends on**: Phase 7.2 (cursor pagination fixed first)
 **Source**: CONCERNS.md C-02, H-03, H-04, H-05, H-06, H-07, H-08, M-04, M-08, M-11, M-13, M-16
 **Success Criteria** (what must be TRUE):
   1. Cursor pagination works correctly for all sort columns, not just ID (C-02)
@@ -308,7 +327,7 @@ Plans:
 **Plans**: TBD
 
 **Concern checklist:**
-- [ ] C-02: Cursor pagination broken for non-ID sorts (compound keyset required)
+- [ ] C-02: Cursor pagination broken for non-ID sorts → **Moved to Phase 7.2**
 - [ ] H-03: `ListAll()` users has no pagination (unbounded query)
 - [ ] H-04: Timestamps as `String!` instead of `DateTime` scalar
 - [ ] H-05: `contentType` uses `String!` instead of `ContentType` enum
@@ -408,7 +427,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 8 -> 9 -> 10
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 8 -> 9 -> 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -424,6 +443,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
 | 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |
 | 7.1 ORM Migration (sqlx → GORM) | 3/3 | Complete | 2026-02-14 |
+| 7.2 gorm-cursor-paginator | 0/2 | Planned | - |
 | 8. API & Schema Quality | 0/0 | Not started | - |
 | 9. Security Hardening | 0/0 | Not started | - |
 | 10. Frontend Quality & Test Coverage | 0/0 | Not started | - |
