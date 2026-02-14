@@ -184,7 +184,7 @@ Plans:
 Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md`. Ordered by dependency: fix errors first, then architecture, then schema, then security (which depends on clean architecture), then frontend. Each phase is a living checklist — items can be picked off incrementally.
 
 - [ ] **Phase 6: Error Handling & Data Integrity** - Fix silent failures, error leakage, and config validation
-- [ ] **Phase 7: Backend Architecture** - Hexagonal cleanup, dependency injection, server infrastructure
+- [x] **Phase 7: Backend Architecture** - Hexagonal cleanup, dependency injection, server infrastructure
 - [ ] **Phase 7.1: ORM Migration — sqlx to GORM** - Replace sqlx with GORM using hex-clean separate model pattern, gorm-cursor-paginator (INSERTED)
 - [ ] **Phase 8: API & Schema Quality** - Fix pagination, GraphQL types, race conditions, nested resolvers
 - [ ] **Phase 9: Security Hardening** - Authentication, rate limiting, query complexity, headers, HTTPS
@@ -237,22 +237,22 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 07-01-PLAN.md — Service port interfaces, ExtractVideoID on YouTubeClient, resolver DI refactor
-- [ ] 07-02-PLAN.md — Replace lib/pq with custom array types, configurable DB pool, config env var, DSN validation
-- [ ] 07-03-PLAN.md — Chi router with middleware, /ready endpoint, graceful shutdown coordination
+- [x] 07-01-PLAN.md — Service port interfaces, ExtractVideoID on YouTubeClient, resolver DI refactor
+- [x] 07-02-PLAN.md — Replace lib/pq with custom array types, configurable DB pool, config env var, DSN validation
+- [x] 07-03-PLAN.md — Chi router with middleware, /ready endpoint, graceful shutdown coordination
 
 **Concern checklist:**
-- [ ] H-01: Adapter-to-adapter coupling (resolver imports YouTube adapter directly)
-- [ ] H-02: Resolver depends on concrete service types (no port interfaces)
-- [ ] H-09: Hardcoded config path
-- [ ] M-01: Dual PostgreSQL driver dependencies (`lib/pq` + `pgx`)
-- [ ] M-02: Hardcoded database connection pool settings
-- [ ] M-05: Function parameter instead of dependency injection
-- [ ] M-06: No request logging middleware
-- [ ] M-09: No graceful shutdown handler
-- [ ] M-10: No health check endpoint
-- [ ] M-12: DB credentials in logs on failure
-- [ ] M-17: No `DATABASE_URL` format validation
+- [x] H-01: Adapter-to-adapter coupling (resolver imports YouTube adapter directly)
+- [x] H-02: Resolver depends on concrete service types (no port interfaces)
+- [x] H-09: Hardcoded config path
+- [x] M-01: Dual PostgreSQL driver dependencies (`lib/pq` + `pgx`)
+- [x] M-02: Hardcoded database connection pool settings
+- [x] M-05: Function parameter instead of dependency injection
+- [x] M-06: No request logging middleware
+- [x] M-09: No graceful shutdown handler
+- [x] M-10: No health check endpoint
+- [x] M-12: DB credentials in logs on failure
+- [x] M-17: No `DATABASE_URL` format validation
 
 ### Phase 7.1: ORM Migration — sqlx to GORM (INSERTED)
 **Goal**: Replace sqlx with GORM using hex-clean separate model pattern (domain models stay pure, GORM models in adapter layer). Eliminate ~35% of repository boilerplate while preserving hexagonal architecture.
@@ -417,7 +417,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6
 | 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 1/3 | In progress | - |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
-| 7. Backend Architecture | 0/3 | Planned | - |
+| 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |
 | 7.1 ORM Migration (sqlx → GORM) | 0/0 | Not started | - |
 | 8. API & Schema Quality | 0/0 | Not started | - |
 | 9. Security Hardening | 0/0 | Not started | - |
