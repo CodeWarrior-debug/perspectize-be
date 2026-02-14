@@ -5,11 +5,11 @@
 ## Languages
 
 **Primary:**
-- Go 1.25+ - Primary language for all backend development (`perspectize-go/`)
+- Go 1.25+ - Primary language for all backend development (`backend/`)
 - SQL - Database schema and migrations in PostgreSQL
 
 **Secondary (Legacy):**
-- C# with ASP.NET Core - Legacy implementation in `perspectize-be/` directory (do not modify, migration in progress)
+- C# with ASP.NET Core - Legacy implementation in `perspectize/` directory (do not modify, migration in progress)
 
 ## Runtime
 
@@ -79,7 +79,7 @@ Configuration is loaded from two sources (in order of precedence):
    - `YOUTUBE_API_KEY` - YouTube Data API v3 key (optional)
 
 2. **config/config.example.json** - Non-secret application configuration
-   - Default location: `perspectize-go/config/config.example.json`
+   - Default location: `backend/config/config.example.json`
    - Loaded in `cmd/server/main.go` via `config.Load()`
    - JSON structure defines server port, database host/port, logging level
 

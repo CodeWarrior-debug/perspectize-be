@@ -30,15 +30,15 @@ tech-stack:
 
 key-files:
   created:
-    - perspectize-fe/src/lib/components/shadcn/dialog/
-    - perspectize-fe/src/lib/components/shadcn/input/
-    - perspectize-fe/src/lib/components/shadcn/label/
-    - perspectize-fe/src/lib/utils/youtube.ts
-    - perspectize-fe/tests/unit/youtube.test.ts
+    - frontend/src/lib/components/shadcn/dialog/
+    - frontend/src/lib/components/shadcn/input/
+    - frontend/src/lib/components/shadcn/label/
+    - frontend/src/lib/utils/youtube.ts
+    - frontend/tests/unit/youtube.test.ts
   modified:
-    - perspectize-fe/src/lib/components/shadcn/index.ts
-    - perspectize-fe/src/lib/queries/content.ts
-    - perspectize-fe/tests/unit/queries-content.test.ts
+    - frontend/src/lib/components/shadcn/index.ts
+    - frontend/src/lib/queries/content.ts
+    - frontend/tests/unit/queries-content.test.ts
 
 key-decisions:
   - "Move shadcn components from ui/ to shadcn/ directory for consistency with existing button component"
@@ -82,14 +82,14 @@ Each task was committed atomically:
 2. **Task 2: Create YouTube URL validation utility, mutation definition, and tests** - `9255b47` (feat)
 
 ## Files Created/Modified
-- `perspectize-fe/src/lib/components/shadcn/dialog/` - Dialog component with 10 sub-components (Root, Content, Header, Title, Footer, Description, Overlay, Close, Portal, Trigger)
-- `perspectize-fe/src/lib/components/shadcn/input/` - Input component
-- `perspectize-fe/src/lib/components/shadcn/label/` - Label component
-- `perspectize-fe/src/lib/components/shadcn/index.ts` - Updated barrel export with Dialog, Input, Label (alphabetized)
-- `perspectize-fe/src/lib/utils/youtube.ts` - validateYouTubeUrl function with URL constructor approach
-- `perspectize-fe/src/lib/queries/content.ts` - Added CREATE_CONTENT_FROM_YOUTUBE mutation
-- `perspectize-fe/tests/unit/youtube.test.ts` - 17 tests for YouTube URL validation
-- `perspectize-fe/tests/unit/queries-content.test.ts` - Added 10 tests for mutation definition
+- `frontend/src/lib/components/shadcn/dialog/` - Dialog component with 10 sub-components (Root, Content, Header, Title, Footer, Description, Overlay, Close, Portal, Trigger)
+- `frontend/src/lib/components/shadcn/input/` - Input component
+- `frontend/src/lib/components/shadcn/label/` - Label component
+- `frontend/src/lib/components/shadcn/index.ts` - Updated barrel export with Dialog, Input, Label (alphabetized)
+- `frontend/src/lib/utils/youtube.ts` - validateYouTubeUrl function with URL constructor approach
+- `frontend/src/lib/queries/content.ts` - Added CREATE_CONTENT_FROM_YOUTUBE mutation
+- `frontend/tests/unit/youtube.test.ts` - 17 tests for YouTube URL validation
+- `frontend/tests/unit/queries-content.test.ts` - Added 10 tests for mutation definition
 
 ## Decisions Made
 

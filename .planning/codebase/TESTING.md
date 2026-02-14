@@ -51,7 +51,7 @@ pnpm run test:duplication  # Code duplication check (jscpd)
 - Centralized in `test/` directory at project root
 - Mirrored structure from source:
   ```
-  perspectize-go/
+  backend/
   ├── internal/core/services/content_service.go    (source)
   ├── test/services/content_service_test.go        (test)
   ├── internal/core/domain/content.go              (source)
@@ -65,7 +65,7 @@ pnpm run test:duplication  # Code duplication check (jscpd)
 
 **Directory Structure:**
 ```
-perspectize-go/test/
+backend/test/
 ├── services/
 │   ├── content_service_test.go
 │   ├── perspective_service_test.go
@@ -91,7 +91,7 @@ perspectize-go/test/
 - Tests in `tests/` directory mirroring `src/` structure
 - Co-located with source for unit tests or in `tests/{category}/`
   ```
-  perspectize-fe/
+  frontend/
   ├── src/lib/utils.ts
   ├── tests/unit/utils.test.ts
   ├── src/lib/stores/userSelection.svelte.ts
@@ -106,7 +106,7 @@ perspectize-go/test/
 
 **Directory Structure:**
 ```
-perspectize-fe/tests/
+frontend/tests/
 ├── setup.ts
 ├── unit/
 │   ├── utils.test.ts
@@ -137,8 +137,8 @@ import (
     "testing"
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/require"
-    "github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/domain"
-    "github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/core/services"
+    "github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
+    "github.com/CodeWarrior-debug/perspectize/backend/internal/core/services"
 )
 
 // Mock implementation of interface

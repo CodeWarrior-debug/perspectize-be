@@ -21,8 +21,8 @@ tech-stack:
   patterns: [AG Grid with $state reactivity, shadcn-themed AG Grid via CSS variables]
 
 key-files:
-  created: [perspectize-fe/src/lib/components/AGGridTest.svelte]
-  modified: [perspectize-fe/src/lib/components/Header.svelte, perspectize-fe/src/routes/+page.svelte, perspectize-fe/src/app.css, perspectize-fe/package.json]
+  created: [frontend/src/lib/components/AGGridTest.svelte]
+  modified: [frontend/src/lib/components/Header.svelte, frontend/src/routes/+page.svelte, frontend/src/app.css, frontend/package.json]
 
 key-decisions:
   - "Add Video is a button (not a page route) — modal implementation deferred to Phase 3"
@@ -65,13 +65,13 @@ Tasks were committed atomically (commit SHAs not provided in source data).
 ## Files Created/Modified
 
 **Created:**
-- `perspectize-fe/src/lib/components/AGGridTest.svelte` - AG Grid validation component with 12 test rows, all features enabled
+- `frontend/src/lib/components/AGGridTest.svelte` - AG Grid validation component with 12 test rows, all features enabled
 
 **Modified:**
-- `perspectize-fe/src/lib/components/Header.svelte` - Added "Add Video" button with placeholder toast
-- `perspectize-fe/src/routes/+page.svelte` - Added AGGridTest component to Activity page
-- `perspectize-fe/src/app.css` - Imported AG Grid styles and custom theme using shadcn CSS variables
-- `perspectize-fe/package.json` - Added ag-grid-community@32.2.2 and ag-grid-svelte5@0.4.1
+- `frontend/src/lib/components/Header.svelte` - Added "Add Video" button with placeholder toast
+- `frontend/src/routes/+page.svelte` - Added AGGridTest component to Activity page
+- `frontend/src/app.css` - Imported AG Grid styles and custom theme using shadcn CSS variables
+- `frontend/package.json` - Added ag-grid-community@32.2.2 and ag-grid-svelte5@0.4.1
 
 ## Decisions Made
 
@@ -122,7 +122,7 @@ Chrome DevTools MCP self-verification was used to test AG Grid features:
 ## Deviations from Plan
 
 **AG_GRID_VALIDATION.md artifact not created:**
-- Plan specified creating `perspectize-fe/AG_GRID_VALIDATION.md` with validation results
+- Plan specified creating `frontend/AG_GRID_VALIDATION.md` with validation results
 - Decision made during execution to skip this artifact and document validation in this summary instead
 - Rationale: Validation results are a one-time checkpoint, not a living document; summary is the authoritative record of phase completion
 

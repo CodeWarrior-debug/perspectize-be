@@ -32,7 +32,7 @@ Perspectize uses golang-migrate with PostgreSQL. Migrations are version-controll
 ## Migration File Structure
 
 ```
-perspectize-go/migrations/
+backend/migrations/
 ├── 000001_initial_schema.up.sql
 ├── 000001_initial_schema.down.sql
 ├── 000002_add_perspectives.up.sql

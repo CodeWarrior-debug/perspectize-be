@@ -7,8 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Perspectize** — Platform for storing, refining, and sharing perspectives on content (initially YouTube videos).
 
 Monorepo with two stacks:
-- **Backend:** `perspectize-go/` — Go GraphQL API (see `perspectize-go/CLAUDE.md`)
-- **Frontend:** `perspectize-fe/` — SvelteKit web app (see `perspectize-fe/CLAUDE.md`)
+- **Backend:** `backend/` — Go GraphQL API (see `backend/CLAUDE.md`)
+- **Frontend:** `frontend/` — SvelteKit web app (see `frontend/CLAUDE.md`)
 
 **CLAUDE.md structure:** Root file (this) contains shared concerns. Package-level files contain stack-specific instructions. Claude loads root + the relevant package file per session.
 
@@ -24,15 +24,15 @@ gh pr view 123
 gh pr merge 123
 
 # Edit PR (use API — gh pr edit fails with Projects Classic deprecation)
-gh api repos/CodeWarrior-debug/perspectize-be/pulls/123 -X PATCH -f body="New description"
+gh api repos/CodeWarrior-debug/perspectize/pulls/123 -X PATCH -f body="New description"
 
 # Issues (use API — gh issue view fails with Projects Classic deprecation)
 gh issue create --title "Title" --body "..."  # Use issue templates (see below)
 gh issue list
-gh api repos/CodeWarrior-debug/perspectize-be/issues/123 --jq '.title, .html_url'
+gh api repos/CodeWarrior-debug/perspectize/issues/123 --jq '.title, .html_url'
 
 # API access
-gh api repos/CodeWarrior-debug/perspectize-be/pulls/123/comments
+gh api repos/CodeWarrior-debug/perspectize/pulls/123/comments
 ```
 
 ### GitHub Templates
@@ -110,8 +110,8 @@ Types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`
 Claude Code may use the following tools **without prompting** for this project:
 
 ### File Operations
-- **Read**: Any file in `.planning/`, `perspectize-fe/src/`, `perspectize-go/`, `docs/`
-- **Edit/Write**: Any file in `.planning/` (design specs, roadmaps, plans), `perspectize-fe/src/`, `perspectize-go/` (excluding sensitive files)
+- **Read**: Any file in `.planning/`, `frontend/src/`, `backend/`, `docs/`
+- **Edit/Write**: Any file in `.planning/` (design specs, roadmaps, plans), `frontend/src/`, `backend/` (excluding sensitive files)
 - **Glob/Grep**: Unlimited search across the codebase
 
 ### Bash Commands
@@ -123,7 +123,7 @@ Claude Code may use the following tools **without prompting** for this project:
 ### Figma MCP Tools
 - **Design context**: `get_screenshot`, `get_design_context`, `get_metadata` — all Figma MCP tools auto-approved
 - **Design system**: `get_variable_defs`, `create_design_system_rules`
-- **File keys**: Design 1 (`K1HaZLeNwCckWvhoyAfRhj`), Radix 3.0 (`SyvrP9yYbrmCorofJK4Co8`), App 1 (`dAiiWM7FOsob5upzUjtocY`) — see [perspectize-fe/docs/FIGMA.md](perspectize-fe/docs/FIGMA.md)
+- **File keys**: Design 1 (`K1HaZLeNwCckWvhoyAfRhj`), Radix 3.0 (`SyvrP9yYbrmCorofJK4Co8`), App 1 (`dAiiWM7FOsob5upzUjtocY`) — see [frontend/docs/FIGMA.md](frontend/docs/FIGMA.md)
 
 ### Task & Execution Tools
 - **TaskCreate/TaskUpdate**: Creating and updating tasks from conversations
@@ -135,9 +135,21 @@ Claude Code may use the following tools **without prompting** for this project:
 
 Planning and execution artifacts in `.planning/`: `PROJECT.md`, `ROADMAP.md`, `STATE.md`, `phases/`. Branching: see [docs/GSD_BRANCHING.md](docs/GSD_BRANCHING.md).
 
-## Self-Verification
+## Self-Verification (MANDATORY)
 
-Before marking work complete, verify against plan `must_haves` and capture evidence. See [docs/VERIFICATION.md](docs/VERIFICATION.md) for full checklist and evidence capture workflow.
+**Before claiming work is complete, pushing, or creating a PR**, you MUST run verification. No exceptions.
+
+### Verification checklist
+
+1. **Build**: `go build ./...` in `backend/` — must compile with zero errors
+2. **Backend tests**: `go test ./...` in `backend/` — all must pass
+3. **Frontend tests**: `pnpm run test:run` in `frontend/` — all must pass
+4. **Stale references**: If renaming/moving files or paths, grep the entire repo for old names
+5. **Plan must_haves**: If executing a GSD plan, verify each `must_haves.truths` item
+
+Run the relevant subset (e.g., backend-only changes skip step 3). Report results explicitly — don't just say "tests pass", show the output summary.
+
+See [docs/VERIFICATION.md](docs/VERIFICATION.md) for evidence capture workflow.
 
 ### Production Setup (Sevalla/Fly.io)
 
@@ -153,9 +165,9 @@ Use `DATABASE_URL` with external endpoint from hosting provider. Note: Sevalla c
 - [Go Patterns](docs/GO_PATTERNS.md) — Error handling and DB query patterns
 
 **Frontend docs:**
-- [Frontend CLAUDE.md](perspectize-fe/CLAUDE.md) — SvelteKit, Svelte 5, TanStack Query patterns
-- [Design Spec](perspectize-fe/docs/DESIGN_SPEC.md) — Figma design system, color tokens, typography, component specs
-- [Figma Reference](perspectize-fe/docs/FIGMA.md) — File keys, pages, variables, code↔Figma mapping
+- [Frontend CLAUDE.md](frontend/CLAUDE.md) — SvelteKit, Svelte 5, TanStack Query patterns
+- [Design Spec](frontend/docs/DESIGN_SPEC.md) — Figma design system, color tokens, typography, component specs
+- [Figma Reference](frontend/docs/FIGMA.md) — File keys, pages, variables, code↔Figma mapping
 
 **Planning & backlog:**
 - [Feature Backlog](FEATURE_BACKLOG.md) — Future ideas and enhancements not tied to any milestone. Capture ideas here during development; evaluate when planning new work.

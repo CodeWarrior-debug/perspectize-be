@@ -6,7 +6,7 @@ This document helps AI agents (Claude Code, subagents, skills) navigate the Pers
 
 | Task | Read First | Subagent | Model | Skills to Load |
 |------|------------|----------|-------|----------------|
-| Go backend work | `perspectize-go/internal/` | `go-backend` | Sonnet | `backend-development` |
+| Go backend work | `backend/internal/` | `go-backend` | Sonnet | `backend-development` |
 | GraphQL changes | `schema.graphql` | `graphql-designer` | Sonnet | `api-scaffolding:graphql-architect` |
 | Database migrations | `migrations/` | `db-migration` | Sonnet | `devops-tools:databases` |
 | Code review | `.golangci.yml` | `code-reviewer` | Haiku | - |
@@ -15,7 +15,7 @@ This document helps AI agents (Claude Code, subagents, skills) navigate the Pers
 
 ## Domain-Specific Instructions
 
-### Go Backend (`perspectize-go/`)
+### Go Backend (`backend/`)
 
 **Entry Points:**
 - `cmd/server/main.go` - Application bootstrap, DI wiring

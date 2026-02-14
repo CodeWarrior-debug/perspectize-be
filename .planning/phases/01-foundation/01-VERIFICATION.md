@@ -33,24 +33,24 @@ score: 7/7 must-haves verified
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `perspectize-fe/package.json` | Project dependencies and scripts | ✓ VERIFIED | Contains @sveltejs/kit, @tanstack/svelte-query, ag-grid-svelte5, all required deps |
-| `perspectize-fe/svelte.config.js` | SvelteKit config with adapter-static | ✓ VERIFIED | adapter-static configured for SSG |
-| `perspectize-fe/src/app.css` | Global styles with Tailwind and theme tokens | ✓ VERIFIED | @import tailwindcss, --color-primary navy, Geist font-face |
-| `perspectize-fe/src/lib/components/shadcn/` | shadcn Button component | ✓ VERIFIED | button/ subfolder with index.ts barrel export |
-| `perspectize-fe/STRUCTURE.md` | Folder structure documentation | ✓ VERIFIED | 250 lines documenting organization, naming, examples |
-| `perspectize-fe/src/lib/components/Header.svelte` | Header with Add Video button | ✓ VERIFIED | 22 lines, Add Video button with toast placeholder |
-| `perspectize-fe/src/lib/components/PageWrapper.svelte` | Responsive page wrapper | ✓ VERIFIED | 8 lines, responsive padding via Tailwind classes |
-| `perspectize-fe/src/lib/components/AGGridTest.svelte` | AG Grid validation component | ✓ VERIFIED | 91 lines, 12 test rows, all features enabled |
-| `perspectize-fe/src/lib/queries/client.ts` | GraphQL client configuration | ✓ VERIFIED | GraphQLClient with VITE_GRAPHQL_URL env var |
-| `perspectize-fe/src/lib/queries/content.ts` | GraphQL query definitions | ✓ VERIFIED | LIST_CONTENT and GET_CONTENT queries with gql tag |
-| `perspectize-fe/vite.config.ts` | Vitest config with coverage thresholds | ✓ VERIFIED | Lines 27-32: thresholds at 80/80/75/80 |
-| `perspectize-fe/tests/helpers/render.ts` | Test helper for Svelte 5 components | ✓ VERIFIED | 15 lines, renderComponent + expectClasses helpers |
-| `perspectize-fe/tests/unit/utils.test.ts` | Unit tests for cn() utility | ✓ VERIFIED | 9 test cases covering empty, single, multi, conditional, conflicts, etc. |
-| `perspectize-fe/tests/unit/queries-client.test.ts` | GraphQL client tests | ✓ VERIFIED | 3 tests verifying client exports and methods |
-| `perspectize-fe/tests/unit/queries-content.test.ts` | GraphQL query tests | ✓ VERIFIED | 11 tests verifying LIST_CONTENT and GET_CONTENT structure |
-| `perspectize-fe/tests/unit/shadcn-barrel.test.ts` | Barrel export tests | ✓ VERIFIED | 4 tests verifying Button and buttonVariants exports |
-| `perspectize-fe/tests/components/Header.test.ts` | Header component tests | ✓ VERIFIED | 9 tests for rendering, brand text, structure, responsive classes |
-| `perspectize-fe/tests/components/PageWrapper.test.ts` | PageWrapper component tests | ✓ VERIFIED | 6 tests for children rendering, responsive classes, custom className |
+| `frontend/package.json` | Project dependencies and scripts | ✓ VERIFIED | Contains @sveltejs/kit, @tanstack/svelte-query, ag-grid-svelte5, all required deps |
+| `frontend/svelte.config.js` | SvelteKit config with adapter-static | ✓ VERIFIED | adapter-static configured for SSG |
+| `frontend/src/app.css` | Global styles with Tailwind and theme tokens | ✓ VERIFIED | @import tailwindcss, --color-primary navy, Geist font-face |
+| `frontend/src/lib/components/shadcn/` | shadcn Button component | ✓ VERIFIED | button/ subfolder with index.ts barrel export |
+| `frontend/STRUCTURE.md` | Folder structure documentation | ✓ VERIFIED | 250 lines documenting organization, naming, examples |
+| `frontend/src/lib/components/Header.svelte` | Header with Add Video button | ✓ VERIFIED | 22 lines, Add Video button with toast placeholder |
+| `frontend/src/lib/components/PageWrapper.svelte` | Responsive page wrapper | ✓ VERIFIED | 8 lines, responsive padding via Tailwind classes |
+| `frontend/src/lib/components/AGGridTest.svelte` | AG Grid validation component | ✓ VERIFIED | 91 lines, 12 test rows, all features enabled |
+| `frontend/src/lib/queries/client.ts` | GraphQL client configuration | ✓ VERIFIED | GraphQLClient with VITE_GRAPHQL_URL env var |
+| `frontend/src/lib/queries/content.ts` | GraphQL query definitions | ✓ VERIFIED | LIST_CONTENT and GET_CONTENT queries with gql tag |
+| `frontend/vite.config.ts` | Vitest config with coverage thresholds | ✓ VERIFIED | Lines 27-32: thresholds at 80/80/75/80 |
+| `frontend/tests/helpers/render.ts` | Test helper for Svelte 5 components | ✓ VERIFIED | 15 lines, renderComponent + expectClasses helpers |
+| `frontend/tests/unit/utils.test.ts` | Unit tests for cn() utility | ✓ VERIFIED | 9 test cases covering empty, single, multi, conditional, conflicts, etc. |
+| `frontend/tests/unit/queries-client.test.ts` | GraphQL client tests | ✓ VERIFIED | 3 tests verifying client exports and methods |
+| `frontend/tests/unit/queries-content.test.ts` | GraphQL query tests | ✓ VERIFIED | 11 tests verifying LIST_CONTENT and GET_CONTENT structure |
+| `frontend/tests/unit/shadcn-barrel.test.ts` | Barrel export tests | ✓ VERIFIED | 4 tests verifying Button and buttonVariants exports |
+| `frontend/tests/components/Header.test.ts` | Header component tests | ✓ VERIFIED | 9 tests for rendering, brand text, structure, responsive classes |
+| `frontend/tests/components/PageWrapper.test.ts` | PageWrapper component tests | ✓ VERIFIED | 6 tests for children rendering, responsive classes, custom className |
 
 ### Key Link Verification
 

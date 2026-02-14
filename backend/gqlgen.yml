@@ -1,0 +1,63 @@
+# gqlgen configuration
+# See https://gqlgen.com/config/ for details
+
+schema:
+  - schema.graphql
+
+exec:
+  filename: internal/adapters/graphql/generated/generated.go
+  package: generated
+
+model:
+  filename: internal/adapters/graphql/model/models_gen.go
+  package: model
+
+resolver:
+  layout: follow-schema
+  dir: internal/adapters/graphql/resolvers
+  package: resolvers
+  filename_template: "{name}.resolvers.go"
+
+# Map GraphQL types to Go types
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.ID
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32
+  JSON:
+    model:
+      - github.com/99designs/gqlgen/graphql.Map
+
+  # Custom scalar for ID conversion
+  IntID:
+    model:
+      - github.com/CodeWarrior-debug/perspectize/backend/pkg/graphql.IntID
+
+  # Sort enums - bind directly to domain types
+  SortOrder:
+    model:
+      - github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain.SortOrder
+  ContentSortBy:
+    model:
+      - github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain.ContentSortBy
+  PerspectiveSortBy:
+    model:
+      - github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain.PerspectiveSortBy
+
+  # Stored enums - bind directly to domain types
+  Privacy:
+    model:
+      - github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain.Privacy
+  ContentType:
+    model:
+      - github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain.ContentType
+  ReviewStatus:
+    model:
+      - github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain.ReviewStatus

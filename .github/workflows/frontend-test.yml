@@ -3,11 +3,11 @@ name: Frontend Tests
 on:
   pull_request:
     paths:
-      - 'perspectize-fe/**'
+      - 'frontend/**'
   push:
     branches: [main]
     paths:
-      - 'perspectize-fe/**'
+      - 'frontend/**'
 
 jobs:
   test:
@@ -23,14 +23,14 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: perspectize-fe/pnpm-lock.yaml
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
-        working-directory: perspectize-fe
+        working-directory: frontend
         run: pnpm install --frozen-lockfile
 
       - name: Run tests with coverage
-        working-directory: perspectize-fe
+        working-directory: frontend
         run: pnpm run test:coverage
 
       - name: Upload coverage reports
@@ -38,4 +38,4 @@ jobs:
         if: always()
         with:
           name: coverage-report
-          path: perspectize-fe/coverage/
+          path: frontend/coverage/

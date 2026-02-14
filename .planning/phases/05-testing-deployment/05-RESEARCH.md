@@ -44,7 +44,7 @@ The established tools for this domain:
 
 **Installation:**
 ```bash
-# Already installed in perspectize-fe/package.json
+# Already installed in frontend/package.json
 # GitHub Actions requires no installation (cloud-hosted)
 ```
 
@@ -65,7 +65,7 @@ The established tools for this domain:
 ```
 
 ### Pattern 1: Monorepo Path-Based CI/CD
-**What:** Use `dorny/paths-filter@v3` to detect changes in `perspectize-fe/` vs `perspectize-go/` and only run relevant jobs.
+**What:** Use `dorny/paths-filter@v3` to detect changes in `frontend/` vs `backend/` and only run relevant jobs.
 **When to use:** All workflows in monorepos to avoid wasting CI minutes on unchanged packages.
 **Example:**
 ```yaml
@@ -88,7 +88,7 @@ jobs:
         with:
           filters: |
             frontend:
-              - 'perspectize-fe/**'
+              - 'frontend/**'
 
   build-deploy:
     needs: detect-changes
@@ -107,14 +107,14 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
-          cache-dependency-path: perspectize-fe/pnpm-lock.yaml
+          cache-dependency-path: frontend/pnpm-lock.yaml
       - name: Install dependencies
-        run: cd perspectize-fe && pnpm install --frozen-lockfile
+        run: cd fe && pnpm install --frozen-lockfile
       - name: Build
-        run: cd perspectize-fe && pnpm run build
+        run: cd fe && pnpm run build
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: 'perspectize-fe/build/'
+          path: 'frontend/build/'
       - uses: actions/deploy-pages@v4
 ```
 
@@ -124,7 +124,7 @@ jobs:
 **Example:**
 ```bash
 # Generate coverage report
-cd perspectize-fe
+cd fe
 pnpm run test:coverage
 
 # Open HTML report in browser
@@ -202,7 +202,7 @@ const config = {
 			strict: true
 		}),
 		paths: {
-			base: dev ? '' : '/perspectize-be'
+			base: dev ? '' : '/perspectize'
 		}
 	}
 };
@@ -311,7 +311,7 @@ jobs:
         with:
           filters: |
             frontend:
-              - 'perspectize-fe/**'
+              - 'frontend/**'
 
   build:
     needs: detect-changes
@@ -331,10 +331,10 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
-          cache-dependency-path: perspectize-fe/pnpm-lock.yaml
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: cd perspectize-fe && pnpm install --frozen-lockfile
+        run: cd fe && pnpm install --frozen-lockfile
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
@@ -342,12 +342,12 @@ jobs:
           static_site_generator: sveltekit
 
       - name: Build
-        run: cd perspectize-fe && pnpm run build
+        run: cd fe && pnpm run build
 
       - name: Upload Artifacts
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'perspectize-fe/build/'
+          path: 'frontend/build/'
 
   deploy:
     needs: build
@@ -369,11 +369,11 @@ name: Frontend Tests
 on:
   pull_request:
     paths:
-      - 'perspectize-fe/**'
+      - 'frontend/**'
   push:
     branches: [main]
     paths:
-      - 'perspectize-fe/**'
+      - 'frontend/**'
 
 jobs:
   test:
@@ -389,20 +389,20 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
-          cache-dependency-path: perspectize-fe/pnpm-lock.yaml
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: cd perspectize-fe && pnpm install --frozen-lockfile
+        run: cd fe && pnpm install --frozen-lockfile
 
       - name: Run tests with coverage
-        run: cd perspectize-fe && pnpm run test:coverage
+        run: cd fe && pnpm run test:coverage
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage-report
-          path: perspectize-fe/coverage/
+          path: frontend/coverage/
 ```
 
 ### Production CORS Configuration
@@ -465,7 +465,7 @@ func main() {
 ```bash
 # Source: https://vitest.dev/guide/coverage
 # Generate HTML coverage report
-cd perspectize-fe
+cd fe
 pnpm run test:coverage
 
 # Open in browser
@@ -517,7 +517,7 @@ Things that couldn't be fully resolved:
 
 1. **Should we use a custom domain for GitHub Pages?**
    - What we know: GitHub Pages supports custom domains (CNAME), free SSL with Let's Encrypt
-   - What's unclear: Does the project need a custom domain (e.g., app.perspectize.com) or is `codewarrior-debug.github.io/perspectize-be` sufficient?
+   - What's unclear: Does the project need a custom domain (e.g., app.perspectize.com) or is `codewarrior-debug.github.io/perspectize` sufficient?
    - Recommendation: Start with default subdomain, add custom domain in v1.1+ if needed
 
 2. **Should coverage be enforced for backend Go code?**

@@ -26,8 +26,8 @@ Complete guide to setting up and running the Perspectize backend locally.
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/CodeWarrior-debug/perspectize-be.git
-cd perspectize-be/perspectize-go
+git clone https://github.com/CodeWarrior-debug/perspectize.git
+cd perspectize/backend
 
 # 2. Start PostgreSQL (Docker)
 make docker-up
@@ -101,7 +101,7 @@ createuser -s testuser
 
 ### 2. Environment Configuration
 
-Create `.env` file in `perspectize-go/`:
+Create `.env` file in `backend/`:
 
 ```bash
 # Database
@@ -215,7 +215,7 @@ go test -race ./...
 ## Project Structure
 
 ```
-perspectize-go/
+backend/
 ├── cmd/
 │   └── server/
 │       └── main.go           # Application entry point, DI wiring

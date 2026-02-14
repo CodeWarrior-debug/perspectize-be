@@ -92,12 +92,12 @@ Recent decisions affecting current work:
 - [03.2-03]: Cell renderers using createElement (not innerHTML) for XSS safety
 - [05-02]: Backend deployed on Sevalla (URL in SEVALLA_BACKEND_URL env var / .env files)
 - [05-02]: Frontend hosting target: Sevalla Static Sites (not DigitalOcean App Platform)
-- [Infra]: CLAUDE.md split into root + perspectize-go/CLAUDE.md + perspectize-fe/CLAUDE.md for package-level context loading
-- [Infra]: Go module renamed from `github.com/yourorg/perspectize-go` to `github.com/CodeWarrior-debug/perspectize-be/perspectize-go` (30 files, all 78 tests pass)
+- [Infra]: CLAUDE.md split into root + backend/CLAUDE.md + frontend/CLAUDE.md for package-level context loading
+- [Infra]: Go module renamed from `github.com/yourorg/backend` to `github.com/CodeWarrior-debug/perspectize/backend` (30 files, all 78 tests pass)
 - [Infra]: Docs delegated to docs/ directory: VERIFICATION.md, DOMAIN_GUIDE.md, GO_PATTERNS.md, GITHUB_PROJECTS.md, GSD_BRANCHING.md
 - [Infra]: qmd .planning/ collection added with stable-vs-live convention
 - [Infra]: All three CLAUDE.md files scored 95/100 (A) quality after optimization
-- [Frontend]: Svelte 5 runes, SvelteKit routing, TanStack Query patterns documented in perspectize-fe/CLAUDE.md
+- [Frontend]: Svelte 5 runes, SvelteKit routing, TanStack Query patterns documented in frontend/CLAUDE.md
 - [03.2-01]: JSONB extraction for sort fields with NULLS LAST to handle missing statistics
 - [03.2-01]: ILIKE search on name field for case-insensitive text search
 - [03.2-02]: Popover trigger uses buttonVariants() directly (bits-ui 2.x Svelte 5 pattern, no asChild)
@@ -108,13 +108,14 @@ Recent decisions affecting current work:
 
 - Phase 02.1 inserted after Phase 2: Mobile Responsive Fixes (URGENT) — P1 issues: header overflow/clipping at 375px, pagination bar broken, table left-shift overflow
 - Phase 03.1 inserted after Phase 3: Dialog UX Polish — Gray overlay too aggressive, modal translucent/hard to read, needs redesign with shadcn best practices
+- Phase 03.3 inserted after Phase 3.2: Repository Rename & Folder Restructure — Rename repo perspectize → perspectize, folders backend → backend, fe → fe, update all imports and Sevalla pointers
 - Phase 07.1 inserted after Phase 7: ORM Migration (sqlx → GORM) — Replace sqlx with GORM using hex-clean separate model pattern. ~35% repository code reduction. Prototype in gorm_*.go files.
 
 ### Project-Level Plan Requirements
 
 All plans that modify frontend or backend source code **must** pass test coverage as a completion gate:
-- **Frontend:** `cd perspectize-fe && pnpm run test:coverage` exits 0 (80% stmts/lines/functions, 75% branches)
-- **Backend:** `cd perspectize-go && make test` exits 0 (all tests pass)
+- **Frontend:** `cd fe && pnpm run test:coverage` exits 0 (80% stmts/lines/functions, 75% branches)
+- **Backend:** `cd backend && make test` exits 0 (all tests pass)
 
 Plans that only modify infrastructure (CI/CD, config) must still verify they don't regress coverage.
 
@@ -139,9 +140,9 @@ None.
 
 **Work completed:**
 1. **CLAUDE.md audit skill created** — custom-claude-improver skill with instruction counting, context budget analysis, and session-based compliance checking
-2. **CLAUDE.md split** — Monolithic CLAUDE.md (683 lines, 372 instructions) split into root + perspectize-go/CLAUDE.md + perspectize-fe/CLAUDE.md
+2. **CLAUDE.md split** — Monolithic CLAUDE.md (683 lines, 372 instructions) split into root + backend/CLAUDE.md + frontend/CLAUDE.md
 3. **Content delegated to docs/** — Created docs/VERIFICATION.md, docs/DOMAIN_GUIDE.md, docs/GO_PATTERNS.md, docs/GITHUB_PROJECTS.md, docs/GSD_BRANCHING.md
-4. **Go module renamed** — `github.com/yourorg/perspectize-go` to `github.com/CodeWarrior-debug/perspectize-be/perspectize-go` (30 files, all 78 tests pass)
+4. **Go module renamed** — `github.com/yourorg/backend` to `github.com/CodeWarrior-debug/perspectize/backend` (30 files, all 78 tests pass)
 5. **qmd .planning/ collection** — Added .planning/ as separate qmd collection with stable-vs-live convention
 6. **Quality scores** — All three CLAUDE.md files at 95/100 (A). Session compliance: root+backend 122/200, root+frontend 145/200
 7. **Frontend patterns documented** — Svelte 5 runes, SvelteKit routing, TanStack Query patterns
@@ -223,10 +224,10 @@ Resume file: None
 - Repository ListAll pattern for fetching all records without pagination
 
 **Files created:**
-- perspectize-fe/src/lib/queries/users.ts (LIST_USERS query)
-- perspectize-fe/src/lib/stores/userSelection.svelte.ts (session-persistent store)
-- perspectize-fe/tests/unit/queries-users.test.ts
-- perspectize-fe/tests/unit/stores-userSelection.test.ts
+- frontend/src/lib/queries/users.ts (LIST_USERS query)
+- frontend/src/lib/stores/userSelection.svelte.ts (session-persistent store)
+- frontend/tests/unit/queries-users.test.ts
+- frontend/tests/unit/stores-userSelection.test.ts
 
 **Duration:** 6 min
 
@@ -252,11 +253,11 @@ Resume file: None
 - Component mocking strategy for tests with QueryClient dependencies
 
 **Files created:**
-- perspectize-fe/src/lib/components/ActivityTable.svelte (AG Grid wrapper)
-- perspectize-fe/src/lib/components/UserSelector.svelte (User dropdown)
-- perspectize-fe/tests/components/ActivityTable.test.ts
-- perspectize-fe/tests/components/UserSelector.test.ts
-- perspectize-fe/tests/helpers/TestWrapper.svelte
+- frontend/src/lib/components/ActivityTable.svelte (AG Grid wrapper)
+- frontend/src/lib/components/UserSelector.svelte (User dropdown)
+- frontend/tests/components/ActivityTable.test.ts
+- frontend/tests/components/UserSelector.test.ts
+- frontend/tests/helpers/TestWrapper.svelte
 
 **Duration:** 3 min
 

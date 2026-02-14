@@ -491,8 +491,8 @@ AG Grid   shadcn-svelte
 
 ```bash
 # Create SvelteKit project with Svelte 5 + TypeScript + Tailwind v4
-npx sv@latest create perspectize-fe
-cd perspectize-fe
+npx sv@latest create fe
+cd fe
 
 # Core data layer
 npm install @tanstack/svelte-query graphql-request graphql

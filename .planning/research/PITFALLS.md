@@ -64,7 +64,7 @@ export default {
       strict: true
     }),
     paths: {
-      base: dev ? '' : '/perspectize-fe', // Match your repo name
+      base: dev ? '' : '/fe', // Match your repo name
       relative: false
     }
   }

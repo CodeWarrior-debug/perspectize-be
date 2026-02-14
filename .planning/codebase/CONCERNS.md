@@ -13,8 +13,8 @@ Comprehensive review of technical debt, bugs, and risk areas. Primary source: `K
 **Risk:** Any client can CRUD any user's data. Complete security bypass.
 
 **Files:**
-- `perspectize-go/cmd/server/main.go` (line 74-93: no auth middleware)
-- `perspectize-go/internal/adapters/graphql/resolvers/schema.resolvers.go` (no auth checks in any mutation)
+- `backend/cmd/server/main.go` (line 74-93: no auth middleware)
+- `backend/internal/adapters/graphql/resolvers/schema.resolvers.go` (no auth checks in any mutation)
 
 **Problem:** GraphQL resolvers process all queries without verifying user identity or permissions. A malicious client can:
 - List all users with email addresses exposed
@@ -38,8 +38,8 @@ Comprehensive review of technical debt, bugs, and risk areas. Primary source: `K
 **Risk:** Wrong pages returned when sorting by name/date.
 
 **Files:**
-- `perspectize-go/internal/adapters/repositories/postgres/content_repository.go:207-336`
-- `perspectize-go/internal/adapters/repositories/postgres/perspective_repository.go:233-362`
+- `backend/internal/adapters/repositories/postgres/content_repository.go:207-336`
+- `backend/internal/adapters/repositories/postgres/perspective_repository.go:233-362`
 
 **Problem:** Keyset pagination cursor only encodes `id`:
 ```go
@@ -66,7 +66,7 @@ When sorting by `CREATED_AT` or `NAME`, the next page query uses the last ID but
 
 **Risk:** User-controlled data interpolated into HTML without escaping.
 
-**Files:** `perspectize-fe/src/lib/components/ActivityTable.svelte:64-70`
+**Files:** `frontend/src/lib/components/ActivityTable.svelte:64-70`
 
 **Problem:**
 ```svelte
@@ -94,7 +94,7 @@ If `params.data.name` contains `<img src=x onerror=alert(1)>` or `params.data.ur
 
 **Risk:** DoS vector via deeply nested queries.
 
-**Files:** `perspectize-go/cmd/server/main.go:75` (handler initialization)
+**Files:** `backend/cmd/server/main.go:75` (handler initialization)
 
 **Problem:** gqlgen server has no complexity calculator configured. Query like:
 ```graphql
@@ -118,7 +118,7 @@ will cause unbounded recursion or O(n²) query execution.
 
 **Risk:** `Access-Control-Allow-Origin: *` allows any origin.
 
-**Files:** `perspectize-go/cmd/server/main.go:80`
+**Files:** `backend/cmd/server/main.go:80`
 
 **Problem:**
 ```go
@@ -132,7 +132,7 @@ A malicious website can make requests to the GraphQL API on behalf of your users
 **Fix approach:**
 1. Replace wildcard with explicit frontend URL (e.g., `https://perspectize.com`)
 2. Use environment variable for origin (dev = `http://localhost:5173`, prod = frontend domain)
-3. Update `perspectize-fe/CLAUDE.md` to document required CORS setup
+3. Update `frontend/CLAUDE.md` to document required CORS setup
 
 ---
 
@@ -140,7 +140,7 @@ A malicious website can make requests to the GraphQL API on behalf of your users
 
 **Risk:** Corrupted data silently omitted from responses.
 
-**Files:** `perspectize-go/internal/adapters/repositories/postgres/perspective_repository.go:419-426`
+**Files:** `backend/internal/adapters/repositories/postgres/perspective_repository.go:419-426`
 
 **Problem:** `categorizedRatings` JSON field is unmarshaled without error checking:
 ```go
@@ -163,7 +163,7 @@ If database contains invalid JSON, response silently drops the field instead of 
 
 **Risk:** Bad duration defaults to 0 seconds, indistinguishable from real short video.
 
-**Files:** `perspectize-go/internal/adapters/youtube/client.go:90-93`
+**Files:** `backend/internal/adapters/youtube/client.go:90-93`
 
 **Problem:**
 ```go
@@ -186,7 +186,7 @@ If YouTube API returns unparseable duration string, the field silently becomes 0
 
 **Risk:** Response, viewCount, likeCount, commentCount all silently become nil on parse error.
 
-**Files:** `perspectize-go/internal/adapters/graphql/resolvers/helpers.go:36-63`
+**Files:** `backend/internal/adapters/graphql/resolvers/helpers.go:36-63`
 
 **Problem:** `domainToModel` unmarshal errors are silently discarded:
 ```go
@@ -209,7 +209,7 @@ strconv.Atoi(c.CommentCount)           // error ignored
 
 **Risk:** Introspection enabled without environment check.
 
-**Files:** `perspectize-go/cmd/server/main.go:92`
+**Files:** `backend/cmd/server/main.go:92`
 
 **Problem:**
 ```go
@@ -231,7 +231,7 @@ Playground is accessible in production, exposes schema to anyone.
 
 **Risk:** Full schema introspection available to all clients.
 
-**Files:** `perspectize-go/cmd/server/main.go:75` (no introspection config)
+**Files:** `backend/cmd/server/main.go:75` (no introspection config)
 
 **Problem:** gqlgen server has default `IntrospectionEnabled: true`. Combined with exposed playground (C-09), attackers enumerate all queries/mutations.
 
@@ -255,11 +255,11 @@ Playground is accessible in production, exposes schema to anyone.
 
 **Risk:** Violates hexagonal architecture dependency rule.
 
-**Files:** `perspectize-go/internal/adapters/graphql/resolvers/schema.resolvers.go:16,23`
+**Files:** `backend/internal/adapters/graphql/resolvers/schema.resolvers.go:16,23`
 
 **Problem:** Resolver imports YouTube adapter directly:
 ```go
-import "github.com/CodeWarrior-debug/perspectize-be/perspectize-go/internal/adapters/youtube"
+import "github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/youtube"
 ```
 
 Dependencies should flow: adapter → service → port. Adapter never talks to adapter.
@@ -277,7 +277,7 @@ Dependencies should flow: adapter → service → port. Adapter never talks to a
 
 **Risk:** Missing service port interfaces.
 
-**Files:** `perspectize-go/internal/adapters/graphql/resolvers/resolver.go:12-16`
+**Files:** `backend/internal/adapters/graphql/resolvers/resolver.go:12-16`
 
 **Problem:**
 ```go
@@ -304,7 +304,7 @@ Should depend on interfaces, not concrete types.
 
 **Risk:** Unbounded query result set.
 
-**Files:** `perspectize-go/internal/adapters/repositories/postgres/user_repository.go:98-114`
+**Files:** `backend/internal/adapters/repositories/postgres/user_repository.go:98-114`
 
 **Problem:**
 ```go
@@ -329,7 +329,7 @@ Query returns all users. If 10,000 users exist, all rows loaded into memory.
 
 **Risk:** Weak API contracts.
 
-**Files:** `perspectize-go/schema.graphql`
+**Files:** `backend/schema.graphql`
 
 **Problems:**
 - **H-04:** Timestamps as `String!` instead of custom `DateTime` scalar (lines 9-10, 56-58, 77-78)
@@ -352,8 +352,8 @@ Query returns all users. If 10,000 users exist, all rows loaded into memory.
 **Risk:** Duplicate inserts possible under concurrent load.
 
 **Files:**
-- `perspectize-go/internal/core/services/perspective_service.go:91-97` (duplicate claim check)
-- `perspectize-go/internal/core/services/user_service.go:49-65` (duplicate user check)
+- `backend/internal/core/services/perspective_service.go:91-97` (duplicate claim check)
+- `backend/internal/core/services/user_service.go:49-65` (duplicate user check)
 
 **Problem:** Classic TOCTOU (time-of-check-time-of-use) race:
 ```go
@@ -381,7 +381,7 @@ r.Create(ctx, ...)  // UNIQUE constraint violated at DB level
 
 **Risk:** Bloat and information leakage.
 
-**Files:** `perspectize-go/internal/adapters/youtube/client.go:100`
+**Files:** `backend/internal/adapters/youtube/client.go:100`
 
 **Problem:** Entire YouTube API response (with metadata, thumbnails, etc.) stored in `Content.response: JSON` field. YouTube response is ~5KB per video.
 
@@ -399,7 +399,7 @@ r.Create(ctx, ...)  // UNIQUE constraint violated at DB level
 
 **Risk:** Config not flexible for deployments.
 
-**Files:** `perspectize-go/cmd/server/main.go:27`
+**Files:** `backend/cmd/server/main.go:27`
 
 **Problem:**
 ```go
@@ -422,7 +422,7 @@ Path is hardcoded. Works in dev, fails in containers where file structure differ
 
 **Risk:** GDPR/privacy violation. Enables spam/phishing.
 
-**Files:** `perspectize-go/internal/adapters/graphql/resolvers/schema.resolvers.go:302-315` (users query)
+**Files:** `backend/internal/adapters/graphql/resolvers/schema.resolvers.go:302-315` (users query)
 
 **Problem:** `Query.users` returns list with email addresses. No access control.
 
@@ -440,7 +440,7 @@ Path is hardcoded. Works in dev, fails in containers where file structure differ
 
 **Risk:** Brute force, enumeration, DoS attacks.
 
-**Files:** `perspectize-go/cmd/server/main.go` (no middleware)
+**Files:** `backend/cmd/server/main.go` (no middleware)
 
 **Problem:** No rate limiting on GraphQL endpoint. Attacker can spam queries without throttling.
 
@@ -459,7 +459,7 @@ Path is hardcoded. Works in dev, fails in containers where file structure differ
 **Risk:** Key compromise enables unauthorized YouTube API calls.
 
 **Files:**
-- `perspectize-go/internal/adapters/youtube/client.go:53-57,76` (key in URL, error messages)
+- `backend/internal/adapters/youtube/client.go:53-57,76` (key in URL, error messages)
 - Stored in config and environment
 
 **Problem:** API key may appear in:
@@ -482,7 +482,7 @@ Path is hardcoded. Works in dev, fails in containers where file structure differ
 
 **Risk:** Database schema/structure exposed via error messages.
 
-**Files:** `perspectize-go/internal/adapters/graphql/resolvers/schema.resolvers.go:31,47,99,152,173`
+**Files:** `backend/internal/adapters/graphql/resolvers/schema.resolvers.go:31,47,99,152,173`
 
 **Problem:** Resolvers use `%w` formatting which wraps underlying errors:
 ```go
@@ -504,7 +504,7 @@ return nil, fmt.Errorf("failed to find content: %w", err)
 
 **Risk:** Man-in-the-middle attacks and Slowloris DoS.
 
-**Files:** `perspectize-go/cmd/server/main.go:99` (http.ListenAndServe with no config)
+**Files:** `backend/cmd/server/main.go:99` (http.ListenAndServe with no config)
 
 **Problems:**
 - **H-14:** No TLS/HTTPS. Traffic is unencrypted.
@@ -531,7 +531,7 @@ return nil, fmt.Errorf("failed to find content: %w", err)
 
 **Risk:** Inconsistent GraphQL contracts.
 
-**Files:** `perspectize-go/internal/adapters/graphql/resolvers/schema.resolvers.go:274,289,326`
+**Files:** `backend/internal/adapters/graphql/resolvers/schema.resolvers.go:274,289,326`
 
 **Problem:** Some resolvers return `nil, nil` (errors hidden from GraphQL) while others return proper errors:
 ```go
@@ -554,8 +554,8 @@ return nil, fmt.Errorf("failed to find content: %w", err)
 **Risk:** Unhandled errors show blank page or default error.
 
 **Files:**
-- `perspectize-fe/src/routes/` (missing `+error.svelte`)
-- `perspectize-fe/src/` (missing `hooks.client.ts`, `hooks.server.ts`)
+- `frontend/src/routes/` (missing `+error.svelte`)
+- `frontend/src/` (missing `hooks.client.ts`, `hooks.server.ts`)
 
 **Problem:** No error boundary component. Errors outside TanStack Query are invisible to users.
 
@@ -572,7 +572,7 @@ return nil, fmt.Errorf("failed to find content: %w", err)
 
 **Risk:** Silent misconfiguration.
 
-**Files:** `perspectize-go/cmd/server/main.go:24` (.env ignored) and `youtube/client.go:23` (no key validation)
+**Files:** `backend/cmd/server/main.go:24` (.env ignored) and `youtube/client.go:23` (no key validation)
 
 **Problems:**
 - `.env` load failure is silently ignored: `_ = godotenv.Load()`
@@ -591,7 +591,7 @@ return nil, fmt.Errorf("failed to find content: %w", err)
 
 **Risk:** Response corruption.
 
-**Files:** `perspectize-go/pkg/graphql/intid.go:17`
+**Files:** `backend/pkg/graphql/intid.go:17`
 
 **Problem:**
 ```go
@@ -614,7 +614,7 @@ If `WriteString` fails, no error is returned. Response may be incomplete.
 
 **Risk:** Architectural mismatch.
 
-**Files:** `perspectize-fe/src/routes/+layout.ts:1`
+**Files:** `frontend/src/routes/+layout.ts:1`
 
 **Problem:**
 ```typescript
@@ -635,7 +635,7 @@ With `adapter-static`, this tells SvelteKit to prerender all routes as static HT
 
 **Risk:** Manual duplication and drift.
 
-**Files:** `perspectize-fe/src/lib/components/` (all component files)
+**Files:** `frontend/src/lib/components/` (all component files)
 
 **Problem:** Type definitions for GraphQL responses are manually written in Svelte components:
 ```typescript
@@ -662,7 +662,7 @@ No code generation from schema. Changes to GraphQL schema require manual updates
 
 **Risk:** No error recovery, no timeout protection.
 
-**Files:** `perspectize-fe/src/lib/queries/client.ts:1-7`
+**Files:** `frontend/src/lib/queries/client.ts:1-7`
 
 **Problem:**
 ```typescript
@@ -689,7 +689,7 @@ Client has no:
 
 **Risk:** XSS/injection attacks.
 
-**Files:** `perspectize-fe/app.html` (no CSP header)
+**Files:** `frontend/app.html` (no CSP header)
 
 **Problem:** No CSP header restricts what scripts can run. Combined with C-05 (innerHTML XSS), attacks easier.
 
@@ -731,7 +731,7 @@ Client has no:
 
 **Issue:** `lib/pq` and `pgx/v5` both imported
 
-**Files:** `perspectize-go/go.mod:10-11`
+**Files:** `backend/go.mod:10-11`
 
 **Impact:** Unnecessary bloat, potential conflicts. Choose one.
 
@@ -743,7 +743,7 @@ Client has no:
 
 **Issue:** No configuration for pool size, timeout.
 
-**Files:** `perspectize-go/pkg/database/postgres.go:21-23`
+**Files:** `backend/pkg/database/postgres.go:21-23`
 
 **Problem:** Max 25 open connections, 5 idle hard-coded.
 
@@ -755,7 +755,7 @@ Client has no:
 
 **Issue:** Error response for duplicate, should be idempotent.
 
-**Files:** `perspectize-go/internal/core/services/content_service.go:30-36`
+**Files:** `backend/internal/core/services/content_service.go:30-36`
 
 **Fix:** Check for `ErrAlreadyExists` and return existing item, not error.
 
@@ -765,7 +765,7 @@ Client has no:
 
 **Issue:** `deletePerspective` uses `ID` scalar instead of `IntID`.
 
-**Files:** `perspectize-go/schema.graphql:185`
+**Files:** `backend/schema.graphql:185`
 
 **Fix:** Standardize all IDs to use `IntID` scalar.
 
@@ -775,7 +775,7 @@ Client has no:
 
 **Issue:** `CreateFromYouTube` accepts `extractVideoID` as parameter.
 
-**Files:** `perspectize-go/internal/core/services/content_service.go:28`
+**Files:** `backend/internal/core/services/content_service.go:28`
 
 **Fix:** Inject into service constructor instead.
 
@@ -785,7 +785,7 @@ Client has no:
 
 **Issue:** Uses default `net/http` mux, no middleware chain.
 
-**Files:** `perspectize-go/cmd/server/main.go:91-94`
+**Files:** `backend/cmd/server/main.go:91-94`
 
 **Impact:** No visibility into request/response for debugging.
 
@@ -797,7 +797,7 @@ Client has no:
 
 **Issue:** Different approaches across resolvers (see H-16).
 
-**Files:** `perspectize-go/internal/adapters/graphql/resolvers/schema.resolvers.go`
+**Files:** `backend/internal/adapters/graphql/resolvers/schema.resolvers.go`
 
 **Fix:** Standardize error return pattern.
 
@@ -807,7 +807,7 @@ Client has no:
 
 **Issue:** `user` and `content` fields on Perspective return null instead of fetching.
 
-**Files:** `perspectize-go/internal/adapters/graphql/resolvers/helpers.go:70-107`
+**Files:** `backend/internal/adapters/graphql/resolvers/helpers.go:70-107`
 
 **Problem:**
 ```graphql
@@ -827,7 +827,7 @@ Clients must separately fetch user/content after fetching perspective.
 
 **Issue:** Server kills in-flight requests on shutdown.
 
-**Files:** `perspectize-go/cmd/server/main.go:99`
+**Files:** `backend/cmd/server/main.go:99`
 
 **Fix:** Add signal handler for SIGTERM with graceful shutdown timeout.
 
@@ -837,7 +837,7 @@ Clients must separately fetch user/content after fetching perspective.
 
 **Issue:** Load balancers/orchestrators have no way to check health.
 
-**Files:** `perspectize-go/cmd/server/main.go:91-93`
+**Files:** `backend/cmd/server/main.go:91-93`
 
 **Fix:** Add `/health` (liveness) and `/ready` (readiness) endpoints.
 
@@ -847,7 +847,7 @@ Clients must separately fetch user/content after fetching perspective.
 
 **Issue:** No length checks on description, labels, categorizedRatings.
 
-**Files:** `perspectize-go/internal/core/services/perspective_service.go`, `user_service.go`
+**Files:** `backend/internal/core/services/perspective_service.go`, `user_service.go`
 
 **Impact:** Unbounded inputs can cause performance issues.
 
@@ -859,7 +859,7 @@ Clients must separately fetch user/content after fetching perspective.
 
 **Issue:** Connection string may appear in logs.
 
-**Files:** `perspectize-go/cmd/server/main.go:43-44`, `config.go:83`
+**Files:** `backend/cmd/server/main.go:43-44`, `config.go:83`
 
 **Fix:** Sanitize DSN before logging (redact password).
 
@@ -869,7 +869,7 @@ Clients must separately fetch user/content after fetching perspective.
 
 **Issue:** `response: JSON` field stores full YouTube response (~5KB per item).
 
-**Files:** `perspectize-go/schema.graphql:77`
+**Files:** `backend/schema.graphql:77`
 
 **Impact:** Bloats database, unnecessary data in queries.
 
@@ -881,7 +881,7 @@ Clients must separately fetch user/content after fetching perspective.
 
 **Issue:** No X-Content-Type-Options, X-Frame-Options, HSTS, etc.
 
-**Files:** `perspectize-go/cmd/server/main.go`
+**Files:** `backend/cmd/server/main.go`
 
 **Fix:** Add security headers middleware:
 ```go
@@ -896,7 +896,7 @@ w.Header().Set("Strict-Transport-Security", "max-age=31536000")
 
 **Issue:** No anti-CSRF tokens.
 
-**Files:** `perspectize-go/cmd/server/main.go:93`
+**Files:** `backend/cmd/server/main.go:93`
 
 **Impact:** Moot until C-01 (auth) is fixed, but should be added.
 
@@ -908,7 +908,7 @@ w.Header().Set("Strict-Transport-Security", "max-age=31536000")
 
 **Issue:** Race condition on concurrent updates.
 
-**Files:** `perspectize-go/internal/adapters/repositories/postgres/perspective_repository.go:187-209`
+**Files:** `backend/internal/adapters/repositories/postgres/perspective_repository.go:187-209`
 
 **Problem:** Unlike Delete, Update doesn't check if row was actually modified (optimistic lock missing).
 
@@ -920,7 +920,7 @@ w.Header().Set("Strict-Transport-Security", "max-age=31536000")
 
 **Issue:** Invalid URL accepted without error.
 
-**Files:** `perspectize-go/internal/config/config.go:79-84`
+**Files:** `backend/internal/config/config.go:79-84`
 
 **Fix:** Validate DSN format at startup.
 
@@ -930,7 +930,7 @@ w.Header().Set("Strict-Transport-Security", "max-age=31536000")
 
 **Issue:** ContentItem, ContentRow, User types manually defined in multiple files.
 
-**Files:** `perspectize-fe/src/lib/components/ActivityTable.svelte`, `+page.svelte`, `UserSelector.svelte`
+**Files:** `frontend/src/lib/components/ActivityTable.svelte`, `+page.svelte`, `UserSelector.svelte`
 
 **Fix:** See H-23 (use codegen).
 
@@ -940,7 +940,7 @@ w.Header().Set("Strict-Transport-Security", "max-age=31536000")
 
 **Issue:** Content query hard-codes 100 items fetch.
 
-**Files:** `perspectize-fe/src/routes/+page.svelte:33-34`
+**Files:** `frontend/src/routes/+page.svelte:33-34`
 
 **Problem:**
 ```typescript
@@ -959,7 +959,7 @@ AG Grid pagination not integrated with server. Fetches all 100 items then pagina
 
 **Issue:** Wired but never used.
 
-**Files:** `perspectize-fe/src/lib/stores/userSelection.svelte.ts`, `src/routes/+page.svelte`
+**Files:** `frontend/src/lib/stores/userSelection.svelte.ts`, `src/routes/+page.svelte`
 
 **Fix:** Either use in content query filter or remove.
 
@@ -969,7 +969,7 @@ AG Grid pagination not integrated with server. Fetches all 100 items then pagina
 
 **Issue:** ContentResponse/ContentItem interfaces declared but never used as type guards.
 
-**Files:** `perspectize-fe/src/routes/+page.svelte:8-28`
+**Files:** `frontend/src/routes/+page.svelte:8-28`
 
 **Fix:** Remove unused types or implement runtime validation.
 
@@ -979,7 +979,7 @@ AG Grid pagination not integrated with server. Fetches all 100 items then pagina
 
 **Issue:** AG Grid filter triggered on every keystroke.
 
-**Files:** `perspectize-fe/src/routes/+page.svelte:30`, `ActivityTable.svelte:130-133`
+**Files:** `frontend/src/routes/+page.svelte:30`, `ActivityTable.svelte:130-133`
 
 **Impact:** Excessive queries sent to server.
 
@@ -991,7 +991,7 @@ AG Grid pagination not integrated with server. Fetches all 100 items then pagina
 
 **Issue:** Error states have no retry button.
 
-**Files:** `perspectize-fe/src/routes/+page.svelte:70-73`, `UserSelector.svelte:37-40`
+**Files:** `frontend/src/routes/+page.svelte:70-73`, `UserSelector.svelte:37-40`
 
 **Fix:** Add retry button on error, call `query.refetch()`.
 
@@ -1001,7 +1001,7 @@ AG Grid pagination not integrated with server. Fetches all 100 items then pagina
 
 **Issue:** AGGridTest.svelte never imported but in component tree.
 
-**Files:** `perspectize-fe/src/lib/components/AGGridTest.svelte`
+**Files:** `frontend/src/lib/components/AGGridTest.svelte`
 
 **Fix:** Delete or comment.
 
@@ -1011,7 +1011,7 @@ AG Grid pagination not integrated with server. Fetches all 100 items then pagina
 
 **Issue:** Fallback uses HTTP not HTTPS.
 
-**Files:** `perspectize-fe/src/lib/queries/client.ts:3`
+**Files:** `frontend/src/lib/queries/client.ts:3`
 
 **Problem:**
 ```typescript
@@ -1026,7 +1026,7 @@ const endpoint = process.env.VITE_GRAPHQL_URL || "http://localhost:8080/graphql"
 
 **Issue:** `retry: 1` retries 4xx errors (should only retry network/5xx).
 
-**Files:** `perspectize-fe/src/routes/+layout.svelte:15`, `+page.svelte:40`
+**Files:** `frontend/src/routes/+layout.svelte:15`, `+page.svelte:40`
 
 **Fix:** Use `shouldRetry: (failureCount, error) => error.status >= 500 || !error.response`
 
@@ -1036,7 +1036,7 @@ const endpoint = process.env.VITE_GRAPHQL_URL || "http://localhost:8080/graphql"
 
 **Issue:** Bad input produces "Invalid Date" string instead of error.
 
-**Files:** `perspectize-fe/src/lib/components/ActivityTable.svelte:48-53`
+**Files:** `frontend/src/lib/components/ActivityTable.svelte:48-53`
 
 **Fix:** Add validation or return fallback with warning.
 
