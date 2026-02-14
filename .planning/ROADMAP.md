@@ -174,8 +174,8 @@ Plans:
 
 Plans:
 - [x] 05-01-PLAN.md — Coverage verification — SKIPPED (thresholds already met: 87.6% stmts, 90.1% lines)
-- [ ] 05-02-PLAN.md — DigitalOcean App Platform static site deployment (cleanup GitHub Pages artifacts, deploy frontend)
-- [ ] 05-03-PLAN.md — CORS configuration with rs/cors and DigitalOcean App Platform frontend origin
+- [x] 05-02-PLAN.md — Sevalla static site deployment (cleanup GitHub Pages artifacts, deploy frontend) — COMPLETED (deployed manually)
+- [ ] 05-03-PLAN.md — CORS configuration with rs/cors and Sevalla frontend origin
 
 ---
 
@@ -184,8 +184,10 @@ Plans:
 Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md`. Ordered by dependency: fix errors first, then architecture, then schema, then security (which depends on clean architecture), then frontend. Each phase is a living checklist — items can be picked off incrementally.
 
 - [ ] **Phase 6: Error Handling & Data Integrity** - Fix silent failures, error leakage, and config validation
-- [ ] **Phase 7: Backend Architecture** - Hexagonal cleanup, dependency injection, server infrastructure
-- [ ] **Phase 8: API & Schema Quality** - Fix pagination, GraphQL types, race conditions, nested resolvers
+- [x] **Phase 7: Backend Architecture** - Hexagonal cleanup, dependency injection, server infrastructure
+- [x] **Phase 7.1: ORM Migration — sqlx to GORM** - Replace sqlx with GORM using hex-clean separate model pattern (INSERTED)
+- [x] **Phase 7.2: gorm-cursor-paginator Integration** - Fix C-02 cursor pagination for non-ID sorts, replace hand-rolled cursor encoding (INSERTED)
+- [ ] **Phase 8: API & Schema Quality** - Fix GraphQL types, race conditions, nested resolvers
 - [ ] **Phase 9: Security Hardening** - Authentication, rate limiting, query complexity, headers, HTTPS
 - [ ] **Phase 10: Frontend Quality & Test Coverage** - XSS fix, codegen, error boundaries, cleanup, test gaps
 
@@ -233,24 +235,83 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
   9. `/health` and `/ready` endpoints exist (M-10)
   10. DB credentials sanitized before logging (M-12)
   11. `DATABASE_URL` format validated at startup (M-17)
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
+
+Plans:
+- [x] 07-01-PLAN.md — Service port interfaces, ExtractVideoID on YouTubeClient, resolver DI refactor
+- [x] 07-02-PLAN.md — Replace lib/pq with custom array types, configurable DB pool, config env var, DSN validation
+- [x] 07-03-PLAN.md — Chi router with middleware, /ready endpoint, graceful shutdown coordination
 
 **Concern checklist:**
-- [ ] H-01: Adapter-to-adapter coupling (resolver imports YouTube adapter directly)
-- [ ] H-02: Resolver depends on concrete service types (no port interfaces)
-- [ ] H-09: Hardcoded config path
-- [ ] M-01: Dual PostgreSQL driver dependencies (`lib/pq` + `pgx`)
-- [ ] M-02: Hardcoded database connection pool settings
-- [ ] M-05: Function parameter instead of dependency injection
-- [ ] M-06: No request logging middleware
-- [ ] M-09: No graceful shutdown handler
-- [ ] M-10: No health check endpoint
-- [ ] M-12: DB credentials in logs on failure
-- [ ] M-17: No `DATABASE_URL` format validation
+- [x] H-01: Adapter-to-adapter coupling (resolver imports YouTube adapter directly)
+- [x] H-02: Resolver depends on concrete service types (no port interfaces)
+- [x] H-09: Hardcoded config path
+- [x] M-01: Dual PostgreSQL driver dependencies (`lib/pq` + `pgx`)
+- [x] M-02: Hardcoded database connection pool settings
+- [x] M-05: Function parameter instead of dependency injection
+- [x] M-06: No request logging middleware
+- [x] M-09: No graceful shutdown handler
+- [x] M-10: No health check endpoint
+- [x] M-12: DB credentials in logs on failure
+- [x] M-17: No `DATABASE_URL` format validation
+
+### Phase 7.1: ORM Migration — sqlx to GORM (INSERTED)
+**Goal**: Replace sqlx with GORM using hex-clean separate model pattern (domain models stay pure, GORM models in adapter layer). Eliminate ~35% of repository boilerplate while preserving hexagonal architecture.
+**Depends on**: Phase 7 (clean architecture + single pgx driver must be in place first)
+**Success Criteria** (what must be TRUE):
+  1. All 3 repository implementations (user, content, perspective) migrated from sqlx to GORM
+  2. Domain models (`core/domain/`) have zero GORM imports or tags — hex-clean
+  3. GORM models live in `adapters/repositories/postgres/` with `gorm:` tags
+  4. Cursor pagination works with opaque base64 cursors (reuses existing encoding functions)
+  5. Dynamic ORDER BY works for all sort fields including JSONB path expressions
+  6. Dynamic WHERE filters work via GORM chaining (no boolean flag pattern)
+  7. Custom `StringArray`/`Int64Array` types (from Phase 7) used — no `lib/pq` imports in any active code
+  8. All existing tests pass (mock interfaces unchanged)
+  9. No performance regression — GORM reflection overhead negligible vs DB round-trip
+**Plans**: 3 plans in 3 waves
+
+Plans:
+- [x] 07.1-01-PLAN.md — GORM deps, models, mappers, ConnectGORM, GormUserRepository
+- [x] 07.1-02-PLAN.md — GormContentRepository + GormPerspectiveRepository (pagination, JSONB sort, dynamic filters)
+- [x] 07.1-03-PLAN.md — Wire GORM in main.go, archive sqlx files, remove sqlx dependency, verify
+
+**Architecture decision:**
+- **Chosen:** GORM with separate GORM models (hex-clean)
+- **Rejected:** sqlc (dynamic ORDER BY blocker, jsonb[] bugs), GORM with tags on domain models (architecture compromise), staying with sqlx (missed 35% reduction)
+- **Prototype:** See `gorm_*.go` files in `adapters/repositories/postgres/` for side-by-side comparison
+- **Research:** ORM comparison research stashed in git (`git stash list` → orm research)
+
+**Estimated impact:**
+| File | Current (sqlx) | GORM prototype | Reduction |
+|------|---------------|----------------|-----------|
+| user_repository | 132 lines | ~90 lines | 32% |
+| content_repository | 364 lines | ~180 lines | 51% |
+| perspective_repository | 495 lines | ~260 lines | 47% |
+| **Total** | **991 lines** | **~640 lines** | **~35%** |
+
+(Includes shared gorm_models.go ~85 lines + gorm_mappers.go ~140 lines)
+
+### Phase 7.2: gorm-cursor-paginator Integration (INSERTED)
+**Goal**: Replace hand-rolled cursor encoding with `gorm-cursor-paginator` library to fix C-02 (cursor pagination broken for non-ID sorts) and simplify pagination code in all GORM repositories
+**Depends on**: Phase 7.1 (GORM migration must be complete)
+**Source**: CONCERNS.md C-02, FEATURE_BACKLOG.md (HIGH PRIORITY)
+**Success Criteria** (what must be TRUE):
+  1. `gorm-cursor-paginator` library added as dependency
+  2. Cursor pagination works correctly for all sort columns (created_at, updated_at, name, JSONB fields), not just ID
+  3. Hand-rolled `encodeCursor`/`decodeCursor` replaced with library's built-in cursor handling
+  4. Content List and Perspective List methods use library paginator
+  5. Compound keyset pagination: cursors encode both sort column value + ID (fixes C-02)
+  6. All existing tests pass — no behavior regression
+  7. Frontend cursor contract preserved (opaque base64 strings, hasNext/hasPrev, startCursor/endCursor)
+**Plans**: 2 plans in 2 waves
+
+Plans:
+- [ ] 07.2-01-PLAN.md — Add gorm-cursor-paginator dep, dummy GORM model fields, sort rule builder functions
+- [ ] 07.2-02-PLAN.md — Rewrite Content + Perspective List() to use paginator, delete old cursor functions
 
 ### Phase 8: API & Schema Quality
 **Goal**: Fix GraphQL schema types, pagination bugs, race conditions, and missing resolvers
-**Depends on**: Phase 7 (clean architecture enables proper resolver changes)
+**Depends on**: Phase 7.2 (cursor pagination fixed first)
 **Source**: CONCERNS.md C-02, H-03, H-04, H-05, H-06, H-07, H-08, M-04, M-08, M-11, M-13, M-16
 **Success Criteria** (what must be TRUE):
   1. Cursor pagination works correctly for all sort columns, not just ID (C-02)
@@ -266,7 +327,7 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
 **Plans**: TBD
 
 **Concern checklist:**
-- [ ] C-02: Cursor pagination broken for non-ID sorts (compound keyset required)
+- [ ] C-02: Cursor pagination broken for non-ID sorts → **Moved to Phase 7.2**
 - [ ] H-03: `ListAll()` users has no pagination (unbounded query)
 - [ ] H-04: Timestamps as `String!` instead of `DateTime` scalar
 - [ ] H-05: `contentType` uses `String!` instead of `ContentType` enum
@@ -366,7 +427,7 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 8 -> 9 -> 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -380,7 +441,9 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 1/3 | In progress | - |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
-| 7. Backend Architecture | 0/0 | Not started | - |
+| 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |
+| 7.1 ORM Migration (sqlx → GORM) | 3/3 | Complete | 2026-02-14 |
+| 7.2 gorm-cursor-paginator | 2/2 | Complete | 2026-02-14 |
 | 8. API & Schema Quality | 0/0 | Not started | - |
 | 9. Security Hardening | 0/0 | Not started | - |
 | 10. Frontend Quality & Test Coverage | 0/0 | Not started | - |

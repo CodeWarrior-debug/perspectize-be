@@ -16,5 +16,9 @@ type VideoMetadata struct {
 
 // YouTubeClient defines the contract for YouTube API interactions
 type YouTubeClient interface {
+	// GetVideoMetadata fetches video metadata from YouTube API
 	GetVideoMetadata(ctx context.Context, videoID string) (*VideoMetadata, error)
+
+	// ExtractVideoID extracts the video ID from a YouTube URL
+	ExtractVideoID(url string) (string, error)
 }

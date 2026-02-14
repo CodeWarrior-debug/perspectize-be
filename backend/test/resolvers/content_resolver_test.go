@@ -58,6 +58,7 @@ func (m *mockContentRepository) List(ctx context.Context, params domain.ContentL
 // mockYouTubeClient implements services.YouTubeClient for testing
 type mockYouTubeClient struct {
 	getVideoMetadataFn func(ctx context.Context, videoID string) (*portservices.VideoMetadata, error)
+	extractVideoIDFn   func(url string) (string, error)
 }
 
 func (m *mockYouTubeClient) GetVideoMetadata(ctx context.Context, videoID string) (*portservices.VideoMetadata, error) {
@@ -65,6 +66,14 @@ func (m *mockYouTubeClient) GetVideoMetadata(ctx context.Context, videoID string
 		return m.getVideoMetadataFn(ctx, videoID)
 	}
 	return nil, fmt.Errorf("not implemented")
+}
+
+func (m *mockYouTubeClient) ExtractVideoID(url string) (string, error) {
+	if m.extractVideoIDFn != nil {
+		return m.extractVideoIDFn(url)
+	}
+	// Default implementation for common test case
+	return "dQw4w9WgXcQ", nil
 }
 
 // mockUserRepository implements repositories.UserRepository for testing
@@ -387,7 +396,13 @@ func TestCreateContentFromYouTube_InvalidURL(t *testing.T) {
 		},
 	}
 
-	server := setupTestServer(repo, &mockYouTubeClient{})
+	ytClient := &mockYouTubeClient{
+		extractVideoIDFn: func(url string) (string, error) {
+			return "", fmt.Errorf("could not extract video ID")
+		},
+	}
+
+	server := setupTestServer(repo, ytClient)
 	defer server.Close()
 
 	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "not-a-youtube-url" }) { id } }`)

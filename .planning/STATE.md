@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 
 ## Current Position
 
-Phase: 3.2 of 5 (Activity Page Beta Quality)
-Plan: 3/4 complete
-Status: Activity Table rewrite with server-side pagination complete
-Last activity: 2026-02-13 — Completed 03.2-03-PLAN.md
+Phase: 7.2 of 10 (gorm-cursor-paginator Integration)
+Plan: 2/2 complete
+Status: Phase complete — Integration finished, C-02 bug fixed
+Last activity: 2026-02-14 — Completed 07.2-02-PLAN.md
 
-Progress: [████████░░] 86%
+Progress: [██████████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 16
-- Average duration: 5.1 min
-- Total execution time: 1.4 hours
+- Total plans completed: 23
+- Average duration: 3.8 min
+- Total execution time: 1.6 hours
 
 **By Phase:**
 
@@ -32,10 +32,13 @@ Progress: [████████░░] 86%
 | 03-add-video-flow | 2 | 8 min | 4 min |
 | 03.1-design-token-system | 2 | 6 min | 3 min |
 | 03.2-activity-page-beta-quality | 3 | 16 min | 5.3 min |
+| 07-backend-architecture | 3 | 7 min | 2.3 min |
+| 07.1-orm-migration-sqlx-to-gorm | 3 | 8 min | 2.7 min |
+| 07.2-gorm-cursor-paginator | 2 | 4 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 5 min, 3 min, 3 min, 7 min, 6 min (avg: 4.8 min)
-- Trend: Good — Consistent performance on complex UI rewrites
+- Last 5 plans: 2 min, 2 min, 4 min, 2 min, 2 min (avg: 2.4 min)
+- Trend: Excellent — Fast execution continues, Phase 7.2 complete
 
 *Updated after each plan completion*
 
@@ -94,7 +97,7 @@ Recent decisions affecting current work:
 - [05-02]: Frontend hosting target: Sevalla Static Sites (not DigitalOcean App Platform)
 - [Infra]: CLAUDE.md split into root + backend/CLAUDE.md + frontend/CLAUDE.md for package-level context loading
 - [Infra]: Go module renamed from `github.com/yourorg/backend` to `github.com/CodeWarrior-debug/perspectize/backend` (30 files, all 78 tests pass)
-- [Infra]: Docs delegated to docs/ directory: VERIFICATION.md, DOMAIN_GUIDE.md, GO_PATTERNS.md, GITHUB_PROJECTS.md, GSD_BRANCHING.md
+- [Infra]: Docs delegated to .docs/ directory: VERIFICATION.md, DOMAIN_GUIDE.md, GO_PATTERNS.md, GITHUB_PROJECTS.md, GSD_BRANCHING.md
 - [Infra]: qmd .planning/ collection added with stable-vs-live convention
 - [Infra]: All three CLAUDE.md files scored 95/100 (A) quality after optimization
 - [Frontend]: Svelte 5 runes, SvelteKit routing, TanStack Query patterns documented in frontend/CLAUDE.md
@@ -103,12 +106,45 @@ Recent decisions affecting current work:
 - [03.2-02]: Popover trigger uses buttonVariants() directly (bits-ui 2.x Svelte 5 pattern, no asChild)
 - [03.2-02]: AddVideoPopover self-contained with internal open state (simpler API than bind:open from parent)
 - [03.2-02]: Temporarily keeping AddVideoDialog for coverage threshold (popover portal rendering limits JSDOM testing)
+- [07-02]: Custom StringArray/Int64Array types replace lib/pq (single pgx driver, ~200 lines of parsing code)
+- [07-02]: Database pool configurable via env vars (DB_MAX_OPEN_CONNS, DB_MAX_IDLE_CONNS, DB_CONN_MAX_LIFETIME)
+- [07-02]: CONFIG_PATH env var for config file path (default: config/config.example.json)
+- [07-02]: DATABASE_URL validated at startup (scheme, hostname, database name)
+- [07-02]: DSN credentials sanitized in all log output (dual-format: URL + key-value)
+- [07-03]: chi router with middleware stack (RequestID, RealIP, Logger, Recoverer)
+- [07-03]: Separate liveness (/health) and readiness (/ready with DB ping) endpoints
+- [07-03]: 30s graceful shutdown timeout on SIGTERM/SIGINT
+- [07.1-01]: Hex-clean GORM pattern: separate GORM models from domain models with bidirectional mappers
+- [07.1-01]: GORM models use custom StringArray/Int64Array/JSONBArray types (not lib/pq)
+- [07.1-01]: Privacy/ReviewStatus enums stored lowercase in DB, UPPERCASE in domain (mappers handle conversion)
+- [07.1-01]: Parts array stored as int64[] in DB, converted to []int in domain
+- [07.1-01]: CategorizedRatings stored as jsonb[] with JSON marshal/unmarshal in mappers
+- [07.1-01]: ConnectGORM uses same pgx driver as sqlx for consistency
+- [07.1-02]: GORM chaining for WHERE filters replaces manual SQL string building with argIdx counting
+- [07.1-02]: gorm.Expr() for ORDER BY with JSONB expressions (makes raw SQL intent explicit)
+- [07.1-02]: Create/Update fetch fresh records via GetByID for DB-generated timestamps
+- [07.1-02]: Delete checks RowsAffected == 0 for ErrNotFound handling
+- [07.1-02]: Total count respects filters but not cursor pagination (query.Count before cursor WHERE)
+- [07.1-03]: Shared repository helpers extracted to helpers.go (cursor encoding, sort mapping, enum converters)
+- [07.1-03]: sqlx dependency fully removed from go.mod
+- [07.1-03]: Old sqlx repository files archived as .sqlx.bak for reference
+- [07.1-03]: GORM is now the active ORM (main.go wired to GORM repositories)
+- [07.2-01]: gorm-cursor-paginator v2.7.0 installed for compound keyset pagination
+- [07.2-01]: Dummy GORM fields with gorm:"-" tag pattern for library schema validation without DB columns
+- [07.2-01]: Sort rule builders (buildContentSortRules, buildPerspectiveSortRules) return []paginator.Rule with primary + ID tie-breaker
+- [07.2-01]: SQLRepr with NULLReplacement for JSONB sort keys (ViewCount, LikeCount, PublishedAt)
+- [07.2-02]: List() pattern: build rules → configure paginator → apply filters → clone for count → Paginate()
+- [07.2-02]: Cursor mapping: HasNext = cursor.After != nil, HasPrev = cursor.Before != nil
+- [07.2-02]: Query cloning via Session(&gorm.Session{}) to avoid Paginate() interference with count queries
+- [07.2-02]: AllowTupleCmp enabled for PostgreSQL row comparison optimization in compound keyset queries
 
 ### Roadmap Evolution
 
 - Phase 02.1 inserted after Phase 2: Mobile Responsive Fixes (URGENT) — P1 issues: header overflow/clipping at 375px, pagination bar broken, table left-shift overflow
 - Phase 03.1 inserted after Phase 3: Dialog UX Polish — Gray overlay too aggressive, modal translucent/hard to read, needs redesign with shadcn best practices
 - Phase 03.3 inserted after Phase 3.2: Repository Rename & Folder Restructure — Rename repo perspectize → perspectize, folders backend → backend, fe → fe, update all imports and Sevalla pointers
+- Phase 07.1 inserted after Phase 7: ORM Migration (sqlx → GORM) — Replace sqlx with GORM using hex-clean separate model pattern. ~35% repository code reduction. Prototype in gorm_*.go files.
+- Phase 07.2 inserted after Phase 7.1: gorm-cursor-paginator Integration (URGENT) — Fix C-02 cursor pagination broken for non-ID sorts. Replace hand-rolled encodeCursor/decodeCursor with library. Was originally planned for 7.1 but skipped during execution.
 
 ### Project-Level Plan Requirements
 
@@ -124,7 +160,7 @@ Plans that only modify infrastructure (CI/CD, config) must still verify they don
 
 ### Known Bugs
 
-None.
+None. (C-02 cursor pagination bug fixed in Phase 07.2)
 
 ### Blockers/Concerns
 
@@ -174,8 +210,8 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-13
-Stopped at: Completed 03.2-01-PLAN.md
+Last session: 2026-02-14
+Stopped at: Completed 07.2-02-PLAN.md (Phase 7.2 complete)
 Resume file: None
 
 ### 2026-02-07 — Plan 01-05: Test Coverage
@@ -262,6 +298,6 @@ Resume file: None
 
 ## Session Continuity
 
-Last session: 2026-02-13
-Stopped at: Completed 03.2-03-PLAN.md
+Last session: 2026-02-14
+Stopped at: Completed 07.2-02-PLAN.md (Phase 7.2 complete)
 Resume file: None

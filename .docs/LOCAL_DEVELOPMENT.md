@@ -449,6 +449,6 @@ Settings (`.vscode/settings.json`):
 
 ## Next Steps
 
-1. Review `docs/ARCHITECTURE.md` for system design
-2. Check `docs/AGENTS.md` for AI agent routing
+1. Review `.docs/ARCHITECTURE.md` for system design
+2. Check `.docs/AGENTS.md` for AI agent routing
 3. Run `make test` to ensure everything works

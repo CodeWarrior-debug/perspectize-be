@@ -8,6 +8,7 @@ import (
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/repositories"
+	portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
 )
 
 // PerspectiveService implements business logic for perspective operations
@@ -24,26 +25,8 @@ func NewPerspectiveService(repo repositories.PerspectiveRepository, userRepo rep
 	}
 }
 
-// CreateInput contains the data needed to create a perspective
-type CreatePerspectiveInput struct {
-	Claim              string
-	UserID             int
-	ContentID          *int
-	Quality            *int
-	Agreement          *int
-	Importance         *int
-	Confidence         *int
-	Like               *string
-	Privacy            *domain.Privacy
-	Description        *string
-	Category           *string
-	Parts              []int
-	Labels             []string
-	CategorizedRatings []domain.CategorizedRating
-}
-
 // Create creates a new perspective with validation
-func (s *PerspectiveService) Create(ctx context.Context, input CreatePerspectiveInput) (*domain.Perspective, error) {
+func (s *PerspectiveService) Create(ctx context.Context, input portservices.CreatePerspectiveInput) (*domain.Perspective, error) {
 	// Validate claim
 	claim := strings.TrimSpace(input.Claim)
 	if claim == "" {
@@ -140,27 +123,8 @@ func (s *PerspectiveService) GetByID(ctx context.Context, id int) (*domain.Persp
 	return perspective, nil
 }
 
-// UpdateInput contains the data needed to update a perspective
-type UpdatePerspectiveInput struct {
-	ID                 int
-	Claim              *string
-	ContentID          *int
-	Quality            *int
-	Agreement          *int
-	Importance         *int
-	Confidence         *int
-	Like               *string
-	Privacy            *domain.Privacy
-	Description        *string
-	Category           *string
-	ReviewStatus       *domain.ReviewStatus
-	Parts              []int
-	Labels             []string
-	CategorizedRatings []domain.CategorizedRating
-}
-
 // Update updates an existing perspective
-func (s *PerspectiveService) Update(ctx context.Context, input UpdatePerspectiveInput) (*domain.Perspective, error) {
+func (s *PerspectiveService) Update(ctx context.Context, input portservices.UpdatePerspectiveInput) (*domain.Perspective, error) {
 	if input.ID <= 0 {
 		return nil, fmt.Errorf("%w: perspective id must be a positive integer", domain.ErrInvalidInput)
 	}

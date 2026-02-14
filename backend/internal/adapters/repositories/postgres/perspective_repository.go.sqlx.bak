@@ -12,7 +12,6 @@ import (
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 // JSONBArray is a custom type for PostgreSQL jsonb[] columns.
@@ -27,8 +26,8 @@ func (a *JSONBArray) Scan(src interface{}) error {
 	}
 
 	// PostgreSQL returns jsonb[] as []byte containing array of bytea
-	// We need to scan through pq.StringArray
-	var strArray pq.StringArray
+	// We need to scan through StringArray
+	var strArray StringArray
 	if err := strArray.Scan(src); err != nil {
 		return err
 	}
@@ -41,7 +40,7 @@ func (a JSONBArray) Value() (driver.Value, error) {
 	if len(a) == 0 {
 		return nil, nil
 	}
-	return pq.StringArray(a).Value()
+	return StringArray(a).Value()
 }
 
 // PerspectiveRepository implements the PerspectiveRepository interface using PostgreSQL
@@ -61,9 +60,9 @@ type perspectiveRow struct {
 	Importance         sql.NullInt64  `db:"importance"`
 	Confidence         sql.NullInt64  `db:"confidence"`
 	Privacy            sql.NullString `db:"privacy"`
-	Parts              pq.Int64Array  `db:"parts"`
+	Parts              Int64Array     `db:"parts"`
 	Category           sql.NullString `db:"category"`
-	Labels             pq.StringArray `db:"labels"`
+	Labels             StringArray    `db:"labels"`
 	Description        sql.NullString `db:"description"`
 	ReviewStatus       sql.NullString `db:"review_status"`
 	CategorizedRatings JSONBArray     `db:"categorized_ratings"`
@@ -110,9 +109,9 @@ func (r *PerspectiveRepository) Create(ctx context.Context, p *domain.Perspectiv
 		toNullInt64FromIntPtr(p.Importance),
 		toNullInt64FromIntPtr(p.Confidence),
 		privacyToDBValue(p.Privacy),
-		pq.Array(p.Parts),
+		intSliceToInt64Array(p.Parts),
 		toNullString(p.Category),
-		pq.Array(p.Labels),
+		StringArray(p.Labels),
 		toNullString(p.Description),
 		reviewStatusToDBValue(p.ReviewStatus),
 		categorizedRatings,
@@ -194,9 +193,9 @@ func (r *PerspectiveRepository) Update(ctx context.Context, p *domain.Perspectiv
 		toNullInt64FromIntPtr(p.Importance),
 		toNullInt64FromIntPtr(p.Confidence),
 		privacyToDBValue(p.Privacy),
-		pq.Array(p.Parts),
+		intSliceToInt64Array(p.Parts),
 		toNullString(p.Category),
-		pq.Array(p.Labels),
+		StringArray(p.Labels),
 		toNullString(p.Description),
 		reviewStatusToDBValue(p.ReviewStatus),
 		categorizedRatings,
@@ -492,4 +491,16 @@ func perspectiveSortColumnName(sortBy domain.PerspectiveSortBy) string {
 	default:
 		return "created_at"
 	}
+}
+
+// intSliceToInt64Array converts []int to Int64Array for database storage
+func intSliceToInt64Array(ints []int) Int64Array {
+	if ints == nil {
+		return nil
+	}
+	result := make(Int64Array, len(ints))
+	for i, v := range ints {
+		result[i] = int64(v)
+	}
+	return result
 }

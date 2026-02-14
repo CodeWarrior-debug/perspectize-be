@@ -20,6 +20,8 @@ import (
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/config"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/services"
 	"github.com/CodeWarrior-debug/perspectize/backend/pkg/database"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
 )
 
@@ -31,10 +33,21 @@ func main() {
 		}
 	}
 
-	// Load config
-	cfg, err := config.Load("config/config.example.json")
+	// Load config (path from env or default)
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		configPath = "config/config.example.json"
+	}
+	cfg, err := config.Load(configPath)
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	// Validate DATABASE_URL if set
+	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
+		if err := config.ValidateDatabaseURL(dbURL); err != nil {
+			log.Fatalf("Invalid DATABASE_URL: %v", err)
+		}
 	}
 
 	dsn := cfg.Database.GetDSN()
@@ -46,23 +59,25 @@ func main() {
 		slog.Info("connecting to database", "host", cfg.Database.Host, "port", cfg.Database.Port, "name", cfg.Database.Name)
 	}
 
-	// Connect to database
-	db, err := database.Connect(dsn)
+	// Connect to database with configurable pool
+	poolCfg := database.PoolConfigFromEnv()
+	db, err := database.ConnectGORM(dsn, poolCfg)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatalf("Failed to connect to database %s: %v", config.SanitizeDSN(dsn), err)
 	}
-	defer db.Close()
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
 
 	// Test connection
-	if err := database.Ping(context.Background(), db); err != nil {
-		log.Fatalf("Database ping failed: %v", err)
+	if err := database.PingGORM(context.Background(), db); err != nil {
+		log.Fatalf("Database ping failed for %s: %v", config.SanitizeDSN(dsn), err)
 	}
 
 	slog.Info("successfully connected to database")
 
 	// Quick query to verify
 	var version string
-	if err := db.Get(&version, "SELECT version()"); err != nil {
+	if err := db.Raw("SELECT version()").Scan(&version).Error; err != nil {
 		log.Fatalf("Failed to query database: %v", err)
 	}
 	slog.Info("PostgreSQL version", "version", version)
@@ -74,9 +89,9 @@ func main() {
 
 	// Initialize adapters
 	youtubeClient := youtube.NewClient(cfg.YouTube.APIKey)
-	contentRepo := postgres.NewContentRepository(db)
-	userRepo := postgres.NewUserRepository(db)
-	perspectiveRepo := postgres.NewPerspectiveRepository(db)
+	contentRepo := postgres.NewGormContentRepository(db)
+	userRepo := postgres.NewGormUserRepository(db)
+	perspectiveRepo := postgres.NewGormPerspectiveRepository(db)
 
 	// Initialize services
 	contentService := services.NewContentService(contentRepo, youtubeClient)
@@ -87,8 +102,17 @@ func main() {
 	resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 
-	// CORS middleware for frontend dev server
-	corsHandler := func(next http.Handler) http.Handler {
+	// Setup chi router
+	r := chi.NewRouter()
+
+	// Middleware stack
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)    // M-06: request logging
+	r.Use(middleware.Recoverer) // panic recovery
+
+	// CORS middleware
+	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
@@ -99,23 +123,37 @@ func main() {
 			}
 			next.ServeHTTP(w, r)
 		})
-	}
+	})
 
-	// Setup HTTP routes
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	// Health check — liveness probe (M-10)
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
 
+	// Ready check — readiness probe with DB ping (M-10)
+	r.Get("/ready", func(w http.ResponseWriter, r *http.Request) {
+		sqlDB, err := db.DB()
+		if err != nil || sqlDB.PingContext(r.Context()) != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("not ready: database unreachable"))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ready"))
+	})
+
+	// GraphQL
+	r.Handle("/graphql", srv)
 	if os.Getenv("APP_ENV") != "production" {
-		http.Handle("/", playground.Handler("GraphQL Playground", "/graphql"))
+		r.Handle("/", playground.Handler("GraphQL Playground", "/graphql"))
 	}
-	http.Handle("/graphql", corsHandler(srv))
 
 	// Start server with timeouts
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 	server := &http.Server{
 		Addr:         addr,
+		Handler:      r, // chi router
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,

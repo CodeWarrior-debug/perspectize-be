@@ -16,7 +16,7 @@ backend/
 └── migrations/       # SQL migration files
 ```
 
-Full structure: [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)
+Full structure: [.docs/ARCHITECTURE.md](../.docs/ARCHITECTURE.md)
 
 **Dependency Rule:** Dependencies point inward. Domain never depends on adapters. Adapters depend on domain ports.
 
@@ -28,11 +28,20 @@ Full structure: [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)
 4. **Adapters** — Infrastructure in `adapters/`
 5. **Wiring** — Connect in `cmd/server/main.go`
 
-Domain layer rules: [docs/DOMAIN_GUIDE.md](../docs/DOMAIN_GUIDE.md)
+Domain layer rules: [.docs/DOMAIN_GUIDE.md](../.docs/DOMAIN_GUIDE.md)
 
 ## Stack
 
-Go 1.25+ · gqlgen (schema-first) · PostgreSQL 17 (sqlx + pgx/v5) · golang-migrate · go-playground/validator · testify + sqlmock · log/slog · godotenv
+Go 1.25+ · gqlgen (schema-first) · PostgreSQL 17 (GORM + pgx/v5) · golang-migrate · go-playground/validator · testify · log/slog · godotenv
+
+### ORM: GORM (Hex-Clean Separate Model Pattern)
+
+- **Domain models** (`core/domain/`) — pure Go, zero GORM imports
+- **GORM models** (`adapters/repositories/postgres/gorm_models.go`) — `gorm:` tagged structs
+- **Mappers** (`gorm_mappers.go`) — bidirectional domain ↔ GORM conversion
+- **Repositories** (`gorm_*_repository.go`) — GORM chaining for dynamic queries
+- **Shared helpers** (`helpers.go`) — cursor encoding, sort mapping, enum converters
+- **Pagination** — hand-rolled cursor encoding (`encodeCursor`/`decodeCursor`). `gorm-cursor-paginator` integration planned (see FEATURE_BACKLOG.md)
 
 ## Commands
 
@@ -79,7 +88,7 @@ Schema-first in `schema.graphql`. After changes: `make graphql-gen` → implemen
 
 Structured logging with `slog` · dependency injection via ports.
 
-Error handling & DB query patterns: [docs/GO_PATTERNS.md](../docs/GO_PATTERNS.md)
+Error handling & DB query patterns: [.docs/GO_PATTERNS.md](../.docs/GO_PATTERNS.md)
 
 ## Adding a New Feature
 
@@ -94,7 +103,7 @@ Error handling & DB query patterns: [docs/GO_PATTERNS.md](../docs/GO_PATTERNS.md
 
 ## CORS
 
-CORS middleware is configured in `cmd/server/main.go` for local development. Currently allows all origins (`*`). Phase 5 will restrict to the frontend's production origin.
+CORS middleware is configured in `cmd/server/main.go` for local development. Currently allows all origins (`*`). Restrict to frontend's production origin before deploying.
 
 ## Gotchas
 
@@ -104,7 +113,7 @@ CORS middleware is configured in `cmd/server/main.go` for local development. Cur
 
 **JSON scalar:** Use `graphql.Map` (configured as `JSON` in `gqlgen.yml`) for JSONB data.
 
-**Cursor pagination:** Opaque base64 (`cursor:<id>`), keyset (not OFFSET), fetch `limit+1` for `hasNextPage`, whitelist sort columns (SQL injection prevention).
+**Cursor pagination:** Opaque base64 (`cursor:<id>`), keyset (not OFFSET), fetch `limit+1` for `hasNextPage`, whitelist sort columns (SQL injection prevention). Helpers in `helpers.go`.
 
 ### Enum & ID Handling (REQUIRED)
 

@@ -150,7 +150,7 @@ perspectize/ (repository root)
 │   └── ... (legacy code)
 │
 │
-├── docs/                           # Shared documentation
+├── .docs/                          # Shared documentation
 │   ├── ARCHITECTURE.md
 │   ├── LOCAL_DEVELOPMENT.md
 │   ├── AGENTS.md

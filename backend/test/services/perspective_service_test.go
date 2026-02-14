@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
+	portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/services"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -105,7 +106,7 @@ func TestPerspectiveCreate_Success(t *testing.T) {
 	userRepo := &mockUserRepoForPerspective{}
 
 	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
-	input := services.CreatePerspectiveInput{
+	input := portservices.CreatePerspectiveInput{
 		Claim:  "This is a test claim",
 		UserID: 1,
 	}
@@ -131,7 +132,7 @@ func TestPerspectiveCreate_WithRatings(t *testing.T) {
 	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
 	quality := 8000
 	agreement := 5000
-	input := services.CreatePerspectiveInput{
+	input := portservices.CreatePerspectiveInput{
 		Claim:     "Test claim with ratings",
 		UserID:    1,
 		Quality:   &quality,
@@ -150,7 +151,7 @@ func TestPerspectiveCreate_ClaimEmpty(t *testing.T) {
 	userRepo := &mockUserRepoForPerspective{}
 
 	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
-	input := services.CreatePerspectiveInput{
+	input := portservices.CreatePerspectiveInput{
 		Claim:  "",
 		UserID: 1,
 	}
@@ -172,7 +173,7 @@ func TestPerspectiveCreate_ClaimTooLong(t *testing.T) {
 	for i := 0; i < 256; i++ {
 		longClaim += "a"
 	}
-	input := services.CreatePerspectiveInput{
+	input := portservices.CreatePerspectiveInput{
 		Claim:  longClaim,
 		UserID: 1,
 	}
@@ -194,7 +195,7 @@ func TestPerspectiveCreate_UserNotFound(t *testing.T) {
 	}
 
 	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
-	input := services.CreatePerspectiveInput{
+	input := portservices.CreatePerspectiveInput{
 		Claim:  "Test claim",
 		UserID: 999,
 	}
@@ -211,7 +212,7 @@ func TestPerspectiveCreate_InvalidUserID(t *testing.T) {
 	userRepo := &mockUserRepoForPerspective{}
 
 	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
-	input := services.CreatePerspectiveInput{
+	input := portservices.CreatePerspectiveInput{
 		Claim:  "Test claim",
 		UserID: 0,
 	}
@@ -229,7 +230,7 @@ func TestPerspectiveCreate_RatingTooHigh(t *testing.T) {
 
 	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
 	quality := 10001
-	input := services.CreatePerspectiveInput{
+	input := portservices.CreatePerspectiveInput{
 		Claim:   "Test claim",
 		UserID:  1,
 		Quality: &quality,
@@ -248,7 +249,7 @@ func TestPerspectiveCreate_RatingNegative(t *testing.T) {
 
 	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
 	agreement := -1
-	input := services.CreatePerspectiveInput{
+	input := portservices.CreatePerspectiveInput{
 		Claim:     "Test claim",
 		UserID:    1,
 		Agreement: &agreement,
@@ -270,7 +271,7 @@ func TestPerspectiveCreate_DuplicateClaim(t *testing.T) {
 	userRepo := &mockUserRepoForPerspective{}
 
 	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
-	input := services.CreatePerspectiveInput{
+	input := portservices.CreatePerspectiveInput{
 		Claim:  "Existing claim",
 		UserID: 1,
 	}
@@ -291,7 +292,7 @@ func TestPerspectiveCreate_RepositoryError(t *testing.T) {
 	userRepo := &mockUserRepoForPerspective{}
 
 	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
-	input := services.CreatePerspectiveInput{
+	input := portservices.CreatePerspectiveInput{
 		Claim:  "Test claim",
 		UserID: 1,
 	}

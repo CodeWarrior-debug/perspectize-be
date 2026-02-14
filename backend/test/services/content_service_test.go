@@ -53,6 +53,7 @@ func (m *mockContentRepository) List(ctx context.Context, params domain.ContentL
 // mockYouTubeClient implements services.YouTubeClient for testing
 type mockYouTubeClient struct {
 	getVideoMetadataFn func(ctx context.Context, videoID string) (*portservices.VideoMetadata, error)
+	extractVideoIDFn   func(url string) (string, error)
 }
 
 func (m *mockYouTubeClient) GetVideoMetadata(ctx context.Context, videoID string) (*portservices.VideoMetadata, error) {
@@ -60,6 +61,13 @@ func (m *mockYouTubeClient) GetVideoMetadata(ctx context.Context, videoID string
 		return m.getVideoMetadataFn(ctx, videoID)
 	}
 	return nil, fmt.Errorf("not implemented")
+}
+
+func (m *mockYouTubeClient) ExtractVideoID(url string) (string, error) {
+	if m.extractVideoIDFn != nil {
+		return m.extractVideoIDFn(url)
+	}
+	return "", fmt.Errorf("could not extract video ID")
 }
 
 // --- GetByID Tests ---
@@ -163,6 +171,9 @@ func TestCreateFromYouTube_Success(t *testing.T) {
 	}
 
 	ytClient := &mockYouTubeClient{
+		extractVideoIDFn: func(url string) (string, error) {
+			return "dQw4w9WgXcQ", nil
+		},
 		getVideoMetadataFn: func(ctx context.Context, videoID string) (*portservices.VideoMetadata, error) {
 			assert.Equal(t, "dQw4w9WgXcQ", videoID)
 			return metadata, nil
@@ -170,11 +181,8 @@ func TestCreateFromYouTube_Success(t *testing.T) {
 	}
 
 	svc := services.NewContentService(repo, ytClient)
-	extractVideoID := func(url string) (string, error) {
-		return "dQw4w9WgXcQ", nil
-	}
 
-	result, err := svc.CreateFromYouTube(context.Background(), videoURL, extractVideoID)
+	result, err := svc.CreateFromYouTube(context.Background(), videoURL)
 
 	require.NoError(t, err)
 	assert.Equal(t, 1, result.ID)
@@ -202,11 +210,8 @@ func TestCreateFromYouTube_AlreadyExists(t *testing.T) {
 	}
 
 	svc := services.NewContentService(repo, &mockYouTubeClient{})
-	extractVideoID := func(url string) (string, error) {
-		return "dQw4w9WgXcQ", nil
-	}
 
-	result, err := svc.CreateFromYouTube(context.Background(), existingURL, extractVideoID)
+	result, err := svc.CreateFromYouTube(context.Background(), existingURL)
 
 	assert.Nil(t, result)
 	require.Error(t, err)
@@ -220,12 +225,15 @@ func TestCreateFromYouTube_InvalidURL(t *testing.T) {
 		},
 	}
 
-	svc := services.NewContentService(repo, &mockYouTubeClient{})
-	extractVideoID := func(url string) (string, error) {
-		return "", fmt.Errorf("could not extract video ID")
+	ytClient := &mockYouTubeClient{
+		extractVideoIDFn: func(url string) (string, error) {
+			return "", fmt.Errorf("could not extract video ID")
+		},
 	}
 
-	result, err := svc.CreateFromYouTube(context.Background(), "not-a-valid-url", extractVideoID)
+	svc := services.NewContentService(repo, ytClient)
+
+	result, err := svc.CreateFromYouTube(context.Background(), "not-a-valid-url")
 
 	assert.Nil(t, result)
 	require.Error(t, err)
@@ -240,17 +248,17 @@ func TestCreateFromYouTube_YouTubeAPIError(t *testing.T) {
 	}
 
 	ytClient := &mockYouTubeClient{
+		extractVideoIDFn: func(url string) (string, error) {
+			return "abc123", nil
+		},
 		getVideoMetadataFn: func(ctx context.Context, videoID string) (*portservices.VideoMetadata, error) {
 			return nil, fmt.Errorf("%w: status 403", domain.ErrYouTubeAPI)
 		},
 	}
 
 	svc := services.NewContentService(repo, ytClient)
-	extractVideoID := func(url string) (string, error) {
-		return "abc123", nil
-	}
 
-	result, err := svc.CreateFromYouTube(context.Background(), "https://youtube.com/watch?v=abc123", extractVideoID)
+	result, err := svc.CreateFromYouTube(context.Background(), "https://youtube.com/watch?v=abc123")
 
 	assert.Nil(t, result)
 	require.Error(t, err)
@@ -274,17 +282,17 @@ func TestCreateFromYouTube_RepositoryCreateError(t *testing.T) {
 	}
 
 	ytClient := &mockYouTubeClient{
+		extractVideoIDFn: func(url string) (string, error) {
+			return "abc123", nil
+		},
 		getVideoMetadataFn: func(ctx context.Context, videoID string) (*portservices.VideoMetadata, error) {
 			return metadata, nil
 		},
 	}
 
 	svc := services.NewContentService(repo, ytClient)
-	extractVideoID := func(url string) (string, error) {
-		return "abc123", nil
-	}
 
-	result, err := svc.CreateFromYouTube(context.Background(), "https://youtube.com/watch?v=abc123", extractVideoID)
+	result, err := svc.CreateFromYouTube(context.Background(), "https://youtube.com/watch?v=abc123")
 
 	assert.Nil(t, result)
 	require.Error(t, err)
@@ -299,11 +307,8 @@ func TestCreateFromYouTube_GetByURLUnexpectedError(t *testing.T) {
 	}
 
 	svc := services.NewContentService(repo, &mockYouTubeClient{})
-	extractVideoID := func(url string) (string, error) {
-		return "abc123", nil
-	}
 
-	result, err := svc.CreateFromYouTube(context.Background(), "https://youtube.com/watch?v=abc123", extractVideoID)
+	result, err := svc.CreateFromYouTube(context.Background(), "https://youtube.com/watch?v=abc123")
 
 	assert.Nil(t, result)
 	require.Error(t, err)

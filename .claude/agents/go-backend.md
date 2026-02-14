@@ -84,7 +84,7 @@ func (r *Repository) GetByID(ctx context.Context, id int) (*Model, error) {
 ## When Invoked
 
 1. First, understand the task by reading relevant existing code
-2. Check `docs/AGENTS.md` for specific patterns
+2. Check `.docs/AGENTS.md` for specific patterns
 3. Follow existing code style in the file you're modifying
 4. Write tests for new functionality
 5. Run `make lint` before completing
