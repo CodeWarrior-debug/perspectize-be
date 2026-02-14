@@ -12,10 +12,10 @@ describe('User Queries', () => {
 			expect(LIST_USERS).toContain('users');
 		});
 
-		it('requests id, username, and email fields', () => {
+		it('requests id and username fields only', () => {
 			expect(LIST_USERS).toContain('id');
 			expect(LIST_USERS).toContain('username');
-			expect(LIST_USERS).toContain('email');
+			expect(LIST_USERS).not.toContain('email');
 		});
 
 		it('does not request unnecessary timestamp fields', () => {
