@@ -15,12 +15,12 @@ The previous implementation incorrectly targeted GitHub Pages, leaving artifacts
 **Key findings:**
 - DigitalOcean App Platform auto-detects pnpm from `pnpm-lock.yaml` and uses it for builds
 - Static sites get assigned URLs like `app-name-xxxxx.ondigitalocean.app` (randomized subdomain)
-- Monorepos supported via Source Directory configuration (set to `fe/`)
+- Monorepos supported via Source Directory configuration (set to `frontend/`)
 - Environment variables must be scoped `BUILD_TIME` for Vite to embed them in static output
 - CORS must be configured on backend with the exact frontend `.ondigitalocean.app` origin URL
 - SvelteKit adapter-static requires `base: ''` (root path) for standard hosting
 
-**Primary recommendation:** Deploy frontend to DigitalOcean App Platform as a static site component using monorepo source directory `fe/`, configure `VITE_GRAPHQL_URL` as build-time environment variable, then update backend `ALLOWED_ORIGINS` with the assigned `.ondigitalocean.app` URL.
+**Primary recommendation:** Deploy frontend to DigitalOcean App Platform as a static site component using monorepo source directory `frontend/`, configure `VITE_GRAPHQL_URL` as build-time environment variable, then update backend `ALLOWED_ORIGINS` with the assigned `.ondigitalocean.app` URL.
 
 ## Standard Stack
 
@@ -61,7 +61,7 @@ DigitalOcean App Platform App: "perspectize"
 │
 └── Frontend Static Site (to be added)
     ├── URL: https://fe-xxxxx.ondigitalocean.app (assigned)
-    ├── Source Directory: fe/
+    ├── Source Directory: frontend/
     ├── Build Command: pnpm run build
     ├── Output Directory: build
     └── Environment Variables:
@@ -80,7 +80,7 @@ DigitalOcean App Platform App: "perspectize"
 name: fe
 static_sites:
   - name: fe
-    source_dir: fe/
+    source_dir: frontend/
     github:
       repo: CodeWarrior-debug/perspectize
       branch: main
@@ -94,10 +94,10 @@ static_sites:
 
 **How it works:**
 - DigitalOcean clones entire repo to `/workspace`
-- Sets working directory to `/workspace/fe/`
+- Sets working directory to `/workspace/frontend/`
 - Detects `pnpm-lock.yaml` and uses pnpm automatically
 - Runs `pnpm install` then `pnpm run build`
-- Serves files from `fe/build/` via CDN
+- Serves files from `frontend/build/` via CDN
 
 ### Pattern 2: Build-Time Environment Variables for Vite
 
@@ -109,7 +109,7 @@ static_sites:
 
 **Example:**
 ```typescript
-// fe/src/lib/queries/client.ts
+// frontend/src/lib/queries/client.ts
 const GRAPHQL_URL = import.meta.env.VITE_GRAPHQL_URL || 'http://localhost:8080/graphql';
 export const graphqlClient = new GraphQLClient(GRAPHQL_URL);
 ```
@@ -173,7 +173,7 @@ envs:
 
 - **Wildcard CORS in production:** While `ALLOWED_ORIGINS=*` works for development, production should restrict to the exact frontend origin. However, since both apps use dynamic `.ondigitalocean.app` subdomains, you must configure this AFTER frontend deployment when the URL is known.
 
-- **Using `cd` in build commands for monorepo:** Don't use `cd fe && pnpm build`. Set Source Directory to `fe/` instead. The Source Directory field sets the working directory automatically.
+- **Using `cd` in build commands for monorepo:** Don't use `cd fe && pnpm build`. Set Source Directory to `frontend/` instead. The Source Directory field sets the working directory automatically.
 
 ## Don't Hand-Roll
 
@@ -197,7 +197,7 @@ envs:
 
 **How to avoid:**
 1. Remove `base: dev ? '' : '/perspectize'` from svelte.config.js, change to `base: ''`
-2. Delete `fe/static/.nojekyll` (GitHub Pages-specific file)
+2. Delete `frontend/static/.nojekyll` (GitHub Pages-specific file)
 3. Delete or archive `.github/workflows/frontend-deploy.yml` (GitHub Pages deploy workflow)
 4. Optionally keep `.github/workflows/frontend-test.yml` (platform-independent PR checks)
 
@@ -297,7 +297,7 @@ Verified patterns from official sources:
 **Source:** [SvelteKit adapter-static docs](https://svelte.dev/docs/kit/adapter-static)
 
 ```typescript
-// fe/svelte.config.js
+// frontend/svelte.config.js
 import adapter from '@sveltejs/adapter-static';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -323,7 +323,7 @@ export default config;
 **Source:** [Vite env variables docs](https://vite.dev/guide/env-and-mode.html)
 
 ```typescript
-// fe/src/lib/queries/client.ts
+// frontend/src/lib/queries/client.ts
 import { GraphQLClient } from 'graphql-request';
 
 // Vite exposes VITE_* env vars via import.meta.env at build time
@@ -347,7 +347,7 @@ static_sites:
       repo: CodeWarrior-debug/perspectize
       branch: main
       deploy_on_push: true
-    source_dir: fe/
+    source_dir: frontend/
     build_command: pnpm run build
     output_dir: build
     environment_slug: node-js

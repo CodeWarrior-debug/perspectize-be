@@ -134,7 +134,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. GitHub repository renamed to `perspectize`
   2. `backend/` renamed to `backend/` with all Go import paths updated and tests passing
-  3. `fe/` renamed to `fe/` with all config paths updated and build passing
+  3. `frontend/` renamed to `frontend/` with all config paths updated and build passing
   4. Sevalla deployment updated to point to new directory structure
   5. All CLAUDE.md files, docs, and planning references updated to reflect new paths
   6. CI/CD (if any) updated for new paths

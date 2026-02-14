@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Monorepo with two stacks:
 - **Backend:** `backend/` — Go GraphQL API (see `backend/CLAUDE.md`)
-- **Frontend:** `fe/` — SvelteKit web app (see `fe/CLAUDE.md`)
+- **Frontend:** `frontend/` — SvelteKit web app (see `frontend/CLAUDE.md`)
 
 **CLAUDE.md structure:** Root file (this) contains shared concerns. Package-level files contain stack-specific instructions. Claude loads root + the relevant package file per session.
 
@@ -110,8 +110,8 @@ Types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`
 Claude Code may use the following tools **without prompting** for this project:
 
 ### File Operations
-- **Read**: Any file in `.planning/`, `fe/src/`, `backend/`, `docs/`
-- **Edit/Write**: Any file in `.planning/` (design specs, roadmaps, plans), `fe/src/`, `backend/` (excluding sensitive files)
+- **Read**: Any file in `.planning/`, `frontend/src/`, `backend/`, `docs/`
+- **Edit/Write**: Any file in `.planning/` (design specs, roadmaps, plans), `frontend/src/`, `backend/` (excluding sensitive files)
 - **Glob/Grep**: Unlimited search across the codebase
 
 ### Bash Commands
@@ -123,7 +123,7 @@ Claude Code may use the following tools **without prompting** for this project:
 ### Figma MCP Tools
 - **Design context**: `get_screenshot`, `get_design_context`, `get_metadata` — all Figma MCP tools auto-approved
 - **Design system**: `get_variable_defs`, `create_design_system_rules`
-- **File keys**: Design 1 (`K1HaZLeNwCckWvhoyAfRhj`), Radix 3.0 (`SyvrP9yYbrmCorofJK4Co8`), App 1 (`dAiiWM7FOsob5upzUjtocY`) — see [fe/docs/FIGMA.md](fe/docs/FIGMA.md)
+- **File keys**: Design 1 (`K1HaZLeNwCckWvhoyAfRhj`), Radix 3.0 (`SyvrP9yYbrmCorofJK4Co8`), App 1 (`dAiiWM7FOsob5upzUjtocY`) — see [frontend/docs/FIGMA.md](frontend/docs/FIGMA.md)
 
 ### Task & Execution Tools
 - **TaskCreate/TaskUpdate**: Creating and updating tasks from conversations
@@ -143,7 +143,7 @@ Planning and execution artifacts in `.planning/`: `PROJECT.md`, `ROADMAP.md`, `S
 
 1. **Build**: `go build ./...` in `backend/` — must compile with zero errors
 2. **Backend tests**: `go test ./...` in `backend/` — all must pass
-3. **Frontend tests**: `pnpm run test:run` in `fe/` — all must pass
+3. **Frontend tests**: `pnpm run test:run` in `frontend/` — all must pass
 4. **Stale references**: If renaming/moving files or paths, grep the entire repo for old names
 5. **Plan must_haves**: If executing a GSD plan, verify each `must_haves.truths` item
 
@@ -165,9 +165,9 @@ Use `DATABASE_URL` with external endpoint from hosting provider. Note: Sevalla c
 - [Go Patterns](docs/GO_PATTERNS.md) — Error handling and DB query patterns
 
 **Frontend docs:**
-- [Frontend CLAUDE.md](fe/CLAUDE.md) — SvelteKit, Svelte 5, TanStack Query patterns
-- [Design Spec](fe/docs/DESIGN_SPEC.md) — Figma design system, color tokens, typography, component specs
-- [Figma Reference](fe/docs/FIGMA.md) — File keys, pages, variables, code↔Figma mapping
+- [Frontend CLAUDE.md](frontend/CLAUDE.md) — SvelteKit, Svelte 5, TanStack Query patterns
+- [Design Spec](frontend/docs/DESIGN_SPEC.md) — Figma design system, color tokens, typography, component specs
+- [Figma Reference](frontend/docs/FIGMA.md) — File keys, pages, variables, code↔Figma mapping
 
 **Planning & backlog:**
 - [Feature Backlog](FEATURE_BACKLOG.md) — Future ideas and enhancements not tied to any milestone. Capture ideas here during development; evaluate when planning new work.

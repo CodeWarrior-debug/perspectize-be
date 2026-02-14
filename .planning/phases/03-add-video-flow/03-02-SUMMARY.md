@@ -27,11 +27,11 @@ tech-stack:
 
 key-files:
   created:
-    - fe/src/lib/components/AddVideoDialog.svelte
-    - fe/tests/components/AddVideoDialog.test.ts
+    - frontend/src/lib/components/AddVideoDialog.svelte
+    - frontend/tests/components/AddVideoDialog.test.ts
   modified:
-    - fe/src/lib/components/Header.svelte
-    - fe/tests/components/Header.test.ts
+    - frontend/src/lib/components/Header.svelte
+    - frontend/tests/components/Header.test.ts
 
 key-decisions:
   - "Dialog uses flat import pattern (Dialog, DialogContent, DialogTitle) not namespace (Dialog.Root)"
@@ -91,10 +91,10 @@ Each task was committed atomically:
 | Mobile 375px: dialog responsive and usable | Pass |
 
 ## Files Created/Modified
-- `fe/src/lib/components/AddVideoDialog.svelte` - Complete dialog with mutation, validation, error mapping
-- `fe/src/lib/components/Header.svelte` - Add Video button wires to dialog, placeholder toast removed
-- `fe/tests/components/AddVideoDialog.test.ts` - 4 tests (render, input, buttons, open prop)
-- `fe/tests/components/Header.test.ts` - Updated: removed toast placeholder test, added dialog mock
+- `frontend/src/lib/components/AddVideoDialog.svelte` - Complete dialog with mutation, validation, error mapping
+- `frontend/src/lib/components/Header.svelte` - Add Video button wires to dialog, placeholder toast removed
+- `frontend/tests/components/AddVideoDialog.test.ts` - 4 tests (render, input, buttons, open prop)
+- `frontend/tests/components/Header.test.ts` - Updated: removed toast placeholder test, added dialog mock
 
 ## Decisions Made
 

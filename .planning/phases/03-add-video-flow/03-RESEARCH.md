@@ -50,7 +50,7 @@ pnpm add get-youtube-id
 
 ### Recommended Project Structure
 ```
-fe/src/lib/
+frontend/src/lib/
 ├── components/
 │   ├── shadcn/
 │   │   ├── dialog/              # Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
@@ -517,7 +517,7 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- Existing codebase: fe/src/lib/components/Header.svelte, fe/src/lib/queries/client.ts, fe/src/routes/+layout.svelte (toast configuration verified)
+- Existing codebase: frontend/src/lib/components/Header.svelte, frontend/src/lib/queries/client.ts, frontend/src/routes/+layout.svelte (toast configuration verified)
 - Existing backend schema: backend/schema.graphql (createContentFromYouTube mutation confirmed)
 - Svelte 5 official docs: [$state](https://svelte.dev/docs/svelte/bind), [$bindable](https://svelte.dev/docs/svelte/$bindable), [event handlers](https://svelte.dev/docs/svelte/bind)
 

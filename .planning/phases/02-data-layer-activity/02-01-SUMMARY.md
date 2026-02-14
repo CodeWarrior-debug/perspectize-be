@@ -27,16 +27,16 @@ key-files:
   created:
     - backend/internal/core/ports/repositories/user_repository.go (ListAll port)
     - backend/internal/adapters/repositories/postgres/user_repository.go (ListAll impl)
-    - fe/src/lib/queries/users.ts (LIST_USERS query)
-    - fe/src/lib/stores/userSelection.svelte.ts (session-persistent store)
-    - fe/tests/unit/queries-users.test.ts
-    - fe/tests/unit/stores-userSelection.test.ts
+    - frontend/src/lib/queries/users.ts (LIST_USERS query)
+    - frontend/src/lib/stores/userSelection.svelte.ts (session-persistent store)
+    - frontend/tests/unit/queries-users.test.ts
+    - frontend/tests/unit/stores-userSelection.test.ts
   modified:
     - backend/schema.graphql (added users query)
     - backend/internal/core/services/user_service.go (ListAll service method)
     - backend/internal/adapters/graphql/resolvers/schema.resolvers.go (Users resolver)
-    - fe/src/lib/queries/content.ts (added sort params, length fields)
-    - fe/tests/unit/queries-content.test.ts (added sort parameter tests)
+    - frontend/src/lib/queries/content.ts (added sort params, length fields)
+    - frontend/tests/unit/queries-content.test.ts (added sort parameter tests)
 
 key-decisions:
   - "Used setter-based session sync instead of $effect for Svelte 5 store testability"
@@ -95,12 +95,12 @@ Each task was committed atomically:
 - `backend/test/services/perspective_service_test.go` - Updated mock with ListAll
 
 ### Frontend
-- `fe/src/lib/queries/users.ts` - Created LIST_USERS query (id, username, email)
-- `fe/src/lib/queries/content.ts` - Updated with sortBy, sortOrder, includeTotalCount params; added length/lengthUnits fields
-- `fe/src/lib/stores/userSelection.svelte.ts` - Created session-persistent store with Svelte 5 runes
-- `fe/tests/unit/queries-users.test.ts` - Unit tests for LIST_USERS query
-- `fe/tests/unit/queries-content.test.ts` - Updated with sort parameter tests
-- `fe/tests/unit/stores-userSelection.test.ts` - Unit tests for user selection store
+- `frontend/src/lib/queries/users.ts` - Created LIST_USERS query (id, username, email)
+- `frontend/src/lib/queries/content.ts` - Updated with sortBy, sortOrder, includeTotalCount params; added length/lengthUnits fields
+- `frontend/src/lib/stores/userSelection.svelte.ts` - Created session-persistent store with Svelte 5 runes
+- `frontend/tests/unit/queries-users.test.ts` - Unit tests for LIST_USERS query
+- `frontend/tests/unit/queries-content.test.ts` - Updated with sort parameter tests
+- `frontend/tests/unit/stores-userSelection.test.ts` - Unit tests for user selection store
 
 ## Decisions Made
 
@@ -128,7 +128,7 @@ Each task was committed atomically:
 - **Found during:** Task 3 (Frontend tests execution)
 - **Issue:** Svelte 5 `$effect()` rune used in module scope caused `effect_orphan` error in Vitest - can only be used in component initialization
 - **Fix:** Changed from `$effect()` auto-sync to manual `syncToSession()` called in setters
-- **Files modified:** `fe/src/lib/stores/userSelection.svelte.ts`
+- **Files modified:** `frontend/src/lib/stores/userSelection.svelte.ts`
 - **Verification:** All 55 frontend tests passing
 - **Committed in:** c003722 (Task 3 commit)
 

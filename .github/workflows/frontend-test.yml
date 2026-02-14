@@ -3,11 +3,11 @@ name: Frontend Tests
 on:
   pull_request:
     paths:
-      - 'fe/**'
+      - 'frontend/**'
   push:
     branches: [main]
     paths:
-      - 'fe/**'
+      - 'frontend/**'
 
 jobs:
   test:
@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: fe/pnpm-lock.yaml
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
         working-directory: fe
@@ -38,4 +38,4 @@ jobs:
         if: always()
         with:
           name: coverage-report
-          path: fe/coverage/
+          path: frontend/coverage/

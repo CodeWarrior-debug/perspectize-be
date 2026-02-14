@@ -44,7 +44,7 @@ The established tools for this domain:
 
 **Installation:**
 ```bash
-# Already installed in fe/package.json
+# Already installed in frontend/package.json
 # GitHub Actions requires no installation (cloud-hosted)
 ```
 
@@ -65,7 +65,7 @@ The established tools for this domain:
 ```
 
 ### Pattern 1: Monorepo Path-Based CI/CD
-**What:** Use `dorny/paths-filter@v3` to detect changes in `fe/` vs `backend/` and only run relevant jobs.
+**What:** Use `dorny/paths-filter@v3` to detect changes in `frontend/` vs `backend/` and only run relevant jobs.
 **When to use:** All workflows in monorepos to avoid wasting CI minutes on unchanged packages.
 **Example:**
 ```yaml
@@ -88,7 +88,7 @@ jobs:
         with:
           filters: |
             frontend:
-              - 'fe/**'
+              - 'frontend/**'
 
   build-deploy:
     needs: detect-changes
@@ -107,14 +107,14 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
-          cache-dependency-path: fe/pnpm-lock.yaml
+          cache-dependency-path: frontend/pnpm-lock.yaml
       - name: Install dependencies
         run: cd fe && pnpm install --frozen-lockfile
       - name: Build
         run: cd fe && pnpm run build
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: 'fe/build/'
+          path: 'frontend/build/'
       - uses: actions/deploy-pages@v4
 ```
 
@@ -311,7 +311,7 @@ jobs:
         with:
           filters: |
             frontend:
-              - 'fe/**'
+              - 'frontend/**'
 
   build:
     needs: detect-changes
@@ -331,7 +331,7 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
-          cache-dependency-path: fe/pnpm-lock.yaml
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
         run: cd fe && pnpm install --frozen-lockfile
@@ -347,7 +347,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'fe/build/'
+          path: 'frontend/build/'
 
   deploy:
     needs: build
@@ -369,11 +369,11 @@ name: Frontend Tests
 on:
   pull_request:
     paths:
-      - 'fe/**'
+      - 'frontend/**'
   push:
     branches: [main]
     paths:
-      - 'fe/**'
+      - 'frontend/**'
 
 jobs:
   test:
@@ -389,7 +389,7 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
-          cache-dependency-path: fe/pnpm-lock.yaml
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
         run: cd fe && pnpm install --frozen-lockfile
@@ -402,7 +402,7 @@ jobs:
         if: always()
         with:
           name: coverage-report
-          path: fe/coverage/
+          path: frontend/coverage/
 ```
 
 ### Production CORS Configuration
