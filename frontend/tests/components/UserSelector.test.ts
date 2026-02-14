@@ -80,7 +80,7 @@ describe('UserSelector with data', () => {
 	it('creates query with correct queryKey and staleTime', () => {
 		render(UserSelector);
 		expect(capturedQueryOptions).toBeDefined();
-		expect(capturedQueryOptions.queryKey).toEqual(['users']);
+		expect(capturedQueryOptions.queryKey).toEqual(['app', 'users', 'list']);
 		expect(capturedQueryOptions.staleTime).toBe(5 * 60 * 1000);
 	});
 

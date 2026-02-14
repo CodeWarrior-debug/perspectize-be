@@ -93,7 +93,7 @@ describe('AddVideoDialog mutation callbacks', () => {
 		});
 
 		expect(mockToastSuccess).toHaveBeenCalledWith('Added: Test Video');
-		expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['content'] });
+		expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['app', 'content', 'list'] });
 	});
 
 	it('onSuccess handles null response gracefully', () => {
