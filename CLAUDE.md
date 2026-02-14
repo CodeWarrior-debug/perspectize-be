@@ -39,20 +39,9 @@ gh api repos/CodeWarrior-debug/perspectize/pulls/123/comments
 
 **Always use the repository templates** in `.github/` when creating PRs and issues.
 
-**Pull Requests** — follow `.github/pull_request_template.md`:
-```
-## Summary        — 1-3 bullet points
-## Problem        — What problem, link to issue (Closes #XX)
-## Solution       — How it solves it
-## Technical Changes — Key changes made
-## Testing        — Checklist: unit tests, manual, GraphQL playground
-## Checklist      — Conventions, tests, docs, breaking changes
-## Related Issues — Closes #XX, Fixes #XX
-```
+**Pull Requests** — follow `.github/pull_request_template.md` (Summary, Problem, Solution, Technical Changes, Testing, Checklist, Related Issues).
 
-**Issues** — use the matching template from `.github/ISSUE_TEMPLATE/`:
-- **Feature request** (`feature_request.md`): Summary, Problem Statement, Proposed Solution, Alternatives, Acceptance Criteria
-- **Bug report** (`bug_report.md`): Description, Steps to Reproduce, Expected/Actual Behavior, Environment, Logs
+**Issues** — use templates from `.github/ISSUE_TEMPLATE/` (feature_request.md or bug_report.md).
 
 GitHub Projects v2: See [docs/GITHUB_PROJECTS.md](docs/GITHUB_PROJECTS.md).
 

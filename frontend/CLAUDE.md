@@ -51,25 +51,7 @@ This project uses **Svelte 5 runes** exclusively. Do not use Svelte 4 syntax.
 | `{@render children()}` | `<slot />` |
 | `onclick={handler}` | `on:click={handler}` |
 
-**Key conventions established in this codebase:**
-
-```svelte
-<script lang="ts">
-  // Props via $props() destructuring
-  let { optional = 'default', required } = $props();
-
-  // Reactive state
-  let items = $state<Item[]>([]);
-
-  // Derived values (never use $effect for derivation)
-  let total = $derived(items.length);
-
-  // Render children via snippet
-  let { children } = $props();
-</script>
-
-{@render children()}
-```
+**Additional rules:** Never use `$effect` for derivation (use `$derived`). Render children via `{@render children()}` with `let { children } = $props()`.
 
 ## TanStack Query + GraphQL
 

@@ -32,7 +32,7 @@ Domain layer rules: [docs/DOMAIN_GUIDE.md](../docs/DOMAIN_GUIDE.md)
 
 ## Stack
 
-Go 1.25+ · gqlgen (schema-first) · PostgreSQL 17 (GORM + pgx/v5) · golang-migrate · go-playground/validator · testify + sqlmock · log/slog · godotenv
+Go 1.25+ · gqlgen (schema-first) · PostgreSQL 17 (GORM + pgx/v5) · golang-migrate · go-playground/validator · testify · log/slog · godotenv
 
 ### ORM: GORM (Hex-Clean Separate Model Pattern)
 
