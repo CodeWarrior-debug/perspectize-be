@@ -16,7 +16,7 @@ backend/
 └── migrations/       # SQL migration files
 ```
 
-Full structure: [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)
+Full structure: [.docs/ARCHITECTURE.md](../.docs/ARCHITECTURE.md)
 
 **Dependency Rule:** Dependencies point inward. Domain never depends on adapters. Adapters depend on domain ports.
 
@@ -28,7 +28,7 @@ Full structure: [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)
 4. **Adapters** — Infrastructure in `adapters/`
 5. **Wiring** — Connect in `cmd/server/main.go`
 
-Domain layer rules: [docs/DOMAIN_GUIDE.md](../docs/DOMAIN_GUIDE.md)
+Domain layer rules: [.docs/DOMAIN_GUIDE.md](../.docs/DOMAIN_GUIDE.md)
 
 ## Stack
 
@@ -88,7 +88,7 @@ Schema-first in `schema.graphql`. After changes: `make graphql-gen` → implemen
 
 Structured logging with `slog` · dependency injection via ports.
 
-Error handling & DB query patterns: [docs/GO_PATTERNS.md](../docs/GO_PATTERNS.md)
+Error handling & DB query patterns: [.docs/GO_PATTERNS.md](../.docs/GO_PATTERNS.md)
 
 ## Adding a New Feature
 

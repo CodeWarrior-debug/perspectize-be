@@ -125,7 +125,7 @@ perspectize-svelte/
 
 ### Confidence: HIGH
 
-Source: [SvelteKit Project Structure Documentation](https://svelte.dev/docs/kit/project-structure), [SvelteKit $lib alias](https://svelte.dev/tutorial/kit/lib)
+Source: [SvelteKit Project Structure Documentation](https://svelte.dev/docs/kit/project-structure), [SvelteKit $lib alias](https://svelte.dev/docs/tutorial/kit/lib)
 
 ---
 

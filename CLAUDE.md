@@ -43,7 +43,7 @@ gh api repos/CodeWarrior-debug/perspectize/pulls/123/comments
 
 **Issues** — use templates from `.github/ISSUE_TEMPLATE/` (feature_request.md or bug_report.md).
 
-GitHub Projects v2: See [docs/GITHUB_PROJECTS.md](docs/GITHUB_PROJECTS.md).
+GitHub Projects v2: See [.docs/GITHUB_PROJECTS.md](.docs/GITHUB_PROJECTS.md).
 
 ## Branch Naming
 
@@ -86,7 +86,7 @@ defer db.Close()
 
 ## GSD Workflow
 
-Planning and execution artifacts in `.planning/`: `PROJECT.md`, `ROADMAP.md`, `STATE.md`, `phases/`. Branching: see [docs/GSD_BRANCHING.md](docs/GSD_BRANCHING.md).
+Planning and execution artifacts in `.planning/`: `PROJECT.md`, `ROADMAP.md`, `STATE.md`, `phases/`. Branching: see [.docs/GSD_BRANCHING.md](.docs/GSD_BRANCHING.md).
 
 ## Self-Verification (MANDATORY)
 
@@ -102,16 +102,16 @@ Planning and execution artifacts in `.planning/`: `PROJECT.md`, `ROADMAP.md`, `S
 
 Run the relevant subset (e.g., backend-only changes skip step 3). Report results explicitly — don't just say "tests pass", show the output summary.
 
-See [docs/VERIFICATION.md](docs/VERIFICATION.md) for evidence capture workflow.
+See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow.
 
 ## Resources
 
 **Monorepo docs:**
-- [Architecture](docs/ARCHITECTURE.md) — System design and hexagonal architecture
-- [Local Development](docs/LOCAL_DEVELOPMENT.md) — Setup guide
-- [Agent Routing](docs/AGENTS.md) — AI agent navigation guide
-- [Domain Guide](docs/DOMAIN_GUIDE.md) — Domain layer rules and patterns
-- [Go Patterns](docs/GO_PATTERNS.md) — Error handling and DB query patterns
+- [Architecture](.docs/ARCHITECTURE.md) — System design and hexagonal architecture
+- [Local Development](.docs/LOCAL_DEVELOPMENT.md) — Setup guide
+- [Agent Routing](.docs/AGENTS.md) — AI agent navigation guide
+- [Domain Guide](.docs/DOMAIN_GUIDE.md) — Domain layer rules and patterns
+- [Go Patterns](.docs/GO_PATTERNS.md) — Error handling and DB query patterns
 
 **Frontend docs:**
 - [Frontend CLAUDE.md](frontend/CLAUDE.md) — SvelteKit, Svelte 5, TanStack Query patterns

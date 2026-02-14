@@ -96,7 +96,7 @@ Recent decisions affecting current work:
 - [05-02]: Frontend hosting target: Sevalla Static Sites (not DigitalOcean App Platform)
 - [Infra]: CLAUDE.md split into root + backend/CLAUDE.md + frontend/CLAUDE.md for package-level context loading
 - [Infra]: Go module renamed from `github.com/yourorg/backend` to `github.com/CodeWarrior-debug/perspectize/backend` (30 files, all 78 tests pass)
-- [Infra]: Docs delegated to docs/ directory: VERIFICATION.md, DOMAIN_GUIDE.md, GO_PATTERNS.md, GITHUB_PROJECTS.md, GSD_BRANCHING.md
+- [Infra]: Docs delegated to .docs/ directory: VERIFICATION.md, DOMAIN_GUIDE.md, GO_PATTERNS.md, GITHUB_PROJECTS.md, GSD_BRANCHING.md
 - [Infra]: qmd .planning/ collection added with stable-vs-live convention
 - [Infra]: All three CLAUDE.md files scored 95/100 (A) quality after optimization
 - [Frontend]: Svelte 5 runes, SvelteKit routing, TanStack Query patterns documented in frontend/CLAUDE.md
@@ -135,6 +135,7 @@ Recent decisions affecting current work:
 - Phase 03.1 inserted after Phase 3: Dialog UX Polish — Gray overlay too aggressive, modal translucent/hard to read, needs redesign with shadcn best practices
 - Phase 03.3 inserted after Phase 3.2: Repository Rename & Folder Restructure — Rename repo perspectize → perspectize, folders backend → backend, fe → fe, update all imports and Sevalla pointers
 - Phase 07.1 inserted after Phase 7: ORM Migration (sqlx → GORM) — Replace sqlx with GORM using hex-clean separate model pattern. ~35% repository code reduction. Prototype in gorm_*.go files.
+- Phase 07.2 inserted after Phase 7.1: gorm-cursor-paginator Integration (URGENT) — Fix C-02 cursor pagination broken for non-ID sorts. Replace hand-rolled encodeCursor/decodeCursor with library. Was originally planned for 7.1 but skipped during execution.
 
 ### Project-Level Plan Requirements
 
