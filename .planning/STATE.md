@@ -10,17 +10,17 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 ## Current Position
 
 Phase: 7.3 of 10 (Frontend Caching Remediation)
-Plan: 1/3 complete
-Status: In progress — Security fixes complete, TanStack Query migration next
-Last activity: 2026-02-14 — Completed 07.3-01-PLAN.md
+Plan: 2/3 complete
+Status: In progress — ActivityTable migrated to TanStack Query, UserSelector next
+Last activity: 2026-02-14 — Completed 07.3-03-PLAN.md
 
-Progress: [████████████████░] 96%
+Progress: [████████████████░] 97%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 24
-- Average duration: 3.7 min
+- Total plans completed: 25
+- Average duration: 3.6 min
 - Total execution time: 1.6 hours
 
 **By Phase:**
@@ -35,11 +35,11 @@ Progress: [████████████████░] 96%
 | 07-backend-architecture | 3 | 7 min | 2.3 min |
 | 07.1-orm-migration-sqlx-to-gorm | 3 | 8 min | 2.7 min |
 | 07.2-gorm-cursor-paginator | 2 | 4 min | 2 min |
-| 07.3-frontend-caching-remediation | 1 | 2 min | 2 min |
+| 07.3-frontend-caching-remediation | 2 | 3 min | 1.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 2 min, 4 min, 2 min, 2 min, 2 min (avg: 2.4 min)
-- Trend: Excellent — Fast execution continues, security foundation complete
+- Last 5 plans: 4 min, 2 min, 2 min, 2 min, 1 min (avg: 2.2 min)
+- Trend: Excellent — Fast execution continues, TanStack Query migration progressing
 
 *Updated after each plan completion*
 
@@ -88,12 +88,16 @@ Recent decisions affecting current work:
 - [03.2-02]: Popover trigger uses buttonVariants() directly (bits-ui 2.x Svelte 5 pattern, no asChild)
 - [03.2-02]: AddVideoPopover self-contained with internal open state (simpler API than bind:open from parent)
 - [03.2-03]: ActivityTable manages own data fetching (no props) for simplicity
-- [03.2-03]: Direct graphqlClient.request instead of TanStack Query for data fetching in ActivityTable
 - [03.2-03]: Cursor-based pagination with stored cursors array for prev/next navigation
 - [03.2-03]: SORT_FIELD_MAP to translate AG Grid colId to GraphQL ContentSortBy enum
 - [03.2-03]: 500ms debounce on floating filters to reduce server requests
 - [03.2-03]: formatCount utility: null → '--', <1K → '500', 1K-1M → '1.2K', ≥1M → '1.2M'
 - [03.2-03]: Cell renderers using createElement (not innerHTML) for XSS safety
+- [07.3-03]: TanStack Query createQuery with keepPreviousData for ActivityTable (replaced manual fetchData)
+- [07.3-03]: Query key includes all pagination/sort/filter params for correct cache segmentation
+- [07.3-03]: AG Grid callbacks update reactive state only (no manual fetches, query auto-refetches)
+- [07.3-03]: Cursor management inside queryFn to update cursors array reactively
+- [07.3-03]: Event listener pattern removed - query invalidation handles refreshes
 - [05-02]: Backend deployed on Sevalla (URL in SEVALLA_BACKEND_URL env var / .env files)
 - [05-02]: Frontend hosting target: Sevalla Static Sites (not DigitalOcean App Platform)
 - [Infra]: CLAUDE.md split into root + backend/CLAUDE.md + frontend/CLAUDE.md for package-level context loading
@@ -217,7 +221,7 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2)
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 07.2-02-PLAN.md (Phase 7.2 complete)
+Stopped at: Completed 07.3-03-PLAN.md (ActivityTable TanStack Query migration)
 Resume file: None
 
 ### 2026-02-07 — Plan 01-05: Test Coverage
