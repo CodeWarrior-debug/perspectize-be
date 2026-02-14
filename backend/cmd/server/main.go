@@ -61,14 +61,15 @@ func main() {
 
 	// Connect to database with configurable pool
 	poolCfg := database.PoolConfigFromEnv()
-	db, err := database.Connect(dsn, poolCfg)
+	db, err := database.ConnectGORM(dsn, poolCfg)
 	if err != nil {
 		log.Fatalf("Failed to connect to database %s: %v", config.SanitizeDSN(dsn), err)
 	}
-	defer db.Close()
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
 
 	// Test connection
-	if err := database.Ping(context.Background(), db); err != nil {
+	if err := database.PingGORM(context.Background(), db); err != nil {
 		log.Fatalf("Database ping failed for %s: %v", config.SanitizeDSN(dsn), err)
 	}
 
@@ -76,7 +77,7 @@ func main() {
 
 	// Quick query to verify
 	var version string
-	if err := db.Get(&version, "SELECT version()"); err != nil {
+	if err := db.Raw("SELECT version()").Scan(&version).Error; err != nil {
 		log.Fatalf("Failed to query database: %v", err)
 	}
 	slog.Info("PostgreSQL version", "version", version)
@@ -88,9 +89,9 @@ func main() {
 
 	// Initialize adapters
 	youtubeClient := youtube.NewClient(cfg.YouTube.APIKey)
-	contentRepo := postgres.NewContentRepository(db)
-	userRepo := postgres.NewUserRepository(db)
-	perspectiveRepo := postgres.NewPerspectiveRepository(db)
+	contentRepo := postgres.NewGormContentRepository(db)
+	userRepo := postgres.NewGormUserRepository(db)
+	perspectiveRepo := postgres.NewGormPerspectiveRepository(db)
 
 	// Initialize services
 	contentService := services.NewContentService(contentRepo, youtubeClient)
@@ -132,7 +133,8 @@ func main() {
 
 	// Ready check — readiness probe with DB ping (M-10)
 	r.Get("/ready", func(w http.ResponseWriter, r *http.Request) {
-		if err := db.PingContext(r.Context()); err != nil {
+		sqlDB, err := db.DB()
+		if err != nil || sqlDB.PingContext(r.Context()) != nil {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			w.Write([]byte("not ready: database unreachable"))
 			return
