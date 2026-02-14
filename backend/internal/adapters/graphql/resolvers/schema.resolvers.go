@@ -14,14 +14,13 @@ import (
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/generated"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/model"
-	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/youtube"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
-	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/services"
+	portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
 )
 
 // CreateContentFromYouTube is the resolver for the createContentFromYouTube field.
 func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input model.CreateContentFromYouTubeInput) (*model.Content, error) {
-	content, err := r.ContentService.CreateFromYouTube(ctx, input.URL, youtube.ExtractVideoID)
+	content, err := r.ContentService.CreateFromYouTube(ctx, input.URL)
 	if err != nil {
 		if errors.Is(err, domain.ErrAlreadyExists) {
 			return nil, fmt.Errorf("content already exists for this URL")
@@ -55,7 +54,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 
 // CreatePerspective is the resolver for the createPerspective field.
 func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.CreatePerspectiveInput) (*model.Perspective, error) {
-	serviceInput := services.CreatePerspectiveInput{
+	serviceInput := portservices.CreatePerspectiveInput{
 		Claim:       input.Claim,
 		UserID:      input.UserID,
 		Quality:     input.Quality,
@@ -108,7 +107,7 @@ func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.Cr
 
 // UpdatePerspective is the resolver for the updatePerspective field.
 func (r *mutationResolver) UpdatePerspective(ctx context.Context, input model.UpdatePerspectiveInput) (*model.Perspective, error) {
-	serviceInput := services.UpdatePerspectiveInput{
+	serviceInput := portservices.UpdatePerspectiveInput{
 		ID:           input.ID,
 		Claim:        input.Claim,
 		Quality:      input.Quality,

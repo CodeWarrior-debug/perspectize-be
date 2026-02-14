@@ -1,7 +1,7 @@
 package resolvers
 
 import (
-	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/services"
+	portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
 )
 
 // This file will not be regenerated automatically.
@@ -10,16 +10,16 @@ import (
 // here.
 
 type Resolver struct {
-	ContentService     *services.ContentService
-	UserService        *services.UserService
-	PerspectiveService *services.PerspectiveService
+	ContentService     portservices.ContentService
+	UserService        portservices.UserService
+	PerspectiveService portservices.PerspectiveService
 }
 
 // NewResolver creates a new resolver with dependencies
 func NewResolver(
-	contentService *services.ContentService,
-	userService *services.UserService,
-	perspectiveService *services.PerspectiveService,
+	contentService portservices.ContentService,
+	userService portservices.UserService,
+	perspectiveService portservices.PerspectiveService,
 ) *Resolver {
 	return &Resolver{
 		ContentService:     contentService,
