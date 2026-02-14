@@ -3,8 +3,10 @@
 	import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
 	import { themeQuartz } from '@ag-grid-community/theming';
 	import type { GridApi, GridOptions, SortChangedEvent, FilterChangedEvent, ColDef } from '@ag-grid-community/core';
+	import { createQuery, keepPreviousData } from '@tanstack/svelte-query';
 	import { graphqlClient } from '$lib/queries/client';
 	import { LIST_CONTENT, type ContentItem, type ContentResponse } from '$lib/queries/content';
+	import { queryKeys } from '$lib/queries/keys';
 	import {
 		itemCellRenderer,
 		typeCellRenderer,
@@ -32,9 +34,6 @@
 
 	// State management
 	let gridApi = $state<GridApi | null>(null);
-	let rowData = $state<ContentItem[]>([]);
-	let loading = $state(true);
-	let totalCount = $state(0);
 	let pageSize = $state(10);
 	let currentPage = $state(0);
 	let cursors = $state<(string | null)[]>([null]); // Stack of cursors for pagination
@@ -42,6 +41,45 @@
 	let sortOrder = $state<'ASC' | 'DESC'>('DESC');
 	let filterText = $state<string>('');
 	let debounceTimer: ReturnType<typeof setTimeout>;
+
+	// TanStack Query for data fetching
+	let currentCursor = $derived(cursors[currentPage]);
+
+	const contentQuery = createQuery(() => ({
+		queryKey: queryKeys.content.list({
+			sortBy,
+			sortOrder,
+			search: filterText,
+			first: pageSize,
+			after: currentCursor
+		}),
+		queryFn: async () => {
+			const response = await graphqlClient.request<ContentResponse>(LIST_CONTENT, {
+				first: pageSize,
+				after: currentCursor,
+				sortBy,
+				sortOrder,
+				filter: filterText ? { search: filterText } : undefined,
+				includeTotalCount: true
+			});
+
+			// Update cursors stack for next page
+			if (response.content.pageInfo.hasNextPage && response.content.pageInfo.endCursor) {
+				if (cursors.length === currentPage + 1) {
+					cursors = [...cursors, response.content.pageInfo.endCursor];
+				}
+			}
+
+			return response;
+		},
+		placeholderData: keepPreviousData,
+		staleTime: 60 * 1000,
+	}));
+
+	// Derived values from query
+	const rowData = $derived(contentQuery.data?.content.items ?? []);
+	const totalCount = $derived(contentQuery.data?.content.totalCount ?? 0);
+	const loading = $derived(contentQuery.isLoading || contentQuery.isPlaceholderData);
 
 	const modules = [ClientSideRowModelModule];
 
@@ -184,7 +222,6 @@
 		suppressCellFocus: true,
 		onGridReady: (params) => {
 			gridApi = params.api;
-			fetchData();
 		},
 		onSortChanged: (event: SortChangedEvent) => {
 			const sortModel = event.api.getColumnState()
@@ -200,10 +237,9 @@
 				sortOrder = 'DESC';
 			}
 
-			// Reset to first page and fetch
+			// Reset to first page (query auto-refetches via key change)
 			currentPage = 0;
 			cursors = [null];
-			fetchData();
 		},
 		onFilterChanged: (event: FilterChangedEvent) => {
 			// Debounce filter changes
@@ -217,56 +253,23 @@
 					.join(' ');
 				filterText = filters;
 
-				// Reset to first page and fetch
+				// Reset to first page (query auto-refetches via key change)
 				currentPage = 0;
 				cursors = [null];
-				fetchData();
 			}, 500);
 		},
 		overlayNoRowsTemplate: '<div class="py-12 text-center text-muted-foreground">No items yet - add the first one!</div>'
 	};
 
-	async function fetchData() {
-		loading = true;
-		try {
-			const response = await graphqlClient.request<ContentResponse>(LIST_CONTENT, {
-				first: pageSize,
-				after: cursors[currentPage],
-				sortBy,
-				sortOrder,
-				filter: filterText ? { search: filterText } : undefined,
-				includeTotalCount: true
-			});
-
-			rowData = response.content.items;
-			totalCount = response.content.totalCount;
-
-			// Update cursors stack for next page
-			if (response.content.pageInfo.hasNextPage && response.content.pageInfo.endCursor) {
-				if (cursors.length === currentPage + 1) {
-					cursors = [...cursors, response.content.pageInfo.endCursor];
-				}
-			}
-		} catch (error) {
-			console.error('Error fetching content:', error);
-			rowData = [];
-			totalCount = 0;
-		} finally {
-			loading = false;
-		}
-	}
-
 	function handleNextPage() {
 		if (currentPage < Math.ceil(totalCount / pageSize) - 1) {
 			currentPage += 1;
-			fetchData();
 		}
 	}
 
 	function handlePrevPage() {
 		if (currentPage > 0) {
 			currentPage -= 1;
-			fetchData();
 		}
 	}
 
@@ -274,7 +277,6 @@
 		pageSize = newSize;
 		currentPage = 0;
 		cursors = [null];
-		fetchData();
 	}
 
 	// Update loading state reactively
@@ -282,19 +284,6 @@
 		if (gridApi) {
 			gridApi.setGridOption('loading', loading);
 		}
-	});
-
-	// Listen for content-added event from AddVideoPopover
-	$effect(() => {
-		const handleContentAdded = () => {
-			// Reset to first page and refetch
-			currentPage = 0;
-			cursors = [null];
-			fetchData();
-		};
-
-		window.addEventListener('content-added', handleContentAdded);
-		return () => window.removeEventListener('content-added', handleContentAdded);
 	});
 </script>
 

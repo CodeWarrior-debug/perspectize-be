@@ -15,10 +15,10 @@ const {
 		error: null as Error | null,
 		data: {
 			users: [
-				{ id: '1', username: 'alice', email: 'alice@test.com' },
-				{ id: '2', username: 'bob', email: 'bob@test.com' },
+				{ id: '1', username: 'alice' },
+				{ id: '2', username: 'bob' },
 			]
-		} as { users: { id: string; username: string; email: string }[] } | null,
+		} as { users: { id: string; username: string }[] } | null,
 	},
 }));
 
@@ -49,8 +49,8 @@ function resetQueryState() {
 	mockQueryState.error = null;
 	mockQueryState.data = {
 		users: [
-			{ id: '1', username: 'alice', email: 'alice@test.com' },
-			{ id: '2', username: 'bob', email: 'bob@test.com' },
+			{ id: '1', username: 'alice' },
+			{ id: '2', username: 'bob' },
 		]
 	};
 }
@@ -80,7 +80,7 @@ describe('UserSelector with data', () => {
 	it('creates query with correct queryKey and staleTime', () => {
 		render(UserSelector);
 		expect(capturedQueryOptions).toBeDefined();
-		expect(capturedQueryOptions.queryKey).toEqual(['users']);
+		expect(capturedQueryOptions.queryKey).toEqual(['app', 'users', 'list']);
 		expect(capturedQueryOptions.staleTime).toBe(5 * 60 * 1000);
 	});
 

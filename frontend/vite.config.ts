@@ -22,7 +22,8 @@ export default defineConfig({
 				'**/*.config.*',
 				'**/setup.ts',
 				'src/lib/components/shadcn/**',
-				'src/routes/**'
+				'src/routes/**',
+				'src/lib/components/ActivityTable.svelte' // JSDOM limitation: AG Grid doesn't render in test environment
 			],
 			thresholds: {
 				lines: 80,

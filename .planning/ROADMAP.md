@@ -187,6 +187,7 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
 - [x] **Phase 7: Backend Architecture** - Hexagonal cleanup, dependency injection, server infrastructure
 - [x] **Phase 7.1: ORM Migration — sqlx to GORM** - Replace sqlx with GORM using hex-clean separate model pattern (INSERTED)
 - [x] **Phase 7.2: gorm-cursor-paginator Integration** - Fix C-02 cursor pagination for non-ID sorts, replace hand-rolled cursor encoding (INSERTED)
+- [x] **Phase 7.3: Frontend Caching Remediation** - Fix TanStack Query bypass, dual-signal anti-pattern, eruda in prod, query key design, security gaps (INSERTED)
 - [ ] **Phase 8: API & Schema Quality** - Fix GraphQL types, race conditions, nested resolvers
 - [ ] **Phase 9: Security Hardening** - Authentication, rate limiting, query complexity, headers, HTTPS
 - [ ] **Phase 10: Frontend Quality & Test Coverage** - XSS fix, codegen, error boundaries, cleanup, test gaps
@@ -309,6 +310,40 @@ Plans:
 - [ ] 07.2-01-PLAN.md — Add gorm-cursor-paginator dep, dummy GORM model fields, sort rule builder functions
 - [ ] 07.2-02-PLAN.md — Rewrite Content + Perspective List() to use paginator, delete old cursor functions
 
+### Phase 7.3: Frontend Caching Remediation (INSERTED)
+**Goal**: Fix critical caching architecture issues — migrate ActivityTable to TanStack Query, remove eruda debug console from production, eliminate dual-signal anti-pattern, add query key factory, remove PII over-fetching, add CSP headers
+**Depends on**: Phase 7.2
+**Source**: Frontend caching review (2026-02-14) — 7 findings across P0-P2 priority
+**Success Criteria** (what must be TRUE):
+  1. Eruda debug script removed from `app.html` (security P0 — CVSS 7.5)
+  2. `email` field removed from `LIST_USERS` query (PII over-fetching, unused field)
+  3. ActivityTable uses `createQuery` with `keepPreviousData` instead of raw `graphqlClient.request()` — eliminates manual fetchData(), custom DOM events, and silent error swallowing
+  4. `content-added` custom window event pattern fully removed (both dispatch and listener)
+  5. AddVideoDialog bug fixed — refreshes table after adding video (currently only Popover does)
+  6. Shared mutation hook extracted from AddVideoPopover + AddVideoDialog (DRY)
+  7. Query key factory at `src/lib/queries/keys.ts` with hierarchical invalidation support
+  8. Type parameters on all `graphqlClient.request<T>()` calls — no `any` types
+  9. CSP meta tag or SvelteKit CSP config restricting script/connect/img sources
+  10. All existing tests pass, no coverage regression
+**Plans**: 4 plans in 3 waves
+
+Plans:
+- [x] 07.3-01-PLAN.md — Remove eruda, add CSP meta tag, create query key factory, remove email from LIST_USERS, export types (Wave 1)
+- [x] 07.3-02-PLAN.md — Extract shared useAddVideo mutation hook, wire to Popover + Dialog, fix Dialog refresh bug (Wave 2)
+- [x] 07.3-03-PLAN.md — Migrate ActivityTable from raw graphqlClient.request() to createQuery with keepPreviousData (Wave 2)
+- [x] 07.3-04-PLAN.md — Update all tests for new patterns, coverage gate (Wave 3)
+
+**Details:**
+Review findings by priority:
+- **P0**: ActivityTable bypasses TanStack Query (root cause of dual-signal, missing cache, silent errors)
+- **P0**: Eruda in production (supply chain risk, info disclosure)
+- **P0**: AddVideoDialog doesn't refresh table (data consistency bug)
+- **P1**: Email PII over-fetched and cached (GDPR concern)
+- **P1**: Missing type params → `any` propagation
+- **P1**: No CSP headers
+- **P2**: Query keys won't scale (flat arrays)
+- **P2**: Duplicate mutation logic across two components
+
 ### Phase 8: API & Schema Quality
 **Goal**: Fix GraphQL schema types, pagination bugs, race conditions, and missing resolvers
 **Depends on**: Phase 7.2 (cursor pagination fixed first)
@@ -427,7 +462,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 8 -> 9 -> 10
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 7.3 -> 8 -> 9 -> 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -444,6 +479,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6
 | 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |
 | 7.1 ORM Migration (sqlx → GORM) | 3/3 | Complete | 2026-02-14 |
 | 7.2 gorm-cursor-paginator | 2/2 | Complete | 2026-02-14 |
+| 7.3 Frontend Caching Remediation | 4/4 | Complete | 2026-02-14 |
 | 8. API & Schema Quality | 0/0 | Not started | - |
 | 9. Security Hardening | 0/0 | Not started | - |
 | 10. Frontend Quality & Test Coverage | 0/0 | Not started | - |

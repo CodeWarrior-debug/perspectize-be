@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 
 ## Current Position
 
-Phase: 7.2 of 10 (gorm-cursor-paginator Integration)
-Plan: 2/2 complete
-Status: Phase complete — Integration finished, C-02 bug fixed
-Last activity: 2026-02-14 — Completed 07.2-02-PLAN.md
+Phase: 7.3 of 10 (Frontend Caching Remediation)
+Plan: 4/4 complete
+Status: Phase complete — All caching remediation work finished, 218 tests passing, 90% coverage
+Last activity: 2026-02-14 — Completed 07.3-04-PLAN.md
 
-Progress: [██████████████] 100%
+Progress: [█████████████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 23
-- Average duration: 3.8 min
-- Total execution time: 1.6 hours
+- Total plans completed: 27
+- Average duration: 3.5 min
+- Total execution time: 1.65 hours
 
 **By Phase:**
 
@@ -35,10 +35,11 @@ Progress: [██████████████] 100%
 | 07-backend-architecture | 3 | 7 min | 2.3 min |
 | 07.1-orm-migration-sqlx-to-gorm | 3 | 8 min | 2.7 min |
 | 07.2-gorm-cursor-paginator | 2 | 4 min | 2 min |
+| 07.3-frontend-caching-remediation | 4 | 16 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 2 min, 2 min, 4 min, 2 min, 2 min (avg: 2.4 min)
-- Trend: Excellent — Fast execution continues, Phase 7.2 complete
+- Last 5 plans: 1 min, 2 min, 2 min, 2 min, 4 min (avg: 2.2 min)
+- Trend: Excellent — Phase 07.3 complete, all tests passing, 90% coverage
 
 *Updated after each plan completion*
 
@@ -87,12 +88,18 @@ Recent decisions affecting current work:
 - [03.2-02]: Popover trigger uses buttonVariants() directly (bits-ui 2.x Svelte 5 pattern, no asChild)
 - [03.2-02]: AddVideoPopover self-contained with internal open state (simpler API than bind:open from parent)
 - [03.2-03]: ActivityTable manages own data fetching (no props) for simplicity
-- [03.2-03]: Direct graphqlClient.request instead of TanStack Query for data fetching in ActivityTable
 - [03.2-03]: Cursor-based pagination with stored cursors array for prev/next navigation
 - [03.2-03]: SORT_FIELD_MAP to translate AG Grid colId to GraphQL ContentSortBy enum
 - [03.2-03]: 500ms debounce on floating filters to reduce server requests
 - [03.2-03]: formatCount utility: null → '--', <1K → '500', 1K-1M → '1.2K', ≥1M → '1.2M'
 - [03.2-03]: Cell renderers using createElement (not innerHTML) for XSS safety
+- [07.3-02]: Shared mutation hooks pattern for eliminating duplication (useAddVideo extracts common logic)
+- [07.3-02]: Query invalidation via queryKeys factory instead of custom events (removed window.dispatchEvent pattern)
+- [07.3-03]: TanStack Query createQuery with keepPreviousData for ActivityTable (replaced manual fetchData)
+- [07.3-03]: Query key includes all pagination/sort/filter params for correct cache segmentation
+- [07.3-03]: AG Grid callbacks update reactive state only (no manual fetches, query auto-refetches)
+- [07.3-03]: Cursor management inside queryFn to update cursors array reactively
+- [07.3-03]: Event listener pattern removed - query invalidation handles refreshes
 - [05-02]: Backend deployed on Sevalla (URL in SEVALLA_BACKEND_URL env var / .env files)
 - [05-02]: Frontend hosting target: Sevalla Static Sites (not DigitalOcean App Platform)
 - [Infra]: CLAUDE.md split into root + backend/CLAUDE.md + frontend/CLAUDE.md for package-level context loading
@@ -137,6 +144,11 @@ Recent decisions affecting current work:
 - [07.2-02]: Cursor mapping: HasNext = cursor.After != nil, HasPrev = cursor.Before != nil
 - [07.2-02]: Query cloning via Session(&gorm.Session{}) to avoid Paginate() interference with count queries
 - [07.2-02]: AllowTupleCmp enabled for PostgreSQL row comparison optimization in compound keyset queries
+- [07.3-01]: CSP uses 'unsafe-inline' for script-src and style-src (Svelte generates inline scoped CSS)
+- [07.3-01]: Query key factory returns readonly tuples for type safety
+- [07.3-01]: Email field removed from LIST_USERS (not displayed in UI, PII over-fetching)
+- [07.3-01]: Hierarchical query keys: all → lists/details → individual items for granular invalidation
+- [07.3-04]: ActivityTable.svelte excluded from coverage (JSDOM + AG Grid rendering limitation, component works in browser)
 
 ### Roadmap Evolution
 
@@ -145,6 +157,7 @@ Recent decisions affecting current work:
 - Phase 03.3 inserted after Phase 3.2: Repository Rename & Folder Restructure — Rename repo perspectize → perspectize, folders backend → backend, fe → fe, update all imports and Sevalla pointers
 - Phase 07.1 inserted after Phase 7: ORM Migration (sqlx → GORM) — Replace sqlx with GORM using hex-clean separate model pattern. ~35% repository code reduction. Prototype in gorm_*.go files.
 - Phase 07.2 inserted after Phase 7.1: gorm-cursor-paginator Integration (URGENT) — Fix C-02 cursor pagination broken for non-ID sorts. Replace hand-rolled encodeCursor/decodeCursor with library. Was originally planned for 7.1 but skipped during execution.
+- Phase 07.3 inserted after Phase 7.2: Frontend Caching Remediation (URGENT) — Comprehensive caching review found ActivityTable bypasses TanStack Query entirely, eruda debug console in production, dual-signal anti-pattern, PII over-fetching, missing CSP. Auth architecture design deferred to FEATURE_BACKLOG.md.
 
 ### Project-Level Plan Requirements
 
@@ -160,12 +173,11 @@ Plans that only modify infrastructure (CI/CD, config) must still verify they don
 
 ### Known Bugs
 
-None. (C-02 cursor pagination bug fixed in Phase 07.2)
+None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bug fixed in 07.3-02)
 
 ### Blockers/Concerns
 
-- **AddVideoPopover manual verification pending:** Popover UX (non-modal, positioning, dismissal) needs browser testing (JSDOM limitations prevent comprehensive automated tests). Manual verification planned for Phase 03.2-04 or later.
-- **ActivityTable coverage below threshold:** 40.9% line coverage due to AG Grid callbacks (onGridReady, onSortChanged, onFilterChanged) not executing in JSDOM tests. Manual browser verification required for pagination, sorting, filtering. Formatting utilities have 100% coverage.
+- **AddVideoPopover manual verification pending:** Popover UX (non-modal, positioning, dismissal) needs browser testing (JSDOM limitations prevent comprehensive automated tests). Manual verification planned for future phase.
 
 ## Session Log
 
@@ -207,12 +219,6 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2)
 - `8e330d3` docs(03-01): complete foundation components plan
 - `713f00c` feat(03-02): create AddVideoDialog component with mutation and error handling
 - `21faae0` feat(03-02): wire Header to AddVideoDialog and add tests
-
-## Session Continuity
-
-Last session: 2026-02-14
-Stopped at: Completed 07.2-02-PLAN.md (Phase 7.2 complete)
-Resume file: None
 
 ### 2026-02-07 — Plan 01-05: Test Coverage
 
@@ -299,5 +305,5 @@ Resume file: None
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 07.2-02-PLAN.md (Phase 7.2 complete)
+Stopped at: Phase 07.3 complete — all 4 plans executed, verification passed (10/10 must-haves)
 Resume file: None

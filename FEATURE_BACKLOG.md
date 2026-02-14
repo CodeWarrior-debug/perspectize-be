@@ -32,6 +32,23 @@ Phase 7.1 research recommended [gorm-cursor-paginator](https://github.com/pilago
 
 ---
 
+## Authentication Architecture Design
+
+Discovered during frontend caching review (2026-02-14). The GraphQL client (`frontend/src/lib/queries/client.ts`) has empty `headers: {}` — no auth tokens, no CSRF protection, no per-user cache scoping. Designing the auth architecture involves:
+
+- **Token strategy:** JWT vs session cookies vs OAuth2
+- **GraphQL client auth hook:** Dynamic header injection via `requestMiddleware` or client factory
+- **Cache scoping:** TanStack Query keys need user identity dimension (e.g., `['content', userId]`)
+- **Cache invalidation on logout:** `queryClient.clear()` to prevent data leakage between users
+- **CSRF protection:** Backend middleware + frontend token handling
+- **Secure token storage:** httpOnly cookies preferred over localStorage/sessionStorage
+
+**Dependencies:** Should be planned alongside Phase 9 (Security Hardening) which covers backend auth middleware.
+
+**Source:** Frontend caching review Finding #4 (CVSS 8.1), Finding #2 (no auth).
+
+---
+
 ## AG Grid Power Features Toolbar
 
 Add a toolbar above `ActivityTable` with power-user grid controls. All features below use **AG Grid Community APIs** — no Enterprise license needed.
@@ -47,3 +64,28 @@ Add a toolbar above `ActivityTable` with power-user grid controls. All features 
 - [AG Grid Filter API](https://www.ag-grid.com/javascript-data-grid/filter-api/)
 - [AG Grid Column State](https://www.ag-grid.com/javascript-data-grid/column-state/)
 - [AG Grid Multi-Sort](https://www.ag-grid.com/javascript-data-grid/row-sorting/#multi-column-sorting)
+
+---
+
+## Compress/Trim YouTube Raw JSONB Response
+
+The `content.response` JSONB column stores the full YouTube Data API response and accounts for **93.7% of all content table data**. At 49 rows this is manageable but will scale poorly.
+
+**Per-column byte analysis (49 rows):**
+
+| Column | Total Bytes | % of Row Data |
+|--------|------------|---------------|
+| response (jsonb) | 118 KB | 93.7% |
+| name | 2.4 KB | 1.9% |
+| url | 2.2 KB | 1.7% |
+| row overhead | 1.5 KB | 1.2% |
+| all other columns | ~1.6 KB | 1.3% |
+
+Average response: **2,469 bytes/row**. All other columns combined: **136 bytes/row**.
+
+**Options:**
+1. **Trim on ingest** — Store only the JSONB paths the app actually reads (`snippet.title`, `snippet.channelTitle`, `snippet.publishedAt`, `snippet.description`, `snippet.tags`, `statistics.*`) and drop unused nested objects (`contentDetails`, `status`, `topicDetails`, `recordingDetails`, etc.)
+2. **Extract to columns** — Promote frequently queried JSONB paths into proper columns (the GraphQL schema already exposes `viewCount`, `likeCount`, `commentCount`, `channelTitle`, `publishedAt`, `tags`, `description` as resolved fields). Keep a trimmed `response` as fallback.
+3. **Compress** — Use `pg_lz_compress` or application-level compression for the raw response if full fidelity is needed for audit/replay.
+
+**Priority:** Low — not a problem at current scale (49 rows, 8 MB DB). Revisit when content table approaches 1,000+ rows.

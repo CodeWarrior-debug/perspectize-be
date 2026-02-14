@@ -30,6 +30,21 @@ export interface ContentResponse {
 	};
 }
 
+export interface CreateContentResponse {
+	createContentFromYouTube: {
+		id: string;
+		name: string;
+		url: string;
+		contentType: string;
+		length: number | null;
+		lengthUnits: string | null;
+		viewCount: number | null;
+		likeCount: number | null;
+		commentCount: number | null;
+		createdAt: string;
+	};
+}
+
 export const LIST_CONTENT = gql`
 	query ListContent(
 		$first: Int
