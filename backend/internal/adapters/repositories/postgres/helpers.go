@@ -3,9 +3,6 @@ package postgres
 import (
 	"database/sql"
 	"database/sql/driver"
-	"encoding/base64"
-	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
@@ -39,77 +36,6 @@ func (a JSONBArray) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return StringArray(a).Value()
-}
-
-// encodeCursor encodes a content ID as an opaque base64 cursor
-func encodeCursor(id int) string {
-	return base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("cursor:%d", id)))
-}
-
-// decodeCursor decodes an opaque base64 cursor back to a content ID
-func decodeCursor(cursor string) (int, error) {
-	decoded, err := base64.StdEncoding.DecodeString(cursor)
-	if err != nil {
-		return 0, fmt.Errorf("invalid cursor: %w", err)
-	}
-	parts := strings.SplitN(string(decoded), ":", 2)
-	if len(parts) != 2 || parts[0] != "cursor" {
-		return 0, fmt.Errorf("invalid cursor format")
-	}
-	id, err := strconv.Atoi(parts[1])
-	if err != nil {
-		return 0, fmt.Errorf("invalid cursor id: %w", err)
-	}
-	return id, nil
-}
-
-// sortColumnName maps a domain sort field to a safe SQL column name or JSONB extraction
-func sortColumnName(sortBy domain.ContentSortBy) string {
-	switch sortBy {
-	case domain.ContentSortByUpdatedAt:
-		return "updated_at"
-	case domain.ContentSortByName:
-		return "name"
-	case domain.ContentSortByCreatedAt:
-		return "created_at"
-	case domain.ContentSortByViewCount:
-		return "(response->'items'->0->'statistics'->>'viewCount')::BIGINT"
-	case domain.ContentSortByLikeCount:
-		return "(response->'items'->0->'statistics'->>'likeCount')::BIGINT"
-	case domain.ContentSortByPublishedAt:
-		return "response->'items'->0->'snippet'->>'publishedAt'"
-	default:
-		return "created_at"
-	}
-}
-
-// sortDirection returns a safe SQL sort direction string
-func sortDirection(order domain.SortOrder) string {
-	if order == domain.SortOrderAsc {
-		return "ASC"
-	}
-	return "DESC"
-}
-
-// isJSONBSort returns true if the sort field requires JSONB extraction
-func isJSONBSort(sortBy domain.ContentSortBy) bool {
-	return sortBy == domain.ContentSortByViewCount ||
-		sortBy == domain.ContentSortByLikeCount ||
-		sortBy == domain.ContentSortByPublishedAt
-}
-
-// perspectiveSortColumnName maps a domain sort field to a safe SQL column name
-func perspectiveSortColumnName(sortBy domain.PerspectiveSortBy) string {
-	switch sortBy {
-	case domain.PerspectiveSortByUpdatedAt:
-		return "updated_at"
-	case domain.PerspectiveSortByClaim:
-		return "claim"
-	case domain.PerspectiveSortByCreatedAt:
-		return "created_at"
-	default:
-		return "created_at"
-	}
 }
 
 // contentTypeToDBValue converts domain ContentType to lowercase for database storage
