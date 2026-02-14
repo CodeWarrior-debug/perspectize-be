@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/99designs/gqlgen v0.17.86
+	github.com/go-chi/chi/v5 v5.2.5
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1

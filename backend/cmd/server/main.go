@@ -20,6 +20,8 @@ import (
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/config"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/services"
 	"github.com/CodeWarrior-debug/perspectize/backend/pkg/database"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
 )
 
@@ -99,8 +101,17 @@ func main() {
 	resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 
-	// CORS middleware for frontend dev server
-	corsHandler := func(next http.Handler) http.Handler {
+	// Setup chi router
+	r := chi.NewRouter()
+
+	// Middleware stack
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)    // M-06: request logging
+	r.Use(middleware.Recoverer) // panic recovery
+
+	// CORS middleware
+	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
@@ -111,23 +122,36 @@ func main() {
 			}
 			next.ServeHTTP(w, r)
 		})
-	}
+	})
 
-	// Setup HTTP routes
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	// Health check — liveness probe (M-10)
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
 
+	// Ready check — readiness probe with DB ping (M-10)
+	r.Get("/ready", func(w http.ResponseWriter, r *http.Request) {
+		if err := db.PingContext(r.Context()); err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("not ready: database unreachable"))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ready"))
+	})
+
+	// GraphQL
+	r.Handle("/graphql", srv)
 	if os.Getenv("APP_ENV") != "production" {
-		http.Handle("/", playground.Handler("GraphQL Playground", "/graphql"))
+		r.Handle("/", playground.Handler("GraphQL Playground", "/graphql"))
 	}
-	http.Handle("/graphql", corsHandler(srv))
 
 	// Start server with timeouts
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 	server := &http.Server{
 		Addr:         addr,
+		Handler:      r, // chi router
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
