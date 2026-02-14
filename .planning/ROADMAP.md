@@ -179,14 +179,15 @@ Plans:
 
 ---
 
-## Post-MVP: Concerns Remediation (Phases 6–10)
+## Post-MVP: Concerns Remediation (Phases 6-10)
 
-Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md`. Ordered by dependency: fix errors first, then architecture, then schema, then security (which depends on clean architecture), then frontend. Each phase is a living checklist — items can be picked off incrementally.
+Phases 6-10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md`. Ordered by dependency: fix errors first, then architecture, then schema, then security (which depends on clean architecture), then frontend. Each phase is a living checklist -- items can be picked off incrementally.
 
 - [ ] **Phase 6: Error Handling & Data Integrity** - Fix silent failures, error leakage, and config validation
 - [x] **Phase 7: Backend Architecture** - Hexagonal cleanup, dependency injection, server infrastructure
-- [x] **Phase 7.1: ORM Migration — sqlx to GORM** - Replace sqlx with GORM using hex-clean separate model pattern (INSERTED)
+- [x] **Phase 7.1: ORM Migration -- sqlx to GORM** - Replace sqlx with GORM using hex-clean separate model pattern (INSERTED)
 - [x] **Phase 7.2: gorm-cursor-paginator Integration** - Fix C-02 cursor pagination for non-ID sorts, replace hand-rolled cursor encoding (INSERTED)
+- [ ] **Phase 7.3: Frontend Caching Remediation** - Fix caching architecture: TanStack Query migration, eruda removal, CSP, query key factory, shared hooks (INSERTED)
 - [ ] **Phase 8: API & Schema Quality** - Fix GraphQL types, race conditions, nested resolvers
 - [ ] **Phase 9: Security Hardening** - Authentication, rate limiting, query complexity, headers, HTTPS
 - [ ] **Phase 10: Frontend Quality & Test Coverage** - XSS fix, codegen, error boundaries, cleanup, test gaps
@@ -199,7 +200,7 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
   1. All `json.Unmarshal` calls check and handle errors (C-06, C-08)
   2. All `strconv`/`time.Parse` calls check and handle errors (C-07, C-08)
   3. GraphQL error responses never expose database schema or internal details (H-13)
-  4. Not-found handling is consistent across all resolvers — standardized pattern (H-16, M-07)
+  4. Not-found handling is consistent across all resolvers -- standardized pattern (H-16, M-07)
   5. `.env` load warns if file missing in dev; YouTube API key validated at startup (H-19, H-20)
   6. `WriteString` return value checked in IntID marshal (H-21)
   7. `CreateFromYouTube` returns existing item on duplicate instead of error (M-03)
@@ -224,10 +225,10 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
 **Depends on**: Phase 6 (error handling patterns established first)
 **Source**: CONCERNS.md H-01, H-02, H-09, M-01, M-02, M-05, M-06, M-09, M-10, M-12, M-17
 **Success Criteria** (what must be TRUE):
-  1. No adapter-to-adapter imports — resolvers use service ports only (H-01, H-02)
+  1. No adapter-to-adapter imports -- resolvers use service ports only (H-01, H-02)
   2. Service port interfaces defined; resolver depends on interfaces, not concrete types (H-02)
   3. Config path loaded from env var with sensible default (H-09)
-  4. Single PostgreSQL driver (`pgx`) — `lib/pq` removed (M-01)
+  4. Single PostgreSQL driver (`pgx`) -- `lib/pq` removed (M-01)
   5. DB pool settings configurable via env vars (M-02)
   6. YouTube `extractVideoID` injected via constructor, not function param (M-05)
   7. Request logging middleware installed (chi router or similar) (M-06)
@@ -238,9 +239,9 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [x] 07-01-PLAN.md — Service port interfaces, ExtractVideoID on YouTubeClient, resolver DI refactor
-- [x] 07-02-PLAN.md — Replace lib/pq with custom array types, configurable DB pool, config env var, DSN validation
-- [x] 07-03-PLAN.md — Chi router with middleware, /ready endpoint, graceful shutdown coordination
+- [x] 07-01-PLAN.md -- Service port interfaces, ExtractVideoID on YouTubeClient, resolver DI refactor
+- [x] 07-02-PLAN.md -- Replace lib/pq with custom array types, configurable DB pool, config env var, DSN validation
+- [x] 07-03-PLAN.md -- Chi router with middleware, /ready endpoint, graceful shutdown coordination
 
 **Concern checklist:**
 - [x] H-01: Adapter-to-adapter coupling (resolver imports YouTube adapter directly)
@@ -255,31 +256,31 @@ Plans:
 - [x] M-12: DB credentials in logs on failure
 - [x] M-17: No `DATABASE_URL` format validation
 
-### Phase 7.1: ORM Migration — sqlx to GORM (INSERTED)
+### Phase 7.1: ORM Migration -- sqlx to GORM (INSERTED)
 **Goal**: Replace sqlx with GORM using hex-clean separate model pattern (domain models stay pure, GORM models in adapter layer). Eliminate ~35% of repository boilerplate while preserving hexagonal architecture.
 **Depends on**: Phase 7 (clean architecture + single pgx driver must be in place first)
 **Success Criteria** (what must be TRUE):
   1. All 3 repository implementations (user, content, perspective) migrated from sqlx to GORM
-  2. Domain models (`core/domain/`) have zero GORM imports or tags — hex-clean
+  2. Domain models (`core/domain/`) have zero GORM imports or tags -- hex-clean
   3. GORM models live in `adapters/repositories/postgres/` with `gorm:` tags
   4. Cursor pagination works with opaque base64 cursors (reuses existing encoding functions)
   5. Dynamic ORDER BY works for all sort fields including JSONB path expressions
   6. Dynamic WHERE filters work via GORM chaining (no boolean flag pattern)
-  7. Custom `StringArray`/`Int64Array` types (from Phase 7) used — no `lib/pq` imports in any active code
+  7. Custom `StringArray`/`Int64Array` types (from Phase 7) used -- no `lib/pq` imports in any active code
   8. All existing tests pass (mock interfaces unchanged)
-  9. No performance regression — GORM reflection overhead negligible vs DB round-trip
+  9. No performance regression -- GORM reflection overhead negligible vs DB round-trip
 **Plans**: 3 plans in 3 waves
 
 Plans:
-- [x] 07.1-01-PLAN.md — GORM deps, models, mappers, ConnectGORM, GormUserRepository
-- [x] 07.1-02-PLAN.md — GormContentRepository + GormPerspectiveRepository (pagination, JSONB sort, dynamic filters)
-- [x] 07.1-03-PLAN.md — Wire GORM in main.go, archive sqlx files, remove sqlx dependency, verify
+- [x] 07.1-01-PLAN.md -- GORM deps, models, mappers, ConnectGORM, GormUserRepository
+- [x] 07.1-02-PLAN.md -- GormContentRepository + GormPerspectiveRepository (pagination, JSONB sort, dynamic filters)
+- [x] 07.1-03-PLAN.md -- Wire GORM in main.go, archive sqlx files, remove sqlx dependency, verify
 
 **Architecture decision:**
 - **Chosen:** GORM with separate GORM models (hex-clean)
 - **Rejected:** sqlc (dynamic ORDER BY blocker, jsonb[] bugs), GORM with tags on domain models (architecture compromise), staying with sqlx (missed 35% reduction)
 - **Prototype:** See `gorm_*.go` files in `adapters/repositories/postgres/` for side-by-side comparison
-- **Research:** ORM comparison research stashed in git (`git stash list` → orm research)
+- **Research:** ORM comparison research stashed in git (`git stash list` -> orm research)
 
 **Estimated impact:**
 | File | Current (sqlx) | GORM prototype | Reduction |
@@ -301,13 +302,36 @@ Plans:
   3. Hand-rolled `encodeCursor`/`decodeCursor` replaced with library's built-in cursor handling
   4. Content List and Perspective List methods use library paginator
   5. Compound keyset pagination: cursors encode both sort column value + ID (fixes C-02)
-  6. All existing tests pass — no behavior regression
+  6. All existing tests pass -- no behavior regression
   7. Frontend cursor contract preserved (opaque base64 strings, hasNext/hasPrev, startCursor/endCursor)
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 07.2-01-PLAN.md — Add gorm-cursor-paginator dep, dummy GORM model fields, sort rule builder functions
-- [ ] 07.2-02-PLAN.md — Rewrite Content + Perspective List() to use paginator, delete old cursor functions
+- [x] 07.2-01-PLAN.md -- Add gorm-cursor-paginator dep, dummy GORM model fields, sort rule builder functions
+- [x] 07.2-02-PLAN.md -- Rewrite Content + Perspective List() to use paginator, delete old cursor functions
+
+### Phase 7.3: Frontend Caching Remediation (INSERTED)
+**Goal**: Fix critical caching architecture issues -- migrate ActivityTable to TanStack Query, remove eruda debug console from production, eliminate dual-signal anti-pattern, add query key factory, remove PII over-fetching, add CSP headers
+**Depends on**: Phase 7.2
+**Source**: Frontend caching review (2026-02-14) -- 7 findings across P0-P2 priority
+**Success Criteria** (what must be TRUE):
+  1. Eruda debug script removed from app.html (security P0)
+  2. `email` field removed from LIST_USERS query (PII over-fetching, unused field)
+  3. ActivityTable uses createQuery with keepPreviousData instead of raw graphqlClient.request()
+  4. `content-added` custom window event pattern fully removed (both dispatch and listener)
+  5. AddVideoDialog bug fixed -- refreshes table after adding video
+  6. Shared mutation hook extracted from AddVideoPopover + AddVideoDialog (DRY)
+  7. Query key factory at src/lib/queries/keys.ts with hierarchical invalidation support
+  8. Type parameters on all graphqlClient.request<T>() calls -- no `any` types
+  9. CSP meta tag restricting script/connect/img sources
+  10. All existing tests pass, no coverage regression
+**Plans**: 4 plans in 3 waves
+
+Plans:
+- [ ] 07.3-01-PLAN.md -- Security fixes (eruda removal, CSP), query key factory, type exports
+- [ ] 07.3-02-PLAN.md -- Shared useAddVideo mutation hook, wire Popover + Dialog, fix Dialog refresh bug
+- [ ] 07.3-03-PLAN.md -- Migrate ActivityTable to TanStack Query createQuery with keepPreviousData
+- [ ] 07.3-04-PLAN.md -- Update tests for new patterns, coverage gate
 
 ### Phase 8: API & Schema Quality
 **Goal**: Fix GraphQL schema types, pagination bugs, race conditions, and missing resolvers
@@ -327,7 +351,7 @@ Plans:
 **Plans**: TBD
 
 **Concern checklist:**
-- [ ] C-02: Cursor pagination broken for non-ID sorts → **Moved to Phase 7.2**
+- [ ] C-02: Cursor pagination broken for non-ID sorts -> **Moved to Phase 7.2**
 - [ ] H-03: `ListAll()` users has no pagination (unbounded query)
 - [ ] H-04: Timestamps as `String!` instead of `DateTime` scalar
 - [ ] H-05: `contentType` uses `String!` instead of `ContentType` enum
@@ -346,7 +370,7 @@ Plans:
 **Source**: CONCERNS.md C-01, C-04, C-05, C-09, C-10, H-10, H-11, H-12, H-14, H-15, H-25, M-14, M-15, M-28
 **Success Criteria** (what must be TRUE):
   1. Authentication middleware validates JWT/session on all mutations (C-01)
-  2. Authorization checks on all mutations — users can only modify their own data (C-01)
+  2. Authorization checks on all mutations -- users can only modify their own data (C-01)
   3. GraphQL query complexity limit enforced (C-04)
   4. CORS restricted to explicit frontend origin (C-05 -- may already be done in Phase 5)
   5. GraphQL playground disabled in production (C-09)
@@ -427,7 +451,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 8 -> 9 -> 10
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 7.3 -> 8 -> 9 -> 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -442,8 +466,9 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6
 | 5. Testing + Deployment | 1/3 | In progress | - |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
 | 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |
-| 7.1 ORM Migration (sqlx → GORM) | 3/3 | Complete | 2026-02-14 |
+| 7.1 ORM Migration (sqlx -> GORM) | 3/3 | Complete | 2026-02-14 |
 | 7.2 gorm-cursor-paginator | 2/2 | Complete | 2026-02-14 |
+| 7.3 Frontend Caching Remediation | 0/4 | Planned | - |
 | 8. API & Schema Quality | 0/0 | Not started | - |
 | 9. Security Hardening | 0/0 | Not started | - |
 | 10. Frontend Quality & Test Coverage | 0/0 | Not started | - |
