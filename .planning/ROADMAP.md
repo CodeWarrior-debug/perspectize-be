@@ -267,7 +267,12 @@ Plans:
   7. `lib/pq` retained only for array types (`pq.Int64Array`, `pq.StringArray`), or replaced with pgx equivalents
   8. All existing tests pass (mock interfaces unchanged)
   9. No performance regression — GORM reflection overhead negligible vs DB round-trip
-**Plans**: TBD
+**Plans**: 3 plans in 3 waves
+
+Plans:
+- [ ] 07.1-01-PLAN.md — GORM deps, models, mappers, ConnectGORM, GormUserRepository
+- [ ] 07.1-02-PLAN.md — GormContentRepository + GormPerspectiveRepository (pagination, JSONB sort, dynamic filters)
+- [ ] 07.1-03-PLAN.md — Wire GORM in main.go, archive sqlx files, remove sqlx dependency, verify
 
 **Architecture decision:**
 - **Chosen:** GORM with separate GORM models (hex-clean)
@@ -418,7 +423,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6
 | 5. Testing + Deployment | 1/3 | In progress | - |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
 | 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |
-| 7.1 ORM Migration (sqlx → GORM) | 0/0 | Not started | - |
+| 7.1 ORM Migration (sqlx → GORM) | 0/3 | Planned | - |
 | 8. API & Schema Quality | 0/0 | Not started | - |
 | 9. Security Hardening | 0/0 | Not started | - |
 | 10. Frontend Quality & Test Coverage | 0/0 | Not started | - |
