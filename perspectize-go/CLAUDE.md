@@ -34,6 +34,17 @@ Domain layer rules: [docs/DOMAIN_GUIDE.md](../docs/DOMAIN_GUIDE.md)
 
 Go 1.25+ · gqlgen (schema-first) · PostgreSQL 17 (sqlx + pgx/v5) · golang-migrate · go-playground/validator · testify + sqlmock · log/slog · godotenv
 
+### Planned: ORM Migration (Phase 7.1)
+
+**sqlx → GORM** with hex-clean separate model pattern. Prototype files (`gorm_*.go`) exist alongside current sqlx implementations for comparison. See `.planning/ROADMAP.md` Phase 7.1 for details.
+
+Key pattern:
+- **Domain models** (`core/domain/`) — pure Go, no ORM tags (unchanged)
+- **GORM models** (`adapters/repositories/postgres/gorm_models.go`) — `gorm:` tagged structs
+- **Mappers** (`gorm_mappers.go`) — bidirectional domain ↔ GORM conversion
+- **Repositories** (`gorm_*_repository.go`) — GORM chaining for dynamic queries
+- **Pagination** — `gorm-cursor-paginator` replaces hand-rolled cursor encoding
+
 ## Commands
 
 ```bash
@@ -104,7 +115,7 @@ CORS middleware is configured in `cmd/server/main.go` for local development. Cur
 
 **JSON scalar:** Use `graphql.Map` (configured as `JSON` in `gqlgen.yml`) for JSONB data.
 
-**Cursor pagination:** Opaque base64 (`cursor:<id>`), keyset (not OFFSET), fetch `limit+1` for `hasNextPage`, whitelist sort columns (SQL injection prevention).
+**Cursor pagination:** Opaque base64 (`cursor:<id>`), keyset (not OFFSET), fetch `limit+1` for `hasNextPage`, whitelist sort columns (SQL injection prevention). Phase 7.1 will replace with `gorm-cursor-paginator`.
 
 ### Enum & ID Handling (REQUIRED)
 

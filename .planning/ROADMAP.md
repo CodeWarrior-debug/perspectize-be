@@ -167,6 +167,7 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
 
 - [ ] **Phase 6: Error Handling & Data Integrity** - Fix silent failures, error leakage, and config validation
 - [ ] **Phase 7: Backend Architecture** - Hexagonal cleanup, dependency injection, server infrastructure
+- [ ] **Phase 7.1: ORM Migration — sqlx to GORM** - Replace sqlx with GORM using hex-clean separate model pattern, gorm-cursor-paginator (INSERTED)
 - [ ] **Phase 8: API & Schema Quality** - Fix pagination, GraphQL types, race conditions, nested resolvers
 - [ ] **Phase 9: Security Hardening** - Authentication, rate limiting, query complexity, headers, HTTPS
 - [ ] **Phase 10: Frontend Quality & Test Coverage** - XSS fix, codegen, error boundaries, cleanup, test gaps
@@ -230,9 +231,40 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
 - [ ] M-12: DB credentials in logs on failure
 - [ ] M-17: No `DATABASE_URL` format validation
 
+### Phase 7.1: ORM Migration — sqlx to GORM (INSERTED)
+**Goal**: Replace sqlx with GORM using hex-clean separate model pattern (domain models stay pure, GORM models in adapter layer). Eliminate ~35% of repository boilerplate while preserving hexagonal architecture.
+**Depends on**: Phase 7 (clean architecture + single pgx driver must be in place first)
+**Success Criteria** (what must be TRUE):
+  1. All 3 repository implementations (user, content, perspective) migrated from sqlx to GORM
+  2. Domain models (`core/domain/`) have zero GORM imports or tags — hex-clean
+  3. GORM models live in `adapters/repositories/postgres/` with `gorm:` tags
+  4. Cursor pagination uses gorm-cursor-paginator (replaces hand-rolled cursor encoding)
+  5. Dynamic ORDER BY works for all sort fields including JSONB path expressions
+  6. Dynamic WHERE filters work via GORM chaining (no boolean flag pattern)
+  7. `lib/pq` retained only for array types (`pq.Int64Array`, `pq.StringArray`), or replaced with pgx equivalents
+  8. All existing tests pass (mock interfaces unchanged)
+  9. No performance regression — GORM reflection overhead negligible vs DB round-trip
+**Plans**: TBD
+
+**Architecture decision:**
+- **Chosen:** GORM with separate GORM models (hex-clean)
+- **Rejected:** sqlc (dynamic ORDER BY blocker, jsonb[] bugs), GORM with tags on domain models (architecture compromise), staying with sqlx (missed 35% reduction)
+- **Prototype:** See `gorm_*.go` files in `adapters/repositories/postgres/` for side-by-side comparison
+- **Research:** ORM comparison research stashed in git (`git stash list` → orm research)
+
+**Estimated impact:**
+| File | Current (sqlx) | GORM prototype | Reduction |
+|------|---------------|----------------|-----------|
+| user_repository | 132 lines | ~90 lines | 32% |
+| content_repository | 364 lines | ~180 lines | 51% |
+| perspective_repository | 495 lines | ~260 lines | 47% |
+| **Total** | **991 lines** | **~640 lines** | **~35%** |
+
+(Includes shared gorm_models.go ~85 lines + gorm_mappers.go ~140 lines)
+
 ### Phase 8: API & Schema Quality
 **Goal**: Fix GraphQL schema types, pagination bugs, race conditions, and missing resolvers
-**Depends on**: Phase 7 (clean architecture enables proper resolver changes)
+**Depends on**: Phase 7.1 (GORM migration simplifies pagination fixes)
 **Source**: CONCERNS.md C-02, H-03, H-04, H-05, H-06, H-07, H-08, M-04, M-08, M-11, M-13, M-16
 **Success Criteria** (what must be TRUE):
   1. Cursor pagination works correctly for all sort columns, not just ID (C-02)
@@ -348,7 +380,7 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 8 -> 9 -> 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -362,6 +394,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6
 | 5. Testing + Deployment | 1/3 | In progress | - |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
 | 7. Backend Architecture | 0/0 | Not started | - |
+| 7.1 ORM Migration (sqlx → GORM) | 0/0 | Not started | - |
 | 8. API & Schema Quality | 0/0 | Not started | - |
 | 9. Security Hardening | 0/0 | Not started | - |
 | 10. Frontend Quality & Test Coverage | 0/0 | Not started | - |
