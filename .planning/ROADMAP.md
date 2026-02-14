@@ -234,7 +234,12 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
   9. `/health` and `/ready` endpoints exist (M-10)
   10. DB credentials sanitized before logging (M-12)
   11. `DATABASE_URL` format validated at startup (M-17)
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
+
+Plans:
+- [ ] 07-01-PLAN.md — Service port interfaces, ExtractVideoID on YouTubeClient, resolver DI refactor
+- [ ] 07-02-PLAN.md — Replace lib/pq with custom array types, configurable DB pool, config env var, DSN validation
+- [ ] 07-03-PLAN.md — Chi router with middleware, /ready endpoint, graceful shutdown coordination
 
 **Concern checklist:**
 - [ ] H-01: Adapter-to-adapter coupling (resolver imports YouTube adapter directly)
@@ -412,7 +417,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 4 -> 5 -> 6
 | 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 1/3 | In progress | - |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
-| 7. Backend Architecture | 0/0 | Not started | - |
+| 7. Backend Architecture | 0/3 | Planned | - |
 | 7.1 ORM Migration (sqlx → GORM) | 0/0 | Not started | - |
 | 8. API & Schema Quality | 0/0 | Not started | - |
 | 9. Security Hardening | 0/0 | Not started | - |
