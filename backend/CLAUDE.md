@@ -103,7 +103,7 @@ Error handling & DB query patterns: [docs/GO_PATTERNS.md](../docs/GO_PATTERNS.md
 
 ## CORS
 
-CORS middleware is configured in `cmd/server/main.go` for local development. Currently allows all origins (`*`). Phase 5 will restrict to the frontend's production origin.
+CORS middleware is configured in `cmd/server/main.go` for local development. Currently allows all origins (`*`). Restrict to frontend's production origin before deploying.
 
 ## Gotchas
 
