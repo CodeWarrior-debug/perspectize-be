@@ -261,10 +261,10 @@ Plans:
   1. All 3 repository implementations (user, content, perspective) migrated from sqlx to GORM
   2. Domain models (`core/domain/`) have zero GORM imports or tags — hex-clean
   3. GORM models live in `adapters/repositories/postgres/` with `gorm:` tags
-  4. Cursor pagination uses gorm-cursor-paginator (replaces hand-rolled cursor encoding)
+  4. Cursor pagination works with opaque base64 cursors (reuses existing encoding functions)
   5. Dynamic ORDER BY works for all sort fields including JSONB path expressions
   6. Dynamic WHERE filters work via GORM chaining (no boolean flag pattern)
-  7. `lib/pq` retained only for array types (`pq.Int64Array`, `pq.StringArray`), or replaced with pgx equivalents
+  7. Custom `StringArray`/`Int64Array` types (from Phase 7) used — no `lib/pq` imports in any active code
   8. All existing tests pass (mock interfaces unchanged)
   9. No performance regression — GORM reflection overhead negligible vs DB round-trip
 **Plans**: 3 plans in 3 waves
