@@ -32,15 +32,10 @@ Tailwind v4 uses `--color-*` prefix for theme variables (e.g., `--color-primary`
 ## Commands
 
 ```bash
-pnpm install          # Install dependencies
 pnpm run dev          # Dev server (http://localhost:5173)
-pnpm run build        # Production build
-pnpm run preview      # Preview production build
 pnpm run check        # Type-check (svelte-check + TypeScript)
-pnpm run check:watch  # Type-check in watch mode
-pnpm run test         # Tests (Vitest, watch mode)
-pnpm run test:run     # Tests once
-pnpm run test:coverage # Coverage report
+pnpm run test:run     # Tests once (CI/verification)
+pnpm run test         # Tests in watch mode
 ```
 
 ## Svelte 5 Patterns
@@ -132,30 +127,9 @@ All tokens defined in `src/app.css` under `@theme`. Full set: primary, secondary
 
 ## AG Grid Svelte 5 Setup (CRITICAL)
 
-The `ag-grid-svelte5` wrapper bundles AG Grid v32.x internally. **Do NOT install `ag-grid-community` separately** — it causes version conflicts.
+Uses `ag-grid-svelte5` wrapper (bundles AG Grid v32.x). **Do NOT install `ag-grid-community` separately.** Import from `@ag-grid-community/*`, use `AgGridSvelte5Component`, style via `themeQuartz.withParams()`.
 
-```bash
-# Pinned to 32.2.x — latest 32.x is 32.3.9 (check before upgrading)
-pnpm add ag-grid-svelte5 @ag-grid-community/core@32.2.1 @ag-grid-community/client-side-row-model@32.2.1 @ag-grid-community/theming@32.2.0
-```
-
-```svelte
-<script lang="ts">
-  import AgGridSvelte5Component from 'ag-grid-svelte5';
-  import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
-  import { themeQuartz } from '@ag-grid-community/theming';
-  import type { GridOptions } from '@ag-grid-community/core';
-
-  const modules = [ClientSideRowModelModule];
-  const theme = themeQuartz.withParams({ fontFamily: 'Inter, sans-serif' });
-  let rowData = $state<MyRow[]>([]);
-  const gridOptions: GridOptions<MyRow> = { columnDefs: [...] };
-</script>
-
-<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
-```
-
-**Do NOT:** Import from `ag-grid-community` (use `@ag-grid-community/*`) · Import AG Grid CSS (use `themeQuartz.withParams()`) · Use `AgGridSvelte` (use `AgGridSvelte5Component`)
+Full setup and examples: [docs/AG_GRID.md](docs/AG_GRID.md)
 
 ## Figma Design Workflow
 

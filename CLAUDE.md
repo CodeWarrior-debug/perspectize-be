@@ -87,49 +87,13 @@ Include: GSD Plan Reference (`.planning/phases/{phase}/{plan}-PLAN.md`), accepta
 
 ## Coding Conventions
 
-**Naming:** Balance brevity with clarity — names should be self-describing without needing comments. Avoid both cryptic abbreviations and excessive verbosity.
-
-**Comments:** Explain **why**, not **what**. Use comments for non-obvious decisions, not to narrate code.
-
 **Learning comments:** Mark temporary explanatory comments with `*TEMP*` for easy grep/removal:
 ```go
 // *TEMP* - defer runs after function returns, ensures cleanup
 defer db.Close()
 ```
 
-**Commit messages:** Use conventional commit format. Keep commits focused and atomic — one logical change per commit.
-```
-type(scope): short description
-
-Optional body explaining why, not what.
-```
-Types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`
-
-## Approved Tools & Permissions
-
-Claude Code may use the following tools **without prompting** for this project:
-
-### File Operations
-- **Read**: Any file in `.planning/`, `frontend/src/`, `backend/`, `docs/`
-- **Edit/Write**: Any file in `.planning/` (design specs, roadmaps, plans), `frontend/src/`, `backend/` (excluding sensitive files)
-- **Glob/Grep**: Unlimited search across the codebase
-
-### Bash Commands
-- **Safe navigation**: `git`, `pnpm`, `npm`, `ls`, `pwd`, `cd`, `cat`, `head`, `tail`
-- **Git operations**: All git commands (clone, checkout, pull, push, commit, log, diff)
-- **Package management**: `pnpm install`, `pnpm run`
-- **Forbidden**: `rm -rf`, `sudo`, `chmod 777` (these require explicit permission)
-
-### Figma MCP Tools
-- **Design context**: `get_screenshot`, `get_design_context`, `get_metadata` — all Figma MCP tools auto-approved
-- **Design system**: `get_variable_defs`, `create_design_system_rules`
-- **File keys**: Design 1 (`K1HaZLeNwCckWvhoyAfRhj`), Radix 3.0 (`SyvrP9yYbrmCorofJK4Co8`), App 1 (`dAiiWM7FOsob5upzUjtocY`) — see [frontend/docs/FIGMA.md](frontend/docs/FIGMA.md)
-
-### Task & Execution Tools
-- **TaskCreate/TaskUpdate**: Creating and updating tasks from conversations
-- **Agents**: Launching Task tool subagents for exploration, planning, code review
-
-**Rationale:** These tools are safe for this workflow. The project uses GSD planning, TanStack + Svelte 5 stack, and Figma for design. File reads/edits focus on spec updates and source code. Bash is limited to safe operations.
+**Commit messages:** Conventional commit format (`feat`, `fix`, `refactor`, `chore`, `docs`, `test`). One logical change per commit.
 
 ## GSD Workflow
 
@@ -150,10 +114,6 @@ Planning and execution artifacts in `.planning/`: `PROJECT.md`, `ROADMAP.md`, `S
 Run the relevant subset (e.g., backend-only changes skip step 3). Report results explicitly — don't just say "tests pass", show the output summary.
 
 See [docs/VERIFICATION.md](docs/VERIFICATION.md) for evidence capture workflow.
-
-### Production Setup (Sevalla/Fly.io)
-
-Use `DATABASE_URL` with external endpoint from hosting provider. Note: Sevalla connections may require `?sslmode=disable` and may succeed on second attempt.
 
 ## Resources
 
