@@ -1,7 +1,70 @@
 import { describe, it, expect } from 'vitest';
-import { LIST_CONTENT, GET_CONTENT, CREATE_CONTENT_FROM_YOUTUBE } from '$lib/queries/content';
+import {
+	LIST_CONTENT,
+	GET_CONTENT,
+	CREATE_CONTENT_FROM_YOUTUBE,
+	type ContentItem,
+	type ContentResponse,
+	type CreateContentResponse,
+} from '$lib/queries/content';
 
 describe('GraphQL query definitions', () => {
+	describe('Type exports', () => {
+		it('exports ContentItem interface', () => {
+			const item: ContentItem = {
+				id: '1',
+				name: 'Test',
+				url: 'https://example.com',
+				contentType: 'VIDEO',
+				length: 100,
+				lengthUnits: 'SECONDS',
+				viewCount: 1000,
+				likeCount: 100,
+				channelTitle: 'Test Channel',
+				publishedAt: '2024-01-01',
+				tags: ['test'],
+				description: 'Test description',
+				createdAt: '2024-01-01',
+				updatedAt: '2024-01-01',
+			};
+			expect(item).toBeDefined();
+		});
+
+		it('exports ContentResponse interface', () => {
+			const response: ContentResponse = {
+				content: {
+					items: [],
+					pageInfo: {
+						hasNextPage: false,
+						hasPreviousPage: false,
+						startCursor: null,
+						endCursor: null,
+					},
+					totalCount: 0,
+				},
+			};
+			expect(response).toBeDefined();
+		});
+
+		it('exports CreateContentResponse interface', () => {
+			const response: CreateContentResponse = {
+				createContentFromYouTube: {
+					id: '1',
+					name: 'Test',
+					url: 'https://youtube.com/watch?v=test',
+					contentType: 'VIDEO',
+					length: 100,
+					lengthUnits: 'SECONDS',
+					viewCount: 1000,
+					likeCount: 100,
+					commentCount: 50,
+					createdAt: '2024-01-01',
+				},
+			};
+			expect(response).toBeDefined();
+		});
+	});
+
 	describe('LIST_CONTENT', () => {
 		it('is defined and is a string', () => {
 			expect(LIST_CONTENT).toBeDefined();
