@@ -6,6 +6,13 @@ import (
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 )
 
+// UpdateUserInput contains the data needed to update a user
+type UpdateUserInput struct {
+	ID       int
+	Username *string
+	Email    *string
+}
+
 // UserService defines the contract for user business logic
 type UserService interface {
 	// Create creates a new user with validation
@@ -19,4 +26,11 @@ type UserService interface {
 
 	// ListAll retrieves all users
 	ListAll(ctx context.Context) ([]*domain.User, error)
+
+	// Update updates an existing user's username and/or email
+	Update(ctx context.Context, input UpdateUserInput) (*domain.User, error)
+
+	// Delete reassigns the user's content and perspectives to the sentinel
+	// "[deleted]" user, then removes the user row.
+	Delete(ctx context.Context, id int) error
 }

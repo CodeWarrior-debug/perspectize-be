@@ -66,6 +66,10 @@ func (m *mockPerspectiveRepository) List(ctx context.Context, params domain.Pers
 	return &domain.PaginatedPerspectives{Items: []*domain.Perspective{}}, nil
 }
 
+func (m *mockPerspectiveRepository) ReassignByUser(ctx context.Context, fromUserID, toUserID int) error {
+	return nil
+}
+
 // mockUserRepoForPerspective implements repositories.UserRepository for perspective tests
 type mockUserRepoForPerspective struct {
 	getByIDFn func(ctx context.Context, id int) (*domain.User, error)
@@ -92,6 +96,14 @@ func (m *mockUserRepoForPerspective) GetByEmail(ctx context.Context, email strin
 
 func (m *mockUserRepoForPerspective) ListAll(ctx context.Context) ([]*domain.User, error) {
 	return []*domain.User{}, nil
+}
+
+func (m *mockUserRepoForPerspective) Update(ctx context.Context, user *domain.User) (*domain.User, error) {
+	return user, nil
+}
+
+func (m *mockUserRepoForPerspective) Delete(ctx context.Context, id int) error {
+	return nil
 }
 
 // --- Create Tests ---

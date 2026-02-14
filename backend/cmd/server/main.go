@@ -95,7 +95,7 @@ func main() {
 
 	// Initialize services
 	contentService := services.NewContentService(contentRepo, youtubeClient)
-	userService := services.NewUserService(userRepo)
+	userService := services.NewUserService(userRepo, contentRepo, perspectiveRepo)
 	perspectiveService := services.NewPerspectiveService(perspectiveRepo, userRepo)
 
 	// Initialize GraphQL

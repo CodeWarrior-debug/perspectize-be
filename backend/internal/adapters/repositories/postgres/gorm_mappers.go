@@ -40,15 +40,16 @@ func contentModelToDomain(m *ContentModel) *domain.Content {
 		return nil
 	}
 	return &domain.Content{
-		ID:          m.ID,
-		Name:        m.Name,
-		URL:         m.URL,
-		ContentType: domain.ContentType(strings.ToUpper(m.ContentType)),
-		Length:      m.Length,
-		LengthUnits: m.LengthUnits,
-		Response:    m.Response,
-		CreatedAt:   m.CreatedAt,
-		UpdatedAt:   m.UpdatedAt,
+		ID:            m.ID,
+		Name:          m.Name,
+		URL:           m.URL,
+		ContentType:   domain.ContentType(strings.ToUpper(m.ContentType)),
+		AddedByUserID: m.AddedByUserID,
+		Length:        m.Length,
+		LengthUnits:   m.LengthUnits,
+		Response:      m.Response,
+		CreatedAt:     m.CreatedAt,
+		UpdatedAt:     m.UpdatedAt,
 	}
 }
 
@@ -58,13 +59,14 @@ func contentDomainToModel(c *domain.Content) *ContentModel {
 		return nil
 	}
 	return &ContentModel{
-		ID:          c.ID,
-		Name:        c.Name,
-		URL:         c.URL,
-		ContentType: strings.ToLower(string(c.ContentType)),
-		Length:      c.Length,
-		LengthUnits: c.LengthUnits,
-		Response:    c.Response,
+		ID:            c.ID,
+		Name:          c.Name,
+		URL:           c.URL,
+		ContentType:   strings.ToLower(string(c.ContentType)),
+		AddedByUserID: c.AddedByUserID,
+		Length:        c.Length,
+		LengthUnits:   c.LengthUnits,
+		Response:      c.Response,
 		// CreatedAt and UpdatedAt are managed by GORM
 	}
 }

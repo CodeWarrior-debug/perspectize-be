@@ -52,6 +52,60 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 	return userDomainToModel(user), nil
 }
 
+// UpdateUser is the resolver for the updateUser field.
+func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUserInput) (*model.User, error) {
+	serviceInput := portservices.UpdateUserInput{
+		ID:       input.ID,
+		Username: input.Username,
+		Email:    input.Email,
+	}
+
+	user, err := r.UserService.Update(ctx, serviceInput)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("user not found")
+		}
+		if errors.Is(err, domain.ErrAlreadyExists) {
+			return nil, fmt.Errorf("user already exists: %w", err)
+		}
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		if errors.Is(err, domain.ErrSentinelUser) {
+			return nil, fmt.Errorf("cannot modify system user")
+		}
+		slog.Error("updating user failed", "error", err)
+		return nil, fmt.Errorf("failed to update user")
+	}
+
+	return userDomainToModel(user), nil
+}
+
+// DeleteUser is the resolver for the deleteUser field.
+func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, error) {
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		return false, fmt.Errorf("invalid user ID: %s", id)
+	}
+
+	err = r.UserService.Delete(ctx, intID)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return false, fmt.Errorf("user not found")
+		}
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return false, fmt.Errorf("invalid user ID")
+		}
+		if errors.Is(err, domain.ErrDeleteSentinel) {
+			return false, fmt.Errorf("cannot delete system user")
+		}
+		slog.Error("deleting user failed", "error", err)
+		return false, fmt.Errorf("failed to delete user")
+	}
+
+	return true, nil
+}
+
 // CreatePerspective is the resolver for the createPerspective field.
 func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.CreatePerspectiveInput) (*model.Perspective, error) {
 	serviceInput := portservices.CreatePerspectiveInput{

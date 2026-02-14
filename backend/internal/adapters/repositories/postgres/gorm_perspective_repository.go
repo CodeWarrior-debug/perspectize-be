@@ -167,3 +167,11 @@ func (r *GormPerspectiveRepository) List(ctx context.Context, params domain.Pers
 
 	return result, nil
 }
+
+// ReassignByUser updates all perspectives owned by fromUserID to toUserID
+func (r *GormPerspectiveRepository) ReassignByUser(ctx context.Context, fromUserID, toUserID int) error {
+	return r.db.WithContext(ctx).
+		Model(&PerspectiveModel{}).
+		Where("user_id = ?", fromUserID).
+		Update("user_id", toUserID).Error
+}

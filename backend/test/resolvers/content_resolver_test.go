@@ -55,6 +55,10 @@ func (m *mockContentRepository) List(ctx context.Context, params domain.ContentL
 	return &domain.PaginatedContent{Items: []*domain.Content{}}, nil
 }
 
+func (m *mockContentRepository) ReassignByUser(ctx context.Context, fromUserID, toUserID int) error {
+	return nil
+}
+
 // mockYouTubeClient implements services.YouTubeClient for testing
 type mockYouTubeClient struct {
 	getVideoMetadataFn func(ctx context.Context, videoID string) (*portservices.VideoMetadata, error)
@@ -121,6 +125,14 @@ func (m *mockUserRepository) ListAll(ctx context.Context) ([]*domain.User, error
 	return []*domain.User{}, nil
 }
 
+func (m *mockUserRepository) Update(ctx context.Context, user *domain.User) (*domain.User, error) {
+	return user, nil
+}
+
+func (m *mockUserRepository) Delete(ctx context.Context, id int) error {
+	return nil
+}
+
 // mockPerspectiveRepository implements repositories.PerspectiveRepository for testing
 type mockPerspectiveRepository struct {
 	createFn            func(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error)
@@ -174,6 +186,10 @@ func (m *mockPerspectiveRepository) List(ctx context.Context, params domain.Pers
 	return &domain.PaginatedPerspectives{Items: []*domain.Perspective{}}, nil
 }
 
+func (m *mockPerspectiveRepository) ReassignByUser(ctx context.Context, fromUserID, toUserID int) error {
+	return nil
+}
+
 // graphqlResponse represents a generic GraphQL JSON response
 type graphqlResponse struct {
 	Data   json.RawMessage `json:"data"`
@@ -185,9 +201,10 @@ type graphqlResponse struct {
 // setupTestServer creates a test GraphQL server with the given mock dependencies
 func setupTestServer(repo *mockContentRepository, ytClient *mockYouTubeClient) *httptest.Server {
 	userRepo := &mockUserRepository{}
+	perspectiveRepo := &mockPerspectiveRepository{}
 	contentService := services.NewContentService(repo, ytClient)
-	userService := services.NewUserService(userRepo)
-	perspectiveService := services.NewPerspectiveService(&mockPerspectiveRepository{}, userRepo)
+	userService := services.NewUserService(userRepo, repo, perspectiveRepo)
+	perspectiveService := services.NewPerspectiveService(perspectiveRepo, userRepo)
 	resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 	return httptest.NewServer(srv)
@@ -892,9 +909,10 @@ func TestNewResolver(t *testing.T) {
 	repo := &mockContentRepository{}
 	ytClient := &mockYouTubeClient{}
 	userRepo := &mockUserRepository{}
+	perspectiveRepo := &mockPerspectiveRepository{}
 	contentService := services.NewContentService(repo, ytClient)
-	userService := services.NewUserService(userRepo)
-	perspectiveService := services.NewPerspectiveService(&mockPerspectiveRepository{}, userRepo)
+	userService := services.NewUserService(userRepo, repo, perspectiveRepo)
+	perspectiveService := services.NewPerspectiveService(perspectiveRepo, userRepo)
 
 	resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
 
