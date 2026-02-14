@@ -9,18 +9,18 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 
 ## Current Position
 
-Phase: 3.2 of 5 (Activity Page Beta Quality)
-Plan: 3/4 complete
-Status: Activity Table rewrite with server-side pagination complete
-Last activity: 2026-02-13 — Completed 03.2-03-PLAN.md
+Phase: 7 of 5 (Backend Architecture)
+Plan: 2/2 complete
+Status: Phase 7 backend architecture hardening complete
+Last activity: 2026-02-14 — Completed 07-02-PLAN.md
 
-Progress: [████████░░] 86%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 16
-- Average duration: 5.1 min
+- Total plans completed: 17
+- Average duration: 5.0 min
 - Total execution time: 1.4 hours
 
 **By Phase:**
@@ -32,10 +32,11 @@ Progress: [████████░░] 86%
 | 03-add-video-flow | 2 | 8 min | 4 min |
 | 03.1-design-token-system | 2 | 6 min | 3 min |
 | 03.2-activity-page-beta-quality | 3 | 16 min | 5.3 min |
+| 07-backend-architecture | 2 | 6 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 5 min, 3 min, 3 min, 7 min, 6 min (avg: 4.8 min)
-- Trend: Good — Consistent performance on complex UI rewrites
+- Last 5 plans: 3 min, 3 min, 7 min, 6 min, 3 min (avg: 4.4 min)
+- Trend: Excellent — Fast execution on backend infrastructure hardening
 
 *Updated after each plan completion*
 
@@ -103,6 +104,11 @@ Recent decisions affecting current work:
 - [03.2-02]: Popover trigger uses buttonVariants() directly (bits-ui 2.x Svelte 5 pattern, no asChild)
 - [03.2-02]: AddVideoPopover self-contained with internal open state (simpler API than bind:open from parent)
 - [03.2-02]: Temporarily keeping AddVideoDialog for coverage threshold (popover portal rendering limits JSDOM testing)
+- [07-02]: Custom StringArray/Int64Array types replace lib/pq (single pgx driver, ~200 lines of parsing code)
+- [07-02]: Database pool configurable via env vars (DB_MAX_OPEN_CONNS, DB_MAX_IDLE_CONNS, DB_CONN_MAX_LIFETIME)
+- [07-02]: CONFIG_PATH env var for config file path (default: config/config.example.json)
+- [07-02]: DATABASE_URL validated at startup (scheme, hostname, database name)
+- [07-02]: DSN credentials sanitized in all log output (dual-format: URL + key-value)
 
 ### Roadmap Evolution
 
@@ -263,6 +269,6 @@ Resume file: None
 
 ## Session Continuity
 
-Last session: 2026-02-13
-Stopped at: Completed 03.2-03-PLAN.md
+Last session: 2026-02-14
+Stopped at: Completed 07-02-PLAN.md
 Resume file: None
