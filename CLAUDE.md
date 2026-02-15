@@ -86,6 +86,8 @@ defer db.Close()
 
 ## GSD Workflow
 
+**ALWAYS use the GSD workflow** for planning and execution in this project. Do NOT use superpowers:writing-plans or other planning skills — use GSD plan files in `.planning/phases/`.
+
 Planning and execution artifacts in `.planning/`: `PROJECT.md`, `ROADMAP.md`, `STATE.md`, `phases/`. Branching: see [.docs/GSD_BRANCHING.md](.docs/GSD_BRANCHING.md).
 
 ## Self-Verification (MANDATORY)

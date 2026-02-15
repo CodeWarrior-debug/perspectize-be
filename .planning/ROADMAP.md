@@ -205,20 +205,24 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
   6. `WriteString` return value checked in IntID marshal (H-21)
   7. `CreateFromYouTube` returns existing item on duplicate instead of error (M-03)
   8. `formatDate` handles invalid input gracefully (M-27)
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
+
+Plans:
+- [ ] 06-01-PLAN.md — Fix silent failures: log CategorizedRatings parse, idempotent CreateFromYouTube, IntID WriteString check
+- [ ] 06-02-PLAN.md — Standardize not-found handling, sanitize GraphQL errors, enforce YouTube API key in production
 
 **Concern checklist:**
-- [ ] C-06: Silent JSON unmarshal in perspective repository
-- [ ] C-07: Silent duration parse in YouTube client
-- [ ] C-08: Five silent parse failures in `domainToModel` helpers
-- [ ] H-13: Sensitive data leaked in GraphQL errors (use generic client errors, log full errors server-side)
-- [ ] H-16: Inconsistent not-found error handling across resolvers
-- [ ] H-19: `.env` load failure silently ignored
-- [ ] H-20: Empty YouTube API key not validated at startup
-- [ ] H-21: `WriteString` return value ignored in IntID
-- [ ] M-03: `CreateFromYouTube` returns error instead of idempotent result
-- [ ] M-07: Inconsistent not-found (duplicate of H-16)
-- [ ] M-27: `formatDate` silently produces "Invalid Date"
+- [ ] C-06: Silent JSON unmarshal in perspective repository → **06-01**
+- [x] C-07: Silent duration parse in YouTube client → **ALREADY FIXED** (parser.go returns fmt.Errorf)
+- [x] C-08: Five silent parse failures in `domainToModel` helpers → **MOSTLY FIXED** (parseStatCount logs via slog.Warn; remaining: CategorizedRatings in gorm_mappers → 06-01)
+- [ ] H-13: Sensitive data leaked in GraphQL errors → **06-02**
+- [ ] H-16: Inconsistent not-found error handling across resolvers → **06-02**
+- [x] H-19: `.env` load failure silently ignored → **ALREADY FIXED** (main.go warns unless production)
+- [ ] H-20: Empty YouTube API key not validated at startup → **06-02** (warn → fatal in production)
+- [ ] H-21: `WriteString` return value ignored in IntID → **06-01**
+- [ ] M-03: `CreateFromYouTube` returns error instead of idempotent result → **06-01**
+- [ ] M-07: Inconsistent not-found (duplicate of H-16) → **06-02**
+- [x] M-27: `formatDate` silently produces "Invalid Date" → **ALREADY FIXED** (returns '—' for invalid input)
 
 ### Phase 7: Backend Architecture
 **Goal**: Clean up hexagonal architecture violations, add proper dependency injection, and harden server infrastructure
