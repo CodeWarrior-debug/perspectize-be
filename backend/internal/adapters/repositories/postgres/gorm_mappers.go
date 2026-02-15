@@ -16,6 +16,7 @@ func userModelToDomain(m *UserModel) *domain.User {
 		ID:        m.ID,
 		Username:  m.Username,
 		Email:     m.Email,
+		Active:    m.Active,
 		CreatedAt: m.CreatedAt,
 		UpdatedAt: m.UpdatedAt,
 	}
@@ -30,6 +31,7 @@ func userDomainToModel(u *domain.User) *UserModel {
 		ID:       u.ID,
 		Username: u.Username,
 		Email:    u.Email,
+		Active:   u.Active,
 		// CreatedAt and UpdatedAt are managed by GORM
 	}
 }
@@ -40,15 +42,16 @@ func contentModelToDomain(m *ContentModel) *domain.Content {
 		return nil
 	}
 	return &domain.Content{
-		ID:          m.ID,
-		Name:        m.Name,
-		URL:         m.URL,
-		ContentType: domain.ContentType(strings.ToUpper(m.ContentType)),
-		Length:      m.Length,
-		LengthUnits: m.LengthUnits,
-		Response:    m.Response,
-		CreatedAt:   m.CreatedAt,
-		UpdatedAt:   m.UpdatedAt,
+		ID:            m.ID,
+		Name:          m.Name,
+		URL:           m.URL,
+		ContentType:   domain.ContentType(strings.ToUpper(m.ContentType)),
+		AddedByUserID: m.AddedByUserID,
+		Length:        m.Length,
+		LengthUnits:   m.LengthUnits,
+		Response:      m.Response,
+		CreatedAt:     m.CreatedAt,
+		UpdatedAt:     m.UpdatedAt,
 	}
 }
 
@@ -58,13 +61,14 @@ func contentDomainToModel(c *domain.Content) *ContentModel {
 		return nil
 	}
 	return &ContentModel{
-		ID:          c.ID,
-		Name:        c.Name,
-		URL:         c.URL,
-		ContentType: strings.ToLower(string(c.ContentType)),
-		Length:      c.Length,
-		LengthUnits: c.LengthUnits,
-		Response:    c.Response,
+		ID:            c.ID,
+		Name:          c.Name,
+		URL:           c.URL,
+		ContentType:   strings.ToLower(string(c.ContentType)),
+		AddedByUserID: c.AddedByUserID,
+		Length:        c.Length,
+		LengthUnits:   c.LengthUnits,
+		Response:      c.Response,
 		// CreatedAt and UpdatedAt are managed by GORM
 	}
 }
@@ -77,7 +81,6 @@ func perspectiveModelToDomain(m *PerspectiveModel) *domain.Perspective {
 
 	p := &domain.Perspective{
 		ID:          m.ID,
-		Claim:       m.Claim,
 		UserID:      m.UserID,
 		ContentID:   m.ContentID,
 		Like:        m.Like,
@@ -141,7 +144,6 @@ func perspectiveDomainToModel(p *domain.Perspective) *PerspectiveModel {
 
 	m := &PerspectiveModel{
 		ID:          p.ID,
-		Claim:       p.Claim,
 		UserID:      p.UserID,
 		ContentID:   p.ContentID,
 		Like:        p.Like,

@@ -95,3 +95,40 @@ func (r *GormUserRepository) ListAll(ctx context.Context) ([]*domain.User, error
 
 	return users, nil
 }
+
+// Update saves changes to an existing user record
+func (r *GormUserRepository) Update(ctx context.Context, user *domain.User) (*domain.User, error) {
+	model := userDomainToModel(user)
+	model.ID = user.ID
+
+	result := r.db.WithContext(ctx).Model(model).Updates(map[string]interface{}{
+		"username": model.Username,
+		"email":    model.Email,
+	})
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, domain.ErrNotFound
+	}
+
+	// Re-read to get updated timestamps
+	var updated UserModel
+	if err := r.db.WithContext(ctx).First(&updated, user.ID).Error; err != nil {
+		return nil, err
+	}
+
+	return userModelToDomain(&updated), nil
+}
+
+// Delete removes a user record by ID
+func (r *GormUserRepository) Delete(ctx context.Context, id int) error {
+	result := r.db.WithContext(ctx).Delete(&UserModel{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}

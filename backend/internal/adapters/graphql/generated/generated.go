@@ -54,22 +54,24 @@ type ComplexityRoot struct {
 	}
 
 	Content struct {
-		ChannelTitle func(childComplexity int) int
-		CommentCount func(childComplexity int) int
-		ContentType  func(childComplexity int) int
-		CreatedAt    func(childComplexity int) int
-		Description  func(childComplexity int) int
-		ID           func(childComplexity int) int
-		Length       func(childComplexity int) int
-		LengthUnits  func(childComplexity int) int
-		LikeCount    func(childComplexity int) int
-		Name         func(childComplexity int) int
-		PublishedAt  func(childComplexity int) int
-		Response     func(childComplexity int) int
-		Tags         func(childComplexity int) int
-		URL          func(childComplexity int) int
-		UpdatedAt    func(childComplexity int) int
-		ViewCount    func(childComplexity int) int
+		AddedBy       func(childComplexity int) int
+		AddedByUserID func(childComplexity int) int
+		ChannelTitle  func(childComplexity int) int
+		CommentCount  func(childComplexity int) int
+		ContentType   func(childComplexity int) int
+		CreatedAt     func(childComplexity int) int
+		Description   func(childComplexity int) int
+		ID            func(childComplexity int) int
+		Length        func(childComplexity int) int
+		LengthUnits   func(childComplexity int) int
+		LikeCount     func(childComplexity int) int
+		Name          func(childComplexity int) int
+		PublishedAt   func(childComplexity int) int
+		Response      func(childComplexity int) int
+		Tags          func(childComplexity int) int
+		URL           func(childComplexity int) int
+		UpdatedAt     func(childComplexity int) int
+		ViewCount     func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -77,7 +79,9 @@ type ComplexityRoot struct {
 		CreatePerspective        func(childComplexity int, input model.CreatePerspectiveInput) int
 		CreateUser               func(childComplexity int, input model.CreateUserInput) int
 		DeletePerspective        func(childComplexity int, id string) int
+		DeleteUser               func(childComplexity int, id string) int
 		UpdatePerspective        func(childComplexity int, input model.UpdatePerspectiveInput) int
+		UpdateUser               func(childComplexity int, input model.UpdateUserInput) int
 	}
 
 	PageInfo struct {
@@ -103,7 +107,6 @@ type ComplexityRoot struct {
 		Agreement          func(childComplexity int) int
 		CategorizedRatings func(childComplexity int) int
 		Category           func(childComplexity int) int
-		Claim              func(childComplexity int) int
 		Confidence         func(childComplexity int) int
 		Content            func(childComplexity int) int
 		ContentID          func(childComplexity int) int
@@ -144,6 +147,8 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateContentFromYouTube(ctx context.Context, input model.CreateContentFromYouTubeInput) (*model.Content, error)
 	CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error)
+	UpdateUser(ctx context.Context, input model.UpdateUserInput) (*model.User, error)
+	DeleteUser(ctx context.Context, id string) (bool, error)
 	CreatePerspective(ctx context.Context, input model.CreatePerspectiveInput) (*model.Perspective, error)
 	UpdatePerspective(ctx context.Context, input model.UpdatePerspectiveInput) (*model.Perspective, error)
 	DeletePerspective(ctx context.Context, id string) (bool, error)
@@ -190,6 +195,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CategorizedRating.Rating(childComplexity), true
 
+	case "Content.addedBy":
+		if e.complexity.Content.AddedBy == nil {
+			break
+		}
+
+		return e.complexity.Content.AddedBy(childComplexity), true
+	case "Content.addedByUserID":
+		if e.complexity.Content.AddedByUserID == nil {
+			break
+		}
+
+		return e.complexity.Content.AddedByUserID(childComplexity), true
 	case "Content.channelTitle":
 		if e.complexity.Content.ChannelTitle == nil {
 			break
@@ -331,6 +348,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeletePerspective(childComplexity, args["id"].(string)), true
+	case "Mutation.deleteUser":
+		if e.complexity.Mutation.DeleteUser == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteUser_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteUser(childComplexity, args["id"].(string)), true
 	case "Mutation.updatePerspective":
 		if e.complexity.Mutation.UpdatePerspective == nil {
 			break
@@ -342,6 +370,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdatePerspective(childComplexity, args["input"].(model.UpdatePerspectiveInput)), true
+	case "Mutation.updateUser":
+		if e.complexity.Mutation.UpdateUser == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateUser_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateUser(childComplexity, args["input"].(model.UpdateUserInput)), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -424,12 +463,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Perspective.Category(childComplexity), true
-	case "Perspective.claim":
-		if e.complexity.Perspective.Claim == nil {
-			break
-		}
-
-		return e.complexity.Perspective.Claim(childComplexity), true
 	case "Perspective.confidence":
 		if e.complexity.Perspective.Confidence == nil {
 			break
@@ -646,6 +679,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateUserInput,
 		ec.unmarshalInputPerspectiveFilter,
 		ec.unmarshalInputUpdatePerspectiveInput,
+		ec.unmarshalInputUpdateUserInput,
 	)
 	first := true
 
@@ -751,6 +785,7 @@ type User {
   id: ID!
   username: String!
   email: String!
+  active: Boolean!
   createdAt: String!
   updatedAt: String!
 }
@@ -770,7 +805,6 @@ enum ReviewStatus {
 enum PerspectiveSortBy {
   CREATED_AT
   UPDATED_AT
-  CLAIM
 }
 
 # Perspective type
@@ -781,7 +815,6 @@ type CategorizedRating {
 
 type Perspective {
   id: ID!
-  claim: String!
   userID: ID!
   user: User
   contentID: ID
@@ -813,6 +846,8 @@ type Content {
   name: String!
   url: String
   contentType: String!
+  addedByUserID: ID!
+  addedBy: User
   length: Int
   lengthUnits: String
   viewCount: Int
@@ -876,7 +911,13 @@ input ContentFilter {
 # User inputs
 input CreateUserInput {
   username: String!
-  email: String!
+  email: String
+}
+
+input UpdateUserInput {
+  id: IntID!
+  username: String
+  email: String
 }
 
 # Perspective inputs
@@ -886,7 +927,6 @@ input CategorizedRatingInput {
 }
 
 input CreatePerspectiveInput {
-  claim: String!
   userID: IntID!
   contentID: IntID
   quality: Int
@@ -904,7 +944,6 @@ input CreatePerspectiveInput {
 
 input UpdatePerspectiveInput {
   id: IntID!
-  claim: String
   contentID: IntID
   quality: Int
   agreement: Int
@@ -931,6 +970,8 @@ type Mutation {
 
   # User mutations
   createUser(input: CreateUserInput!): User!
+  updateUser(input: UpdateUserInput!): User!
+  deleteUser(id: ID!): Boolean!
 
   # Perspective mutations
   createPerspective(input: CreatePerspectiveInput!): Perspective!
@@ -983,7 +1024,7 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Mutation_createContentFromYouTube_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateContentFromYouTubeInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateContentFromYouTubeInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateContentFromYouTubeInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateContentFromYouTubeInput)
 	if err != nil {
 		return nil, err
 	}
@@ -994,7 +1035,7 @@ func (ec *executionContext) field_Mutation_createContentFromYouTube_args(ctx con
 func (ec *executionContext) field_Mutation_createPerspective_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreatePerspectiveInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreatePerspectiveInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreatePerspectiveInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreatePerspectiveInput)
 	if err != nil {
 		return nil, err
 	}
@@ -1005,7 +1046,7 @@ func (ec *executionContext) field_Mutation_createPerspective_args(ctx context.Co
 func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateUserInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateUserInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateUserInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateUserInput)
 	if err != nil {
 		return nil, err
 	}
@@ -1024,10 +1065,32 @@ func (ec *executionContext) field_Mutation_deletePerspective_args(ctx context.Co
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteUser_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_updatePerspective_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdatePerspectiveInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUpdatePerspectiveInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdatePerspectiveInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUpdatePerspectiveInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateUser_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateUserInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUpdateUserInput)
 	if err != nil {
 		return nil, err
 	}
@@ -1080,12 +1143,12 @@ func (ec *executionContext) field_Query_content_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOContentSortBy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentSortBy)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOContentSortBy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐContentSortBy)
 	if err != nil {
 		return nil, err
 	}
 	args["sortBy"] = arg4
-	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐSortOrder)
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐSortOrder)
 	if err != nil {
 		return nil, err
 	}
@@ -1095,7 +1158,7 @@ func (ec *executionContext) field_Query_content_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["includeTotalCount"] = arg6
-	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOContentFilter2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentFilter)
+	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOContentFilter2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -1137,12 +1200,12 @@ func (ec *executionContext) field_Query_perspectives_args(ctx context.Context, r
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOPerspectiveSortBy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPerspectiveSortBy)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOPerspectiveSortBy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐPerspectiveSortBy)
 	if err != nil {
 		return nil, err
 	}
 	args["sortBy"] = arg4
-	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐSortOrder)
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐSortOrder)
 	if err != nil {
 		return nil, err
 	}
@@ -1152,7 +1215,7 @@ func (ec *executionContext) field_Query_perspectives_args(ctx context.Context, r
 		return nil, err
 	}
 	args["includeTotalCount"] = arg6
-	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOPerspectiveFilter2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveFilter)
+	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOPerspectiveFilter2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -1403,6 +1466,78 @@ func (ec *executionContext) fieldContext_Content_contentType(_ context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Content_addedByUserID(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Content_addedByUserID,
+		func(ctx context.Context) (any, error) {
+			return obj.AddedByUserID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Content_addedByUserID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Content",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Content_addedBy(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Content_addedBy,
+		func(ctx context.Context) (any, error) {
+			return obj.AddedBy, nil
+		},
+		nil,
+		ec.marshalOUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Content_addedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Content",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "active":
+				return ec.fieldContext_User_active(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_User_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_User_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
 	}
 	return fc, nil
@@ -1767,7 +1902,7 @@ func (ec *executionContext) _Mutation_createContentFromYouTube(ctx context.Conte
 			return ec.resolvers.Mutation().CreateContentFromYouTube(ctx, fc.Args["input"].(model.CreateContentFromYouTubeInput))
 		},
 		nil,
-		ec.marshalNContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent,
+		ec.marshalNContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent,
 		true,
 		true,
 	)
@@ -1789,6 +1924,10 @@ func (ec *executionContext) fieldContext_Mutation_createContentFromYouTube(ctx c
 				return ec.fieldContext_Content_url(ctx, field)
 			case "contentType":
 				return ec.fieldContext_Content_contentType(ctx, field)
+			case "addedByUserID":
+				return ec.fieldContext_Content_addedByUserID(ctx, field)
+			case "addedBy":
+				return ec.fieldContext_Content_addedBy(ctx, field)
 			case "length":
 				return ec.fieldContext_Content_length(ctx, field)
 			case "lengthUnits":
@@ -1842,7 +1981,7 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 			return ec.resolvers.Mutation().CreateUser(ctx, fc.Args["input"].(model.CreateUserInput))
 		},
 		nil,
-		ec.marshalNUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
+		ec.marshalNUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
 		true,
 		true,
 	)
@@ -1862,6 +2001,8 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "active":
+				return ec.fieldContext_User_active(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
@@ -1884,6 +2025,102 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateUser,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateUser(ctx, fc.Args["input"].(model.UpdateUserInput))
+		},
+		nil,
+		ec.marshalNUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "active":
+				return ec.fieldContext_User_active(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_User_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_User_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteUser,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteUser(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createPerspective(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1895,7 +2132,7 @@ func (ec *executionContext) _Mutation_createPerspective(ctx context.Context, fie
 			return ec.resolvers.Mutation().CreatePerspective(ctx, fc.Args["input"].(model.CreatePerspectiveInput))
 		},
 		nil,
-		ec.marshalNPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective,
+		ec.marshalNPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective,
 		true,
 		true,
 	)
@@ -1911,8 +2148,6 @@ func (ec *executionContext) fieldContext_Mutation_createPerspective(ctx context.
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Perspective_id(ctx, field)
-			case "claim":
-				return ec.fieldContext_Perspective_claim(ctx, field)
 			case "userID":
 				return ec.fieldContext_Perspective_userID(ctx, field)
 			case "user":
@@ -1978,7 +2213,7 @@ func (ec *executionContext) _Mutation_updatePerspective(ctx context.Context, fie
 			return ec.resolvers.Mutation().UpdatePerspective(ctx, fc.Args["input"].(model.UpdatePerspectiveInput))
 		},
 		nil,
-		ec.marshalNPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective,
+		ec.marshalNPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective,
 		true,
 		true,
 	)
@@ -1994,8 +2229,6 @@ func (ec *executionContext) fieldContext_Mutation_updatePerspective(ctx context.
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Perspective_id(ctx, field)
-			case "claim":
-				return ec.fieldContext_Perspective_claim(ctx, field)
 			case "userID":
 				return ec.fieldContext_Perspective_userID(ctx, field)
 			case "user":
@@ -2217,7 +2450,7 @@ func (ec *executionContext) _PaginatedContent_items(ctx context.Context, field g
 			return obj.Items, nil
 		},
 		nil,
-		ec.marshalNContent2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentᚄ,
+		ec.marshalNContent2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentᚄ,
 		true,
 		true,
 	)
@@ -2239,6 +2472,10 @@ func (ec *executionContext) fieldContext_PaginatedContent_items(_ context.Contex
 				return ec.fieldContext_Content_url(ctx, field)
 			case "contentType":
 				return ec.fieldContext_Content_contentType(ctx, field)
+			case "addedByUserID":
+				return ec.fieldContext_Content_addedByUserID(ctx, field)
+			case "addedBy":
+				return ec.fieldContext_Content_addedBy(ctx, field)
 			case "length":
 				return ec.fieldContext_Content_length(ctx, field)
 			case "lengthUnits":
@@ -2280,7 +2517,7 @@ func (ec *executionContext) _PaginatedContent_pageInfo(ctx context.Context, fiel
 			return obj.PageInfo, nil
 		},
 		nil,
-		ec.marshalNPageInfo2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPageInfo,
+		ec.marshalNPageInfo2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPageInfo,
 		true,
 		true,
 	)
@@ -2348,7 +2585,7 @@ func (ec *executionContext) _PaginatedPerspectives_items(ctx context.Context, fi
 			return obj.Items, nil
 		},
 		nil,
-		ec.marshalNPerspective2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveᚄ,
+		ec.marshalNPerspective2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveᚄ,
 		true,
 		true,
 	)
@@ -2364,8 +2601,6 @@ func (ec *executionContext) fieldContext_PaginatedPerspectives_items(_ context.C
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Perspective_id(ctx, field)
-			case "claim":
-				return ec.fieldContext_Perspective_claim(ctx, field)
 			case "userID":
 				return ec.fieldContext_Perspective_userID(ctx, field)
 			case "user":
@@ -2419,7 +2654,7 @@ func (ec *executionContext) _PaginatedPerspectives_pageInfo(ctx context.Context,
 			return obj.PageInfo, nil
 		},
 		nil,
-		ec.marshalNPageInfo2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPageInfo,
+		ec.marshalNPageInfo2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPageInfo,
 		true,
 		true,
 	)
@@ -2506,35 +2741,6 @@ func (ec *executionContext) fieldContext_Perspective_id(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Perspective_claim(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Perspective_claim,
-		func(ctx context.Context) (any, error) {
-			return obj.Claim, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Perspective_claim(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Perspective",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Perspective_userID(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2574,7 +2780,7 @@ func (ec *executionContext) _Perspective_user(ctx context.Context, field graphql
 			return obj.User, nil
 		},
 		nil,
-		ec.marshalOUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
+		ec.marshalOUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
 		true,
 		false,
 	)
@@ -2594,6 +2800,8 @@ func (ec *executionContext) fieldContext_Perspective_user(_ context.Context, fie
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "active":
+				return ec.fieldContext_User_active(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
@@ -2644,7 +2852,7 @@ func (ec *executionContext) _Perspective_content(ctx context.Context, field grap
 			return obj.Content, nil
 		},
 		nil,
-		ec.marshalOContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent,
+		ec.marshalOContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent,
 		true,
 		false,
 	)
@@ -2666,6 +2874,10 @@ func (ec *executionContext) fieldContext_Perspective_content(_ context.Context, 
 				return ec.fieldContext_Content_url(ctx, field)
 			case "contentType":
 				return ec.fieldContext_Content_contentType(ctx, field)
+			case "addedByUserID":
+				return ec.fieldContext_Content_addedByUserID(ctx, field)
+			case "addedBy":
+				return ec.fieldContext_Content_addedBy(ctx, field)
 			case "length":
 				return ec.fieldContext_Content_length(ctx, field)
 			case "lengthUnits":
@@ -2852,7 +3064,7 @@ func (ec *executionContext) _Perspective_privacy(ctx context.Context, field grap
 			return obj.Privacy, nil
 		},
 		nil,
-		ec.marshalNPrivacy2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy,
+		ec.marshalNPrivacy2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐPrivacy,
 		true,
 		true,
 	)
@@ -2939,7 +3151,7 @@ func (ec *executionContext) _Perspective_reviewStatus(ctx context.Context, field
 			return obj.ReviewStatus, nil
 		},
 		nil,
-		ec.marshalOReviewStatus2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐReviewStatus,
+		ec.marshalOReviewStatus2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐReviewStatus,
 		true,
 		false,
 	)
@@ -3026,7 +3238,7 @@ func (ec *executionContext) _Perspective_categorizedRatings(ctx context.Context,
 			return obj.CategorizedRatings, nil
 		},
 		nil,
-		ec.marshalOCategorizedRating2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingᚄ,
+		ec.marshalOCategorizedRating2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingᚄ,
 		true,
 		false,
 	)
@@ -3120,7 +3332,7 @@ func (ec *executionContext) _Query_contentByID(ctx context.Context, field graphq
 			return ec.resolvers.Query().ContentByID(ctx, fc.Args["id"].(string))
 		},
 		nil,
-		ec.marshalOContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent,
+		ec.marshalOContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent,
 		true,
 		false,
 	)
@@ -3142,6 +3354,10 @@ func (ec *executionContext) fieldContext_Query_contentByID(ctx context.Context, 
 				return ec.fieldContext_Content_url(ctx, field)
 			case "contentType":
 				return ec.fieldContext_Content_contentType(ctx, field)
+			case "addedByUserID":
+				return ec.fieldContext_Content_addedByUserID(ctx, field)
+			case "addedBy":
+				return ec.fieldContext_Content_addedBy(ctx, field)
 			case "length":
 				return ec.fieldContext_Content_length(ctx, field)
 			case "lengthUnits":
@@ -3195,7 +3411,7 @@ func (ec *executionContext) _Query_content(ctx context.Context, field graphql.Co
 			return ec.resolvers.Query().Content(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["sortBy"].(*domain.ContentSortBy), fc.Args["sortOrder"].(*domain.SortOrder), fc.Args["includeTotalCount"].(*bool), fc.Args["filter"].(*model.ContentFilter))
 		},
 		nil,
-		ec.marshalNPaginatedContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedContent,
+		ec.marshalNPaginatedContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedContent,
 		true,
 		true,
 	)
@@ -3244,7 +3460,7 @@ func (ec *executionContext) _Query_userByID(ctx context.Context, field graphql.C
 			return ec.resolvers.Query().UserByID(ctx, fc.Args["id"].(string))
 		},
 		nil,
-		ec.marshalOUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
+		ec.marshalOUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
 		true,
 		false,
 	)
@@ -3264,6 +3480,8 @@ func (ec *executionContext) fieldContext_Query_userByID(ctx context.Context, fie
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "active":
+				return ec.fieldContext_User_active(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
@@ -3297,7 +3515,7 @@ func (ec *executionContext) _Query_userByUsername(ctx context.Context, field gra
 			return ec.resolvers.Query().UserByUsername(ctx, fc.Args["username"].(string))
 		},
 		nil,
-		ec.marshalOUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
+		ec.marshalOUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
 		true,
 		false,
 	)
@@ -3317,6 +3535,8 @@ func (ec *executionContext) fieldContext_Query_userByUsername(ctx context.Contex
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "active":
+				return ec.fieldContext_User_active(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
@@ -3349,7 +3569,7 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 			return ec.resolvers.Query().Users(ctx)
 		},
 		nil,
-		ec.marshalNUser2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUserᚄ,
+		ec.marshalNUser2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUserᚄ,
 		true,
 		true,
 	)
@@ -3369,6 +3589,8 @@ func (ec *executionContext) fieldContext_Query_users(_ context.Context, field gr
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "active":
+				return ec.fieldContext_User_active(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
@@ -3391,7 +3613,7 @@ func (ec *executionContext) _Query_perspectiveByID(ctx context.Context, field gr
 			return ec.resolvers.Query().PerspectiveByID(ctx, fc.Args["id"].(string))
 		},
 		nil,
-		ec.marshalOPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective,
+		ec.marshalOPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective,
 		true,
 		false,
 	)
@@ -3407,8 +3629,6 @@ func (ec *executionContext) fieldContext_Query_perspectiveByID(ctx context.Conte
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Perspective_id(ctx, field)
-			case "claim":
-				return ec.fieldContext_Perspective_claim(ctx, field)
 			case "userID":
 				return ec.fieldContext_Perspective_userID(ctx, field)
 			case "user":
@@ -3474,7 +3694,7 @@ func (ec *executionContext) _Query_perspectives(ctx context.Context, field graph
 			return ec.resolvers.Query().Perspectives(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["sortBy"].(*domain.PerspectiveSortBy), fc.Args["sortOrder"].(*domain.SortOrder), fc.Args["includeTotalCount"].(*bool), fc.Args["filter"].(*model.PerspectiveFilter))
 		},
 		nil,
-		ec.marshalNPaginatedPerspectives2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedPerspectives,
+		ec.marshalNPaginatedPerspectives2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedPerspectives,
 		true,
 		true,
 	)
@@ -3702,6 +3922,35 @@ func (ec *executionContext) fieldContext_User_email(_ context.Context, field gra
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_active(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_User_active,
+		func(ctx context.Context) (any, error) {
+			return obj.Active, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_User_active(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5261,7 +5510,7 @@ func (ec *executionContext) unmarshalInputContentFilter(ctx context.Context, obj
 		switch k {
 		case "contentType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contentType"))
-			data, err := ec.unmarshalOContentType2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentType(ctx, v)
+			data, err := ec.unmarshalOContentType2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐContentType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5327,20 +5576,13 @@ func (ec *executionContext) unmarshalInputCreatePerspectiveInput(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"claim", "userID", "contentID", "quality", "agreement", "importance", "confidence", "like", "privacy", "description", "category", "parts", "labels", "categorizedRatings"}
+	fieldsInOrder := [...]string{"userID", "contentID", "quality", "agreement", "importance", "confidence", "like", "privacy", "description", "category", "parts", "labels", "categorizedRatings"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "claim":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("claim"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Claim = data
 		case "userID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userID"))
 			data, err := ec.unmarshalNIntID2int(ctx, v)
@@ -5392,7 +5634,7 @@ func (ec *executionContext) unmarshalInputCreatePerspectiveInput(ctx context.Con
 			it.Like = data
 		case "privacy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("privacy"))
-			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx, v)
+			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5427,7 +5669,7 @@ func (ec *executionContext) unmarshalInputCreatePerspectiveInput(ctx context.Con
 			it.Labels = data
 		case "categorizedRatings":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("categorizedRatings"))
-			data, err := ec.unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInputᚄ(ctx, v)
+			data, err := ec.unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5461,7 +5703,7 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 			it.Username = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5502,7 +5744,7 @@ func (ec *executionContext) unmarshalInputPerspectiveFilter(ctx context.Context,
 			it.ContentID = data
 		case "privacy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("privacy"))
-			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx, v)
+			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5520,7 +5762,7 @@ func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "claim", "contentID", "quality", "agreement", "importance", "confidence", "like", "privacy", "description", "category", "reviewStatus", "parts", "labels", "categorizedRatings"}
+	fieldsInOrder := [...]string{"id", "contentID", "quality", "agreement", "importance", "confidence", "like", "privacy", "description", "category", "reviewStatus", "parts", "labels", "categorizedRatings"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5534,13 +5776,6 @@ func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Con
 				return it, err
 			}
 			it.ID = data
-		case "claim":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("claim"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Claim = data
 		case "contentID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contentID"))
 			data, err := ec.unmarshalOIntID2ᚖint(ctx, v)
@@ -5585,7 +5820,7 @@ func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Con
 			it.Like = data
 		case "privacy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("privacy"))
-			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx, v)
+			data, err := ec.unmarshalOPrivacy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5606,7 +5841,7 @@ func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Con
 			it.Category = data
 		case "reviewStatus":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reviewStatus"))
-			data, err := ec.unmarshalOReviewStatus2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐReviewStatus(ctx, v)
+			data, err := ec.unmarshalOReviewStatus2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐReviewStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5627,11 +5862,52 @@ func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Con
 			it.Labels = data
 		case "categorizedRatings":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("categorizedRatings"))
-			data, err := ec.unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInputᚄ(ctx, v)
+			data, err := ec.unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.CategorizedRatings = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, obj any) (model.UpdateUserInput, error) {
+	var it model.UpdateUserInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "username", "email"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNIntID2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "username":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Username = data
+		case "email":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Email = data
 		}
 	}
 
@@ -5718,6 +5994,13 @@ func (ec *executionContext) _Content(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "addedByUserID":
+			out.Values[i] = ec._Content_addedByUserID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "addedBy":
+			out.Values[i] = ec._Content_addedBy(ctx, field, obj)
 		case "length":
 			out.Values[i] = ec._Content_length(ctx, field, obj)
 		case "lengthUnits":
@@ -5800,6 +6083,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "createUser":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createUser(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateUser":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateUser(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteUser":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteUser(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -6001,11 +6298,6 @@ func (ec *executionContext) _Perspective(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = graphql.MarshalString("Perspective")
 		case "id":
 			out.Values[i] = ec._Perspective_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "claim":
-			out.Values[i] = ec._Perspective_claim(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -6295,6 +6587,11 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "email":
 			out.Values[i] = ec._User_email(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "active":
+			out.Values[i] = ec._User_active(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -6682,7 +6979,7 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNCategorizedRating2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRating(ctx context.Context, sel ast.SelectionSet, v *model.CategorizedRating) graphql.Marshaler {
+func (ec *executionContext) marshalNCategorizedRating2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRating(ctx context.Context, sel ast.SelectionSet, v *model.CategorizedRating) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -6692,16 +6989,16 @@ func (ec *executionContext) marshalNCategorizedRating2ᚖgithubᚗcomᚋCodeWarr
 	return ec._CategorizedRating(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCategorizedRatingInput2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInput(ctx context.Context, v any) (*model.CategorizedRatingInput, error) {
+func (ec *executionContext) unmarshalNCategorizedRatingInput2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInput(ctx context.Context, v any) (*model.CategorizedRatingInput, error) {
 	res, err := ec.unmarshalInputCategorizedRatingInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNContent2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx context.Context, sel ast.SelectionSet, v model.Content) graphql.Marshaler {
+func (ec *executionContext) marshalNContent2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx context.Context, sel ast.SelectionSet, v model.Content) graphql.Marshaler {
 	return ec._Content(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNContent2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Content) graphql.Marshaler {
+func (ec *executionContext) marshalNContent2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Content) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6725,7 +7022,7 @@ func (ec *executionContext) marshalNContent2ᚕᚖgithubᚗcomᚋCodeWarriorᚑd
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx, sel, v[i])
+			ret[i] = ec.marshalNContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6745,7 +7042,7 @@ func (ec *executionContext) marshalNContent2ᚕᚖgithubᚗcomᚋCodeWarriorᚑd
 	return ret
 }
 
-func (ec *executionContext) marshalNContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx context.Context, sel ast.SelectionSet, v *model.Content) graphql.Marshaler {
+func (ec *executionContext) marshalNContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx context.Context, sel ast.SelectionSet, v *model.Content) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -6755,17 +7052,17 @@ func (ec *executionContext) marshalNContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebu
 	return ec._Content(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCreateContentFromYouTubeInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateContentFromYouTubeInput(ctx context.Context, v any) (model.CreateContentFromYouTubeInput, error) {
+func (ec *executionContext) unmarshalNCreateContentFromYouTubeInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateContentFromYouTubeInput(ctx context.Context, v any) (model.CreateContentFromYouTubeInput, error) {
 	res, err := ec.unmarshalInputCreateContentFromYouTubeInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreatePerspectiveInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreatePerspectiveInput(ctx context.Context, v any) (model.CreatePerspectiveInput, error) {
+func (ec *executionContext) unmarshalNCreatePerspectiveInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreatePerspectiveInput(ctx context.Context, v any) (model.CreatePerspectiveInput, error) {
 	res, err := ec.unmarshalInputCreatePerspectiveInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateUserInput(ctx context.Context, v any) (model.CreateUserInput, error) {
+func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateUserInput(ctx context.Context, v any) (model.CreateUserInput, error) {
 	res, err := ec.unmarshalInputCreateUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -6818,7 +7115,7 @@ func (ec *executionContext) marshalNIntID2int(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
+func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -6828,11 +7125,11 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋCodeWarriorᚑdeb
 	return ec._PageInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPaginatedContent2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedContent(ctx context.Context, sel ast.SelectionSet, v model.PaginatedContent) graphql.Marshaler {
+func (ec *executionContext) marshalNPaginatedContent2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedContent(ctx context.Context, sel ast.SelectionSet, v model.PaginatedContent) graphql.Marshaler {
 	return ec._PaginatedContent(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPaginatedContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedContent(ctx context.Context, sel ast.SelectionSet, v *model.PaginatedContent) graphql.Marshaler {
+func (ec *executionContext) marshalNPaginatedContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedContent(ctx context.Context, sel ast.SelectionSet, v *model.PaginatedContent) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -6842,11 +7139,11 @@ func (ec *executionContext) marshalNPaginatedContent2ᚖgithubᚗcomᚋCodeWarri
 	return ec._PaginatedContent(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPaginatedPerspectives2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedPerspectives(ctx context.Context, sel ast.SelectionSet, v model.PaginatedPerspectives) graphql.Marshaler {
+func (ec *executionContext) marshalNPaginatedPerspectives2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedPerspectives(ctx context.Context, sel ast.SelectionSet, v model.PaginatedPerspectives) graphql.Marshaler {
 	return ec._PaginatedPerspectives(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPaginatedPerspectives2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedPerspectives(ctx context.Context, sel ast.SelectionSet, v *model.PaginatedPerspectives) graphql.Marshaler {
+func (ec *executionContext) marshalNPaginatedPerspectives2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPaginatedPerspectives(ctx context.Context, sel ast.SelectionSet, v *model.PaginatedPerspectives) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -6856,11 +7153,11 @@ func (ec *executionContext) marshalNPaginatedPerspectives2ᚖgithubᚗcomᚋCode
 	return ec._PaginatedPerspectives(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPerspective2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx context.Context, sel ast.SelectionSet, v model.Perspective) graphql.Marshaler {
+func (ec *executionContext) marshalNPerspective2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx context.Context, sel ast.SelectionSet, v model.Perspective) graphql.Marshaler {
 	return ec._Perspective(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPerspective2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Perspective) graphql.Marshaler {
+func (ec *executionContext) marshalNPerspective2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Perspective) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6884,7 +7181,7 @@ func (ec *executionContext) marshalNPerspective2ᚕᚖgithubᚗcomᚋCodeWarrior
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx, sel, v[i])
+			ret[i] = ec.marshalNPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6904,7 +7201,7 @@ func (ec *executionContext) marshalNPerspective2ᚕᚖgithubᚗcomᚋCodeWarrior
 	return ret
 }
 
-func (ec *executionContext) marshalNPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx context.Context, sel ast.SelectionSet, v *model.Perspective) graphql.Marshaler {
+func (ec *executionContext) marshalNPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx context.Context, sel ast.SelectionSet, v *model.Perspective) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -6914,13 +7211,13 @@ func (ec *executionContext) marshalNPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑ
 	return ec._Perspective(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPrivacy2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, v any) (domain.Privacy, error) {
+func (ec *executionContext) unmarshalNPrivacy2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, v any) (domain.Privacy, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := domain.Privacy(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPrivacy2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, sel ast.SelectionSet, v domain.Privacy) graphql.Marshaler {
+func (ec *executionContext) marshalNPrivacy2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, sel ast.SelectionSet, v domain.Privacy) graphql.Marshaler {
 	_ = sel
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -6947,16 +7244,21 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNUpdatePerspectiveInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUpdatePerspectiveInput(ctx context.Context, v any) (model.UpdatePerspectiveInput, error) {
+func (ec *executionContext) unmarshalNUpdatePerspectiveInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUpdatePerspectiveInput(ctx context.Context, v any) (model.UpdatePerspectiveInput, error) {
 	res, err := ec.unmarshalInputUpdatePerspectiveInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUser2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+func (ec *executionContext) unmarshalNUpdateUserInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUpdateUserInput(ctx context.Context, v any) (model.UpdateUserInput, error) {
+	res, err := ec.unmarshalInputUpdateUserInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUser2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6980,7 +7282,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebu
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7000,7 +7302,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebu
 	return ret
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -7293,7 +7595,7 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOCategorizedRating2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CategorizedRating) graphql.Marshaler {
+func (ec *executionContext) marshalOCategorizedRating2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CategorizedRating) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7320,7 +7622,7 @@ func (ec *executionContext) marshalOCategorizedRating2ᚕᚖgithubᚗcomᚋCodeW
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCategorizedRating2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRating(ctx, sel, v[i])
+			ret[i] = ec.marshalNCategorizedRating2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRating(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7340,7 +7642,7 @@ func (ec *executionContext) marshalOCategorizedRating2ᚕᚖgithubᚗcomᚋCodeW
 	return ret
 }
 
-func (ec *executionContext) unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInputᚄ(ctx context.Context, v any) ([]*model.CategorizedRatingInput, error) {
+func (ec *executionContext) unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInputᚄ(ctx context.Context, v any) ([]*model.CategorizedRatingInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7350,7 +7652,7 @@ func (ec *executionContext) unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcom�
 	res := make([]*model.CategorizedRatingInput, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNCategorizedRatingInput2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNCategorizedRatingInput2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCategorizedRatingInput(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -7358,14 +7660,14 @@ func (ec *executionContext) unmarshalOCategorizedRatingInput2ᚕᚖgithubᚗcom�
 	return res, nil
 }
 
-func (ec *executionContext) marshalOContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx context.Context, sel ast.SelectionSet, v *model.Content) graphql.Marshaler {
+func (ec *executionContext) marshalOContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx context.Context, sel ast.SelectionSet, v *model.Content) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Content(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOContentFilter2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentFilter(ctx context.Context, v any) (*model.ContentFilter, error) {
+func (ec *executionContext) unmarshalOContentFilter2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentFilter(ctx context.Context, v any) (*model.ContentFilter, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7373,7 +7675,7 @@ func (ec *executionContext) unmarshalOContentFilter2ᚖgithubᚗcomᚋCodeWarrio
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOContentSortBy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentSortBy(ctx context.Context, v any) (*domain.ContentSortBy, error) {
+func (ec *executionContext) unmarshalOContentSortBy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐContentSortBy(ctx context.Context, v any) (*domain.ContentSortBy, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7382,7 +7684,7 @@ func (ec *executionContext) unmarshalOContentSortBy2ᚖgithubᚗcomᚋCodeWarrio
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOContentSortBy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentSortBy(ctx context.Context, sel ast.SelectionSet, v *domain.ContentSortBy) graphql.Marshaler {
+func (ec *executionContext) marshalOContentSortBy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐContentSortBy(ctx context.Context, sel ast.SelectionSet, v *domain.ContentSortBy) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7392,7 +7694,7 @@ func (ec *executionContext) marshalOContentSortBy2ᚖgithubᚗcomᚋCodeWarrior�
 	return res
 }
 
-func (ec *executionContext) unmarshalOContentType2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentType(ctx context.Context, v any) (*domain.ContentType, error) {
+func (ec *executionContext) unmarshalOContentType2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐContentType(ctx context.Context, v any) (*domain.ContentType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7401,7 +7703,7 @@ func (ec *executionContext) unmarshalOContentType2ᚖgithubᚗcomᚋCodeWarrior�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOContentType2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐContentType(ctx context.Context, sel ast.SelectionSet, v *domain.ContentType) graphql.Marshaler {
+func (ec *executionContext) marshalOContentType2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐContentType(ctx context.Context, sel ast.SelectionSet, v *domain.ContentType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7519,14 +7821,14 @@ func (ec *executionContext) marshalOJSON2map(ctx context.Context, sel ast.Select
 	return res
 }
 
-func (ec *executionContext) marshalOPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx context.Context, sel ast.SelectionSet, v *model.Perspective) graphql.Marshaler {
+func (ec *executionContext) marshalOPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective(ctx context.Context, sel ast.SelectionSet, v *model.Perspective) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Perspective(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOPerspectiveFilter2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveFilter(ctx context.Context, v any) (*model.PerspectiveFilter, error) {
+func (ec *executionContext) unmarshalOPerspectiveFilter2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspectiveFilter(ctx context.Context, v any) (*model.PerspectiveFilter, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7534,7 +7836,7 @@ func (ec *executionContext) unmarshalOPerspectiveFilter2ᚖgithubᚗcomᚋCodeWa
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOPerspectiveSortBy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPerspectiveSortBy(ctx context.Context, v any) (*domain.PerspectiveSortBy, error) {
+func (ec *executionContext) unmarshalOPerspectiveSortBy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐPerspectiveSortBy(ctx context.Context, v any) (*domain.PerspectiveSortBy, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7543,7 +7845,7 @@ func (ec *executionContext) unmarshalOPerspectiveSortBy2ᚖgithubᚗcomᚋCodeWa
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOPerspectiveSortBy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPerspectiveSortBy(ctx context.Context, sel ast.SelectionSet, v *domain.PerspectiveSortBy) graphql.Marshaler {
+func (ec *executionContext) marshalOPerspectiveSortBy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐPerspectiveSortBy(ctx context.Context, sel ast.SelectionSet, v *domain.PerspectiveSortBy) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7553,7 +7855,7 @@ func (ec *executionContext) marshalOPerspectiveSortBy2ᚖgithubᚗcomᚋCodeWarr
 	return res
 }
 
-func (ec *executionContext) unmarshalOPrivacy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, v any) (*domain.Privacy, error) {
+func (ec *executionContext) unmarshalOPrivacy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, v any) (*domain.Privacy, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7562,7 +7864,7 @@ func (ec *executionContext) unmarshalOPrivacy2ᚖgithubᚗcomᚋCodeWarriorᚑde
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOPrivacy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, sel ast.SelectionSet, v *domain.Privacy) graphql.Marshaler {
+func (ec *executionContext) marshalOPrivacy2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, sel ast.SelectionSet, v *domain.Privacy) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7572,7 +7874,7 @@ func (ec *executionContext) marshalOPrivacy2ᚖgithubᚗcomᚋCodeWarriorᚑdebu
 	return res
 }
 
-func (ec *executionContext) unmarshalOReviewStatus2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐReviewStatus(ctx context.Context, v any) (*domain.ReviewStatus, error) {
+func (ec *executionContext) unmarshalOReviewStatus2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐReviewStatus(ctx context.Context, v any) (*domain.ReviewStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7581,7 +7883,7 @@ func (ec *executionContext) unmarshalOReviewStatus2ᚖgithubᚗcomᚋCodeWarrior
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOReviewStatus2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐReviewStatus(ctx context.Context, sel ast.SelectionSet, v *domain.ReviewStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOReviewStatus2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐReviewStatus(ctx context.Context, sel ast.SelectionSet, v *domain.ReviewStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7591,7 +7893,7 @@ func (ec *executionContext) marshalOReviewStatus2ᚖgithubᚗcomᚋCodeWarrior�
 	return res
 }
 
-func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐSortOrder(ctx context.Context, v any) (*domain.SortOrder, error) {
+func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐSortOrder(ctx context.Context, v any) (*domain.SortOrder, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7600,7 +7902,7 @@ func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋCodeWarriorᚑ
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOSortOrder2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋcoreᚋdomainᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v *domain.SortOrder) graphql.Marshaler {
+func (ec *executionContext) marshalOSortOrder2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v *domain.SortOrder) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7664,7 +7966,7 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚑbeᚋperspectizeᚑgoᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

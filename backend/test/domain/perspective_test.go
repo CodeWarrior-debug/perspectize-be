@@ -16,7 +16,6 @@ func TestPerspectiveStruct(t *testing.T) {
 
 	perspective := domain.Perspective{
 		ID:          1,
-		Claim:       "Test claim",
 		UserID:      1,
 		ContentID:   &contentID,
 		Quality:     &quality,
@@ -29,7 +28,6 @@ func TestPerspectiveStruct(t *testing.T) {
 	}
 
 	assert.Equal(t, 1, perspective.ID)
-	assert.Equal(t, "Test claim", perspective.Claim)
 	assert.Equal(t, 1, perspective.UserID)
 	assert.Equal(t, &contentID, perspective.ContentID)
 	assert.Equal(t, &quality, perspective.Quality)
@@ -45,7 +43,6 @@ func TestPerspectiveZeroValue(t *testing.T) {
 	var perspective domain.Perspective
 
 	assert.Equal(t, 0, perspective.ID)
-	assert.Equal(t, "", perspective.Claim)
 	assert.Equal(t, 0, perspective.UserID)
 	assert.Nil(t, perspective.ContentID)
 	assert.Nil(t, perspective.Quality)
@@ -83,13 +80,11 @@ func TestCategorizedRating(t *testing.T) {
 func TestPerspectiveSortByConstants(t *testing.T) {
 	assert.Equal(t, domain.PerspectiveSortBy("CREATED_AT"), domain.PerspectiveSortByCreatedAt)
 	assert.Equal(t, domain.PerspectiveSortBy("UPDATED_AT"), domain.PerspectiveSortByUpdatedAt)
-	assert.Equal(t, domain.PerspectiveSortBy("CLAIM"), domain.PerspectiveSortByClaim)
 }
 
 func TestPerspectiveWithCategorizedRatings(t *testing.T) {
 	perspective := domain.Perspective{
 		ID:     1,
-		Claim:  "Test",
 		UserID: 1,
 		CategorizedRatings: []domain.CategorizedRating{
 			{Category: "accuracy", Rating: 8000},

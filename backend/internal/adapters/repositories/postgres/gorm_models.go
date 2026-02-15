@@ -10,6 +10,7 @@ type UserModel struct {
 	ID        int       `gorm:"primaryKey;autoIncrement"`
 	Username  string    `gorm:"not null"`
 	Email     string    `gorm:"uniqueIndex;not null"`
+	Active    bool      `gorm:"not null;default:true"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }
@@ -21,13 +22,14 @@ func (UserModel) TableName() string {
 
 // ContentModel is the GORM persistence model for content table
 type ContentModel struct {
-	ID          int             `gorm:"primaryKey;autoIncrement"`
-	Name        string          `gorm:"not null"`
-	URL         *string         `gorm:"uniqueIndex"`
-	ContentType string          `gorm:"column:content_type;not null"`
-	Length      *int            `gorm:""`
-	LengthUnits *string         `gorm:""`
-	Response    json.RawMessage `gorm:"type:jsonb"`
+	ID            int             `gorm:"primaryKey;autoIncrement"`
+	Name          string          `gorm:"not null"`
+	URL           *string         `gorm:"uniqueIndex"`
+	ContentType   string          `gorm:"column:content_type;not null"`
+	AddedByUserID int             `gorm:"column:added_by_user_id;not null"`
+	Length        *int            `gorm:""`
+	LengthUnits   *string         `gorm:""`
+	Response      json.RawMessage `gorm:"type:jsonb"`
 
 	// Dummy fields for gorm-cursor-paginator sort key validation.
 	// These are NOT database columns — SQLRepr provides the actual SQL.
@@ -48,7 +50,6 @@ func (ContentModel) TableName() string {
 // PerspectiveModel is the GORM persistence model for perspectives table
 type PerspectiveModel struct {
 	ID                 int         `gorm:"primaryKey;autoIncrement"`
-	Claim              string      `gorm:"not null;size:255"`
 	UserID             int         `gorm:"not null"`
 	ContentID          *int        `gorm:""`
 	Like               *string     `gorm:"column:like"`

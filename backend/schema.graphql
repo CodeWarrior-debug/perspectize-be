@@ -6,6 +6,7 @@ type User {
   id: ID!
   username: String!
   email: String!
+  active: Boolean!
   createdAt: String!
   updatedAt: String!
 }
@@ -25,7 +26,6 @@ enum ReviewStatus {
 enum PerspectiveSortBy {
   CREATED_AT
   UPDATED_AT
-  CLAIM
 }
 
 # Perspective type
@@ -36,7 +36,6 @@ type CategorizedRating {
 
 type Perspective {
   id: ID!
-  claim: String!
   userID: ID!
   user: User
   contentID: ID
@@ -68,6 +67,8 @@ type Content {
   name: String!
   url: String
   contentType: String!
+  addedByUserID: ID!
+  addedBy: User
   length: Int
   lengthUnits: String
   viewCount: Int
@@ -131,7 +132,13 @@ input ContentFilter {
 # User inputs
 input CreateUserInput {
   username: String!
-  email: String!
+  email: String
+}
+
+input UpdateUserInput {
+  id: IntID!
+  username: String
+  email: String
 }
 
 # Perspective inputs
@@ -141,7 +148,6 @@ input CategorizedRatingInput {
 }
 
 input CreatePerspectiveInput {
-  claim: String!
   userID: IntID!
   contentID: IntID
   quality: Int
@@ -159,7 +165,6 @@ input CreatePerspectiveInput {
 
 input UpdatePerspectiveInput {
   id: IntID!
-  claim: String
   contentID: IntID
   quality: Int
   agreement: Int
@@ -186,6 +191,8 @@ type Mutation {
 
   # User mutations
   createUser(input: CreateUserInput!): User!
+  updateUser(input: UpdateUserInput!): User!
+  deleteUser(id: ID!): Boolean!
 
   # Perspective mutations
   createPerspective(input: CreatePerspectiveInput!): Perspective!

@@ -29,6 +29,15 @@ vi.mock('@tanstack/svelte-query', () => ({
 		capturedQueryOptions = optionsFn();
 		return mockQueryState;
 	}),
+	createMutation: vi.fn(() => ({
+		mutate: vi.fn(),
+		isPending: false,
+		isSuccess: false,
+		data: undefined,
+	})),
+	useQueryClient: vi.fn(() => ({
+		invalidateQueries: vi.fn(),
+	})),
 }));
 
 vi.mock('$lib/queries/client', () => ({
@@ -37,6 +46,13 @@ vi.mock('$lib/queries/client', () => ({
 
 vi.mock('$lib/queries/users', () => ({
 	LIST_USERS: 'mock-list-users-query',
+}));
+
+vi.mock('svelte-sonner', () => ({
+	toast: {
+		success: vi.fn(),
+		error: vi.fn(),
+	},
 }));
 
 vi.mock('$lib/stores/userSelection.svelte', () => ({
@@ -116,6 +132,12 @@ describe('UserSelector with data', () => {
 		render(UserSelector);
 		const select = screen.getByRole('combobox') as HTMLSelectElement;
 		expect(select.value).toBe('');
+	});
+
+	it('renders CreateUserPopover adjacent to select', () => {
+		render(UserSelector);
+		const newUserButton = screen.getByRole('button', { name: /new user/i });
+		expect(newUserButton).toBeInTheDocument();
 	});
 });
 
