@@ -443,13 +443,35 @@ func TestNewUserService(t *testing.T) {
 	assert.NotNil(t, svc)
 }
 
+// --- ListAll Tests ---
+
+func TestListAll_ExcludesSentinels(t *testing.T) {
+	repo := &mockUserRepository{
+		listAllFn: func(ctx context.Context) ([]*domain.User, error) {
+			return []*domain.User{
+				{ID: 1, Username: "admin", Role: domain.UserRoleAdmin},
+				{ID: 2, Username: "alice", Role: domain.UserRoleDefault},
+			}, nil
+		},
+	}
+
+	svc := newTestUserService(repo)
+	users, err := svc.ListAll(context.Background())
+
+	require.NoError(t, err)
+	assert.Len(t, users, 2)
+	for _, u := range users {
+		assert.False(t, u.IsSentinel(), "sentinel user should not be in ListAll results")
+	}
+}
+
 // --- Update Tests ---
 
 func TestUpdate_Success(t *testing.T) {
 	newUsername := "updateduser"
 	repo := &mockUserRepository{
 		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
-			return &domain.User{ID: 2, Username: "olduser", Email: "old@example.com"}, nil
+			return &domain.User{ID: 2, Username: "olduser", Email: "old@example.com", Role: domain.UserRoleDefault}, nil
 		},
 		updateFn: func(ctx context.Context, user *domain.User) (*domain.User, error) {
 			return user, nil
@@ -470,7 +492,7 @@ func TestUpdate_Success(t *testing.T) {
 func TestUpdate_SentinelUserBlocked(t *testing.T) {
 	repo := &mockUserRepository{
 		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
-			return &domain.User{ID: 1, Username: domain.DeletedUserUsername, Email: "deleted@system.internal"}, nil
+			return &domain.User{ID: 1, Username: domain.DeletedUserUsername, Email: "deleted@system.internal", Role: domain.UserRoleSentinel}, nil
 		},
 	}
 
@@ -501,7 +523,7 @@ func TestUpdate_UsernameAlreadyTaken(t *testing.T) {
 	takenName := "taken"
 	repo := &mockUserRepository{
 		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
-			return &domain.User{ID: 2, Username: "olduser", Email: "old@example.com"}, nil
+			return &domain.User{ID: 2, Username: "olduser", Email: "old@example.com", Role: domain.UserRoleDefault}, nil
 		},
 		getByUsernameFn: func(ctx context.Context, username string) (*domain.User, error) {
 			if username == "taken" {
@@ -525,10 +547,10 @@ func TestUpdate_UsernameAlreadyTaken(t *testing.T) {
 // --- Delete Tests ---
 
 func TestDelete_Success(t *testing.T) {
-	sentinelUser := &domain.User{ID: 1, Username: domain.DeletedUserUsername}
+	sentinelUser := &domain.User{ID: 1, Username: domain.DeletedUserUsername, Role: domain.UserRoleSentinel}
 	repo := &mockUserRepository{
 		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
-			return &domain.User{ID: 2, Username: "testuser", Email: "test@example.com"}, nil
+			return &domain.User{ID: 2, Username: "testuser", Email: "test@example.com", Role: domain.UserRoleDefault}, nil
 		},
 		getByUsernameFn: func(ctx context.Context, username string) (*domain.User, error) {
 			if username == domain.DeletedUserUsername {
@@ -553,7 +575,7 @@ func TestDelete_Success(t *testing.T) {
 func TestDelete_SentinelUserBlocked(t *testing.T) {
 	repo := &mockUserRepository{
 		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
-			return &domain.User{ID: 1, Username: domain.DeletedUserUsername}, nil
+			return &domain.User{ID: 1, Username: domain.DeletedUserUsername, Role: domain.UserRoleSentinel}, nil
 		},
 	}
 
@@ -589,10 +611,10 @@ func TestDelete_UserNotFound(t *testing.T) {
 }
 
 func TestDelete_ReassignContentFails(t *testing.T) {
-	sentinelUser := &domain.User{ID: 1, Username: domain.DeletedUserUsername}
+	sentinelUser := &domain.User{ID: 1, Username: domain.DeletedUserUsername, Role: domain.UserRoleSentinel}
 	repo := &mockUserRepository{
 		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
-			return &domain.User{ID: 2, Username: "testuser"}, nil
+			return &domain.User{ID: 2, Username: "testuser", Role: domain.UserRoleDefault}, nil
 		},
 		getByUsernameFn: func(ctx context.Context, username string) (*domain.User, error) {
 			if username == domain.DeletedUserUsername {
@@ -617,10 +639,10 @@ func TestDelete_ReassignContentFails(t *testing.T) {
 }
 
 func TestDelete_ReassignPerspectivesFails(t *testing.T) {
-	sentinelUser := &domain.User{ID: 1, Username: domain.DeletedUserUsername}
+	sentinelUser := &domain.User{ID: 1, Username: domain.DeletedUserUsername, Role: domain.UserRoleSentinel}
 	repo := &mockUserRepository{
 		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
-			return &domain.User{ID: 2, Username: "testuser"}, nil
+			return &domain.User{ID: 2, Username: "testuser", Role: domain.UserRoleDefault}, nil
 		},
 		getByUsernameFn: func(ctx context.Context, username string) (*domain.User, error) {
 			if username == domain.DeletedUserUsername {
@@ -713,7 +735,7 @@ func TestUpdate_ReservedSystemUsername(t *testing.T) {
 func TestUpdate_SystemSentinelBlocked(t *testing.T) {
 	repo := &mockUserRepository{
 		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
-			return &domain.User{ID: 1, Username: domain.SystemUserUsername, Email: "system@system.internal"}, nil
+			return &domain.User{ID: 1, Username: domain.SystemUserUsername, Email: "system@system.internal", Role: domain.UserRoleSentinel}, nil
 		},
 	}
 
@@ -732,7 +754,7 @@ func TestUpdate_SystemSentinelBlocked(t *testing.T) {
 func TestDelete_SystemSentinelBlocked(t *testing.T) {
 	repo := &mockUserRepository{
 		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
-			return &domain.User{ID: 1, Username: domain.SystemUserUsername}, nil
+			return &domain.User{ID: 1, Username: domain.SystemUserUsername, Role: domain.UserRoleSentinel}, nil
 		},
 	}
 

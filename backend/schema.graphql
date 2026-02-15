@@ -1,12 +1,20 @@
 scalar JSON
 scalar IntID
 
+# User enums
+enum UserRole {
+  ADMIN
+  SENTINEL
+  DEFAULT
+}
+
 # User type
 type User {
   id: ID!
   username: String!
   email: String!
   active: Boolean!
+  role: UserRole!
   createdAt: String!
   updatedAt: String!
 }

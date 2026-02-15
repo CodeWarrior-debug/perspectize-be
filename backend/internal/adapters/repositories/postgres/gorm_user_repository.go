@@ -79,11 +79,14 @@ func (r *GormUserRepository) GetByEmail(ctx context.Context, email string) (*dom
 	return userModelToDomain(&model), nil
 }
 
-// ListAll retrieves all users ordered by username
+// ListAll retrieves all non-sentinel users ordered by username
 func (r *GormUserRepository) ListAll(ctx context.Context) ([]*domain.User, error) {
 	var models []UserModel
 
-	err := r.db.WithContext(ctx).Order("username ASC").Find(&models).Error
+	err := r.db.WithContext(ctx).
+		Where("role != ?", "sentinel").
+		Order("username ASC").
+		Find(&models).Error
 	if err != nil {
 		return nil, err
 	}

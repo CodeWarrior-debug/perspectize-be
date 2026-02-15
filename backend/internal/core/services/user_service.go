@@ -80,6 +80,7 @@ func (s *UserService) Create(ctx context.Context, username, email string) (*doma
 	user := &domain.User{
 		Username: username,
 		Email:    email,
+		Role:     domain.UserRoleDefault,
 		Active:   true,
 	}
 
