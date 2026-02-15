@@ -31,8 +31,8 @@ type CategorizedRating struct {
 // Perspective represents a user's viewpoint on content
 type Perspective struct {
 	ID        int
-	UserID    int // Required, FK to users
-	ContentID *int   // Optional, FK to content
+	UserID    int  // Required, FK to users
+	ContentID *int // Optional, FK to content
 
 	// Optional ratings (0-10000 range enforced by DB domain)
 	Quality    *int
