@@ -192,16 +192,22 @@ func TestCreate_UsernameTooLong(t *testing.T) {
 	assert.Contains(t, err.Error(), "username must be 24 characters or less")
 }
 
-func TestCreate_EmailEmpty(t *testing.T) {
-	repo := &mockUserRepository{}
-	svc := newTestUserService(repo)
+func TestCreate_EmailEmpty_Succeeds(t *testing.T) {
+	repo := &mockUserRepository{
+		createFn: func(ctx context.Context, user *domain.User) (*domain.User, error) {
+			user.ID = 1
+			return user, nil
+		},
+	}
 
+	svc := newTestUserService(repo)
 	result, err := svc.Create(context.Background(), "testuser", "")
 
-	assert.Nil(t, result)
-	require.Error(t, err)
-	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
-	assert.Contains(t, err.Error(), "email is required")
+	require.NoError(t, err)
+	assert.Equal(t, 1, result.ID)
+	assert.Equal(t, "testuser", result.Username)
+	assert.Equal(t, "", result.Email)
+	assert.True(t, result.Active)
 }
 
 func TestCreate_EmailInvalid(t *testing.T) {

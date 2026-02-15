@@ -49,13 +49,12 @@ func (s *UserService) Create(ctx context.Context, username, email string) (*doma
 		return nil, fmt.Errorf("%w: username is reserved", domain.ErrInvalidInput)
 	}
 
-	// Validate email
+	// Validate email (optional — only validate format if provided)
 	email = strings.TrimSpace(email)
-	if email == "" {
-		return nil, fmt.Errorf("%w: email is required", domain.ErrInvalidInput)
-	}
-	if !emailRegex.MatchString(email) {
-		return nil, fmt.Errorf("%w: invalid email format", domain.ErrInvalidInput)
+	if email != "" {
+		if !emailRegex.MatchString(email) {
+			return nil, fmt.Errorf("%w: invalid email format", domain.ErrInvalidInput)
+		}
 	}
 
 	// Check if username already exists
@@ -67,13 +66,15 @@ func (s *UserService) Create(ctx context.Context, username, email string) (*doma
 		return nil, fmt.Errorf("failed to check username: %w", err)
 	}
 
-	// Check if email already exists
-	existing, err = s.repo.GetByEmail(ctx, email)
-	if err == nil && existing != nil {
-		return nil, fmt.Errorf("%w: email already registered", domain.ErrAlreadyExists)
-	}
-	if err != nil && !errors.Is(err, domain.ErrNotFound) {
-		return nil, fmt.Errorf("failed to check email: %w", err)
+	// Check if email already exists (only if email provided)
+	if email != "" {
+		existing, err = s.repo.GetByEmail(ctx, email)
+		if err == nil && existing != nil {
+			return nil, fmt.Errorf("%w: email already registered", domain.ErrAlreadyExists)
+		}
+		if err != nil && !errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("failed to check email: %w", err)
+		}
 	}
 
 	user := &domain.User{
