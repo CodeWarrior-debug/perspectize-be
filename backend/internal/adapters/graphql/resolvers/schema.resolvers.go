@@ -37,7 +37,11 @@ func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input m
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error) {
-	user, err := r.UserService.Create(ctx, input.Username, input.Email)
+	email := ""
+	if input.Email != nil {
+		email = *input.Email
+	}
+	user, err := r.UserService.Create(ctx, input.Username, email)
 	if err != nil {
 		if errors.Is(err, domain.ErrAlreadyExists) {
 			return nil, fmt.Errorf("user already exists: %w", err)

@@ -911,7 +911,7 @@ input ContentFilter {
 # User inputs
 input CreateUserInput {
   username: String!
-  email: String!
+  email: String
 }
 
 input UpdateUserInput {
@@ -5703,7 +5703,7 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 			it.Username = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}

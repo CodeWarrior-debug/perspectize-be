@@ -65,8 +65,8 @@ type CreatePerspectiveInput struct {
 }
 
 type CreateUserInput struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
+	Username string  `json:"username"`
+	Email    *string `json:"email,omitempty"`
 }
 
 type Mutation struct {

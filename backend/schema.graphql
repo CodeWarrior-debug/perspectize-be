@@ -132,7 +132,7 @@ input ContentFilter {
 # User inputs
 input CreateUserInput {
   username: String!
-  email: String!
+  email: String
 }
 
 input UpdateUserInput {
