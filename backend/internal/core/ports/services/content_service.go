@@ -8,8 +8,8 @@ import (
 
 // ContentService defines the contract for content business logic
 type ContentService interface {
-	// CreateFromYouTube creates content from a YouTube URL
-	CreateFromYouTube(ctx context.Context, url string) (*domain.Content, error)
+	// CreateFromYouTube creates content from a YouTube URL, attributed to the given user
+	CreateFromYouTube(ctx context.Context, url string, userID int) (*domain.Content, error)
 
 	// GetByID retrieves content by ID
 	GetByID(ctx context.Context, id int) (*domain.Content, error)

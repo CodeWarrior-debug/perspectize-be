@@ -45,7 +45,8 @@ type ContentFilter struct {
 }
 
 type CreateContentFromYouTubeInput struct {
-	URL string `json:"url"`
+	URL    string `json:"url"`
+	UserID int    `json:"userId"`
 }
 
 type CreatePerspectiveInput struct {

@@ -906,6 +906,7 @@ enum ContentType {
 # Inputs
 input CreateContentFromYouTubeInput {
   url: String!
+  userId: IntID!
 }
 
 # TODO: Add additional filters (e.g., dateRange, search) or make filters dynamic
@@ -5600,7 +5601,7 @@ func (ec *executionContext) unmarshalInputCreateContentFromYouTubeInput(ctx cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"url"}
+	fieldsInOrder := [...]string{"url", "userId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5614,6 +5615,13 @@ func (ec *executionContext) unmarshalInputCreateContentFromYouTubeInput(ctx cont
 				return it, err
 			}
 			it.URL = data
+		case "userId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+			data, err := ec.unmarshalNIntID2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UserID = data
 		}
 	}
 

@@ -20,7 +20,7 @@ import (
 
 // CreateContentFromYouTube is the resolver for the createContentFromYouTube field.
 func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input model.CreateContentFromYouTubeInput) (*model.Content, error) {
-	content, err := r.ContentService.CreateFromYouTube(ctx, input.URL)
+	content, err := r.ContentService.CreateFromYouTube(ctx, input.URL, input.UserID)
 	if err != nil {
 		if errors.Is(err, domain.ErrAlreadyExists) {
 			return nil, fmt.Errorf("content already exists for this URL")

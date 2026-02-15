@@ -127,6 +127,7 @@ enum ContentType {
 # Inputs
 input CreateContentFromYouTubeInput {
   url: String!
+  userId: IntID!
 }
 
 # TODO: Add additional filters (e.g., dateRange, search) or make filters dynamic
