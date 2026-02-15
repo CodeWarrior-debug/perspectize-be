@@ -11,7 +11,6 @@ import (
 func BenchmarkPerspectiveService_GetByID(b *testing.B) {
 	perspective := &domain.Perspective{
 		ID:      1,
-		Claim:   "Benchmark claim",
 		UserID:  1,
 		Privacy: domain.PrivacyPublic,
 	}
@@ -36,7 +35,6 @@ func BenchmarkPerspectiveService_ListPerspectives(b *testing.B) {
 	for i := range items {
 		items[i] = &domain.Perspective{
 			ID:      i + 1,
-			Claim:   "Perspective claim",
 			UserID:  1,
 			Privacy: domain.PrivacyPublic,
 		}
