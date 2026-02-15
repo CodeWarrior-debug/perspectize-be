@@ -25,7 +25,6 @@ enum ReviewStatus {
 enum PerspectiveSortBy {
   CREATED_AT
   UPDATED_AT
-  CLAIM
 }
 
 # Perspective type
@@ -36,7 +35,6 @@ type CategorizedRating {
 
 type Perspective {
   id: ID!
-  claim: String!
   userID: ID!
   user: User
   contentID: ID
@@ -149,7 +147,6 @@ input CategorizedRatingInput {
 }
 
 input CreatePerspectiveInput {
-  claim: String!
   userID: IntID!
   contentID: IntID
   quality: Int
@@ -167,7 +164,6 @@ input CreatePerspectiveInput {
 
 input UpdatePerspectiveInput {
   id: IntID!
-  claim: String
   contentID: IntID
   quality: Int
   agreement: Int

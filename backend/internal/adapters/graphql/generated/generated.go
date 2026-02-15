@@ -107,7 +107,6 @@ type ComplexityRoot struct {
 		Agreement          func(childComplexity int) int
 		CategorizedRatings func(childComplexity int) int
 		Category           func(childComplexity int) int
-		Claim              func(childComplexity int) int
 		Confidence         func(childComplexity int) int
 		Content            func(childComplexity int) int
 		ContentID          func(childComplexity int) int
@@ -464,12 +463,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Perspective.Category(childComplexity), true
-	case "Perspective.claim":
-		if e.complexity.Perspective.Claim == nil {
-			break
-		}
-
-		return e.complexity.Perspective.Claim(childComplexity), true
 	case "Perspective.confidence":
 		if e.complexity.Perspective.Confidence == nil {
 			break
@@ -811,7 +804,6 @@ enum ReviewStatus {
 enum PerspectiveSortBy {
   CREATED_AT
   UPDATED_AT
-  CLAIM
 }
 
 # Perspective type
@@ -822,7 +814,6 @@ type CategorizedRating {
 
 type Perspective {
   id: ID!
-  claim: String!
   userID: ID!
   user: User
   contentID: ID
@@ -935,7 +926,6 @@ input CategorizedRatingInput {
 }
 
 input CreatePerspectiveInput {
-  claim: String!
   userID: IntID!
   contentID: IntID
   quality: Int
@@ -953,7 +943,6 @@ input CreatePerspectiveInput {
 
 input UpdatePerspectiveInput {
   id: IntID!
-  claim: String
   contentID: IntID
   quality: Int
   agreement: Int
@@ -2152,8 +2141,6 @@ func (ec *executionContext) fieldContext_Mutation_createPerspective(ctx context.
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Perspective_id(ctx, field)
-			case "claim":
-				return ec.fieldContext_Perspective_claim(ctx, field)
 			case "userID":
 				return ec.fieldContext_Perspective_userID(ctx, field)
 			case "user":
@@ -2235,8 +2222,6 @@ func (ec *executionContext) fieldContext_Mutation_updatePerspective(ctx context.
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Perspective_id(ctx, field)
-			case "claim":
-				return ec.fieldContext_Perspective_claim(ctx, field)
 			case "userID":
 				return ec.fieldContext_Perspective_userID(ctx, field)
 			case "user":
@@ -2609,8 +2594,6 @@ func (ec *executionContext) fieldContext_PaginatedPerspectives_items(_ context.C
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Perspective_id(ctx, field)
-			case "claim":
-				return ec.fieldContext_Perspective_claim(ctx, field)
 			case "userID":
 				return ec.fieldContext_Perspective_userID(ctx, field)
 			case "user":
@@ -2746,35 +2729,6 @@ func (ec *executionContext) fieldContext_Perspective_id(_ context.Context, field
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Perspective_claim(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Perspective_claim,
-		func(ctx context.Context) (any, error) {
-			return obj.Claim, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Perspective_claim(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Perspective",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3660,8 +3614,6 @@ func (ec *executionContext) fieldContext_Query_perspectiveByID(ctx context.Conte
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Perspective_id(ctx, field)
-			case "claim":
-				return ec.fieldContext_Perspective_claim(ctx, field)
 			case "userID":
 				return ec.fieldContext_Perspective_userID(ctx, field)
 			case "user":
@@ -5580,20 +5532,13 @@ func (ec *executionContext) unmarshalInputCreatePerspectiveInput(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"claim", "userID", "contentID", "quality", "agreement", "importance", "confidence", "like", "privacy", "description", "category", "parts", "labels", "categorizedRatings"}
+	fieldsInOrder := [...]string{"userID", "contentID", "quality", "agreement", "importance", "confidence", "like", "privacy", "description", "category", "parts", "labels", "categorizedRatings"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "claim":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("claim"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Claim = data
 		case "userID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userID"))
 			data, err := ec.unmarshalNIntID2int(ctx, v)
@@ -5773,7 +5718,7 @@ func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "claim", "contentID", "quality", "agreement", "importance", "confidence", "like", "privacy", "description", "category", "reviewStatus", "parts", "labels", "categorizedRatings"}
+	fieldsInOrder := [...]string{"id", "contentID", "quality", "agreement", "importance", "confidence", "like", "privacy", "description", "category", "reviewStatus", "parts", "labels", "categorizedRatings"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5787,13 +5732,6 @@ func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Con
 				return it, err
 			}
 			it.ID = data
-		case "claim":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("claim"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Claim = data
 		case "contentID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contentID"))
 			data, err := ec.unmarshalOIntID2ᚖint(ctx, v)
@@ -6316,11 +6254,6 @@ func (ec *executionContext) _Perspective(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = graphql.MarshalString("Perspective")
 		case "id":
 			out.Values[i] = ec._Perspective_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "claim":
-			out.Values[i] = ec._Perspective_claim(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

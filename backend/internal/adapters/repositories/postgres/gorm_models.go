@@ -49,7 +49,6 @@ func (ContentModel) TableName() string {
 // PerspectiveModel is the GORM persistence model for perspectives table
 type PerspectiveModel struct {
 	ID                 int         `gorm:"primaryKey;autoIncrement"`
-	Claim              string      `gorm:"not null;size:255"`
 	UserID             int         `gorm:"not null"`
 	ContentID          *int        `gorm:""`
 	Like               *string     `gorm:"column:like"`

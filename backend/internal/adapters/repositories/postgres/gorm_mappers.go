@@ -79,7 +79,6 @@ func perspectiveModelToDomain(m *PerspectiveModel) *domain.Perspective {
 
 	p := &domain.Perspective{
 		ID:          m.ID,
-		Claim:       m.Claim,
 		UserID:      m.UserID,
 		ContentID:   m.ContentID,
 		Like:        m.Like,
@@ -143,7 +142,6 @@ func perspectiveDomainToModel(p *domain.Perspective) *PerspectiveModel {
 
 	m := &PerspectiveModel{
 		ID:          p.ID,
-		Claim:       p.Claim,
 		UserID:      p.UserID,
 		ContentID:   p.ContentID,
 		Like:        p.Like,

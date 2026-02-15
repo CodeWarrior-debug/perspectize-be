@@ -49,7 +49,6 @@ type CreateContentFromYouTubeInput struct {
 }
 
 type CreatePerspectiveInput struct {
-	Claim              string                    `json:"claim"`
 	UserID             int                       `json:"userID"`
 	ContentID          *int                      `json:"contentID,omitempty"`
 	Quality            *int                      `json:"quality,omitempty"`
@@ -94,7 +93,6 @@ type PaginatedPerspectives struct {
 
 type Perspective struct {
 	ID                 string               `json:"id"`
-	Claim              string               `json:"claim"`
 	UserID             string               `json:"userID"`
 	User               *User                `json:"user,omitempty"`
 	ContentID          *string              `json:"contentID,omitempty"`
@@ -126,7 +124,6 @@ type Query struct {
 
 type UpdatePerspectiveInput struct {
 	ID                 int                       `json:"id"`
-	Claim              *string                   `json:"claim,omitempty"`
 	ContentID          *int                      `json:"contentID,omitempty"`
 	Quality            *int                      `json:"quality,omitempty"`
 	Agreement          *int                      `json:"agreement,omitempty"`

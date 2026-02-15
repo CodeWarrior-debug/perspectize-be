@@ -109,9 +109,6 @@ func (m *mockPerspectiveRepoForUser) Create(ctx context.Context, p *domain.Persp
 func (m *mockPerspectiveRepoForUser) GetByID(ctx context.Context, id int) (*domain.Perspective, error) {
 	return nil, domain.ErrNotFound
 }
-func (m *mockPerspectiveRepoForUser) GetByUserAndClaim(ctx context.Context, userID int, claim string) (*domain.Perspective, error) {
-	return nil, domain.ErrNotFound
-}
 func (m *mockPerspectiveRepoForUser) Update(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error) {
 	return p, nil
 }
@@ -610,4 +607,131 @@ func TestDelete_ReassignContentFails(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to reassign content")
+}
+
+func TestDelete_ReassignPerspectivesFails(t *testing.T) {
+	sentinelUser := &domain.User{ID: 1, Username: domain.DeletedUserUsername}
+	repo := &mockUserRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
+			return &domain.User{ID: 2, Username: "testuser"}, nil
+		},
+		getByUsernameFn: func(ctx context.Context, username string) (*domain.User, error) {
+			if username == domain.DeletedUserUsername {
+				return sentinelUser, nil
+			}
+			return nil, domain.ErrNotFound
+		},
+	}
+
+	contentRepo := &mockContentRepoForUser{}
+	perspectiveRepo := &mockPerspectiveRepoForUser{
+		reassignByUserFn: func(ctx context.Context, fromUserID, toUserID int) error {
+			return fmt.Errorf("database error")
+		},
+	}
+	svc := newTestUserServiceFull(repo, contentRepo, perspectiveRepo)
+
+	err := svc.Delete(context.Background(), 2)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to reassign perspectives")
+}
+
+// --- Reserved Username Tests ---
+
+func TestCreate_ReservedDeletedUsername(t *testing.T) {
+	repo := &mockUserRepository{}
+	svc := newTestUserService(repo)
+
+	result, err := svc.Create(context.Background(), domain.DeletedUserUsername, "test@example.com")
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
+	assert.Contains(t, err.Error(), "username is reserved")
+}
+
+func TestCreate_ReservedSystemUsername(t *testing.T) {
+	repo := &mockUserRepository{}
+	svc := newTestUserService(repo)
+
+	result, err := svc.Create(context.Background(), domain.SystemUserUsername, "test@example.com")
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
+	assert.Contains(t, err.Error(), "username is reserved")
+}
+
+func TestUpdate_ReservedDeletedUsername(t *testing.T) {
+	reserved := domain.DeletedUserUsername
+	repo := &mockUserRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
+			return &domain.User{ID: 2, Username: "normaluser", Email: "normal@example.com"}, nil
+		},
+	}
+
+	svc := newTestUserService(repo)
+	result, err := svc.Update(context.Background(), portservices.UpdateUserInput{
+		ID:       2,
+		Username: &reserved,
+	})
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
+	assert.Contains(t, err.Error(), "username is reserved")
+}
+
+func TestUpdate_ReservedSystemUsername(t *testing.T) {
+	reserved := domain.SystemUserUsername
+	repo := &mockUserRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
+			return &domain.User{ID: 2, Username: "normaluser", Email: "normal@example.com"}, nil
+		},
+	}
+
+	svc := newTestUserService(repo)
+	result, err := svc.Update(context.Background(), portservices.UpdateUserInput{
+		ID:       2,
+		Username: &reserved,
+	})
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
+	assert.Contains(t, err.Error(), "username is reserved")
+}
+
+func TestUpdate_SystemSentinelBlocked(t *testing.T) {
+	repo := &mockUserRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
+			return &domain.User{ID: 1, Username: domain.SystemUserUsername, Email: "system@system.internal"}, nil
+		},
+	}
+
+	newUsername := "hacker"
+	svc := newTestUserService(repo)
+	result, err := svc.Update(context.Background(), portservices.UpdateUserInput{
+		ID:       1,
+		Username: &newUsername,
+	})
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrSentinelUser))
+}
+
+func TestDelete_SystemSentinelBlocked(t *testing.T) {
+	repo := &mockUserRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
+			return &domain.User{ID: 1, Username: domain.SystemUserUsername}, nil
+		},
+	}
+
+	svc := newTestUserService(repo)
+	err := svc.Delete(context.Background(), 1)
+
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrDeleteSentinel))
 }

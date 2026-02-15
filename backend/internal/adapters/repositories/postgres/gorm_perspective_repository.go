@@ -51,20 +51,6 @@ func (r *GormPerspectiveRepository) GetByID(ctx context.Context, id int) (*domai
 	return perspectiveModelToDomain(&model), nil
 }
 
-// GetByUserAndClaim retrieves a perspective by user ID and claim text
-func (r *GormPerspectiveRepository) GetByUserAndClaim(ctx context.Context, userID int, claim string) (*domain.Perspective, error) {
-	var model PerspectiveModel
-	err := r.db.WithContext(ctx).Where("user_id = ? AND claim = ?", userID, claim).First(&model).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, domain.ErrNotFound
-		}
-		return nil, fmt.Errorf("failed to get perspective by user and claim: %w", err)
-	}
-
-	return perspectiveModelToDomain(&model), nil
-}
-
 // Update updates an existing perspective
 func (r *GormPerspectiveRepository) Update(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error) {
 	model := perspectiveDomainToModel(p)

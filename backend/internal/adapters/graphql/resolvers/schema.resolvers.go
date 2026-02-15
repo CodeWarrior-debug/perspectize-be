@@ -109,7 +109,6 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, err
 // CreatePerspective is the resolver for the createPerspective field.
 func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.CreatePerspectiveInput) (*model.Perspective, error) {
 	serviceInput := portservices.CreatePerspectiveInput{
-		Claim:       input.Claim,
 		UserID:      input.UserID,
 		Quality:     input.Quality,
 		Agreement:   input.Agreement,
@@ -140,9 +139,6 @@ func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.Cr
 
 	perspective, err := r.PerspectiveService.Create(ctx, serviceInput)
 	if err != nil {
-		if errors.Is(err, domain.ErrDuplicateClaim) {
-			return nil, fmt.Errorf("duplicate claim: %w", err)
-		}
 		if errors.Is(err, domain.ErrInvalidRating) {
 			return nil, fmt.Errorf("invalid rating: %w", err)
 		}
@@ -163,7 +159,6 @@ func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.Cr
 func (r *mutationResolver) UpdatePerspective(ctx context.Context, input model.UpdatePerspectiveInput) (*model.Perspective, error) {
 	serviceInput := portservices.UpdatePerspectiveInput{
 		ID:           input.ID,
-		Claim:        input.Claim,
 		Quality:      input.Quality,
 		Agreement:    input.Agreement,
 		Importance:   input.Importance,
@@ -196,9 +191,6 @@ func (r *mutationResolver) UpdatePerspective(ctx context.Context, input model.Up
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
 			return nil, fmt.Errorf("perspective not found")
-		}
-		if errors.Is(err, domain.ErrDuplicateClaim) {
-			return nil, fmt.Errorf("duplicate claim: %w", err)
 		}
 		if errors.Is(err, domain.ErrInvalidRating) {
 			return nil, fmt.Errorf("invalid rating: %w", err)

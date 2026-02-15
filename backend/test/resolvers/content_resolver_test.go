@@ -135,12 +135,11 @@ func (m *mockUserRepository) Delete(ctx context.Context, id int) error {
 
 // mockPerspectiveRepository implements repositories.PerspectiveRepository for testing
 type mockPerspectiveRepository struct {
-	createFn            func(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error)
-	getByIDFn           func(ctx context.Context, id int) (*domain.Perspective, error)
-	getByUserAndClaimFn func(ctx context.Context, userID int, claim string) (*domain.Perspective, error)
-	updateFn            func(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error)
-	deleteFn            func(ctx context.Context, id int) error
-	listFn              func(ctx context.Context, params domain.PerspectiveListParams) (*domain.PaginatedPerspectives, error)
+	createFn  func(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error)
+	getByIDFn func(ctx context.Context, id int) (*domain.Perspective, error)
+	updateFn  func(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error)
+	deleteFn  func(ctx context.Context, id int) error
+	listFn    func(ctx context.Context, params domain.PerspectiveListParams) (*domain.PaginatedPerspectives, error)
 }
 
 func (m *mockPerspectiveRepository) Create(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error) {
@@ -154,13 +153,6 @@ func (m *mockPerspectiveRepository) Create(ctx context.Context, p *domain.Perspe
 func (m *mockPerspectiveRepository) GetByID(ctx context.Context, id int) (*domain.Perspective, error) {
 	if m.getByIDFn != nil {
 		return m.getByIDFn(ctx, id)
-	}
-	return nil, domain.ErrNotFound
-}
-
-func (m *mockPerspectiveRepository) GetByUserAndClaim(ctx context.Context, userID int, claim string) (*domain.Perspective, error) {
-	if m.getByUserAndClaimFn != nil {
-		return m.getByUserAndClaimFn(ctx, userID, claim)
 	}
 	return nil, domain.ErrNotFound
 }

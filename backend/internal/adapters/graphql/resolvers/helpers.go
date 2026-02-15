@@ -108,7 +108,6 @@ func parseStatCount(value, field string, contentID int) *int {
 func perspectiveDomainToModel(p *domain.Perspective) *model.Perspective {
 	m := &model.Perspective{
 		ID:           strconv.Itoa(p.ID),
-		Claim:        p.Claim,
 		UserID:       strconv.Itoa(p.UserID),
 		Quality:      p.Quality,
 		Agreement:    p.Agreement,

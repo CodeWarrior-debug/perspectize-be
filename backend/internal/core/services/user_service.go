@@ -45,6 +45,9 @@ func (s *UserService) Create(ctx context.Context, username, email string) (*doma
 	if len(username) > 24 {
 		return nil, fmt.Errorf("%w: username must be 24 characters or less", domain.ErrInvalidInput)
 	}
+	if username == domain.DeletedUserUsername || username == domain.SystemUserUsername {
+		return nil, fmt.Errorf("%w: username is reserved", domain.ErrInvalidInput)
+	}
 
 	// Validate email
 	email = strings.TrimSpace(email)
@@ -147,6 +150,9 @@ func (s *UserService) Update(ctx context.Context, input portservices.UpdateUserI
 		}
 		if len(username) > 24 {
 			return nil, fmt.Errorf("%w: username must be 24 characters or less", domain.ErrInvalidInput)
+		}
+		if username == domain.DeletedUserUsername || username == domain.SystemUserUsername {
+			return nil, fmt.Errorf("%w: username is reserved", domain.ErrInvalidInput)
 		}
 		// Check uniqueness (only if actually changing)
 		if username != user.Username {

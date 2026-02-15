@@ -31,8 +31,7 @@ type CategorizedRating struct {
 // Perspective represents a user's viewpoint on content
 type Perspective struct {
 	ID        int
-	Claim     string // Required, max 255 chars
-	UserID    int    // Required, FK to users
+	UserID    int // Required, FK to users
 	ContentID *int   // Optional, FK to content
 
 	// Optional ratings (0-10000 range enforced by DB domain)
@@ -80,7 +79,6 @@ type PerspectiveSortBy string
 const (
 	PerspectiveSortByCreatedAt PerspectiveSortBy = "CREATED_AT"
 	PerspectiveSortByUpdatedAt PerspectiveSortBy = "UPDATED_AT"
-	PerspectiveSortByClaim     PerspectiveSortBy = "CLAIM"
 )
 
 // PerspectiveFilter contains filter criteria for perspective queries
