@@ -4,6 +4,7 @@
 	import { LIST_USERS, type User, type UsersResponse } from '$lib/queries/users';
 	import { queryKeys } from '$lib/queries/keys';
 	import { setSelectedUserId, getSelectedUserId } from '$lib/stores/userSelection.svelte';
+	import CreateUserPopover from '$lib/components/CreateUserPopover.svelte';
 
 	const usersQuery = createQuery(() => ({
 		queryKey: queryKeys.users.list(),
@@ -17,10 +18,14 @@
 		setSelectedUserId(value ? parseInt(value, 10) : null);
 	}
 
+	function handleUserCreated(userId: string) {
+		setSelectedUserId(parseInt(userId, 10));
+	}
+
 	const currentUserId = $derived(getSelectedUserId());
 </script>
 
-<div>
+<div class="flex items-center gap-2">
 	{#if usersQuery.isLoading}
 		<select class="h-9 rounded-md border border-input bg-background px-3 text-sm" disabled>
 			<option>Loading users...</option>
@@ -41,4 +46,5 @@
 			{/each}
 		</select>
 	{/if}
+	<CreateUserPopover onUserCreated={handleUserCreated} />
 </div>
