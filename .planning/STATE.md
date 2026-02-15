@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 3.2 complete — Phase 4 (Add Perspective Flow) next
+**Current focus:** Phases 3.2, 3.3 (obsolete), 5 complete — Phase 4 (Add Perspective Flow) is next
 
 ## Current Position
 
@@ -305,6 +305,6 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Phase 3.2 marked complete — all code verified implemented, planning docs updated
+Stopped at: Phases 3.2, 3.3 (obsolete), 5 marked complete — roadmap cleaned up
 Resume file: None
-Next up: Phase 4 (Add Perspective Flow) or Phase 3.3 (Repo Rename — may be obsolete, folders already match)
+Next up: Phase 4 (Add Perspective Flow) — core feature, 2 plans

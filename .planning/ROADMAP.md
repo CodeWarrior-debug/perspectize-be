@@ -18,9 +18,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
 - [x] **Phase 3.1: Design Token System** - Implement all 27 Figma color variables, Geist + Charter typography, rating colors in code (INSERTED — rescoped)
 - [x] **Phase 3.2: Activity Page Beta Quality** - Rebuild Activity page to beta quality with server-side ops, new columns, popover dialog, data provenance (INSERTED)
-- [ ] **Phase 3.3: Repository Rename & Folder Restructure** - Rename repo to perspectize, backend → backend, fe → fe, update imports and Sevalla (INSERTED)
+- [x] **Phase 3.3: Repository Rename & Folder Restructure** - OBSOLETE — repo already named `perspectize`, folders already `backend/` + `frontend/` (INSERTED)
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
-- [ ] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
+- [x] **Phase 5: Testing + Deployment** - Coverage met, deployed on Sevalla, CORS working (wildcard — restriction deferred to Phase 9)
 
 ## Phase Details
 
@@ -141,9 +141,9 @@ Plans:
 **Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 03.3-01-PLAN.md — GitHub repo rename (checkpoint) + Go module path refactor (imports, gqlgen.yml, tests)
-- [ ] 03.3-02-PLAN.md — Folder rename (git mv) + bulk path updates across CI/CD, CLAUDE.md, docs, planning
-- [ ] 03.3-03-PLAN.md — Deployment config update (checkpoint) + push to GitHub + CI/CD verification
+- [x] 03.3-01-PLAN.md — OBSOLETE (repo already named perspectize, Go module path already correct)
+- [x] 03.3-02-PLAN.md — OBSOLETE (folders already backend/ and frontend/)
+- [x] 03.3-03-PLAN.md — OBSOLETE (Sevalla already deployed with current structure)
 
 ### Phase 4: Add Perspective Flow
 **Goal**: Users can create perspectives on videos with ratings, Like text, and Review text
@@ -175,7 +175,7 @@ Plans:
 Plans:
 - [x] 05-01-PLAN.md — Coverage verification — SKIPPED (thresholds already met: 87.6% stmts, 90.1% lines)
 - [x] 05-02-PLAN.md — Sevalla static site deployment (cleanup GitHub Pages artifacts, deploy frontend) — COMPLETED (deployed manually)
-- [ ] 05-03-PLAN.md — CORS configuration with rs/cors and Sevalla frontend origin
+- [x] 05-03-PLAN.md — SKIPPED (CORS already working with wildcard `*`; restriction to specific origin deferred to Phase 9 C-05)
 
 ---
 
@@ -472,9 +472,9 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 3. Add Video Flow | 2/2 | Complete | 2026-02-07 |
 | 3.1 Design Token System | 2/2 | Complete | 2026-02-12 |
 | 3.2 Activity Page Beta Quality | 4/4 | Complete | 2026-02-14 |
-| 3.3 Repository Rename & Restructure | 0/3 | Planned | - |
+| 3.3 Repository Rename & Restructure | 0/3 | Obsolete | 2026-02-15 |
 | 4. Add Perspective Flow | 0/2 | Not started | - |
-| 5. Testing + Deployment | 1/3 | In progress | - |
+| 5. Testing + Deployment | 2/3 | Complete | 2026-02-15 |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
 | 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |
 | 7.1 ORM Migration (sqlx → GORM) | 3/3 | Complete | 2026-02-14 |
