@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 3 complete — Phase 3.1 (Dialog UX Polish) next
+**Current focus:** Phase 8 complete — Phase 8.1 (API & Schema Quality) next
 
 ## Current Position
 
-Phase: 7.3 of 10 (Frontend Caching Remediation)
-Plan: 4/4 complete
-Status: Phase complete — All caching remediation work finished, 218 tests passing, 90% coverage
-Last activity: 2026-02-14 — Completed 07.3-04-PLAN.md
+Phase: 8 of 10 (User Integration Flow)
+Plan: 1/1 complete
+Status: Phase 8 complete, Phase 7.4 complete
+Last activity: 2026-02-15 — Executed 07.4-01 and 08-01, gofmt cleanup
 
 Progress: [█████████████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 27
-- Average duration: 3.5 min
-- Total execution time: 1.65 hours
+- Total plans completed: 29
+- Average duration: 3.4 min
+- Total execution time: 1.73 hours
 
 **By Phase:**
 
@@ -36,10 +36,12 @@ Progress: [█████████████████] 100%
 | 07.1-orm-migration-sqlx-to-gorm | 3 | 8 min | 2.7 min |
 | 07.2-gorm-cursor-paginator | 2 | 4 min | 2 min |
 | 07.3-frontend-caching-remediation | 4 | 16 min | 4 min |
+| 07.4-performance-monitoring | 1 | 3 min | 3 min |
+| 08-user-integration-flow | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 1 min, 2 min, 2 min, 2 min, 4 min (avg: 2.2 min)
-- Trend: Excellent — Phase 07.3 complete, all tests passing, 90% coverage
+- Last 5 plans: 2 min, 2 min, 4 min, 3 min, 3 min (avg: 2.8 min)
+- Trend: Excellent — Phase 08 complete, performance monitoring baselines established
 
 *Updated after each plan completion*
 
@@ -149,6 +151,17 @@ Recent decisions affecting current work:
 - [07.3-01]: Email field removed from LIST_USERS (not displayed in UI, PII over-fetching)
 - [07.3-01]: Hierarchical query keys: all → lists/details → individual items for granular invalidation
 - [07.3-04]: ActivityTable.svelte excluded from coverage (JSDOM + AG Grid rendering limitation, component works in browser)
+- [07.4-01]: slog-based request timing middleware replaces chi Logger (richer structured fields)
+- [07.4-01]: GORM slow query callbacks log queries >100ms with SQL and duration
+- [07.4-01]: /debug/db-stats endpoint serves sql.DBStats as JSON (dev-only)
+- [07.4-01]: gqlgen AroundOperations extension logs operation name and duration_ms
+- [07.4-01]: Go benchmark tests for ContentService and PerspectiveService with mocked repos
+- [07.4-01]: Frontend Web Vitals (LCP, CLS, INP, FCP, TTFB) logged to console in dev
+- [08-01]: CreateUserInput.email optional (String, not String!) in GraphQL schema
+- [08-01]: FormPopover shared component extracts popover boilerplate (used by AddVideo + CreateUser)
+- [08-01]: CreateUserPopover with username input and useCreateUser mutation hook
+- [08-01]: UserSelector has adjacent "+ New User" trigger with auto-select on creation
+- [08-01]: Query invalidation on user creation via queryKeys.users.list()
 
 ### Roadmap Evolution
 
@@ -158,6 +171,8 @@ Recent decisions affecting current work:
 - Phase 07.1 inserted after Phase 7: ORM Migration (sqlx → GORM) — Replace sqlx with GORM using hex-clean separate model pattern. ~35% repository code reduction. Prototype in gorm_*.go files.
 - Phase 07.2 inserted after Phase 7.1: gorm-cursor-paginator Integration (URGENT) — Fix C-02 cursor pagination broken for non-ID sorts. Replace hand-rolled encodeCursor/decodeCursor with library. Was originally planned for 7.1 but skipped during execution.
 - Phase 07.3 inserted after Phase 7.2: Frontend Caching Remediation (URGENT) — Comprehensive caching review found ActivityTable bypasses TanStack Query entirely, eruda debug console in production, dual-signal anti-pattern, PII over-fetching, missing CSP. Auth architecture design deferred to FEATURE_BACKLOG.md.
+- Phase 07.4 inserted after Phase 7.3: Performance Monitoring — Establish measurable performance baselines before application grows in complexity. slog-based instrumentation, no new infrastructure deps.
+- Phase 08 (User Integration Flow) inserted — Frontend create user flow with shared FormPopover, optional email in schema.
 
 ### Project-Level Plan Requirements
 
@@ -302,8 +317,25 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 
 **Duration:** 3 min
 
+### 2026-02-15 — Phase 07.4: Performance Monitoring + Phase 08: User Integration Flow
+
+**Branch:** `claude/user-integration-flow-QODCb`
+
+**Work completed:**
+1. **Phase 07.4-01: Performance Monitoring** — HTTP request timing middleware (slog), GORM slow query logger (>100ms), /debug/db-stats endpoint, GraphQL operation timing extension, Go benchmark tests for ContentService and PerspectiveService, frontend Web Vitals capture
+2. **Phase 08-01: User Integration Flow** — Backend email optional in CreateUserInput, FormPopover shared component, CreateUserPopover with useCreateUser hook, UserSelector wiring with auto-select, AddVideoPopover refactored to use FormPopover
+3. **gofmt cleanup** — Formatting fixes across 10 backend files
+
+**Commits:**
+- `aeb87df` feat(07.4): add performance monitoring baselines
+- `8d03d1a` feat(08-01): make email optional, add CREATE_USER mutation, FormPopover
+- `1cde940` feat(08-01): AddVideoPopover refactor, CreateUserPopover, UserSelector wiring, tests
+- `960931b` chore: gofmt alignment fixes in domain package
+- `52c904e` fix: remove invalid Claim field from perspective bench test
+- `92a488a` chore: gofmt formatting across backend
+
 ## Session Continuity
 
-Last session: 2026-02-14
-Stopped at: Phase 07.3 complete — all 4 plans executed, verification passed (10/10 must-haves)
+Last session: 2026-02-15
+Stopped at: Phase 08 complete — 07.4-01 and 08-01 both executed. Next: Phase 8.1 (API & Schema Quality)
 Resume file: None

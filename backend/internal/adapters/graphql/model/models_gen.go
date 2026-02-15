@@ -17,22 +17,24 @@ type CategorizedRatingInput struct {
 }
 
 type Content struct {
-	ID           string         `json:"id"`
-	Name         string         `json:"name"`
-	URL          *string        `json:"url,omitempty"`
-	ContentType  string         `json:"contentType"`
-	Length       *int           `json:"length,omitempty"`
-	LengthUnits  *string        `json:"lengthUnits,omitempty"`
-	ViewCount    *int           `json:"viewCount,omitempty"`
-	LikeCount    *int           `json:"likeCount,omitempty"`
-	CommentCount *int           `json:"commentCount,omitempty"`
-	ChannelTitle *string        `json:"channelTitle,omitempty"`
-	PublishedAt  *string        `json:"publishedAt,omitempty"`
-	Tags         []string       `json:"tags,omitempty"`
-	Description  *string        `json:"description,omitempty"`
-	Response     map[string]any `json:"response,omitempty"`
-	CreatedAt    string         `json:"createdAt"`
-	UpdatedAt    string         `json:"updatedAt"`
+	ID            string         `json:"id"`
+	Name          string         `json:"name"`
+	URL           *string        `json:"url,omitempty"`
+	ContentType   string         `json:"contentType"`
+	AddedByUserID string         `json:"addedByUserID"`
+	AddedBy       *User          `json:"addedBy,omitempty"`
+	Length        *int           `json:"length,omitempty"`
+	LengthUnits   *string        `json:"lengthUnits,omitempty"`
+	ViewCount     *int           `json:"viewCount,omitempty"`
+	LikeCount     *int           `json:"likeCount,omitempty"`
+	CommentCount  *int           `json:"commentCount,omitempty"`
+	ChannelTitle  *string        `json:"channelTitle,omitempty"`
+	PublishedAt   *string        `json:"publishedAt,omitempty"`
+	Tags          []string       `json:"tags,omitempty"`
+	Description   *string        `json:"description,omitempty"`
+	Response      map[string]any `json:"response,omitempty"`
+	CreatedAt     string         `json:"createdAt"`
+	UpdatedAt     string         `json:"updatedAt"`
 }
 
 type ContentFilter struct {
@@ -47,7 +49,6 @@ type CreateContentFromYouTubeInput struct {
 }
 
 type CreatePerspectiveInput struct {
-	Claim              string                    `json:"claim"`
 	UserID             int                       `json:"userID"`
 	ContentID          *int                      `json:"contentID,omitempty"`
 	Quality            *int                      `json:"quality,omitempty"`
@@ -64,8 +65,8 @@ type CreatePerspectiveInput struct {
 }
 
 type CreateUserInput struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
+	Username string  `json:"username"`
+	Email    *string `json:"email,omitempty"`
 }
 
 type Mutation struct {
@@ -92,7 +93,6 @@ type PaginatedPerspectives struct {
 
 type Perspective struct {
 	ID                 string               `json:"id"`
-	Claim              string               `json:"claim"`
 	UserID             string               `json:"userID"`
 	User               *User                `json:"user,omitempty"`
 	ContentID          *string              `json:"contentID,omitempty"`
@@ -124,7 +124,6 @@ type Query struct {
 
 type UpdatePerspectiveInput struct {
 	ID                 int                       `json:"id"`
-	Claim              *string                   `json:"claim,omitempty"`
 	ContentID          *int                      `json:"contentID,omitempty"`
 	Quality            *int                      `json:"quality,omitempty"`
 	Agreement          *int                      `json:"agreement,omitempty"`
@@ -140,10 +139,17 @@ type UpdatePerspectiveInput struct {
 	CategorizedRatings []*CategorizedRatingInput `json:"categorizedRatings,omitempty"`
 }
 
+type UpdateUserInput struct {
+	ID       int     `json:"id"`
+	Username *string `json:"username,omitempty"`
+	Email    *string `json:"email,omitempty"`
+}
+
 type User struct {
 	ID        string `json:"id"`
 	Username  string `json:"username"`
 	Email     string `json:"email"`
+	Active    bool   `json:"active"`
 	CreatedAt string `json:"createdAt"`
 	UpdatedAt string `json:"updatedAt"`
 }

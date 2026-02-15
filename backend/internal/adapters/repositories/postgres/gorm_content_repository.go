@@ -143,3 +143,11 @@ func (r *GormContentRepository) List(ctx context.Context, params domain.ContentL
 
 	return result, nil
 }
+
+// ReassignByUser updates all content owned by fromUserID to toUserID
+func (r *GormContentRepository) ReassignByUser(ctx context.Context, fromUserID, toUserID int) error {
+	return r.db.WithContext(ctx).
+		Model(&ContentModel{}).
+		Where("added_by_user_id = ?", fromUserID).
+		Update("added_by_user_id", toUserID).Error
+}

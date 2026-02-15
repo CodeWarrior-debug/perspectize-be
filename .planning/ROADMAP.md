@@ -188,10 +188,27 @@ Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md
 - [x] **Phase 7.1: ORM Migration — sqlx to GORM** - Replace sqlx with GORM using hex-clean separate model pattern (INSERTED)
 - [x] **Phase 7.2: gorm-cursor-paginator Integration** - Fix C-02 cursor pagination for non-ID sorts, replace hand-rolled cursor encoding (INSERTED)
 - [x] **Phase 7.3: Frontend Caching Remediation** - Fix TanStack Query bypass, dual-signal anti-pattern, eruda in prod, query key design, security gaps (INSERTED)
-- [ ] **Phase 7.4: Performance Monitoring** - Request timing, GORM slow query logging, DB stats, GraphQL timing, Go benchmarks, Web Vitals (INSERTED)
-- [ ] **Phase 8: API & Schema Quality** - Fix GraphQL types, race conditions, nested resolvers
+- [x] **Phase 7.4: Performance Monitoring** - Request timing, GORM slow query logging, DB stats, GraphQL timing, Go benchmarks, Web Vitals (INSERTED)
+- [x] **Phase 8: User Integration Flow** - Frontend create user flow, shared FormPopover, optional email in schema (INSERTED)
+- [ ] **Phase 8.1: API & Schema Quality** - Fix GraphQL types, race conditions, nested resolvers
 - [ ] **Phase 9: Security Hardening** - Authentication, rate limiting, query complexity, headers, HTTPS
 - [ ] **Phase 10: Frontend Quality & Test Coverage** - XSS fix, codegen, error boundaries, cleanup, test gaps
+
+### Phase 8: User Integration Flow (INSERTED)
+**Goal**: Enable frontend user creation via shared FormPopover component, make email optional in backend schema
+**Depends on**: Phase 7.3 (caching patterns established)
+**Success Criteria** (what must be TRUE):
+  1. CreateUserInput.email is optional (String, not String!) in GraphQL schema
+  2. FormPopover is a shared component used by both AddVideoPopover and CreateUserPopover
+  3. CreateUserPopover has a single username input field and calls createUser mutation
+  4. On successful user creation, users.list query cache is invalidated
+  5. On successful user creation, the new user is auto-selected in UserSelector
+  6. UserSelector shows a create user trigger that opens CreateUserPopover
+  7. AddVideoPopover refactored to use FormPopover (no behavior change)
+**Plans**: 1 plan in 1 wave
+
+Plans:
+- [x] 08-01-PLAN.md — Backend email optional, FormPopover shared component, CreateUserPopover, UserSelector wiring
 
 ### Phase 6: Error Handling & Data Integrity
 **Goal**: Eliminate all silent failures so errors are visible, logged, and surfaced correctly to clients
@@ -361,7 +378,7 @@ Review findings by priority:
 **Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 07.4-01-PLAN.md — Request timing middleware, GORM slow query logger, DB stats endpoint, GraphQL timing, Go benchmarks, Web Vitals
+- [x] 07.4-01-PLAN.md — Request timing middleware, GORM slow query logger, DB stats endpoint, GraphQL timing, Go benchmarks, Web Vitals
 
 ### Phase 8: API & Schema Quality
 **Goal**: Fix GraphQL schema types, pagination bugs, race conditions, and missing resolvers
@@ -481,7 +498,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 7.3 -> 7.4 -> 8 -> 9 -> 10
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 7.3 -> 7.4 -> 8 -> 8.1 -> 9 -> 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -499,7 +516,8 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 7.1 ORM Migration (sqlx → GORM) | 3/3 | Complete | 2026-02-14 |
 | 7.2 gorm-cursor-paginator | 2/2 | Complete | 2026-02-14 |
 | 7.3 Frontend Caching Remediation | 4/4 | Complete | 2026-02-14 |
-| 7.4 Performance Monitoring | 0/1 | In progress | - |
-| 8. API & Schema Quality | 0/0 | Not started | - |
+| 7.4 Performance Monitoring | 1/1 | Complete | 2026-02-15 |
+| 8. User Integration Flow | 1/1 | Complete | 2026-02-15 |
+| 8.1 API & Schema Quality | 0/0 | Not started | - |
 | 9. Security Hardening | 0/0 | Not started | - |
 | 10. Frontend Quality & Test Coverage | 0/0 | Not started | - |

@@ -62,8 +62,8 @@ func BenchmarkContentService_ListContent(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		svc.ListContent(ctx, domain.ContentListParams{
-			First:   &first,
-			SortBy:  domain.ContentSortByCreatedAt,
+			First:     &first,
+			SortBy:    domain.ContentSortByCreatedAt,
 			SortOrder: domain.SortOrderDesc,
 		})
 	}

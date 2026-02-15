@@ -37,7 +37,11 @@ func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input m
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error) {
-	user, err := r.UserService.Create(ctx, input.Username, input.Email)
+	email := ""
+	if input.Email != nil {
+		email = *input.Email
+	}
+	user, err := r.UserService.Create(ctx, input.Username, email)
 	if err != nil {
 		if errors.Is(err, domain.ErrAlreadyExists) {
 			return nil, fmt.Errorf("user already exists: %w", err)
@@ -52,10 +56,63 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 	return userDomainToModel(user), nil
 }
 
+// UpdateUser is the resolver for the updateUser field.
+func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUserInput) (*model.User, error) {
+	serviceInput := portservices.UpdateUserInput{
+		ID:       input.ID,
+		Username: input.Username,
+		Email:    input.Email,
+	}
+
+	user, err := r.UserService.Update(ctx, serviceInput)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("user not found")
+		}
+		if errors.Is(err, domain.ErrAlreadyExists) {
+			return nil, fmt.Errorf("user already exists: %w", err)
+		}
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		if errors.Is(err, domain.ErrSentinelUser) {
+			return nil, fmt.Errorf("cannot modify system user")
+		}
+		slog.Error("updating user failed", "error", err)
+		return nil, fmt.Errorf("failed to update user")
+	}
+
+	return userDomainToModel(user), nil
+}
+
+// DeleteUser is the resolver for the deleteUser field.
+func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, error) {
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		return false, fmt.Errorf("invalid user ID: %s", id)
+	}
+
+	err = r.UserService.Delete(ctx, intID)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return false, fmt.Errorf("user not found")
+		}
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return false, fmt.Errorf("invalid user ID")
+		}
+		if errors.Is(err, domain.ErrDeleteSentinel) {
+			return false, fmt.Errorf("cannot delete system user")
+		}
+		slog.Error("deleting user failed", "error", err)
+		return false, fmt.Errorf("failed to delete user")
+	}
+
+	return true, nil
+}
+
 // CreatePerspective is the resolver for the createPerspective field.
 func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.CreatePerspectiveInput) (*model.Perspective, error) {
 	serviceInput := portservices.CreatePerspectiveInput{
-		Claim:       input.Claim,
 		UserID:      input.UserID,
 		Quality:     input.Quality,
 		Agreement:   input.Agreement,
@@ -86,9 +143,6 @@ func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.Cr
 
 	perspective, err := r.PerspectiveService.Create(ctx, serviceInput)
 	if err != nil {
-		if errors.Is(err, domain.ErrDuplicateClaim) {
-			return nil, fmt.Errorf("duplicate claim: %w", err)
-		}
 		if errors.Is(err, domain.ErrInvalidRating) {
 			return nil, fmt.Errorf("invalid rating: %w", err)
 		}
@@ -109,7 +163,6 @@ func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.Cr
 func (r *mutationResolver) UpdatePerspective(ctx context.Context, input model.UpdatePerspectiveInput) (*model.Perspective, error) {
 	serviceInput := portservices.UpdatePerspectiveInput{
 		ID:           input.ID,
-		Claim:        input.Claim,
 		Quality:      input.Quality,
 		Agreement:    input.Agreement,
 		Importance:   input.Importance,
@@ -142,9 +195,6 @@ func (r *mutationResolver) UpdatePerspective(ctx context.Context, input model.Up
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
 			return nil, fmt.Errorf("perspective not found")
-		}
-		if errors.Is(err, domain.ErrDuplicateClaim) {
-			return nil, fmt.Errorf("duplicate claim: %w", err)
 		}
 		if errors.Is(err, domain.ErrInvalidRating) {
 			return nil, fmt.Errorf("invalid rating: %w", err)

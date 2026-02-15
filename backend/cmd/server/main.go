@@ -100,7 +100,7 @@ func main() {
 
 	// Initialize services
 	contentService := services.NewContentService(contentRepo, youtubeClient)
-	userService := services.NewUserService(userRepo)
+	userService := services.NewUserService(userRepo, contentRepo, perspectiveRepo)
 	perspectiveService := services.NewPerspectiveService(perspectiveRepo, userRepo)
 
 	// Initialize GraphQL
@@ -114,7 +114,7 @@ func main() {
 	// Middleware stack
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(perfmw.RequestTimer) // structured request timing (replaces chi Logger)
+	r.Use(perfmw.RequestTimer)  // structured request timing (replaces chi Logger)
 	r.Use(middleware.Recoverer) // panic recovery
 
 	// CORS middleware

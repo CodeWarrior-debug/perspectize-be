@@ -50,6 +50,10 @@ func (m *mockContentRepository) List(ctx context.Context, params domain.ContentL
 	return &domain.PaginatedContent{Items: []*domain.Content{}}, nil
 }
 
+func (m *mockContentRepository) ReassignByUser(ctx context.Context, fromUserID, toUserID int) error {
+	return nil
+}
+
 // mockYouTubeClient implements services.YouTubeClient for testing
 type mockYouTubeClient struct {
 	getVideoMetadataFn func(ctx context.Context, videoID string) (*portservices.VideoMetadata, error)
