@@ -79,6 +79,7 @@ func (s *UserService) Create(ctx context.Context, username, email string) (*doma
 	user := &domain.User{
 		Username: username,
 		Email:    email,
+		Active:   true,
 	}
 
 	created, err := s.repo.Create(ctx, user)

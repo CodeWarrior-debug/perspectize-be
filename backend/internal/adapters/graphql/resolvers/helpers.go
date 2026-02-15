@@ -15,6 +15,7 @@ func userDomainToModel(u *domain.User) *model.User {
 		ID:        strconv.Itoa(u.ID),
 		Username:  u.Username,
 		Email:     u.Email,
+		Active:    u.Active,
 		CreatedAt: u.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		UpdatedAt: u.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}

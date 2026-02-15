@@ -16,6 +16,7 @@ func userModelToDomain(m *UserModel) *domain.User {
 		ID:        m.ID,
 		Username:  m.Username,
 		Email:     m.Email,
+		Active:    m.Active,
 		CreatedAt: m.CreatedAt,
 		UpdatedAt: m.UpdatedAt,
 	}
@@ -30,6 +31,7 @@ func userDomainToModel(u *domain.User) *UserModel {
 		ID:       u.ID,
 		Username: u.Username,
 		Email:    u.Email,
+		Active:   u.Active,
 		// CreatedAt and UpdatedAt are managed by GORM
 	}
 }

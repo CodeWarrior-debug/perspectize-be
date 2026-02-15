@@ -152,6 +152,7 @@ func TestCreate_Success(t *testing.T) {
 	assert.Equal(t, 1, result.ID)
 	assert.Equal(t, "testuser", result.Username)
 	assert.Equal(t, "test@example.com", result.Email)
+	assert.True(t, result.Active)
 }
 
 func TestCreate_UsernameEmpty(t *testing.T) {
