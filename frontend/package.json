@@ -48,6 +48,7 @@
 		"graphql": "^16.12.0",
 		"graphql-request": "^7.4.0",
 		"svelte-sonner": "^1.0.7",
-		"tailwind-merge": "^3.4.0"
+		"tailwind-merge": "^3.4.0",
+		"web-vitals": "^5.1.0"
 	}
 }
