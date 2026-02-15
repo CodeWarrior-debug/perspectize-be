@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2.1: Mobile Responsive Fixes** - Fix header overflow, pagination bar, and table layout at 375px (INSERTED)
 - [x] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
 - [x] **Phase 3.1: Design Token System** - Implement all 27 Figma color variables, Geist + Charter typography, rating colors in code (INSERTED — rescoped)
-- [ ] **Phase 3.2: Activity Page Beta Quality** - Rebuild Activity page to beta quality with server-side ops, new columns, popover dialog, data provenance (INSERTED)
+- [x] **Phase 3.2: Activity Page Beta Quality** - Rebuild Activity page to beta quality with server-side ops, new columns, popover dialog, data provenance (INSERTED)
 - [ ] **Phase 3.3: Repository Rename & Folder Restructure** - Rename repo to perspectize, backend → backend, fe → fe, update imports and Sevalla (INSERTED)
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
 - [ ] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
@@ -123,10 +123,10 @@ Plans:
 **Plans**: 4 plans in 3 waves
 
 Plans:
-- [ ] 03.2-01-PLAN.md — Backend: expose YouTube fields (channelTitle, publishedAt, tags, description) + extend sort/filter
-- [ ] 03.2-02-PLAN.md — Frontend: popover dialog redesign (replace modal with non-modal popover)
-- [ ] 03.2-03-PLAN.md — Frontend: ActivityTable rewrite (server-side pagination, new columns, compact rows, sticky headers, provenance)
-- [ ] 03.2-04-PLAN.md — Integration polish, test coverage, visual verification checkpoint
+- [x] 03.2-01-PLAN.md — Backend: expose YouTube fields (channelTitle, publishedAt, tags, description) + extend sort/filter
+- [x] 03.2-02-PLAN.md — Frontend: popover dialog redesign (replace modal with non-modal popover)
+- [x] 03.2-03-PLAN.md — Frontend: ActivityTable rewrite (server-side pagination, new columns, compact rows, sticky headers, provenance)
+- [x] 03.2-04-PLAN.md — Integration polish, test coverage, visual verification checkpoint
 
 ### Phase 3.3: Repository Rename & Folder Restructure (INSERTED)
 **Goal**: Rename repository from perspectize to perspectize, restructure folders (backend → backend, fe → fe), update all Go imports, fix CI/CD and Sevalla deployment pointers
@@ -307,8 +307,8 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 07.2-01-PLAN.md — Add gorm-cursor-paginator dep, dummy GORM model fields, sort rule builder functions
-- [ ] 07.2-02-PLAN.md — Rewrite Content + Perspective List() to use paginator, delete old cursor functions
+- [x] 07.2-01-PLAN.md — Add gorm-cursor-paginator dep, dummy GORM model fields, sort rule builder functions
+- [x] 07.2-02-PLAN.md — Rewrite Content + Perspective List() to use paginator, delete old cursor functions
 
 ### Phase 7.3: Frontend Caching Remediation (INSERTED)
 **Goal**: Fix critical caching architecture issues — migrate ActivityTable to TanStack Query, remove eruda debug console from production, eliminate dual-signal anti-pattern, add query key factory, remove PII over-fetching, add CSP headers
@@ -471,7 +471,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 2.1 Mobile Responsive Fixes | 2/2 | Complete | 2026-02-07 |
 | 3. Add Video Flow | 2/2 | Complete | 2026-02-07 |
 | 3.1 Design Token System | 2/2 | Complete | 2026-02-12 |
-| 3.2 Activity Page Beta Quality | 0/4 | Planned | - |
+| 3.2 Activity Page Beta Quality | 4/4 | Complete | 2026-02-14 |
 | 3.3 Repository Rename & Restructure | 0/3 | Planned | - |
 | 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 1/3 | In progress | - |
