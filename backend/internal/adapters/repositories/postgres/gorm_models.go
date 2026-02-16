@@ -10,6 +10,7 @@ type UserModel struct {
 	ID        int       `gorm:"primaryKey;autoIncrement"`
 	Username  string    `gorm:"not null"`
 	Email     string    `gorm:"uniqueIndex;not null"`
+	Role      string    `gorm:"not null;default:default"`
 	Active    bool      `gorm:"not null;default:true"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`

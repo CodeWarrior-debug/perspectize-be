@@ -45,7 +45,8 @@ type ContentFilter struct {
 }
 
 type CreateContentFromYouTubeInput struct {
-	URL string `json:"url"`
+	URL    string `json:"url"`
+	UserID int    `json:"userId"`
 }
 
 type CreatePerspectiveInput struct {
@@ -146,10 +147,11 @@ type UpdateUserInput struct {
 }
 
 type User struct {
-	ID        string `json:"id"`
-	Username  string `json:"username"`
-	Email     string `json:"email"`
-	Active    bool   `json:"active"`
-	CreatedAt string `json:"createdAt"`
-	UpdatedAt string `json:"updatedAt"`
+	ID        string          `json:"id"`
+	Username  string          `json:"username"`
+	Email     string          `json:"email"`
+	Active    bool            `json:"active"`
+	Role      domain.UserRole `json:"role"`
+	CreatedAt string          `json:"createdAt"`
+	UpdatedAt string          `json:"updatedAt"`
 }

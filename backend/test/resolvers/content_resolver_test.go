@@ -362,7 +362,7 @@ func TestCreateContentFromYouTube_Success(t *testing.T) {
 	server := setupTestServer(repo, ytClient)
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" }) { id name contentType } }`)
+	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", userId: 1 }) { id name contentType } }`)
 
 	assert.Empty(t, result.Errors)
 
@@ -392,7 +392,7 @@ func TestCreateContentFromYouTube_AlreadyExists(t *testing.T) {
 	server := setupTestServer(repo, &mockYouTubeClient{})
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" }) { id } }`)
+	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", userId: 1 }) { id } }`)
 
 	require.NotEmpty(t, result.Errors)
 	assert.Contains(t, result.Errors[0].Message, "content already exists")
@@ -414,7 +414,7 @@ func TestCreateContentFromYouTube_InvalidURL(t *testing.T) {
 	server := setupTestServer(repo, ytClient)
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "not-a-youtube-url" }) { id } }`)
+	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "not-a-youtube-url", userId: 1 }) { id } }`)
 
 	require.NotEmpty(t, result.Errors)
 	assert.Contains(t, result.Errors[0].Message, "invalid YouTube URL")

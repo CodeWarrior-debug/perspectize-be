@@ -10,12 +10,14 @@ const {
 	mockToastSuccess,
 	mockToastError,
 	mockValidate,
+	mockGetSelectedUserId,
 } = vi.hoisted(() => ({
 	mockMutate: vi.fn(),
 	mockInvalidateQueries: vi.fn(),
 	mockToastSuccess: vi.fn(),
 	mockToastError: vi.fn(),
 	mockValidate: vi.fn(),
+	mockGetSelectedUserId: vi.fn(() => 1),
 }));
 
 // Capture mutation options for behavioral testing
@@ -49,6 +51,10 @@ vi.mock('$lib/queries/client', () => ({
 
 vi.mock('$lib/utils/youtube', () => ({
 	validateYouTubeUrl: (...args: any[]) => mockValidate(...args),
+}));
+
+vi.mock('$lib/stores/userSelection.svelte', () => ({
+	getSelectedUserId: (...args: any[]) => mockGetSelectedUserId(...args),
 }));
 
 
@@ -185,7 +191,14 @@ describe('AddVideoPopover mutation callbacks', () => {
 		await capturedMutationOptions.mutationFn('https://youtube.com/watch?v=abc123');
 		expect(graphqlClient.request).toHaveBeenCalledWith(
 			expect.anything(),
-			{ input: { url: 'https://youtube.com/watch?v=abc123' } }
+			{ input: { url: 'https://youtube.com/watch?v=abc123', userId: 1 } }
 		);
+	});
+
+	it('mutationFn throws when no user is selected', async () => {
+		expect(capturedMutationOptions).toBeDefined();
+		mockGetSelectedUserId.mockReturnValueOnce(null);
+		await expect(capturedMutationOptions.mutationFn('https://youtube.com/watch?v=abc123'))
+			.rejects.toThrow('No user selected');
 	});
 });

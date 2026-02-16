@@ -780,12 +780,20 @@ var sources = []*ast.Source{
 	{Name: "../../../../schema.graphql", Input: `scalar JSON
 scalar IntID
 
+# User enums
+enum UserRole {
+  ADMIN
+  SENTINEL
+  DEFAULT
+}
+
 # User type
 type User {
   id: ID!
   username: String!
   email: String!
   active: Boolean!
+  role: UserRole!
   createdAt: String!
   updatedAt: String!
 }
@@ -898,6 +906,7 @@ enum ContentType {
 # Inputs
 input CreateContentFromYouTubeInput {
   url: String!
+  userId: IntID!
 }
 
 # TODO: Add additional filters (e.g., dateRange, search) or make filters dynamic
@@ -1532,6 +1541,8 @@ func (ec *executionContext) fieldContext_Content_addedBy(_ context.Context, fiel
 				return ec.fieldContext_User_email(ctx, field)
 			case "active":
 				return ec.fieldContext_User_active(ctx, field)
+			case "role":
+				return ec.fieldContext_User_role(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
@@ -2003,6 +2014,8 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 				return ec.fieldContext_User_email(ctx, field)
 			case "active":
 				return ec.fieldContext_User_active(ctx, field)
+			case "role":
+				return ec.fieldContext_User_role(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
@@ -2058,6 +2071,8 @@ func (ec *executionContext) fieldContext_Mutation_updateUser(ctx context.Context
 				return ec.fieldContext_User_email(ctx, field)
 			case "active":
 				return ec.fieldContext_User_active(ctx, field)
+			case "role":
+				return ec.fieldContext_User_role(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
@@ -2802,6 +2817,8 @@ func (ec *executionContext) fieldContext_Perspective_user(_ context.Context, fie
 				return ec.fieldContext_User_email(ctx, field)
 			case "active":
 				return ec.fieldContext_User_active(ctx, field)
+			case "role":
+				return ec.fieldContext_User_role(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
@@ -3482,6 +3499,8 @@ func (ec *executionContext) fieldContext_Query_userByID(ctx context.Context, fie
 				return ec.fieldContext_User_email(ctx, field)
 			case "active":
 				return ec.fieldContext_User_active(ctx, field)
+			case "role":
+				return ec.fieldContext_User_role(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
@@ -3537,6 +3556,8 @@ func (ec *executionContext) fieldContext_Query_userByUsername(ctx context.Contex
 				return ec.fieldContext_User_email(ctx, field)
 			case "active":
 				return ec.fieldContext_User_active(ctx, field)
+			case "role":
+				return ec.fieldContext_User_role(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
@@ -3591,6 +3612,8 @@ func (ec *executionContext) fieldContext_Query_users(_ context.Context, field gr
 				return ec.fieldContext_User_email(ctx, field)
 			case "active":
 				return ec.fieldContext_User_active(ctx, field)
+			case "role":
+				return ec.fieldContext_User_role(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
@@ -3951,6 +3974,35 @@ func (ec *executionContext) fieldContext_User_active(_ context.Context, field gr
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_role(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_User_role,
+		func(ctx context.Context) (any, error) {
+			return obj.Role, nil
+		},
+		nil,
+		ec.marshalNUserRole2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐUserRole,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_User_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UserRole does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5549,7 +5601,7 @@ func (ec *executionContext) unmarshalInputCreateContentFromYouTubeInput(ctx cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"url"}
+	fieldsInOrder := [...]string{"url", "userId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5563,6 +5615,13 @@ func (ec *executionContext) unmarshalInputCreateContentFromYouTubeInput(ctx cont
 				return it, err
 			}
 			it.URL = data
+		case "userId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+			data, err := ec.unmarshalNIntID2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UserID = data
 		}
 	}
 
@@ -6595,6 +6654,11 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "role":
+			out.Values[i] = ec._User_role(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createdAt":
 			out.Values[i] = ec._User_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -7218,6 +7282,23 @@ func (ec *executionContext) unmarshalNPrivacy2githubᚗcomᚋCodeWarriorᚑdebug
 }
 
 func (ec *executionContext) marshalNPrivacy2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐPrivacy(ctx context.Context, sel ast.SelectionSet, v domain.Privacy) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNUserRole2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐUserRole(ctx context.Context, v any) (domain.UserRole, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.UserRole(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUserRole2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐUserRole(ctx context.Context, sel ast.SelectionSet, v domain.UserRole) graphql.Marshaler {
 	_ = sel
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
