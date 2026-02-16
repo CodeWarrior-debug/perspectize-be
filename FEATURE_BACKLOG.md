@@ -92,6 +92,62 @@ Average response: **2,469 bytes/row**. All other columns combined: **136 bytes/r
 
 ---
 
+## Multi-Content-Type Schema Design (JSONB Philosophy)
+
+When adding content types beyond YouTube (books, articles, podcasts, etc.), the `content` table needs a clear column vs. JSONB strategy. The guiding principle: **shared fields get columns, type-specific fields stay in JSONB.**
+
+### Column Promotion Candidates
+
+Fields that are common across content types should be promoted to dedicated columns for indexing, sorting, and type safety:
+
+| Promoted Column | YouTube Source | Book Source | Data Type (TBD) |
+|----------------|---------------|-------------|------------------|
+| `name` | snippet.title | volumeInfo.title | already exists |
+| `image_url` | snippet.thumbnails | volumeInfo.imageLinks | already exists |
+| `creator` | snippet.channelTitle | volumeInfo.authors (array) | text vs text[] vs jsonb — needs discussion |
+| `published_at` | snippet.publishedAt | volumeInfo.publishedDate | timestamptz vs date — YouTube has full timestamps, books often only have year |
+| `description` | snippet.description | volumeInfo.description | text (potentially long) |
+| `length` | contentDetails.duration (ISO 8601) | volumeInfo.pageCount (integer) | text vs integer — needs discussion (heterogeneous units) |
+
+**Open questions on data types:**
+- `creator` — Single author vs. multiple authors (YouTube has one channel, books have co-authors). Store as `text` (comma-joined) or `text[]` or keep in JSONB?
+- `published_at` — YouTube provides RFC 3339 timestamps; books may only have "2024" or "2024-03". Use `timestamptz` with day-level precision fallback, or `text`?
+- `length` — Duration (PT15M33S) and page count (384) are fundamentally different units. Store as `text` with a `length_unit` column? Or keep type-specific in JSONB?
+
+### JSONB-Only Fields (Type-Specific)
+
+Fields that belong to one content type and don't generalize stay in the JSONB `metadata` column:
+
+| Field | Content Type | Why JSONB |
+|-------|-------------|-----------|
+| `viewCount`, `likeCount`, `commentCount` | YouTube | Video engagement metrics — no book equivalent |
+| `isbn`, `isbn13` | Book | Identifier unique to books |
+| `publisher` | Book | Books have publishers; YouTube has channels (→ `creator`) |
+| `pageCount` | Book | Could go either way — see `length` discussion above |
+| `language` | Book | YouTube has `defaultAudioLanguage` but rarely useful |
+| `categories` / `tags` | Both | Similar concept but different taxonomies per source |
+
+### Book API Recommendation: Google Books API
+
+For the first non-YouTube content type, **Google Books API** is the recommended data source:
+
+- **Free tier** — 1,000 req/day without API key, higher with key
+- **Shared infrastructure** — Same Google API ecosystem as YouTube (API key, client libs, error patterns, rate limits)
+- **Rich metadata** — title, authors, description, thumbnails, page count, categories, publisher, ISBNs, ratings, preview links
+- **Similar response structure** — `items[]` with `volumeInfo` parallels YouTube's `items[]` with `snippet`
+
+**Other APIs evaluated:**
+- **Open Library** (openlibrary.org) — Free, no key, 20M+ editions. Good fallback if Google quota is insufficient. Less structured metadata.
+- **Library of Congress** — Free, authoritative for bibliographic data, but clunky API and inconsistent response formats. Better for archival than consumer use.
+- **Goodreads** — API shut down by Amazon in 2020. Not available.
+- **ISBNdb** — Paid ($9/mo+). Not worth it when free options exist.
+
+**Priority:** Medium — design the schema strategy before adding the second content type. The column promotion migration (creator, published_at, description) should happen during the JSONB trim work above.
+
+**Source:** Architecture discussion (2026-02-16)
+
+---
+
 ## Server-Side Sorting and Filtering for Activity Table
 
 Currently AG Grid sorting and filtering is client-side only — operates on the current page of rows. With server-side pagination (`limit`/`offset`), this means sort/filter only affects the visible page, not the full dataset.
