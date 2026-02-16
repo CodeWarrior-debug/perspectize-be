@@ -20,6 +20,7 @@
 		contentRowId
 	} from '$lib/utils/formatting';
 	import { TagsTooltip } from '$lib/components/TagsTooltip';
+	import { DescriptionTooltip } from '$lib/components/DescriptionTooltip';
 
 	// GraphQL ContentSortBy to AG Grid colId mapping
 	const SORT_FIELD_MAP: Record<string, string> = {
@@ -230,7 +231,8 @@
 			sortable: false,
 			filter: 'agTextColumnFilter',
 			valueFormatter: (params) => truncateDescription(params.value, 80),
-			tooltipValueGetter: (params) => params.data?.description ?? '',  // full text, not truncated
+			tooltipComponent: DescriptionTooltip,
+			tooltipField: 'description',
 			headerTooltip: 'Video description from YouTube API'
 		},
 		{
@@ -249,7 +251,7 @@
 			valueFormatter: dateValueFormatter,
 			headerTooltip: 'Last updated in Perspectize'
 		},
-		// Hidden columns
+
 		{
 			colId: 'createdAt',
 			field: 'createdAt',
@@ -263,7 +265,6 @@
 				const val = params.data?.createdAt;
 				return val ? new Date(val) : null;
 			},
-			hide: true,
 			valueFormatter: dateValueFormatter,
 			headerTooltip: 'Date added to Perspectize'
 		}
@@ -360,8 +361,8 @@
 			gridApi.setColumnsVisible(['duration', 'views', 'likes', 'publishDate', 'channel', 'createdAt', 'updatedAt', 'tags', 'description'], false);
 			gridApi.setColumnsVisible(['item', 'type'], true);
 		} else {
-			gridApi.setColumnsVisible(['item', 'type', 'duration', 'views', 'likes', 'publishDate'], true);
-			gridApi.setColumnsVisible(['channel', 'createdAt', 'updatedAt', 'tags', 'description'], false);
+			gridApi.setColumnsVisible(['item', 'type', 'duration', 'createdAt', 'updatedAt'], true);
+			gridApi.setColumnsVisible(['views', 'likes', 'publishDate', 'channel', 'tags', 'description'], false);
 		}
 	});
 

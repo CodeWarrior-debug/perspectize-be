@@ -114,6 +114,23 @@
 	white-space: nowrap;
 }
 
+/* Description tooltip */
+.description-tooltip {
+	white-space: pre-wrap;
+	word-break: break-word;
+	padding: 10px;
+	background: rgba(45, 45, 45, 0.9);
+	border: none;
+	border-radius: 6px;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+	font-size: 13px;
+	line-height: 1.5;
+	color: rgba(255, 255, 255, 0.95);
+	max-width: 400px;
+	max-height: 300px;
+	overflow-y: auto;
+}
+
 /* AG Grid tooltip styling — match browser native tooltip look */
 .ag-tooltip {
 	font-size: 15px !important;
