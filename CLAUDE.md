@@ -16,6 +16,8 @@ Monorepo with two stacks:
 
 **Always use `gh` CLI** for GitHub operations. Do not use MCP plugins.
 
+**Note:** In Claude Code web sessions, `gh` CLI may not be authenticated. If `gh` auth fails, push the branch with `git push -u origin <branch>` and let the user create the PR via the GitHub UI button (the "Compare & pull request" banner on the repo page). Prepare the PR title and body so the user can copy it.
+
 ```bash
 # Pull requests
 gh pr create --title "Title" --body "..."  # Use PR template (see below)
