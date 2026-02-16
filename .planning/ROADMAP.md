@@ -18,15 +18,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
 - [x] **Phase 3.1: Design Token System** - Implement all 27 Figma color variables, Geist + Charter typography, rating colors in code (INSERTED — rescoped)
 - [x] **Phase 3.2: Activity Page Beta Quality** - Rebuild Activity page to beta quality with server-side ops, new columns, popover dialog, data provenance (INSERTED)
-<<<<<<< claude/plan-gsd-workflow-3OFvn
 - [x] **Phase 3.3: Repository Rename & Folder Restructure** - OBSOLETE — repo already named `perspectize`, folders already `backend/` + `frontend/` (INSERTED)
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
 - [x] **Phase 5: Testing + Deployment** - Coverage met, deployed on Sevalla, CORS working (wildcard — restriction deferred to Phase 9)
-=======
-- [x] **Phase 3.3: Repository Rename & Folder Restructure** - Rename repo to perspectize, backend → backend, fe → fe, update imports and Sevalla (INSERTED)
-- [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
-- [x] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
->>>>>>> main
 
 ## Phase Details
 
@@ -141,13 +135,10 @@ Plans:
 - [x] 03.2-02-PLAN.md — Frontend: popover dialog redesign (replace modal with non-modal popover)
 - [x] 03.2-03-PLAN.md — Frontend: ActivityTable rewrite (server-side pagination, new columns, compact rows, sticky headers, provenance)
 - [x] 03.2-04-PLAN.md — Integration polish, test coverage, visual verification checkpoint
-<<<<<<< claude/plan-gsd-workflow-3OFvn
-=======
 - [x] 03.2-05-PLAN.md — Navy header styling, AG Grid card container, theme param fixes (D-01, D-02, D-06)
 - [x] 03.2-06-PLAN.md — Column filter types, floating filters on all columns, YouTube icon centering (D-09, D-10)
 - [x] 03.2-07-PLAN.md — Mobile responsive: column hiding, icon-only buttons, hidden thumbnails, compact pagination (M-01, M-03, M-05, M-06)
 - [x] 03.2-08-PLAN.md — Mobile popovers to dialogs, shadcn Select for UserSelector (M-04, D-03)
->>>>>>> main
 
 ### Phase 3.3: Repository Rename & Folder Restructure (INSERTED)
 **Goal**: Rename repository from perspectize to perspectize, restructure folders (backend → backend, fe → fe), update all Go imports, fix CI/CD and Sevalla deployment pointers
@@ -202,8 +193,9 @@ Plans:
 
 ## Post-MVP: Concerns Remediation (Phases 6-10)
 
-Phases 6-10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md`. Ordered by dependency: fix errors first, then architecture, then schema, then security (which depends on clean architecture), then frontend. Each phase is a living checklist -- items can be picked off incrementally.
+Phases 6-10 address issues from the bug backlog (`.planning/phases/bugs/BACKLOG.md`, gitignored). Ordered by dependency: fix errors first, then architecture, then schema, then security (which depends on clean architecture), then frontend. Each phase is a living checklist -- items can be picked off incrementally.
 
+- [ ] **Bugs (persistent)** - Ongoing bug tracking and fixes (`.planning/phases/bugs/`, gitignored — see `.docs/BUG_TRACKING.md`)
 - [ ] **Phase 6: Error Handling & Data Integrity** - Fix silent failures, error leakage, and config validation
 - [x] **Phase 7: Backend Architecture** - Hexagonal cleanup, dependency injection, server infrastructure
 - [x] **Phase 7.1: ORM Migration -- sqlx to GORM** - Replace sqlx with GORM using hex-clean separate model pattern (INSERTED)
@@ -234,7 +226,7 @@ Plans:
 ### Phase 6: Error Handling & Data Integrity
 **Goal**: Eliminate all silent failures so errors are visible, logged, and surfaced correctly to clients
 **Depends on**: Phase 5 (CI/CD catches regressions)
-**Source**: CONCERNS.md C-06, C-07, C-08, H-13, H-16, H-19, H-20, H-21, M-03, M-27
+**Source**: Bug Backlog C-06, C-07, C-08, H-13, H-16, H-19, H-20, H-21, M-03, M-27
 **Success Criteria** (what must be TRUE):
   1. All `json.Unmarshal` calls check and handle errors (C-06, C-08)
   2. All `strconv`/`time.Parse` calls check and handle errors (C-07, C-08)
@@ -266,7 +258,7 @@ Plans:
 ### Phase 7: Backend Architecture
 **Goal**: Clean up hexagonal architecture violations, add proper dependency injection, and harden server infrastructure
 **Depends on**: Phase 6 (error handling patterns established first)
-**Source**: CONCERNS.md H-01, H-02, H-09, M-01, M-02, M-05, M-06, M-09, M-10, M-12, M-17
+**Source**: Bug Backlog H-01, H-02, H-09, M-01, M-02, M-05, M-06, M-09, M-10, M-12, M-17
 **Success Criteria** (what must be TRUE):
   1. No adapter-to-adapter imports -- resolvers use service ports only (H-01, H-02)
   2. Service port interfaces defined; resolver depends on interfaces, not concrete types (H-02)
@@ -338,7 +330,7 @@ Plans:
 ### Phase 7.2: gorm-cursor-paginator Integration (INSERTED)
 **Goal**: Replace hand-rolled cursor encoding with `gorm-cursor-paginator` library to fix C-02 (cursor pagination broken for non-ID sorts) and simplify pagination code in all GORM repositories
 **Depends on**: Phase 7.1 (GORM migration must be complete)
-**Source**: CONCERNS.md C-02, FEATURE_BACKLOG.md (HIGH PRIORITY)
+**Source**: Bug Backlog C-02, FEATURE_BACKLOG.md (HIGH PRIORITY)
 **Success Criteria** (what must be TRUE):
   1. `gorm-cursor-paginator` library added as dependency
   2. Cursor pagination works correctly for all sort columns (created_at, updated_at, name, JSONB fields), not just ID
@@ -408,7 +400,7 @@ Plans:
 ### Phase 8: API & Schema Quality
 **Goal**: Fix GraphQL schema types, pagination bugs, race conditions, and missing resolvers
 **Depends on**: Phase 7.2 (cursor pagination fixed first)
-**Source**: CONCERNS.md C-02, H-03, H-04, H-05, H-06, H-07, H-08, M-04, M-08, M-11, M-13, M-16
+**Source**: Bug Backlog C-02, H-03, H-04, H-05, H-06, H-07, H-08, M-04, M-08, M-11, M-13, M-16
 **Success Criteria** (what must be TRUE):
   1. Cursor pagination works correctly for all sort columns, not just ID (C-02)
   2. `ListAll` users has pagination with configurable limit (H-03)
@@ -439,7 +431,7 @@ Plans:
 ### Phase 9: Security Hardening
 **Goal**: Add authentication, authorization, rate limiting, and security headers to make the app safe for multi-user deployment
 **Depends on**: Phase 8 (clean schema + architecture required before layering auth)
-**Source**: CONCERNS.md C-01, C-04, C-05, C-09, C-10, H-10, H-11, H-12, H-14, H-15, H-25, M-14, M-15, M-28
+**Source**: Bug Backlog C-01, C-04, C-05, C-09, C-10, H-10, H-11, H-12, H-14, H-15, H-25, M-14, M-15, M-28
 **Success Criteria** (what must be TRUE):
   1. Authentication middleware validates JWT/session on all mutations (C-01)
   2. Authorization checks on all mutations -- users can only modify their own data (C-01)
@@ -477,7 +469,7 @@ Plans:
 ### Phase 10: Frontend Quality & Test Coverage
 **Goal**: Fix frontend vulnerabilities, add codegen, error boundaries, and close all test coverage gaps
 **Depends on**: Phase 8 (schema fixes enable codegen; nested resolvers enable frontend cleanup)
-**Source**: CONCERNS.md C-03, H-17, H-18, H-22, H-23, H-24, M-18-M-26, T-01-T-06, L-*
+**Source**: Bug Backlog C-03, H-17, H-18, H-22, H-23, H-24, M-18-M-26, T-01-T-06, L-*
 **Success Criteria** (what must be TRUE):
   1. AG Grid cellRenderer uses safe DOM APIs, no raw innerHTML interpolation (C-03)
   2. `+error.svelte` error boundary exists with retry UI (H-17, M-23)
@@ -518,7 +510,7 @@ Plans:
 - [ ] T-04: No repository-layer tests
 - [ ] T-05: No YouTube API client tests
 - [ ] T-06: No `IntID` scalar tests
-- [ ] L-*: Low priority cleanup (see CONCERNS.md L-01 through L-22)
+- [ ] L-*: Low priority cleanup (see Bug Backlog L-01 through L-22)
 
 ## Progress
 
@@ -532,13 +524,8 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 2.1 Mobile Responsive Fixes | 2/2 | Complete | 2026-02-07 |
 | 3. Add Video Flow | 2/2 | Complete | 2026-02-07 |
 | 3.1 Design Token System | 2/2 | Complete | 2026-02-12 |
-<<<<<<< claude/plan-gsd-workflow-3OFvn
-| 3.2 Activity Page Beta Quality | 4/4 | Complete | 2026-02-14 |
+| 3.2 Activity Page Beta Quality | 8/8 | Complete | 2026-02-14 |
 | 3.3 Repository Rename & Restructure | 0/3 | Obsolete | 2026-02-15 |
-=======
-| 3.2 Activity Page Beta Quality | 4/8 | In progress | - |
-| 3.3 Repository Rename & Restructure | 0/3 | Planned | - |
->>>>>>> main
 | 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 2/3 | Complete | 2026-02-15 |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
