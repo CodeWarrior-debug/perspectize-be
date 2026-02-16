@@ -49,13 +49,22 @@ export function contentRowId(params: { data?: { id: string | number } }): string
 }
 
 /**
- * Format count numbers with K/M suffixes.
+ * Format count numbers with K/M/B suffixes (space before suffix).
  */
 export function formatCount(count: number | null): string {
 	if (count === null) return '--';
 	if (count < 1000) return String(count);
-	if (count < 1000000) return `${(count / 1000).toFixed(1)}K`;
-	return `${(count / 1000000).toFixed(1)}M`;
+	if (count < 1_000_000) return `${(count / 1_000).toFixed(1)} K`;
+	if (count < 1_000_000_000) return `${(count / 1_000_000).toFixed(1)} M`;
+	return `${(count / 1_000_000_000).toFixed(1)} B`;
+}
+
+/**
+ * Format count with comma separators for exact display.
+ */
+export function formatCountExact(count: number | null): string {
+	if (count === null) return '--';
+	return count.toLocaleString('en-US');
 }
 
 /**
@@ -149,6 +158,12 @@ export function typeCellRenderer(params: { data?: { contentType: string } }): HT
 
 	const container = document.createElement('div');
 	container.className = 'flex items-center justify-center h-full w-full';
+
+	// Hidden text for filter matching
+	const hidden = document.createElement('span');
+	hidden.className = 'sr-only';
+	hidden.textContent = params.data.contentType ?? '';
+	container.appendChild(hidden);
 
 	// YouTube play button icon (red)
 	const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');

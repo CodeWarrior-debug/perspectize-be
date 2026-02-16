@@ -3,6 +3,7 @@ import {
 	formatDuration,
 	formatDate,
 	formatCount,
+	formatCountExact,
 	formatPublishDate,
 	formatTags,
 	truncateDescription,
@@ -168,16 +169,41 @@ describe('formatCount', () => {
 	});
 
 	it('formats thousands with K suffix', () => {
-		expect(formatCount(1000)).toBe('1.0K');
-		expect(formatCount(1234)).toBe('1.2K');
-		expect(formatCount(5678)).toBe('5.7K');
-		expect(formatCount(999999)).toBe('1000.0K');
+		expect(formatCount(1000)).toBe('1.0 K');
+		expect(formatCount(1234)).toBe('1.2 K');
+		expect(formatCount(5678)).toBe('5.7 K');
+		expect(formatCount(999999)).toBe('1000.0 K');
 	});
 
 	it('formats millions with M suffix', () => {
-		expect(formatCount(1000000)).toBe('1.0M');
-		expect(formatCount(1234567)).toBe('1.2M');
-		expect(formatCount(5678901)).toBe('5.7M');
+		expect(formatCount(1000000)).toBe('1.0 M');
+		expect(formatCount(1234567)).toBe('1.2 M');
+		expect(formatCount(5678901)).toBe('5.7 M');
+	});
+
+	it('formats billions with B suffix', () => {
+		expect(formatCount(1000000000)).toBe('1.0 B');
+		expect(formatCount(2500000000)).toBe('2.5 B');
+	});
+});
+
+describe('formatCountExact', () => {
+	it('returns -- for null', () => {
+		expect(formatCountExact(null)).toBe('--');
+	});
+
+	it('formats small numbers without commas', () => {
+		expect(formatCountExact(0)).toBe('0');
+		expect(formatCountExact(999)).toBe('999');
+	});
+
+	it('formats thousands with commas', () => {
+		expect(formatCountExact(1000)).toBe('1,000');
+		expect(formatCountExact(1234567)).toBe('1,234,567');
+	});
+
+	it('formats millions with commas', () => {
+		expect(formatCountExact(1000000)).toBe('1,000,000');
 	});
 });
 
@@ -336,5 +362,15 @@ describe('typeCellRenderer', () => {
 
 		const path = svg?.querySelector('path');
 		expect(path).toBeTruthy();
+	});
+
+	it('includes sr-only span with content type for filter matching', () => {
+		const result = typeCellRenderer({
+			data: { contentType: 'YOUTUBE' }
+		}) as HTMLElement;
+
+		const hidden = result.querySelector('.sr-only');
+		expect(hidden).toBeTruthy();
+		expect(hidden?.textContent).toBe('YOUTUBE');
 	});
 });
