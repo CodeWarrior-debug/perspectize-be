@@ -54,6 +54,16 @@ describe('Header component', () => {
 		expect(header?.className).toContain('border-b');
 	});
 
+	it('header has navy background (bg-primary)', () => {
+		const { header } = renderHeader();
+		expect(header?.className).toContain('bg-primary');
+	});
+
+	it('header has white text (text-primary-foreground)', () => {
+		const { header } = renderHeader();
+		expect(header?.className).toContain('text-primary-foreground');
+	});
+
 	it('has responsive padding and gap classes on inner container', () => {
 		const { inner } = renderHeader();
 		expect(inner?.className).toContain('px-4');
@@ -87,6 +97,18 @@ describe('Header component', () => {
 		render(Header);
 		const logo = screen.getByText('Perspectize');
 		expect(logo.className).toContain('text-base');
+	});
+
+	it('logo has white text color on navy header', () => {
+		render(Header);
+		const logo = screen.getByText('Perspectize');
+		expect(logo.className).toContain('text-primary-foreground');
+	});
+
+	it('logo has hover opacity effect', () => {
+		render(Header);
+		const logo = screen.getByText('Perspectize');
+		expect(logo.className).toContain('hover:text-primary-foreground/80');
 	});
 
 	it('right container has shrink-0 to prevent interactive element shrinking', () => {
