@@ -182,3 +182,52 @@ The `SELECT count(*) FROM "content"` query and JSONB-path ORDER BY queries are h
 **Priority:** Low — manageable at 50 rows but a known scaling bottleneck. Consider alongside JSONB trimming/extraction work.
 
 **Source:** Backend logs (2026-02-15)
+
+---
+
+## Technical Debt: Sticky Header Color Token
+
+**Problem:** Sticky header originally used `bg-background` but `--color-background` wasn't defined in `app.css`, causing transparent header and scroll bleed-through.
+
+**Current patch:** Changed `bg-background` to `bg-white` in `Header.svelte` (SHA: b42c457).
+
+**Long-term fix:** Define complete color theme in `app.css` (`--color-background`, `--color-foreground`, `--color-border`, etc.) so semantic utilities resolve correctly and support dark mode. Then revert header to `bg-background`.
+
+**Priority:** Low — cosmetic, works correctly now.
+
+---
+
+## Technical Debt: Client-Side Pagination Prefetch Strategy
+
+**Problem:** `ListContent` query fetches `first: 100` but AG Grid only shows 10 per page. Client-side pagination/filtering works over the pre-fetched set, but total count isn't exposed and fetch size isn't tied to page size.
+
+**Current patch:** `first: 100` hardcoded — covers all client-side page sizes (10/25/50) with room for search filtering. Acceptable for MVP.
+
+**Long-term fix:** Adaptive prefetch with exposed total count:
+1. Expose `totalCount` to the UI — if not provided by query, don't show. Total count = total available server-side, not total loaded.
+2. Allow items-per-page to be user-specified (max 100).
+3. Prefetch a multiple of page size: 1–10 items/page → fetch 5x (up to 50); 11–33 items/page → fetch 3x (up to 100); 34–100 items/page → fetch 1.5x (up to 100).
+
+**Priority:** Medium — related to server-side sorting/filtering work.
+
+**Related:** [#56](https://github.com/CodeWarrior-debug/perspectize/issues/56)
+
+---
+
+## Contributor License Agreement (CLA)
+
+Enable automatic contributor agreement signing for external contributions. One checkbox on first contribution — keeps it simple.
+
+**Options:**
+- [CLA Assistant](https://cla-assistant.io/) — Free GitHub integration, stores signatures, auto-comments on PRs from new contributors
+- [CLA Assistant Lite](https://github.com/contributor-assistant/github-action) — GitHub Action alternative, signatures stored in repo
+- Custom DCO (Developer Certificate of Origin) — Lightweight alternative using `Signed-off-by` in commits
+
+**What contributors agree to:**
+- They have the right to submit the contribution
+- The contribution is licensed under AGPL-3.0 (same as project)
+- No additional obligations — AGPL version stays open and available
+
+**Template reference:** [Apache ICLA](https://www.apache.org/licenses/icla.pdf) (for inspiration, ours would be simpler)
+
+**Priority:** Low — set up before accepting external contributions
