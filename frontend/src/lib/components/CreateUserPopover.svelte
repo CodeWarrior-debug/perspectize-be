@@ -35,7 +35,6 @@
 	bind:open
 	triggerLabel="New User"
 	triggerVariant="outline"
-	triggerSize="sm"
 	title="New User"
 	description="Create a new user account."
 	submitLabel="Create User"
