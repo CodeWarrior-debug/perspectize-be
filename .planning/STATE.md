@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 ## Current Position
 
 Phase: 03.2 of 10 (Activity Page Beta Quality)
-Plan: 6 of 8 complete
+Plan: 7 of 8 complete
 Status: In progress
-Last activity: 2026-02-15 — Completed 03.2-06-PLAN.md (column filters and icon centering)
+Last activity: 2026-02-16 — Completed 03.2-05-PLAN.md (navy header and card container)
 
-Progress: [██████████████████░░] 75%
+Progress: [███████████████████░] 87.5%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 30
+- Total plans completed: 31
 - Average duration: 3.4 min
-- Total execution time: 1.78 hours
+- Total execution time: 1.86 hours
 
 **By Phase:**
 
@@ -31,7 +31,7 @@ Progress: [██████████████████░░] 75%
 | 02-data-layer-activity | 2 | 9 min | 4.5 min |
 | 03-add-video-flow | 2 | 8 min | 4 min |
 | 03.1-design-token-system | 2 | 6 min | 3 min |
-| 03.2-activity-page-beta-quality | 4 | 19 min | 4.75 min |
+| 03.2-activity-page-beta-quality | 5 | 24 min | 4.8 min |
 | 07-backend-architecture | 3 | 7 min | 2.3 min |
 | 07.1-orm-migration-sqlx-to-gorm | 3 | 8 min | 2.7 min |
 | 07.2-gorm-cursor-paginator | 2 | 4 min | 2 min |
@@ -40,7 +40,7 @@ Progress: [██████████████████░░] 75%
 | 08-user-integration-flow | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 2 min, 4 min, 3 min, 3 min, 3 min (avg: 3 min)
+- Last 5 plans: 4 min, 3 min, 3 min, 3 min, 5 min (avg: 3.6 min)
 - Trend: Excellent — Consistent execution velocity
 
 *Updated after each plan completion*
@@ -165,6 +165,9 @@ Recent decisions affecting current work:
 - [08-01]: CreateUserPopover with username input and useCreateUser mutation hook
 - [08-01]: UserSelector has adjacent "+ New User" trigger with auto-select on creation
 - [08-01]: Query invalidation on user creation via queryKeys.users.list()
+- [03.2-05]: AddVideoPopover outline variant on navy header for visibility (not ghost or default)
+- [03.2-05]: Card wrapper pattern for grid components: border rounded-lg shadow-sm overflow-hidden
+- [03.2-05]: Component variant props pass-through pattern (AddVideoPopover → FormPopover)
 
 ### Roadmap Evolution
 
@@ -339,6 +342,6 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 
 ## Session Continuity
 
-Last session: 2026-02-15
-Stopped at: Completed 03.2-06-PLAN.md — Column filters and icon centering fixed
+Last session: 2026-02-16
+Stopped at: Completed 03.2-05-PLAN.md — Navy header and card container
 Resume file: None
