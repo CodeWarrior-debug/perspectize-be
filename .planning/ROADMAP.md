@@ -158,7 +158,7 @@ Plans:
 - [x] 03.3-03-PLAN.md — OBSOLETE (Sevalla already deployed with current structure)
 
 ### Phase 4: Add Perspective Flow
-**Goal**: Users can create perspectives on videos with ratings, Like text, and Review text
+**Goal**: Users can create perspectives on videos with ratings, Like, and Review text
 **Depends on**: Phase 3
 **Requirements**: PERSP-01, PERSP-02, PERSP-03, PERSP-04, PERSP-05, PERSP-06, PERSP-07, PERSP-08, PERSP-09, USER-03, TEST-05
 **Success Criteria** (what must be TRUE):
@@ -443,35 +443,43 @@ Plans:
   1. Authentication middleware validates JWT/session on all mutations (C-01)
   2. Authorization checks on all mutations -- users can only modify their own data (C-01)
   3. GraphQL query complexity limit enforced (C-04)
-  4. CORS restricted to explicit frontend origin (C-05 -- may already be done in Phase 5)
-  5. GraphQL playground disabled in production (C-09)
+  4. CORS restricted to explicit frontend origin (C-05)
+  5. GraphQL playground disabled in production (C-09) — ALREADY FIXED (Plan 07-03)
   6. Introspection disabled in production (C-10)
   7. User email addresses only visible to authenticated user for their own account (H-10)
   8. Rate limiting middleware installed (H-11)
   9. YouTube API key never appears in logs or error responses (H-12)
-  10. HTTP server has read/write/idle timeouts configured (H-15)
-  11. TLS/HTTPS via reverse proxy or `ListenAndServeTLS` (H-14)
+  10. HTTP server has read/write/idle timeouts configured (H-15) — ALREADY FIXED (Plan 07-03)
+  11. TLS/HTTPS via Sevalla reverse proxy (H-14)
   12. Security headers set: `X-Content-Type-Options`, `X-Frame-Options`, HSTS (M-14)
-  13. CSRF protection middleware installed (M-15)
-  14. Content Security Policy header on frontend (H-25)
-  15. Secrets managed via vault/rotation mechanism (M-28)
-**Plans**: TBD
+  13. CSRF protection via Content-Type validation (M-15)
+  14. Content Security Policy enhanced on frontend (H-25) — PARTIALLY FIXED (CSP meta tag exists from Plan 07.3-01)
+  15. Secrets management strategy documented (M-28)
+**Plans**: 6 plans in 3 waves
+
+Plans:
+- [ ] 09-01-PLAN.md — JWT auth infrastructure: dependencies, AuthService, auth middleware, GraphQL directives, wire to server (Wave 1)
+- [ ] 09-02-PLAN.md — Authorization: email visibility check, @owner directive with ownership checks, wire services to directives (Wave 2)
+- [ ] 09-03-PLAN.md — API protection: rate limiting, query complexity, CORS restriction, introspection disable, Content-Type validation (Wave 2)
+- [ ] 09-04-PLAN.md — Security headers: unrolled/secure middleware, enhanced CSP, HTTPS verification (Wave 3)
+- [ ] 09-05-PLAN.md — Error sanitization: YouTube API key removal from logs and GraphQL errors (Wave 3)
+- [ ] 09-06-PLAN.md — Secrets management: documentation with rotation procedures, Sevalla best practices (Wave 3)
 
 **Concern checklist:**
-- [ ] C-01: No authentication or authorization (CRITICAL)
-- [ ] C-04: No GraphQL query complexity limiting (DoS vector)
-- [ ] C-05: Wildcard CORS configuration (may be resolved by Phase 5, plan 05-03)
-- [ ] C-09: GraphQL playground exposed unconditionally
-- [ ] C-10: GraphQL introspection enabled without restriction
-- [ ] H-10: User email addresses exposed in public query
-- [ ] H-11: No rate limiting
-- [ ] H-12: YouTube API key exposure risk in logs/errors
-- [ ] H-14: No HTTPS/TLS
-- [ ] H-15: No HTTP server timeouts (Slowloris DoS)
-- [ ] H-25: No Content Security Policy
-- [ ] M-14: Missing security headers
-- [ ] M-15: No CSRF protection
-- [ ] M-28: No secret rotation or vault integration
+- [ ] C-01: No authentication or authorization (CRITICAL) → **09-01, 09-02**
+- [ ] C-04: No GraphQL query complexity limiting (DoS vector) → **09-03**
+- [ ] C-05: Wildcard CORS configuration → **09-03**
+- [x] C-09: GraphQL playground exposed unconditionally → **ALREADY FIXED** (Plan 07-03 gates with APP_ENV)
+- [ ] C-10: GraphQL introspection enabled without restriction → **09-03**
+- [ ] H-10: User email addresses exposed in public query → **09-02**
+- [ ] H-11: No rate limiting → **09-03**
+- [ ] H-12: YouTube API key exposure risk in logs/errors → **09-05**
+- [ ] H-14: No HTTPS/TLS → **09-04** (verify Sevalla handles TLS termination)
+- [x] H-15: No HTTP server timeouts (Slowloris DoS) → **ALREADY FIXED** (Plan 07-03: ReadTimeout, WriteTimeout, IdleTimeout)
+- [x] H-25: No Content Security Policy → **PARTIALLY FIXED** (Plan 07.3-01 added CSP meta tag, 09-04 enhances)
+- [ ] M-14: Missing security headers → **09-04**
+- [ ] M-15: No CSRF protection → **09-03** (Content-Type validation approach)
+- [ ] M-28: No secret rotation or vault integration → **09-06** (documentation-based strategy)
 
 ### Phase 10: Frontend Quality & Test Coverage
 **Goal**: Fix frontend vulnerabilities, add codegen, error boundaries, and close all test coverage gaps
@@ -543,5 +551,5 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 7.4 Performance Monitoring | 1/1 | Complete | 2026-02-15 |
 | 8. User Integration Flow | 1/1 | Complete | 2026-02-15 |
 | 8.1 API & Schema Quality | 0/5 | Not started | - |
-| 9. Security Hardening | 0/0 | Not started | - |
+| 9. Security Hardening | 0/6 | Not started | - |
 | 10. Frontend Quality & Test Coverage | 0/0 | Not started | - |
