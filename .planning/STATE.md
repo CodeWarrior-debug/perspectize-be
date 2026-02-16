@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 8 complete — Phase 8.1 (API & Schema Quality) next
+**Current focus:** Phase 3.2 complete — Phase 3.3 (Repository Rename & Folder Restructure) next
 
 ## Current Position
 

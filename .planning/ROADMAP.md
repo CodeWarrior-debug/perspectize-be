@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2.1: Mobile Responsive Fixes** - Fix header overflow, pagination bar, and table layout at 375px (INSERTED)
 - [x] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
 - [x] **Phase 3.1: Design Token System** - Implement all 27 Figma color variables, Geist + Charter typography, rating colors in code (INSERTED — rescoped)
-- [ ] **Phase 3.2: Activity Page Beta Quality** - Rebuild Activity page to beta quality with server-side ops, new columns, popover dialog, data provenance (INSERTED)
+- [x] **Phase 3.2: Activity Page Beta Quality** - Rebuild Activity page to beta quality with server-side ops, new columns, popover dialog, data provenance (INSERTED)
 - [ ] **Phase 3.3: Repository Rename & Folder Restructure** - Rename repo to perspectize, backend → backend, fe → fe, update imports and Sevalla (INSERTED)
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
 - [ ] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
@@ -135,10 +135,10 @@ Plans:
 - [x] 03.2-02-PLAN.md — Frontend: popover dialog redesign (replace modal with non-modal popover)
 - [x] 03.2-03-PLAN.md — Frontend: ActivityTable rewrite (server-side pagination, new columns, compact rows, sticky headers, provenance)
 - [x] 03.2-04-PLAN.md — Integration polish, test coverage, visual verification checkpoint
-- [ ] 03.2-05-PLAN.md — Navy header styling, AG Grid card container, theme param fixes (D-01, D-02, D-06)
-- [ ] 03.2-06-PLAN.md — Column filter types, floating filters on all columns, YouTube icon centering (D-09, D-10)
-- [ ] 03.2-07-PLAN.md — Mobile responsive: column hiding, icon-only buttons, hidden thumbnails, compact pagination (M-01, M-03, M-05, M-06)
-- [ ] 03.2-08-PLAN.md — Mobile popovers to dialogs, shadcn Select for UserSelector (M-04, D-03)
+- [x] 03.2-05-PLAN.md — Navy header styling, AG Grid card container, theme param fixes (D-01, D-02, D-06)
+- [x] 03.2-06-PLAN.md — Column filter types, floating filters on all columns, YouTube icon centering (D-09, D-10)
+- [x] 03.2-07-PLAN.md — Mobile responsive: column hiding, icon-only buttons, hidden thumbnails, compact pagination (M-01, M-03, M-05, M-06)
+- [x] 03.2-08-PLAN.md — Mobile popovers to dialogs, shadcn Select for UserSelector (M-04, D-03)
 
 ### Phase 3.3: Repository Rename & Folder Restructure (INSERTED)
 **Goal**: Rename repository from perspectize to perspectize, restructure folders (backend → backend, fe → fe), update all Go imports, fix CI/CD and Sevalla deployment pointers
