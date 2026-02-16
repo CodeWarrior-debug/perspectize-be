@@ -397,12 +397,12 @@ Review findings by priority:
 Plans:
 - [x] 07.4-01-PLAN.md — Request timing middleware, GORM slow query logger, DB stats endpoint, GraphQL timing, Go benchmarks, Web Vitals
 
-### Phase 8: API & Schema Quality
+### Phase 8.1: API & Schema Quality
 **Goal**: Fix GraphQL schema types, pagination bugs, race conditions, and missing resolvers
 **Depends on**: Phase 7.2 (cursor pagination fixed first)
 **Source**: Bug Backlog C-02, H-03, H-04, H-05, H-06, H-07, H-08, M-04, M-08, M-11, M-13, M-16
 **Success Criteria** (what must be TRUE):
-  1. Cursor pagination works correctly for all sort columns, not just ID (C-02)
+  1. Cursor pagination works correctly for all sort columns, not just ID (C-02) — ALREADY FIXED in Phase 7.2
   2. `ListAll` users has pagination with configurable limit (H-03)
   3. Timestamps use `DateTime` scalar with proper serialization (H-04)
   4. `contentType` uses `ContentType` enum, not `String` (H-05)
@@ -412,26 +412,33 @@ Plans:
   8. Perspective `user` and `content` nested fields resolve correctly (M-08)
   9. Input length validation on description, labels, categorizedRatings (M-11)
   10. Update checks `RowsAffected` for optimistic concurrency (M-16)
-**Plans**: TBD
+**Plans**: 5 plans in 3 waves
+
+Plans:
+- [ ] 08.1-01-PLAN.md — Schema quality: DateTime scalar, ContentType enum, deletePerspective IntID fix
+- [ ] 08.1-02-PLAN.md — YouTube structured fields: remove response, add individual columns, migration
+- [ ] 08.1-03-PLAN.md — DB constraints: GORM uniqueIndex tags, migration, service error handling
+- [ ] 08.1-04-PLAN.md — Pagination, validation, RowsAffected: users limit param, input validation, concurrency checks
+- [ ] 08.1-05-PLAN.md — Nested resolvers: Perspective.user and Perspective.content field resolvers
 
 **Concern checklist:**
-- [ ] C-02: Cursor pagination broken for non-ID sorts -> **Moved to Phase 7.2**
-- [ ] H-03: `ListAll()` users has no pagination (unbounded query)
-- [ ] H-04: Timestamps as `String!` instead of `DateTime` scalar
-- [ ] H-05: `contentType` uses `String!` instead of `ContentType` enum
-- [ ] H-06: Race condition on perspective claim uniqueness check (TOCTOU)
-- [ ] H-07: Race condition on user uniqueness check (TOCTOU)
-- [ ] H-08: YouTube API response stored verbatim (~5KB bloat per item)
-- [ ] M-04: `deletePerspective` uses `ID` scalar instead of `IntID`
-- [ ] M-08: Missing nested field resolvers (perspective->user, perspective->content)
-- [ ] M-11: Missing input length validation
-- [ ] M-13: Unbounded JSON field (duplicate of H-08)
-- [ ] M-16: Update does not check `RowsAffected`
+- [x] C-02: Cursor pagination broken for non-ID sorts → **ALREADY FIXED in Phase 7.2**
+- [ ] H-03: `ListAll()` users has no pagination (unbounded query) → **08.1-04**
+- [ ] H-04: Timestamps as `String!` instead of `DateTime` scalar → **08.1-01**
+- [ ] H-05: `contentType` uses `String!` instead of `ContentType` enum → **08.1-01**
+- [ ] H-06: Race condition on perspective claim uniqueness check (TOCTOU) → **08.1-03**
+- [ ] H-07: Race condition on user uniqueness check (TOCTOU) → **08.1-03**
+- [ ] H-08: YouTube API response stored verbatim (~5KB bloat per item) → **08.1-02**
+- [ ] M-04: `deletePerspective` uses `ID` scalar instead of `IntID` → **08.1-01**
+- [ ] M-08: Missing nested field resolvers (perspective->user, perspective->content) → **08.1-05**
+- [ ] M-11: Missing input length validation → **08.1-04**
+- [ ] M-13: Unbounded JSON field (duplicate of H-08) → **08.1-02**
+- [ ] M-16: Update does not check `RowsAffected` → **08.1-04**
 
 ### Phase 9: Security Hardening
 **Goal**: Add authentication, authorization, rate limiting, and security headers to make the app safe for multi-user deployment
-**Depends on**: Phase 8 (clean schema + architecture required before layering auth)
-**Source**: Bug Backlog C-01, C-04, C-05, C-09, C-10, H-10, H-11, H-12, H-14, H-15, H-25, M-14, M-15, M-28
+**Depends on**: Phase 8.1 (clean schema + architecture required before layering auth)
+**Source**: Bug backlog C-01, C-04, C-05, C-09, C-10, H-10, H-11, H-12, H-14, H-15, H-25, M-14, M-15, M-28
 **Success Criteria** (what must be TRUE):
   1. Authentication middleware validates JWT/session on all mutations (C-01)
   2. Authorization checks on all mutations -- users can only modify their own data (C-01)
@@ -468,8 +475,8 @@ Plans:
 
 ### Phase 10: Frontend Quality & Test Coverage
 **Goal**: Fix frontend vulnerabilities, add codegen, error boundaries, and close all test coverage gaps
-**Depends on**: Phase 8 (schema fixes enable codegen; nested resolvers enable frontend cleanup)
-**Source**: Bug Backlog C-03, H-17, H-18, H-22, H-23, H-24, M-18-M-26, T-01-T-06, L-*
+**Depends on**: Phase 8.1 (schema fixes enable codegen; nested resolvers enable frontend cleanup)
+**Source**: Bug backlog C-03, H-17, H-18, H-22, H-23, H-24, M-18-M-26, T-01-T-06, L-*
 **Success Criteria** (what must be TRUE):
   1. AG Grid cellRenderer uses safe DOM APIs, no raw innerHTML interpolation (C-03)
   2. `+error.svelte` error boundary exists with retry UI (H-17, M-23)
@@ -535,7 +542,6 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 7.3 Frontend Caching Remediation | 4/4 | Complete | 2026-02-14 |
 | 7.4 Performance Monitoring | 1/1 | Complete | 2026-02-15 |
 | 8. User Integration Flow | 1/1 | Complete | 2026-02-15 |
-| 8.1 API & Schema Quality | 0/0 | Not started | - |
+| 8.1 API & Schema Quality | 0/5 | Not started | - |
 | 9. Security Hardening | 0/0 | Not started | - |
 | 10. Frontend Quality & Test Coverage | 0/0 | Not started | - |
-
