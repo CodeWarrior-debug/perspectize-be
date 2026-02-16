@@ -5,6 +5,12 @@
 	import { validateYouTubeUrl } from '$lib/utils/youtube';
 	import PlusIcon from '@lucide/svelte/icons/plus';
 
+	let {
+		triggerVariant = 'default',
+	}: {
+		triggerVariant?: 'default' | 'outline' | 'ghost';
+	} = $props();
+
 	// Reactive state
 	let open = $state(false);
 	let url = $state('');
@@ -42,6 +48,7 @@
 
 <FormPopover
 	bind:open
+	{triggerVariant}
 	triggerLabel="Add Video"
 	title="Add Video"
 	description="Paste a YouTube URL to add it to your library."

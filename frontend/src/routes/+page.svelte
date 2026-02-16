@@ -7,6 +7,8 @@
 		<h1 class="text-3xl font-bold">Activity</h1>
 	</div>
 	<div class="flex-1 min-h-0 px-4 md:px-6 lg:px-8 pb-4">
-		<ActivityTable />
+		<div class="border rounded-lg shadow-sm overflow-hidden h-full flex flex-col">
+			<ActivityTable />
+		</div>
 	</div>
 </div>
