@@ -308,13 +308,17 @@ describe('typeCellRenderer', () => {
 		expect(typeCellRenderer({ data: undefined })).toBe('');
 	});
 
-	it('renders YouTube play icon', () => {
+	it('renders YouTube play icon with full centering', () => {
 		const result = typeCellRenderer({
 			data: { contentType: 'youtube_video' }
 		}) as HTMLElement;
 
 		expect(result).toBeInstanceOf(HTMLDivElement);
 		expect(result.className).toContain('flex');
+		expect(result.className).toContain('items-center');
+		expect(result.className).toContain('justify-center');
+		expect(result.className).toContain('h-full');
+		expect(result.className).toContain('w-full');
 
 		const svg = result.querySelector('svg');
 		expect(svg).toBeTruthy();

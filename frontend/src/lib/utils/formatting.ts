@@ -148,7 +148,7 @@ export function typeCellRenderer(params: { data?: { contentType: string } }): HT
 	if (!params.data) return '';
 
 	const container = document.createElement('div');
-	container.className = 'flex items-center justify-center';
+	container.className = 'flex items-center justify-center h-full w-full';
 
 	// YouTube play button icon (red)
 	const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
