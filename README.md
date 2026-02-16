@@ -3,7 +3,7 @@
 <!-- TODO: Add hero banner image -->
 <!-- ![Perspectize Banner](assets/banner.png) -->
 
-A platform for storing, refining, and sharing perspectives on content. Currently focused on YouTube videos, with a foundation designed to support multiple content types (books, articles, podcasts, etc.).
+A platform for storing, refining, and sharing perspectives on content, with philosophy that the app should give the user calm and control - not addicting and endlessly distracting the user, in the way of many sharing platforms.  Currently focused on YouTube videos, with a foundation designed to support multiple content types (books, articles, podcasts, etc.).
 
 <!-- TODO: Add demo GIF showing the Activity page in action -->
 <!-- ![Perspectize Demo](assets/demo.gif) -->
@@ -135,3 +135,4 @@ See [LICENSE](LICENSE) for the full license text.
 ---
 
 Built with care by the Perspectize team.
+
