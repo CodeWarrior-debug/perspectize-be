@@ -231,3 +231,106 @@ Enable automatic contributor agreement signing for external contributions. One c
 **Template reference:** [Apache ICLA](https://www.apache.org/licenses/icla.pdf) (for inspiration, ours would be simpler)
 
 **Priority:** Low — set up before accepting external contributions
+
+---
+
+## Content Categories (Google Content Taxonomy)
+
+Categorize content using [Google's Cloud NL Content Taxonomy](https://cloud.google.com/natural-language/docs/categories) — 27 top-level categories designed for digital content classification. Evaluated against Library of Congress Classification (too academic, book-oriented) and Dewey Decimal (too coarse at 10 categories, proprietary OCLC license).
+
+**Why Google's taxonomy wins for Perspectize:**
+- Built for web/digital content, not physical books
+- Maps almost 1:1 to YouTube's own category system
+- Intuitive labels users understand ("Arts & Entertainment" not "Class P")
+- Free to use, actively maintained
+- 3-4 levels of depth — enough granularity without overwhelming
+
+**Recommended v1 categories (20 of 27):** Arts & Entertainment, Autos & Vehicles, Beauty & Fitness, Books & Literature, Business & Industrial, Computers & Electronics, Finance, Food & Drink, Games, Health, Hobbies & Leisure, Home & Garden, Jobs & Education, Law & Government, News, People & Society, Pets & Animals, Science, Sports, Travel & Transportation.
+
+**Dropped for v1:** Adult, Internet & Telecom, Online Communities, Real Estate, Reference, Sensitive Subjects, Shopping.
+
+**Implementation approach:**
+- One category per content item (single-select)
+- Complements tags (tags = specific, categories = broad classification)
+- Store as enum or lookup table; plan for custom user-defined categories later
+- Consider auto-categorization via Google Cloud NL API or LLM classification on ingest
+
+**Source:** Taxonomy comparison discussion (2026-02-16)
+
+---
+
+## Robustness Score
+
+A computed metric indicating how well-supported a perspective is. Surfaces the difference between a quick hot-take and a thoroughly reasoned perspective.
+
+**Possible signal inputs:**
+- Number of supporting arguments or evidence points
+- Whether the perspective references specific timestamps/quotes from the content
+- Length and depth of the perspective text
+- Whether counter-arguments are acknowledged
+- Number of tags/categories applied
+- Whether the user has engaged with opposing perspectives on the same content
+
+**Design considerations:**
+- Display as a visual indicator (progress bar, shield icon, star rating)
+- Should encourage thoroughness without gatekeeping — all perspectives welcome, but well-supported ones are surfaced
+- Could be computed client-side initially, moved to backend as the formula stabilizes
+
+**Source:** Feature discussion (2026-02-16)
+
+---
+
+## Provenance Icons
+
+Visual indicators showing the source/origin of content items. At a glance, users should know where content came from.
+
+**v1 scope (YouTube only):**
+- YouTube icon/badge on all content (since only YouTube is supported initially)
+
+**Future multi-source scope:**
+- Distinct icons per content type: YouTube, Podcast, Article, Book, etc.
+- Icon displayed in the Activity Table, content detail views, and anywhere content is listed
+- Could use platform brand icons (YouTube play button, Spotify waves, etc.) or abstract content-type icons
+- Consider a "verified source" variant for content fetched directly via API vs. manually added
+
+**Source:** Feature discussion (2026-02-16)
+
+---
+
+## Chat / Discussion on Content
+
+Enable conversation threads on content items, allowing users to discuss perspectives with each other.
+
+**Possible scope:**
+- Comment threads on individual content items
+- Reply threads on specific perspectives
+- Real-time or near-real-time messaging
+- Threaded vs. flat discussion structure
+
+**Design considerations:**
+- Moderation strategy (community-driven, AI-assisted, manual)
+- Notification system for replies
+- How chat interacts with perspectives — is a chat message a lightweight perspective, or a separate concept?
+- Could start as simple comment threads and evolve toward real-time chat
+
+**Source:** Feature discussion (2026-02-16)
+
+---
+
+## Jeeves AI Assistant
+
+An AI-powered assistant integrated into the platform to help users discover, refine, and engage with content and perspectives.
+
+**Possible capabilities:**
+- **Perspective refinement** — Help users articulate their perspectives more clearly, suggest evidence, flag logical gaps
+- **Content discovery** — "Based on your perspectives, you might find this interesting"
+- **Summarization** — Summarize the range of perspectives on a given piece of content
+- **Challenge mode** — Present counter-arguments to strengthen a user's thinking
+- **Category/tag suggestions** — Auto-suggest categories and tags based on content analysis
+
+**Design considerations:**
+- Name "Jeeves" evokes a knowledgeable, helpful butler — the AI should feel like a thoughtful assistant, not a chatbot
+- Could be a sidebar panel, a chat interface, or contextual suggestions inline
+- Start with one focused capability (e.g., perspective refinement) rather than trying to do everything
+
+**Source:** Feature discussion (2026-02-16)
