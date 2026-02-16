@@ -30,7 +30,7 @@
 		"jscpd": "^4.0.8",
 		"jsdom": "^28.0.0",
 		"svelte": "^5.51.2",
-		"svelte-check": "^4.3.5",
+		"svelte-check": "^4.4.0",
 		"tailwind-variants": "^3.2.2",
 		"tailwindcss": "^4.1.18",
 		"typescript": "^5.9.3",
