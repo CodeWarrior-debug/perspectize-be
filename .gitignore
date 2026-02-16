@@ -46,3 +46,8 @@ coverage/
 # Local Claude Code settings and hooks (machine-specific)
 .claude/*.local.md
 .claude/*.local.json
+
+# Private bug tracking (not for public exposure)
+KNOWN_BUGS.md
+.planning/phases/bugs/
+.planning/codebase/CONCERNS.md

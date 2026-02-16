@@ -158,7 +158,7 @@ Plans:
 - [x] 03.3-03-PLAN.md — OBSOLETE (Sevalla already deployed with current structure)
 
 ### Phase 4: Add Perspective Flow
-**Goal**: Users can create perspectives on videos with ratings, Like text, and Review text
+**Goal**: Users can create perspectives on videos with ratings, Like, and Review text
 **Depends on**: Phase 3
 **Requirements**: PERSP-01, PERSP-02, PERSP-03, PERSP-04, PERSP-05, PERSP-06, PERSP-07, PERSP-08, PERSP-09, USER-03, TEST-05
 **Success Criteria** (what must be TRUE):
@@ -193,8 +193,9 @@ Plans:
 
 ## Post-MVP: Concerns Remediation (Phases 6-10)
 
-Phases 6-10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md`. Ordered by dependency: fix errors first, then architecture, then schema, then security (which depends on clean architecture), then frontend. Each phase is a living checklist -- items can be picked off incrementally.
+Phases 6-10 address issues from the bug backlog (`.planning/phases/bugs/BACKLOG.md`, gitignored). Ordered by dependency: fix errors first, then architecture, then schema, then security (which depends on clean architecture), then frontend. Each phase is a living checklist -- items can be picked off incrementally.
 
+- [ ] **Bugs (persistent)** - Ongoing bug tracking and fixes (`.planning/phases/bugs/`, gitignored — see `.docs/BUG_TRACKING.md`)
 - [ ] **Phase 6: Error Handling & Data Integrity** - Fix silent failures, error leakage, and config validation
 - [x] **Phase 7: Backend Architecture** - Hexagonal cleanup, dependency injection, server infrastructure
 - [x] **Phase 7.1: ORM Migration -- sqlx to GORM** - Replace sqlx with GORM using hex-clean separate model pattern (INSERTED)
@@ -225,7 +226,7 @@ Plans:
 ### Phase 6: Error Handling & Data Integrity
 **Goal**: Eliminate all silent failures so errors are visible, logged, and surfaced correctly to clients
 **Depends on**: Phase 5 (CI/CD catches regressions)
-**Source**: CONCERNS.md C-06, C-07, C-08, H-13, H-16, H-19, H-20, H-21, M-03, M-27
+**Source**: Bug Backlog C-06, C-07, C-08, H-13, H-16, H-19, H-20, H-21, M-03, M-27
 **Success Criteria** (what must be TRUE):
   1. All `json.Unmarshal` calls check and handle errors (C-06, C-08)
   2. All `strconv`/`time.Parse` calls check and handle errors (C-07, C-08)
@@ -257,7 +258,7 @@ Plans:
 ### Phase 7: Backend Architecture
 **Goal**: Clean up hexagonal architecture violations, add proper dependency injection, and harden server infrastructure
 **Depends on**: Phase 6 (error handling patterns established first)
-**Source**: CONCERNS.md H-01, H-02, H-09, M-01, M-02, M-05, M-06, M-09, M-10, M-12, M-17
+**Source**: Bug Backlog H-01, H-02, H-09, M-01, M-02, M-05, M-06, M-09, M-10, M-12, M-17
 **Success Criteria** (what must be TRUE):
   1. No adapter-to-adapter imports -- resolvers use service ports only (H-01, H-02)
   2. Service port interfaces defined; resolver depends on interfaces, not concrete types (H-02)
@@ -329,7 +330,7 @@ Plans:
 ### Phase 7.2: gorm-cursor-paginator Integration (INSERTED)
 **Goal**: Replace hand-rolled cursor encoding with `gorm-cursor-paginator` library to fix C-02 (cursor pagination broken for non-ID sorts) and simplify pagination code in all GORM repositories
 **Depends on**: Phase 7.1 (GORM migration must be complete)
-**Source**: CONCERNS.md C-02, FEATURE_BACKLOG.md (HIGH PRIORITY)
+**Source**: Bug Backlog C-02, FEATURE_BACKLOG.md (HIGH PRIORITY)
 **Success Criteria** (what must be TRUE):
   1. `gorm-cursor-paginator` library added as dependency
   2. Cursor pagination works correctly for all sort columns (created_at, updated_at, name, JSONB fields), not just ID
@@ -396,12 +397,12 @@ Review findings by priority:
 Plans:
 - [x] 07.4-01-PLAN.md — Request timing middleware, GORM slow query logger, DB stats endpoint, GraphQL timing, Go benchmarks, Web Vitals
 
-### Phase 8: API & Schema Quality
+### Phase 8.1: API & Schema Quality
 **Goal**: Fix GraphQL schema types, pagination bugs, race conditions, and missing resolvers
 **Depends on**: Phase 7.2 (cursor pagination fixed first)
-**Source**: CONCERNS.md C-02, H-03, H-04, H-05, H-06, H-07, H-08, M-04, M-08, M-11, M-13, M-16
+**Source**: Bug Backlog C-02, H-03, H-04, H-05, H-06, H-07, H-08, M-04, M-08, M-11, M-13, M-16
 **Success Criteria** (what must be TRUE):
-  1. Cursor pagination works correctly for all sort columns, not just ID (C-02)
+  1. Cursor pagination works correctly for all sort columns, not just ID (C-02) — ALREADY FIXED in Phase 7.2
   2. `ListAll` users has pagination with configurable limit (H-03)
   3. Timestamps use `DateTime` scalar with proper serialization (H-04)
   4. `contentType` uses `ContentType` enum, not `String` (H-05)
@@ -411,64 +412,79 @@ Plans:
   8. Perspective `user` and `content` nested fields resolve correctly (M-08)
   9. Input length validation on description, labels, categorizedRatings (M-11)
   10. Update checks `RowsAffected` for optimistic concurrency (M-16)
-**Plans**: TBD
+**Plans**: 5 plans in 3 waves
+
+Plans:
+- [ ] 08.1-01-PLAN.md — Schema quality: DateTime scalar, ContentType enum, deletePerspective IntID fix
+- [ ] 08.1-02-PLAN.md — YouTube structured fields: remove response, add individual columns, migration
+- [ ] 08.1-03-PLAN.md — DB constraints: GORM uniqueIndex tags, migration, service error handling
+- [ ] 08.1-04-PLAN.md — Pagination, validation, RowsAffected: users limit param, input validation, concurrency checks
+- [ ] 08.1-05-PLAN.md — Nested resolvers: Perspective.user and Perspective.content field resolvers
 
 **Concern checklist:**
-- [ ] C-02: Cursor pagination broken for non-ID sorts -> **Moved to Phase 7.2**
-- [ ] H-03: `ListAll()` users has no pagination (unbounded query)
-- [ ] H-04: Timestamps as `String!` instead of `DateTime` scalar
-- [ ] H-05: `contentType` uses `String!` instead of `ContentType` enum
-- [ ] H-06: Race condition on perspective claim uniqueness check (TOCTOU)
-- [ ] H-07: Race condition on user uniqueness check (TOCTOU)
-- [ ] H-08: YouTube API response stored verbatim (~5KB bloat per item)
-- [ ] M-04: `deletePerspective` uses `ID` scalar instead of `IntID`
-- [ ] M-08: Missing nested field resolvers (perspective->user, perspective->content)
-- [ ] M-11: Missing input length validation
-- [ ] M-13: Unbounded JSON field (duplicate of H-08)
-- [ ] M-16: Update does not check `RowsAffected`
+- [x] C-02: Cursor pagination broken for non-ID sorts → **ALREADY FIXED in Phase 7.2**
+- [ ] H-03: `ListAll()` users has no pagination (unbounded query) → **08.1-04**
+- [ ] H-04: Timestamps as `String!` instead of `DateTime` scalar → **08.1-01**
+- [ ] H-05: `contentType` uses `String!` instead of `ContentType` enum → **08.1-01**
+- [ ] H-06: Race condition on perspective claim uniqueness check (TOCTOU) → **08.1-03**
+- [ ] H-07: Race condition on user uniqueness check (TOCTOU) → **08.1-03**
+- [ ] H-08: YouTube API response stored verbatim (~5KB bloat per item) → **08.1-02**
+- [ ] M-04: `deletePerspective` uses `ID` scalar instead of `IntID` → **08.1-01**
+- [ ] M-08: Missing nested field resolvers (perspective->user, perspective->content) → **08.1-05**
+- [ ] M-11: Missing input length validation → **08.1-04**
+- [ ] M-13: Unbounded JSON field (duplicate of H-08) → **08.1-02**
+- [ ] M-16: Update does not check `RowsAffected` → **08.1-04**
 
 ### Phase 9: Security Hardening
 **Goal**: Add authentication, authorization, rate limiting, and security headers to make the app safe for multi-user deployment
-**Depends on**: Phase 8 (clean schema + architecture required before layering auth)
-**Source**: CONCERNS.md C-01, C-04, C-05, C-09, C-10, H-10, H-11, H-12, H-14, H-15, H-25, M-14, M-15, M-28
+**Depends on**: Phase 8.1 (clean schema + architecture required before layering auth)
+**Source**: Bug backlog C-01, C-04, C-05, C-09, C-10, H-10, H-11, H-12, H-14, H-15, H-25, M-14, M-15, M-28
 **Success Criteria** (what must be TRUE):
   1. Authentication middleware validates JWT/session on all mutations (C-01)
   2. Authorization checks on all mutations -- users can only modify their own data (C-01)
   3. GraphQL query complexity limit enforced (C-04)
-  4. CORS restricted to explicit frontend origin (C-05 -- may already be done in Phase 5)
-  5. GraphQL playground disabled in production (C-09)
+  4. CORS restricted to explicit frontend origin (C-05)
+  5. GraphQL playground disabled in production (C-09) — ALREADY FIXED (Plan 07-03)
   6. Introspection disabled in production (C-10)
   7. User email addresses only visible to authenticated user for their own account (H-10)
   8. Rate limiting middleware installed (H-11)
   9. YouTube API key never appears in logs or error responses (H-12)
-  10. HTTP server has read/write/idle timeouts configured (H-15)
-  11. TLS/HTTPS via reverse proxy or `ListenAndServeTLS` (H-14)
+  10. HTTP server has read/write/idle timeouts configured (H-15) — ALREADY FIXED (Plan 07-03)
+  11. TLS/HTTPS via Sevalla reverse proxy (H-14)
   12. Security headers set: `X-Content-Type-Options`, `X-Frame-Options`, HSTS (M-14)
-  13. CSRF protection middleware installed (M-15)
-  14. Content Security Policy header on frontend (H-25)
-  15. Secrets managed via vault/rotation mechanism (M-28)
-**Plans**: TBD
+  13. CSRF protection via Content-Type validation (M-15)
+  14. Content Security Policy enhanced on frontend (H-25) — PARTIALLY FIXED (CSP meta tag exists from Plan 07.3-01)
+  15. Secrets management strategy documented (M-28)
+**Plans**: 6 plans in 3 waves
+
+Plans:
+- [ ] 09-01-PLAN.md — JWT auth infrastructure: dependencies, AuthService, auth middleware, GraphQL directives, wire to server (Wave 1)
+- [ ] 09-02-PLAN.md — Authorization: email visibility check, @owner directive with ownership checks, wire services to directives (Wave 2)
+- [ ] 09-03-PLAN.md — API protection: rate limiting, query complexity, CORS restriction, introspection disable, Content-Type validation (Wave 2)
+- [ ] 09-04-PLAN.md — Security headers: unrolled/secure middleware, enhanced CSP, HTTPS verification (Wave 3)
+- [ ] 09-05-PLAN.md — Error sanitization: YouTube API key removal from logs and GraphQL errors (Wave 3)
+- [ ] 09-06-PLAN.md — Secrets management: documentation with rotation procedures, Sevalla best practices (Wave 3)
 
 **Concern checklist:**
-- [ ] C-01: No authentication or authorization (CRITICAL)
-- [ ] C-04: No GraphQL query complexity limiting (DoS vector)
-- [ ] C-05: Wildcard CORS configuration (may be resolved by Phase 5, plan 05-03)
-- [ ] C-09: GraphQL playground exposed unconditionally
-- [ ] C-10: GraphQL introspection enabled without restriction
-- [ ] H-10: User email addresses exposed in public query
-- [ ] H-11: No rate limiting
-- [ ] H-12: YouTube API key exposure risk in logs/errors
-- [ ] H-14: No HTTPS/TLS
-- [ ] H-15: No HTTP server timeouts (Slowloris DoS)
-- [ ] H-25: No Content Security Policy
-- [ ] M-14: Missing security headers
-- [ ] M-15: No CSRF protection
-- [ ] M-28: No secret rotation or vault integration
+- [ ] C-01: No authentication or authorization (CRITICAL) → **09-01, 09-02**
+- [ ] C-04: No GraphQL query complexity limiting (DoS vector) → **09-03**
+- [ ] C-05: Wildcard CORS configuration → **09-03**
+- [x] C-09: GraphQL playground exposed unconditionally → **ALREADY FIXED** (Plan 07-03 gates with APP_ENV)
+- [ ] C-10: GraphQL introspection enabled without restriction → **09-03**
+- [ ] H-10: User email addresses exposed in public query → **09-02**
+- [ ] H-11: No rate limiting → **09-03**
+- [ ] H-12: YouTube API key exposure risk in logs/errors → **09-05**
+- [ ] H-14: No HTTPS/TLS → **09-04** (verify Sevalla handles TLS termination)
+- [x] H-15: No HTTP server timeouts (Slowloris DoS) → **ALREADY FIXED** (Plan 07-03: ReadTimeout, WriteTimeout, IdleTimeout)
+- [x] H-25: No Content Security Policy → **PARTIALLY FIXED** (Plan 07.3-01 added CSP meta tag, 09-04 enhances)
+- [ ] M-14: Missing security headers → **09-04**
+- [ ] M-15: No CSRF protection → **09-03** (Content-Type validation approach)
+- [ ] M-28: No secret rotation or vault integration → **09-06** (documentation-based strategy)
 
 ### Phase 10: Frontend Quality & Test Coverage
 **Goal**: Fix frontend vulnerabilities, add codegen, error boundaries, and close all test coverage gaps
-**Depends on**: Phase 8 (schema fixes enable codegen; nested resolvers enable frontend cleanup)
-**Source**: CONCERNS.md C-03, H-17, H-18, H-22, H-23, H-24, M-18-M-26, T-01-T-06, L-*
+**Depends on**: Phase 8.1 (schema fixes enable codegen; nested resolvers enable frontend cleanup)
+**Source**: Bug backlog C-03, H-17, H-18, H-22, H-23, H-24, M-18-M-26, T-01-T-06, L-*
 **Success Criteria** (what must be TRUE):
   1. AG Grid cellRenderer uses safe DOM APIs, no raw innerHTML interpolation (C-03)
   2. `+error.svelte` error boundary exists with retry UI (H-17, M-23)
@@ -485,31 +501,39 @@ Plans:
   13. Repository-layer tests exist (T-04)
   14. YouTube API client tested (T-05)
   15. `IntID` scalar tested (T-06)
-**Plans**: TBD
+**Plans**: 6 plans in 3 waves
+
+Plans:
+- [ ] 10-01-PLAN.md — GraphQL Code Generator setup (client-preset, codegen.ts, generated types)
+- [ ] 10-02-PLAN.md — Error boundaries and GraphQL client enhancements (+error.svelte, hooks.client.ts, timeout, selective retry)
+- [ ] 10-03-PLAN.md — Backend service and resolver tests (PerspectiveService.Update, User/Perspective resolvers)
+- [ ] 10-04-PLAN.md — Backend helper and scalar tests (helpers.go converters, IntID scalar)
+- [ ] 10-05-PLAN.md — Backend repository integration tests (Content/Perspective List with DB, pagination, sorting, filtering)
+- [ ] 10-06-PLAN.md — Frontend coverage gaps and dead code detection (Knip setup, tooltip tests, coverage thresholds)
 
 **Concern checklist:**
-- [ ] C-03: XSS vulnerability in AG Grid cellRenderer
-- [ ] H-17: Missing `+error.svelte` error boundary
-- [ ] H-18: Missing `hooks.client.ts` / `hooks.server.ts`
-- [ ] H-22: `prerender = true` without SSR (architectural mismatch)
-- [ ] H-23: No TypeScript types generated from GraphQL schema
-- [ ] H-24: GraphQL client missing error/timeout infrastructure
-- [ ] M-18: Duplicated type definitions across components
-- [ ] M-19: No server-side pagination integration (hard-coded 100)
-- [ ] M-20: `selectedUserId` store not consumed
-- [ ] M-21: Unused type guards
+- [x] C-03: XSS vulnerability in AG Grid cellRenderer → **ALREADY FIXED** (createElement used, not innerHTML)
+- [ ] H-17: Missing `+error.svelte` error boundary → **10-02**
+- [ ] H-18: Missing `hooks.client.ts` / `hooks.server.ts` → **10-02**
+- [x] H-22: `prerender = true` without SSR (architectural mismatch) → **ALREADY FIXED** (prerender false in +layout.ts)
+- [ ] H-23: No TypeScript types generated from GraphQL schema → **10-01**
+- [ ] H-24: GraphQL client missing error/timeout infrastructure → **10-02**
+- [ ] M-18: Duplicated type definitions across components → **10-01** (codegen eliminates duplication)
+- [x] M-19: No server-side pagination integration (hard-coded 100) → **ALREADY FIXED** (Phase 3.2)
+- [ ] M-20: `selectedUserId` store not consumed → **10-06** (Knip detection)
+- [ ] M-21: Unused type guards → **10-06** (Knip detection)
 - [ ] M-22: Search input not debounced
-- [ ] M-23: No error recovery UI (no retry button)
-- [ ] M-24: Dead code (`AGGridTest.svelte`)
-- [ ] M-25: HTTP fallback for GraphQL endpoint
-- [ ] M-26: Retry configuration retries all errors (should only retry 5xx)
-- [ ] T-01: `PerspectiveService.Update()` -- zero tests
-- [ ] T-02: No resolver tests
-- [ ] T-03: No `helpers.go` conversion tests
-- [ ] T-04: No repository-layer tests
-- [ ] T-05: No YouTube API client tests
-- [ ] T-06: No `IntID` scalar tests
-- [ ] L-*: Low priority cleanup (see CONCERNS.md L-01 through L-22)
+- [ ] M-23: No error recovery UI (no retry button) → **10-02**
+- [ ] M-24: Dead code (`AGGridTest.svelte`) → **10-06** (Knip detection, note: AGGridTest.svelte not found, may already be removed)
+- [ ] M-25: HTTP fallback for GraphQL endpoint → **10-02** (HTTPS auto-upgrade in client)
+- [ ] M-26: Retry configuration retries all errors (should only retry 5xx) → **10-02**
+- [ ] T-01: `PerspectiveService.Update()` -- zero tests → **10-03**
+- [ ] T-02: No resolver tests → **10-03**
+- [ ] T-03: No `helpers.go` conversion tests → **10-04**
+- [ ] T-04: No repository-layer tests → **10-05**
+- [ ] T-05: No YouTube API client tests → **DEFERRED** (requires client refactor for testability, 15 tests currently skipped)
+- [ ] T-06: No `IntID` scalar tests → **10-04**
+- [ ] L-*: Low priority cleanup (see Bug Backlog L-01 through L-22) → **DEFERRED** (low priority)
 
 ## Progress
 
@@ -534,7 +558,6 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 7.3 Frontend Caching Remediation | 4/4 | Complete | 2026-02-14 |
 | 7.4 Performance Monitoring | 1/1 | Complete | 2026-02-15 |
 | 8. User Integration Flow | 1/1 | Complete | 2026-02-15 |
-| 8.1 API & Schema Quality | 0/0 | Not started | - |
-| 9. Security Hardening | 0/0 | Not started | - |
-| 10. Frontend Quality & Test Coverage | 0/0 | Not started | - |
-
+| 8.1 API & Schema Quality | 0/5 | Not started | - |
+| 9. Security Hardening | 0/6 | Not started | - |
+| 10. Frontend Quality & Test Coverage | 0/6 | Not started | - |

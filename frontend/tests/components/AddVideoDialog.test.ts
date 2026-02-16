@@ -18,7 +18,7 @@ const {
 	mockToastSuccess: vi.fn(),
 	mockToastError: vi.fn(),
 	mockValidate: vi.fn(),
-	mockGetSelectedUserId: vi.fn(() => 1),
+	mockGetSelectedUserId: vi.fn((): number | null => 1),
 }));
 
 // Capture mutation options for behavioral testing
@@ -52,11 +52,11 @@ vi.mock('$lib/queries/client', () => ({
 }));
 
 vi.mock('$lib/utils/youtube', () => ({
-	validateYouTubeUrl: (...args: any[]) => mockValidate(...args),
+	validateYouTubeUrl: (url: string) => mockValidate(url),
 }));
 
 vi.mock('$lib/stores/userSelection.svelte', () => ({
-	getSelectedUserId: (...args: any[]) => mockGetSelectedUserId(...args),
+	getSelectedUserId: () => mockGetSelectedUserId(),
 }));
 
 

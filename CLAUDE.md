@@ -92,6 +92,16 @@ gh api repos/CodeWarrior-debug/perspectize/pulls/123/comments
 
 GitHub Projects v2: See [.docs/GITHUB_PROJECTS.md](.docs/GITHUB_PROJECTS.md).
 
+### PR Merge Preferences
+
+```bash
+gh pr merge 123 --squash --delete-branch --admin
+```
+
+- `--squash` — Single commit (cleaner history)
+- `--delete-branch` — Auto-delete branch after merge
+- `--admin` — Bypass branch protection when needed
+
 ## Branch Naming
 
 **Always branch from updated `main`:** `git checkout main && git pull origin main && git checkout -b <name>`
@@ -129,7 +139,7 @@ Include: GSD Plan Reference (`.planning/phases/{phase}/{plan}-PLAN.md`), accepta
 defer db.Close()
 ```
 
-**Commit messages:** Conventional commit format (`feat`, `fix`, `refactor`, `chore`, `docs`, `test`). One logical change per commit.
+**Commit messages:** Conventional commit format (`feat`, `fix`, `refactor`, `chore`, `docs`, `test`). One logical change per commit. GSD planning work (PLAN.md, CONTEXT.md, RESEARCH.md, ROADMAP.md) uses the `docs` tag — e.g., `docs(11,13): create execution plans`.
 
 ## GSD Workflow
 
@@ -173,6 +183,7 @@ See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow
 
 **Planning & backlog:**
 - [Feature Backlog](FEATURE_BACKLOG.md) — Future ideas and enhancements not tied to any milestone. Capture ideas here during development; evaluate when planning new work.
+- [Bug Tracking](.docs/BUG_TRACKING.md) — How known bugs are tracked privately (gitignored files, persistent bugs phase)
 
 **External references:**
 - [gqlgen](https://gqlgen.com/) | [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/) | [Effective Go](https://go.dev/doc/effective_go) | [PostgreSQL 17](https://www.postgresql.org/docs/17/)

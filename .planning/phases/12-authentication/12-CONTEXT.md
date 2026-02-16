@@ -1,8 +1,8 @@
-# Phase 12: Authentication & Security — Context
+# Phase 12: Authentication — Context
 
 ## Phase Goal
 
-Replace user dropdown selector with proper JWT authentication. Secure all GraphQL mutations. Enable user-specific features.
+Replace user dropdown selector with Clerk-based authentication. Secure all GraphQL mutations. Enable user-specific features.
 
 ## Problem Statement
 
@@ -15,23 +15,34 @@ Current system allows anyone to:
 - Create/update/delete content
 - Act as any user (via dropdown selector)
 
-## Research Summary
+## Approach: Clerk Authentication Provider
 
-See `.planning/v1.1-research/AUTH-ARCHITECTURE.md` for full research.
+**Decision:** Use [Clerk](https://clerk.com) instead of custom JWT implementation.
 
-**Recommended approach:** Hybrid JWT with httpOnly refresh cookies
-- **Access tokens:** 15 min expiry, stored in-memory (JavaScript variable)
-- **Refresh tokens:** 7 days expiry, stored in httpOnly cookie
-- **Password hashing:** Argon2id (OWASP 2026 standard)
-- **Middleware:** go-chi/jwtauth for JWT validation
+**Why Clerk over custom JWT:**
+- Eliminates 10-17 days of auth backend development (Argon2id, refresh tokens, password reset, email verification)
+- Official Go SDK v2 with chi-compatible JWT middleware
+- Community SvelteKit SDK (`svelte-clerk`) with Svelte 5 runes support
+- Pre-built UI components (SignIn, SignUp, UserButton, UserProfile)
+- 50K MAU free tier — more than sufficient for MVP and beyond
+- No password storage, no token rotation logic, no security-critical crypto code
 
-**Why not localStorage for tokens:**
-- XSS vulnerability — any script can read localStorage
-- httpOnly cookies cannot be accessed by JavaScript
+**Why not other providers:**
+- Auth0: No Svelte SDK, expensive for production features
+- Supabase Auth: Requires SSR hooks — incompatible with adapter-static
+- Firebase Auth: No Svelte SDK, dated UI, Google lock-in
+- Logto: Requires SSR hooks — incompatible with adapter-static
+- Lucia Auth: Deprecated (March 2025)
+- Hanko: Smaller community, 10K free tier, less mature Go SDK
+- Custom JWT: 10-17 days effort, security risk from hand-rolling auth
 
-**Why hybrid approach:**
-- Access tokens in memory: fast access, no cookie overhead
-- Refresh tokens in cookies: survive page refresh, secure storage
+Full comparison: `12-RESEARCH-provider-comparison.md`
+
+## Research Documents
+
+- `12-RESEARCH-sveltekit.md` — Clerk + SvelteKit integration (svelte-clerk, SPA mode, token forwarding)
+- `12-RESEARCH-go-backend.md` — Clerk Go SDK middleware, webhook sync, user mapping
+- `12-RESEARCH-provider-comparison.md` — 8 providers evaluated against project constraints
 
 ## Current Architecture
 
@@ -50,179 +61,135 @@ Frontend                    Backend
 └─────────────┘            └─────────────┘
 ```
 
-## Target Architecture
+## Target Architecture (Clerk)
 
 ```
-Frontend                    Backend
-┌─────────────┐            ┌─────────────┐
-│ Auth State  │◀──────────▶│ JWT Auth    │
-│ (runes)     │ access     │ Middleware  │
-└─────────────┘ token      └─────────────┘
-     │                           │
-     ▼                           ▼
-┌─────────────┐            ┌─────────────┐
-│ GraphQL     │───────────▶│ Resolvers   │
-│ Client      │ Bearer     │ Check ctx   │
-│ + auth hook │ token      │ user        │
-└─────────────┘            └─────────────┘
-     │
-     ▼
-┌─────────────┐
-│ TanStack    │
-│ Query       │
-│ (user-keyed)│
-└─────────────┘
+Frontend (SvelteKit SPA)              Backend (Go + chi)
+┌──────────────────────┐              ┌──────────────────────┐
+│ ClerkProvider        │              │ clerk-sdk-go/v2      │
+│ ├── SignedIn/Out     │  Bearer      │ ├── WithHeaderAuth   │
+│ ├── UserButton       │──token──────▶│ ├── SessionClaims    │
+│ └── getToken()       │              │ └── ForContext()     │
+└──────────────────────┘              └──────────────────────┘
+     │                                       │
+     ▼                                       ▼
+┌──────────────────────┐              ┌──────────────────────┐
+│ GraphQL Client       │              │ Resolvers            │
+│ + Authorization      │  query/      │ ├── auth.ForContext() │
+│   Bearer header      │──mutation───▶│ ├── ownership check  │
+└──────────────────────┘              │ └── user.ID (local)  │
+     │                                └──────────────────────┘
+     ▼                                       │
+┌──────────────────────┐              ┌──────────────────────┐
+│ TanStack Query       │              │ Webhook Handler      │
+│ (user-keyed cache)   │              │ /webhooks/clerk      │
+└──────────────────────┘              │ (Svix verification)  │
+                                      └──────────────────────┘
 ```
+
+## Key Architecture Decisions
+
+### 1. SPA Mode (adapter-static)
+
+The frontend uses `adapter-static` — no `hooks.server.ts` available. All auth is client-side:
+- `ClerkProvider` wraps the app with publishable key only
+- `CLERK_SECRET_KEY` stays on the Go backend only
+- Token verification happens on the Go backend, not SvelteKit
+- Layout changes: `prerender=false`, `ssr=false`, fallback=`index.html`
+
+### 2. Bearer Token Flow (not cookies)
+
+Frontend gets session token via `getToken()`, sends as `Authorization: Bearer <token>`. Go backend verifies with `WithHeaderAuthorization()` middleware. No httpOnly cookie needed (Clerk manages session tokens internally with 60-second TTL and auto-refresh).
+
+### 3. Local User ID Mapping
+
+Keep existing integer `users.id` as primary key. Add `clerk_user_id TEXT UNIQUE` column. Middleware resolves Clerk ID → local user on each request. Foreign keys throughout the schema remain integer-based.
+
+### 4. Webhook-Based User Sync
+
+Clerk webhooks (via Svix) sync user creation/updates/deletion to local DB. On-demand fallback: if authenticated request arrives but webhook hasn't fired yet, fetch user from Clerk API and create locally.
 
 ## Database Changes
 
 ```sql
--- Add password field to users table
-ALTER TABLE users ADD COLUMN password_hash TEXT;
+-- Add Clerk user ID to existing users table
+ALTER TABLE users ADD COLUMN clerk_user_id TEXT UNIQUE;
+CREATE INDEX idx_users_clerk_user_id ON users (clerk_user_id);
 
--- Add refresh token storage
-CREATE TABLE refresh_tokens (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    token_hash TEXT NOT NULL,
-    expires_at TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    revoked_at TIMESTAMPTZ
-);
-
-CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens (user_id);
-CREATE INDEX idx_refresh_tokens_hash ON refresh_tokens (token_hash);
+-- NO password_hash column needed (Clerk manages passwords)
+-- NO refresh_tokens table needed (Clerk manages sessions)
 ```
 
-## GraphQL Schema Changes
+## What Clerk Eliminates from Original Plan
 
-```graphql
-input RegisterInput {
-  username: String!
-  password: String!
-  email: String
-}
+| Original CONTEXT.md | With Clerk |
+|---------------------|-----------|
+| Argon2id password hashing | Not needed — Clerk handles passwords |
+| JWT token generation (HS256) | Not needed — Clerk issues RS256 JWTs |
+| Refresh token table + rotation | Not needed — Clerk manages sessions |
+| Custom login/register mutations | Not needed — Clerk UI components |
+| go-chi/jwtauth middleware | Replaced by clerk-sdk-go middleware |
+| Frontend auth state (custom runes) | Use svelte-clerk reactive state |
+| Password reset flow | Not needed — Clerk handles it |
+| Email verification | Not needed — Clerk handles it |
 
-input LoginInput {
-  username: String!
-  password: String!
-}
+## Environment Variables
 
-type AuthPayload {
-  user: User!
-  accessToken: String!
-  expiresIn: Int!  # seconds
-}
+```bash
+# Backend (Go)
+CLERK_SECRET_KEY=sk_live_xxx              # Clerk Backend API secret
+CLERK_WEBHOOK_SIGNING_SECRET=whsec_xxx    # From Clerk Dashboard > Webhooks
 
-type Mutation {
-  register(input: RegisterInput!): AuthPayload!
-  login(input: LoginInput!): AuthPayload!
-  logout: Boolean!
-  refreshToken: AuthPayload!
-}
+# Frontend (SvelteKit)
+VITE_CLERK_PUBLISHABLE_KEY=pk_live_xxx    # Public key only
 ```
 
-## Go Middleware Pattern
+## Impact on Phase 9 (Security Hardening)
 
-```go
-// Chi middleware
-func JWTAuthMiddleware(secretKey string) func(next http.Handler) http.Handler {
-    return jwtauth.Verifier(jwtauth.New("HS256", []byte(secretKey), nil))
-}
+Phase 9 has 6 plans for custom JWT auth. With Clerk:
 
-// Context injection
-func AuthContext(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        _, claims, _ := jwtauth.FromContext(r.Context())
-        if claims != nil {
-            userID := claims["user_id"].(float64)
-            ctx := context.WithValue(r.Context(), auth.UserIDKey, int64(userID))
-            next.ServeHTTP(w, r.WithContext(ctx))
-        } else {
-            next.ServeHTTP(w, r)
-        }
-    })
-}
+| Phase 9 Plan | Current Purpose | Impact |
+|-------------|----------------|--------|
+| 09-01 | JWT auth infrastructure (custom) | **SUPERSEDED** — Clerk SDK replaces custom JWT |
+| 09-02 | Authorization (@owner directive) | **KEEP** — Ownership checks still needed, wire to Clerk context |
+| 09-03 | Rate limiting, query complexity, CORS | **KEEP** — All still needed. Update CORS for `Authorization` header |
+| 09-04 | Security headers (HSTS, CSP) | **KEEP** — Independent of auth provider |
+| 09-05 | Error sanitization | **KEEP** — Still need to protect API keys in logs |
+| 09-06 | Secrets management docs | **UPDATE** — Document Clerk secrets instead of JWT secrets |
 
-// Resolver access
-func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.CreatePerspectiveInput) (*model.Perspective, error) {
-    userID := auth.ForContext(ctx)
-    if userID == 0 {
-        return nil, errors.New("authentication required")
-    }
-    // ... create perspective with userID
-}
-```
+**Net effect:** Phase 9 Plan 01 is replaced by Phase 12 Clerk integration. Plans 02-05 remain valid. Plan 06 needs minor updates.
 
-## SvelteKit Patterns
+## Dependencies
 
-```typescript
-// Auth state with Svelte 5 runes
-let accessToken = $state<string | null>(null);
-let user = $state<User | null>(null);
+- Phase 8.1 (clean schema + architecture required before layering auth)
+- Phase 9 Plans 03-05 can execute in parallel with Phase 12
 
-// Token refresh
-async function refreshToken() {
-    const response = await fetch('/api/refresh', { credentials: 'include' });
-    const data = await response.json();
-    accessToken = data.accessToken;
-    user = data.user;
-}
+## Risks
 
-// GraphQL client with auth
-const graphqlClient = new GraphQLClient(GRAPHQL_ENDPOINT, {
-    requestMiddleware: (request) => ({
-        ...request,
-        headers: {
-            ...request.headers,
-            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
-    }),
-});
-
-// TanStack Query cache scoping
-const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-            queryKeyHashFn: (key) => {
-                // Prefix with user ID
-                return JSON.stringify([user?.id, ...key]);
-            },
-        },
-    },
-});
-```
-
-## Requirements Covered
-
-- AUTH-01 through AUTH-13 (all authentication requirements)
+- **svelte-clerk SPA compatibility** — Community SDK, not official. SPA mode not explicitly documented. Mitigation: test early, fall back to `@clerk/clerk-js` vanilla if needed.
+- **Vendor lock-in** — Users stored in Clerk infrastructure. Mitigation: local user table with all critical data; Clerk ID is just a link column.
+- **Webhook race condition** — User authenticates before webhook fires. Mitigation: on-demand user creation fallback.
+- **CORS update** — Must add `Authorization` to allowed headers. Currently only allows `Content-Type`.
 
 ## Success Metrics
 
 | Metric | Current | Target |
 |--------|---------|--------|
-| Auth mechanism | User dropdown | JWT tokens |
-| Password storage | N/A | Argon2id |
-| Token storage | N/A | httpOnly cookies |
-| Mutation protection | None | All mutations |
-| Cache scoping | None | User ID prefix |
-
-## Dependencies
-
-- Phase 11 (clean schema foundation)
-
-## Risks
-
-- **Security vulnerabilities:** JWT implementation errors, timing attacks
-- **Token leakage:** Improper cookie flags, XSS exposure
-- **Migration:** Existing users need password set flow
+| Auth mechanism | User dropdown | Clerk JWT tokens |
+| Password storage | N/A | Clerk-managed |
+| Token verification | None | clerk-sdk-go middleware |
+| Mutation protection | None | All mutations require auth |
+| Cache scoping | None | User ID prefix in query keys |
+| Login UI | Dropdown selector | Clerk SignIn/UserButton |
 
 ## Open Questions
 
-1. Should existing users be forced to set password, or grandfather with dropdown?
-2. Should we implement "remember me" checkbox (extend refresh to 30 days)?
-3. Should we add login attempt rate limiting immediately, or defer?
+1. **Clerk appearance customization** — How well do Clerk's pre-built UI components match Perspectize's navy theme and Geist/Charter typography? Test with `appearance.variables`.
+2. **Sevalla SPA fallback** — Need to configure `index.html` fallback for client-side routing.
+3. **Existing user migration** — 3 users exist. Sentinel users (`[deleted]`, `[system]`) should remain local-only. Real users get Clerk accounts via Backend API.
+4. **GraphQL Playground** — Auth middleware is permissive (allows unauthenticated through). Playground works for public queries. For mutations in dev, use Clerk dev tokens.
 
 ---
 
-*Context gathered: 2026-02-16*
+*Context updated: 2026-02-16 — Rewritten to favor Clerk integration over custom JWT*
+*Previous approach (custom JWT) preserved in git history and v1.1-research/AUTH-ARCHITECTURE.md*
