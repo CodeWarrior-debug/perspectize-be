@@ -29,7 +29,9 @@ func NewClient(apiKey string) *Client {
 	}
 }
 
-// YouTubeAPIResponse represents the response from YouTube Data API
+// YouTubeAPIResponse represents the trimmed response stored in the database.
+// Only fields the app actually reads are included — everything else
+// (thumbnails, etag, status, topicDetails, etc.) is stripped on ingest.
 type YouTubeAPIResponse struct {
 	Items []struct {
 		ID      string `json:"id"`
@@ -96,12 +98,18 @@ func (c *Client) GetVideoMetadata(ctx context.Context, videoID string) (*service
 		duration = 0
 	}
 
+	// Re-marshal from parsed struct to strip unused fields
+	trimmed, err := json.Marshal(apiResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal trimmed response: %w", err)
+	}
+
 	return &services.VideoMetadata{
 		Title:       item.Snippet.Title,
 		Description: item.Snippet.Description,
 		Duration:    duration,
 		ChannelName: item.Snippet.ChannelTitle,
-		Response:    body,
+		Response:    trimmed,
 	}, nil
 }
 
