@@ -20,7 +20,7 @@
 		"@lucide/svelte": "^0.564.0",
 		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/adapter-static": "^3.0.10",
-		"@sveltejs/kit": "^2.50.1",
+		"@sveltejs/kit": "^2.52.0",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
 		"@tailwindcss/vite": "^4.1.18",
 		"@testing-library/jest-dom": "^6.9.1",
@@ -40,7 +40,7 @@
 	"dependencies": {
 		"@ag-grid-community/client-side-row-model": "32.2.1",
 		"@ag-grid-community/core": "32.3.9",
-		"@ag-grid-community/theming": "32.2.0",
+		"@ag-grid-community/theming": "32.3.9",
 		"@tanstack/svelte-form": "^1.28.3",
 		"@tanstack/svelte-query": "^6.0.18",
 		"ag-grid-svelte5": "^1.0.3",
