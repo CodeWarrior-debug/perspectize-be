@@ -12,6 +12,49 @@ Monorepo with two stacks:
 
 **CLAUDE.md structure:** Root file (this) contains shared concerns. Package-level files contain stack-specific instructions. Claude loads root + the relevant package file per session.
 
+## Context Lookup with qmd (MANDATORY — Use Before Reading Files)
+
+**ALWAYS use qmd bash commands** to search for code before using Read/Glob/Grep. This applies to ALL agents including GSD subagents.
+
+⚠️ **DO NOT use MCP qmd tools** — use Bash commands only. MCP is not available in all contexts.
+
+**Allowed commands (pre-approved):**
+- `qmd search *` — keyword search
+- `qmd vsearch *` — semantic search
+- `qmd query *` — hybrid search with reranking
+- `qmd get *` — retrieve file content
+- `qmd ls *` — list files in collection
+- `qmd update` — refresh index after changes
+- `qmd status` — check index status
+- `qmd embed` — generate embeddings after update
+
+```bash
+# Quick keyword search (BM25) — use 80% of the time
+qmd search "auth middleware" -c perspectize
+
+# Semantic search — finds related code even without exact keywords
+qmd vsearch "how does error handling work" -c perspectize
+
+# Hybrid search with reranking — best quality for complex questions
+qmd query "checkout flow validation" -c perspectize
+
+# Get specific file (optionally from line N, max L lines)
+qmd get qmd://perspectize/backend/internal/domain/content.go
+qmd get qmd://perspectize/backend/internal/domain/content.go:45 -l 30
+
+# List files in collection
+qmd ls perspectize
+```
+
+**Workflow:**
+1. Use `qmd search` or `qmd query` first to find relevant code
+2. Use `qmd get` to retrieve targeted snippets (not full files)
+3. Fall back to Read/Glob only if qmd doesn't return enough results
+
+**Available collections:** `perspectize` (code), `planning` (GSD docs)
+
+**Update index after major changes:** `qmd update && qmd embed`
+
 ## GitHub & Repository Management
 
 **Always use `gh` CLI** for GitHub operations. Do not use MCP plugins.
