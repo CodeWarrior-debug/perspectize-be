@@ -29,7 +29,7 @@
 		"bits-ui": "^2.15.5",
 		"jscpd": "^4.0.8",
 		"jsdom": "^28.0.0",
-		"svelte": "^5.48.2",
+		"svelte": "^5.51.2",
 		"svelte-check": "^4.3.5",
 		"tailwind-variants": "^3.2.2",
 		"tailwindcss": "^4.1.18",
