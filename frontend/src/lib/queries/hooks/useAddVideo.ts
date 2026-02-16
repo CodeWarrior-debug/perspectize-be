@@ -24,6 +24,7 @@ export function useAddVideo() {
 			queryClient.invalidateQueries({ queryKey: queryKeys.content.lists() });
 		},
 		onError: (err: Error) => {
+			console.error('[AddVideo] mutation failed:', err);
 			const message = err.message.toLowerCase();
 			if (message.includes('no user selected')) {
 				toast.error('Please select a user first');
@@ -31,6 +32,8 @@ export function useAddVideo() {
 				toast.error('This video has already been added');
 			} else if (message.includes('invalid youtube url') || message.includes('video not found')) {
 				toast.error('Invalid YouTube URL or video not found');
+			} else if (message.includes('load failed') || message.includes('failed to fetch')) {
+				toast.error('Cannot reach the server. Check your connection and try again.');
 			} else {
 				toast.error('Failed to add video. Please try again.');
 			}
