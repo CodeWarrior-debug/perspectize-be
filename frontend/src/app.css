@@ -88,25 +88,52 @@
 	--color-logo-purple: #8b5cf6;
 }
 
-/* AG Grid pagination mobile responsive fix (GitHub issue #9239) */
-.ag-paging-panel {
-	height: auto !important;
-	flex-wrap: wrap-reverse;
-	row-gap: 1rem;
-	padding: 0.25rem;
-	align-items: center;
-	justify-content: flex-end;
+/* Tags tooltip */
+.tags-tooltip {
+	max-width: 320px;
+	max-height: 200px;
+	overflow-y: auto;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	padding: 10px;
+	background: rgba(45, 45, 45, 0.9);
+	border: none;
+	border-radius: 6px;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+	font-size: 13px;
 }
 
-@media (max-width: 768px) {
-	.ag-paging-panel {
-		justify-content: center;
+.tags-tooltip-chip {
+	display: inline-block;
+	padding: 3px 10px;
+	background: rgba(255, 255, 255, 0.15);
+	border: 1px solid rgba(255, 255, 255, 0.25);
+	border-radius: 12px;
+	color: rgba(255, 255, 255, 0.95);
+	white-space: nowrap;
+}
+
+/* AG Grid tooltip styling — match browser native tooltip look */
+.ag-tooltip {
+	font-size: 15px !important;
+	max-width: 400px !important;
+	white-space: normal !important;
+	word-break: break-word !important;
+	line-height: 1.4 !important;
+	background-color: rgba(45, 45, 45, 0.9) !important;
+	color: rgba(255, 255, 255, 0.95) !important;
+	border: none !important;
+	border-radius: 4px !important;
+	padding: 4px 8px !important;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2) !important;
+	max-height: 300px !important;
+	overflow-y: auto !important;
+}
+
+/* Mobile-specific utilities */
+@media (max-width: 767px) {
+	.thumbnail-mobile-hide {
+		display: none;
 	}
 }
-
-@media (max-width: 375px) {
-	.ag-paging-panel {
-		font-size: 0.875rem;
-	}
-}
-

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/repositories"
@@ -27,15 +26,6 @@ func NewPerspectiveService(repo repositories.PerspectiveRepository, userRepo rep
 
 // Create creates a new perspective with validation
 func (s *PerspectiveService) Create(ctx context.Context, input portservices.CreatePerspectiveInput) (*domain.Perspective, error) {
-	// Validate claim
-	claim := strings.TrimSpace(input.Claim)
-	if claim == "" {
-		return nil, fmt.Errorf("%w: claim is required", domain.ErrInvalidInput)
-	}
-	if len(claim) > 255 {
-		return nil, fmt.Errorf("%w: claim must be 255 characters or less", domain.ErrInvalidInput)
-	}
-
 	// Validate user exists
 	if input.UserID <= 0 {
 		return nil, fmt.Errorf("%w: user_id must be a positive integer", domain.ErrInvalidInput)
@@ -70,15 +60,6 @@ func (s *PerspectiveService) Create(ctx context.Context, input portservices.Crea
 		}
 	}
 
-	// Check for duplicate claim by same user
-	existing, err := s.repo.GetByUserAndClaim(ctx, input.UserID, claim)
-	if err == nil && existing != nil {
-		return nil, fmt.Errorf("%w: '%s'", domain.ErrDuplicateClaim, claim)
-	}
-	if err != nil && !errors.Is(err, domain.ErrNotFound) {
-		return nil, fmt.Errorf("failed to check existing claim: %w", err)
-	}
-
 	// Set default privacy
 	privacy := domain.PrivacyPublic
 	if input.Privacy != nil {
@@ -86,7 +67,6 @@ func (s *PerspectiveService) Create(ctx context.Context, input portservices.Crea
 	}
 
 	perspective := &domain.Perspective{
-		Claim:              claim,
 		UserID:             input.UserID,
 		ContentID:          input.ContentID,
 		Quality:            input.Quality,
@@ -133,28 +113,6 @@ func (s *PerspectiveService) Update(ctx context.Context, input portservices.Upda
 	existing, err := s.repo.GetByID(ctx, input.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get perspective: %w", err)
-	}
-
-	// Update claim if provided
-	if input.Claim != nil {
-		claim := strings.TrimSpace(*input.Claim)
-		if claim == "" {
-			return nil, fmt.Errorf("%w: claim cannot be empty", domain.ErrInvalidInput)
-		}
-		if len(claim) > 255 {
-			return nil, fmt.Errorf("%w: claim must be 255 characters or less", domain.ErrInvalidInput)
-		}
-		// Check for duplicate if claim changed
-		if claim != existing.Claim {
-			dup, err := s.repo.GetByUserAndClaim(ctx, existing.UserID, claim)
-			if err == nil && dup != nil {
-				return nil, fmt.Errorf("%w: '%s'", domain.ErrDuplicateClaim, claim)
-			}
-			if err != nil && !errors.Is(err, domain.ErrNotFound) {
-				return nil, fmt.Errorf("failed to check existing claim: %w", err)
-			}
-		}
-		existing.Claim = claim
 	}
 
 	// Validate and update ratings

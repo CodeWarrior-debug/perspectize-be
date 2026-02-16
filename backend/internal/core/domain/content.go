@@ -14,13 +14,14 @@ const (
 
 // Content represents a media item that users create perspectives on
 type Content struct {
-	ID          int
-	Name        string
-	URL         *string
-	ContentType ContentType
-	Length      *int
-	LengthUnits *string
-	Response    json.RawMessage
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID            int
+	Name          string
+	URL           *string
+	ContentType   ContentType
+	AddedByUserID int
+	Length        *int
+	LengthUnits   *string
+	Response      json.RawMessage
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }

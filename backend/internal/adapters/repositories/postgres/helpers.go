@@ -173,11 +173,6 @@ func buildPerspectiveSortRules(sortBy domain.PerspectiveSortBy, order domain.Sor
 			Key:   "UpdatedAt",
 			Order: paginatorOrder,
 		}
-	case domain.PerspectiveSortByClaim:
-		primaryRule = paginator.Rule{
-			Key:   "Claim",
-			Order: paginatorOrder,
-		}
 	case domain.PerspectiveSortByCreatedAt:
 		primaryRule = paginator.Rule{
 			Key:   "CreatedAt",

@@ -50,6 +50,10 @@ func (m *mockContentRepository) List(ctx context.Context, params domain.ContentL
 	return &domain.PaginatedContent{Items: []*domain.Content{}}, nil
 }
 
+func (m *mockContentRepository) ReassignByUser(ctx context.Context, fromUserID, toUserID int) error {
+	return nil
+}
+
 // mockYouTubeClient implements services.YouTubeClient for testing
 type mockYouTubeClient struct {
 	getVideoMetadataFn func(ctx context.Context, videoID string) (*portservices.VideoMetadata, error)
@@ -182,13 +186,14 @@ func TestCreateFromYouTube_Success(t *testing.T) {
 
 	svc := services.NewContentService(repo, ytClient)
 
-	result, err := svc.CreateFromYouTube(context.Background(), videoURL)
+	result, err := svc.CreateFromYouTube(context.Background(), videoURL, 42)
 
 	require.NoError(t, err)
 	assert.Equal(t, 1, result.ID)
 	assert.Equal(t, "Test Video Title", result.Name)
 	assert.Equal(t, domain.ContentTypeYouTube, result.ContentType)
 	assert.Equal(t, &videoURL, result.URL)
+	assert.Equal(t, 42, result.AddedByUserID)
 	require.NotNil(t, result.Length)
 	assert.Equal(t, 300, *result.Length)
 	require.NotNil(t, result.LengthUnits)
@@ -211,7 +216,7 @@ func TestCreateFromYouTube_AlreadyExists(t *testing.T) {
 
 	svc := services.NewContentService(repo, &mockYouTubeClient{})
 
-	result, err := svc.CreateFromYouTube(context.Background(), existingURL)
+	result, err := svc.CreateFromYouTube(context.Background(), existingURL, 1)
 
 	assert.Nil(t, result)
 	require.Error(t, err)
@@ -233,7 +238,7 @@ func TestCreateFromYouTube_InvalidURL(t *testing.T) {
 
 	svc := services.NewContentService(repo, ytClient)
 
-	result, err := svc.CreateFromYouTube(context.Background(), "not-a-valid-url")
+	result, err := svc.CreateFromYouTube(context.Background(), "not-a-valid-url", 1)
 
 	assert.Nil(t, result)
 	require.Error(t, err)
@@ -258,7 +263,7 @@ func TestCreateFromYouTube_YouTubeAPIError(t *testing.T) {
 
 	svc := services.NewContentService(repo, ytClient)
 
-	result, err := svc.CreateFromYouTube(context.Background(), "https://youtube.com/watch?v=abc123")
+	result, err := svc.CreateFromYouTube(context.Background(), "https://youtube.com/watch?v=abc123", 1)
 
 	assert.Nil(t, result)
 	require.Error(t, err)
@@ -292,7 +297,7 @@ func TestCreateFromYouTube_RepositoryCreateError(t *testing.T) {
 
 	svc := services.NewContentService(repo, ytClient)
 
-	result, err := svc.CreateFromYouTube(context.Background(), "https://youtube.com/watch?v=abc123")
+	result, err := svc.CreateFromYouTube(context.Background(), "https://youtube.com/watch?v=abc123", 1)
 
 	assert.Nil(t, result)
 	require.Error(t, err)
@@ -308,7 +313,7 @@ func TestCreateFromYouTube_GetByURLUnexpectedError(t *testing.T) {
 
 	svc := services.NewContentService(repo, &mockYouTubeClient{})
 
-	result, err := svc.CreateFromYouTube(context.Background(), "https://youtube.com/watch?v=abc123")
+	result, err := svc.CreateFromYouTube(context.Background(), "https://youtube.com/watch?v=abc123", 1)
 
 	assert.Nil(t, result)
 	require.Error(t, err)

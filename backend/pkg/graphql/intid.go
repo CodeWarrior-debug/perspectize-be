@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
@@ -29,6 +30,12 @@ func UnmarshalIntID(v interface{}) (int, error) {
 		return int(v), nil
 	case float64:
 		return int(v), nil
+	case json.Number:
+		i, err := v.Int64()
+		if err != nil {
+			return 0, fmt.Errorf("IntID: invalid number %q: %w", v.String(), err)
+		}
+		return int(i), nil
 	default:
 		return 0, fmt.Errorf("IntID must be a string or integer, got %T", v)
 	}

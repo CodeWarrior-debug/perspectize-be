@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
 	import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query';
 	import { Toaster } from 'svelte-sonner';
 	import favicon from '$lib/assets/favicon.svg';
 	import Header from '$lib/components/Header.svelte';
+	import { reportWebVitals } from '$lib/vitals';
 	import '../app.css';
 
 	// CRITICAL: Disable queries on server to prevent post-SSR execution
@@ -18,6 +20,10 @@
 	});
 
 	let { children } = $props();
+
+	onMount(() => {
+		reportWebVitals();
+	});
 </script>
 
 <svelte:head>

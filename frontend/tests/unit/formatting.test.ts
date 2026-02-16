@@ -3,6 +3,7 @@ import {
 	formatDuration,
 	formatDate,
 	formatCount,
+	formatCountExact,
 	formatPublishDate,
 	formatTags,
 	truncateDescription,
@@ -168,16 +169,41 @@ describe('formatCount', () => {
 	});
 
 	it('formats thousands with K suffix', () => {
-		expect(formatCount(1000)).toBe('1.0K');
-		expect(formatCount(1234)).toBe('1.2K');
-		expect(formatCount(5678)).toBe('5.7K');
-		expect(formatCount(999999)).toBe('1000.0K');
+		expect(formatCount(1000)).toBe('1.0 K');
+		expect(formatCount(1234)).toBe('1.2 K');
+		expect(formatCount(5678)).toBe('5.7 K');
+		expect(formatCount(999999)).toBe('1000.0 K');
 	});
 
 	it('formats millions with M suffix', () => {
-		expect(formatCount(1000000)).toBe('1.0M');
-		expect(formatCount(1234567)).toBe('1.2M');
-		expect(formatCount(5678901)).toBe('5.7M');
+		expect(formatCount(1000000)).toBe('1.0 M');
+		expect(formatCount(1234567)).toBe('1.2 M');
+		expect(formatCount(5678901)).toBe('5.7 M');
+	});
+
+	it('formats billions with B suffix', () => {
+		expect(formatCount(1000000000)).toBe('1.0 B');
+		expect(formatCount(2500000000)).toBe('2.5 B');
+	});
+});
+
+describe('formatCountExact', () => {
+	it('returns -- for null', () => {
+		expect(formatCountExact(null)).toBe('--');
+	});
+
+	it('formats small numbers without commas', () => {
+		expect(formatCountExact(0)).toBe('0');
+		expect(formatCountExact(999)).toBe('999');
+	});
+
+	it('formats thousands with commas', () => {
+		expect(formatCountExact(1000)).toBe('1,000');
+		expect(formatCountExact(1234567)).toBe('1,234,567');
+	});
+
+	it('formats millions with commas', () => {
+		expect(formatCountExact(1000000)).toBe('1,000,000');
 	});
 });
 
@@ -301,6 +327,15 @@ describe('itemCellRenderer', () => {
 		const span = result.querySelector('span');
 		expect(span?.textContent).toBe('No URL');
 	});
+
+	it('adds thumbnail-mobile-hide class to thumbnail', () => {
+		const result = itemCellRenderer({
+			data: { name: 'Video with thumbnail', url: 'https://youtube.com/watch?v=test123' }
+		}) as HTMLElement;
+
+		const img = result.querySelector('img');
+		expect(img?.className).toContain('thumbnail-mobile-hide');
+	});
 });
 
 describe('typeCellRenderer', () => {
@@ -308,13 +343,17 @@ describe('typeCellRenderer', () => {
 		expect(typeCellRenderer({ data: undefined })).toBe('');
 	});
 
-	it('renders YouTube play icon', () => {
+	it('renders YouTube play icon with full centering', () => {
 		const result = typeCellRenderer({
 			data: { contentType: 'youtube_video' }
 		}) as HTMLElement;
 
 		expect(result).toBeInstanceOf(HTMLDivElement);
 		expect(result.className).toContain('flex');
+		expect(result.className).toContain('items-center');
+		expect(result.className).toContain('justify-center');
+		expect(result.className).toContain('h-full');
+		expect(result.className).toContain('w-full');
 
 		const svg = result.querySelector('svg');
 		expect(svg).toBeTruthy();
@@ -323,5 +362,15 @@ describe('typeCellRenderer', () => {
 
 		const path = svg?.querySelector('path');
 		expect(path).toBeTruthy();
+	});
+
+	it('includes sr-only span with content type for filter matching', () => {
+		const result = typeCellRenderer({
+			data: { contentType: 'YOUTUBE' }
+		}) as HTMLElement;
+
+		const hidden = result.querySelector('.sr-only');
+		expect(hidden).toBeTruthy();
+		expect(hidden?.textContent).toBe('YOUTUBE');
 	});
 });

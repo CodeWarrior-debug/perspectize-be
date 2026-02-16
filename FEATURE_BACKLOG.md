@@ -89,3 +89,40 @@ Average response: **2,469 bytes/row**. All other columns combined: **136 bytes/r
 3. **Compress** — Use `pg_lz_compress` or application-level compression for the raw response if full fidelity is needed for audit/replay.
 
 **Priority:** Low — not a problem at current scale (49 rows, 8 MB DB). Revisit when content table approaches 1,000+ rows.
+
+---
+
+## Server-Side Sorting and Filtering for Activity Table
+
+Currently AG Grid sorting and filtering is client-side only — operates on the current page of rows. With server-side pagination (`limit`/`offset`), this means sort/filter only affects the visible page, not the full dataset.
+
+**What to do:**
+- Add `orderBy` and `filter` parameters to the `contents` GraphQL query
+- Implement sort/filter in the backend resolver and GORM repository
+- Wire AG Grid's `onSortChanged`/`onFilterChanged` events to re-fetch with server parameters
+- Consider switching to AG Grid's server-side row model for seamless integration
+
+**Priority:** Medium — noticeable UX gap once content exceeds one page (currently 52 items across 6 pages). Sorting "Views" only reorders the 10 visible rows, not all 52.
+
+**Source:** Phase 3.2 UAT (2026-02-16)
+
+---
+
+## Slow COUNT(*) and JSONB Sort Queries
+
+The `SELECT count(*) FROM "content"` query and JSONB-path ORDER BY queries are hitting 200-400ms, triggering GORM's slow query warning (>= 200ms). Observed at ~50 rows — will worsen at scale.
+
+**Slow queries observed:**
+- `SELECT count(*) FROM "content"` — 203ms to 382ms
+- `SELECT * FROM "content" ORDER BY COALESCE(response->'items'->0->'snippet'->>'publishedAt', '') ASC` — 157ms
+- Full GraphQL request latency: 395-541ms
+
+**Potential fixes:**
+1. **Add indexes** — GIN index on `response` JSONB, or expression indexes on frequently sorted JSONB paths (`(response->'items'->0->'statistics'->>'viewCount')::BIGINT`, `response->'items'->0->'snippet'->>'publishedAt'`)
+2. **Extract to columns** — Promote JSONB-derived sort fields to dedicated columns (related to "Compress/Trim YouTube Raw JSONB Response" item above)
+3. **Cache total count** — Avoid `SELECT count(*)` on every paginated request; use estimated count or cache with TTL
+4. **Analyze** — Run `EXPLAIN ANALYZE` on slow queries to confirm whether it's sequential scan or JSONB extraction overhead
+
+**Priority:** Low — manageable at 50 rows but a known scaling bottleneck. Consider alongside JSONB trimming/extraction work.
+
+**Source:** Backend logs (2026-02-15)

@@ -16,6 +16,10 @@ Monorepo with two stacks:
 
 **Always use `gh` CLI** for GitHub operations. Do not use MCP plugins.
 
+**Note:** In Claude Code web sessions, `gh` CLI may not be authenticated. If `gh` auth fails:
+- **Creating a PR:** Push the branch with `git push -u origin <branch>` and let the user create the PR via the GitHub UI button. Prepare the PR title and body as copyable text for the user.
+- **Updating a PR:** Output the updated title/body as copyable text so the user can paste it into the GitHub UI.
+
 ```bash
 # Pull requests
 gh pr create --title "Title" --body "..."  # Use PR template (see below)
@@ -119,6 +123,10 @@ See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow
 - [Frontend CLAUDE.md](frontend/CLAUDE.md) — SvelteKit, Svelte 5, TanStack Query patterns
 - [Design Spec](frontend/docs/DESIGN_SPEC.md) — Figma design system, color tokens, typography, component specs
 - [Figma Reference](frontend/docs/FIGMA.md) — File keys, pages, variables, code↔Figma mapping
+
+**How-to guides:**
+- [Adding an AG Grid Column](.claude/docs/ADDING_AG_GRID_COLUMN.md) — Decision checklist for adding columns to the ActivityTable
+- [Adding a Content Type](.claude/docs/ADDING_CONTENT_TYPE.md) — End-to-end guide for new content types (backend + frontend)
 
 **Planning & backlog:**
 - [Feature Backlog](FEATURE_BACKLOG.md) — Future ideas and enhancements not tied to any milestone. Capture ideas here during development; evaluate when planning new work.

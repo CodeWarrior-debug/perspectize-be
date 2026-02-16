@@ -41,3 +41,18 @@ vi.mock('$app/stores', () => {
 vi.mock('$lib/assets/favicon.svg', () => ({
 	default: '/favicon.svg'
 }));
+
+// Mock window.matchMedia for responsive components
+Object.defineProperty(window, 'matchMedia', {
+	writable: true,
+	value: vi.fn().mockImplementation((query: string) => ({
+		matches: false, // Default to desktop (not mobile)
+		media: query,
+		onchange: null,
+		addListener: vi.fn(),
+		removeListener: vi.fn(),
+		addEventListener: vi.fn(),
+		removeEventListener: vi.fn(),
+		dispatchEvent: vi.fn()
+	}))
+});

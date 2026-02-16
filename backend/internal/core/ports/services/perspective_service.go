@@ -8,7 +8,6 @@ import (
 
 // CreatePerspectiveInput contains the data needed to create a perspective
 type CreatePerspectiveInput struct {
-	Claim              string
 	UserID             int
 	ContentID          *int
 	Quality            *int
@@ -27,7 +26,6 @@ type CreatePerspectiveInput struct {
 // UpdatePerspectiveInput contains the data needed to update a perspective
 type UpdatePerspectiveInput struct {
 	ID                 int
-	Claim              *string
 	ContentID          *int
 	Quality            *int
 	Agreement          *int

@@ -20,12 +20,18 @@ import (
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/config"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/services"
 	"github.com/CodeWarrior-debug/perspectize/backend/pkg/database"
+	gqltiming "github.com/CodeWarrior-debug/perspectize/backend/pkg/graphql"
+	"github.com/CodeWarrior-debug/perspectize/backend/pkg/logger"
+	perfmw "github.com/CodeWarrior-debug/perspectize/backend/pkg/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Configure structured JSON logging for Sevalla log viewer
+	logger.Setup()
+
 	// Load .env file
 	if err := godotenv.Load(); err != nil {
 		if os.Getenv("APP_ENV") != "production" {
@@ -68,6 +74,9 @@ func main() {
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 
+	// Register slow query logger (logs queries >100ms)
+	database.RegisterSlowQueryLogger(db)
+
 	// Test connection
 	if err := database.PingGORM(context.Background(), db); err != nil {
 		log.Fatalf("Database ping failed for %s: %v", config.SanitizeDSN(dsn), err)
@@ -95,12 +104,13 @@ func main() {
 
 	// Initialize services
 	contentService := services.NewContentService(contentRepo, youtubeClient)
-	userService := services.NewUserService(userRepo)
+	userService := services.NewUserService(userRepo, contentRepo, perspectiveRepo)
 	perspectiveService := services.NewPerspectiveService(perspectiveRepo, userRepo)
 
 	// Initialize GraphQL
 	resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
+	srv.AroundOperations(gqltiming.OperationTimer())
 
 	// Setup chi router
 	r := chi.NewRouter()
@@ -108,8 +118,8 @@ func main() {
 	// Middleware stack
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)    // M-06: request logging
-	r.Use(middleware.Recoverer) // panic recovery
+	r.Use(perfmw.RequestTimer) // structured request timing (replaces chi Logger)
+	r.Use(perfmw.Recoverer)    // structured panic recovery (JSON via slog)
 
 	// CORS middleware
 	r.Use(func(next http.Handler) http.Handler {
@@ -147,6 +157,7 @@ func main() {
 	r.Handle("/graphql", srv)
 	if os.Getenv("APP_ENV") != "production" {
 		r.Handle("/", playground.Handler("GraphQL Playground", "/graphql"))
+		r.Get("/debug/db-stats", database.StatsHandler(sqlDB))
 	}
 
 	// Start server with timeouts

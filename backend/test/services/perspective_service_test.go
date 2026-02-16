@@ -15,12 +15,11 @@ import (
 
 // mockPerspectiveRepository implements repositories.PerspectiveRepository for testing
 type mockPerspectiveRepository struct {
-	createFn            func(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error)
-	getByIDFn           func(ctx context.Context, id int) (*domain.Perspective, error)
-	getByUserAndClaimFn func(ctx context.Context, userID int, claim string) (*domain.Perspective, error)
-	updateFn            func(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error)
-	deleteFn            func(ctx context.Context, id int) error
-	listFn              func(ctx context.Context, params domain.PerspectiveListParams) (*domain.PaginatedPerspectives, error)
+	createFn  func(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error)
+	getByIDFn func(ctx context.Context, id int) (*domain.Perspective, error)
+	updateFn  func(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error)
+	deleteFn  func(ctx context.Context, id int) error
+	listFn    func(ctx context.Context, params domain.PerspectiveListParams) (*domain.PaginatedPerspectives, error)
 }
 
 func (m *mockPerspectiveRepository) Create(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error) {
@@ -34,13 +33,6 @@ func (m *mockPerspectiveRepository) Create(ctx context.Context, p *domain.Perspe
 func (m *mockPerspectiveRepository) GetByID(ctx context.Context, id int) (*domain.Perspective, error) {
 	if m.getByIDFn != nil {
 		return m.getByIDFn(ctx, id)
-	}
-	return nil, domain.ErrNotFound
-}
-
-func (m *mockPerspectiveRepository) GetByUserAndClaim(ctx context.Context, userID int, claim string) (*domain.Perspective, error) {
-	if m.getByUserAndClaimFn != nil {
-		return m.getByUserAndClaimFn(ctx, userID, claim)
 	}
 	return nil, domain.ErrNotFound
 }
@@ -64,6 +56,10 @@ func (m *mockPerspectiveRepository) List(ctx context.Context, params domain.Pers
 		return m.listFn(ctx, params)
 	}
 	return &domain.PaginatedPerspectives{Items: []*domain.Perspective{}}, nil
+}
+
+func (m *mockPerspectiveRepository) ReassignByUser(ctx context.Context, fromUserID, toUserID int) error {
+	return nil
 }
 
 // mockUserRepoForPerspective implements repositories.UserRepository for perspective tests
@@ -94,6 +90,14 @@ func (m *mockUserRepoForPerspective) ListAll(ctx context.Context) ([]*domain.Use
 	return []*domain.User{}, nil
 }
 
+func (m *mockUserRepoForPerspective) Update(ctx context.Context, user *domain.User) (*domain.User, error) {
+	return user, nil
+}
+
+func (m *mockUserRepoForPerspective) Delete(ctx context.Context, id int) error {
+	return nil
+}
+
 // --- Create Tests ---
 
 func TestPerspectiveCreate_Success(t *testing.T) {
@@ -107,7 +111,6 @@ func TestPerspectiveCreate_Success(t *testing.T) {
 
 	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
 	input := portservices.CreatePerspectiveInput{
-		Claim:  "This is a test claim",
 		UserID: 1,
 	}
 
@@ -115,7 +118,6 @@ func TestPerspectiveCreate_Success(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, 1, result.ID)
-	assert.Equal(t, "This is a test claim", result.Claim)
 	assert.Equal(t, 1, result.UserID)
 	assert.Equal(t, domain.PrivacyPublic, result.Privacy)
 }
@@ -133,7 +135,6 @@ func TestPerspectiveCreate_WithRatings(t *testing.T) {
 	quality := 8000
 	agreement := 5000
 	input := portservices.CreatePerspectiveInput{
-		Claim:     "Test claim with ratings",
 		UserID:    1,
 		Quality:   &quality,
 		Agreement: &agreement,
@@ -146,46 +147,6 @@ func TestPerspectiveCreate_WithRatings(t *testing.T) {
 	assert.Equal(t, &agreement, result.Agreement)
 }
 
-func TestPerspectiveCreate_ClaimEmpty(t *testing.T) {
-	perspectiveRepo := &mockPerspectiveRepository{}
-	userRepo := &mockUserRepoForPerspective{}
-
-	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
-	input := portservices.CreatePerspectiveInput{
-		Claim:  "",
-		UserID: 1,
-	}
-
-	result, err := svc.Create(context.Background(), input)
-
-	assert.Nil(t, result)
-	require.Error(t, err)
-	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
-	assert.Contains(t, err.Error(), "claim is required")
-}
-
-func TestPerspectiveCreate_ClaimTooLong(t *testing.T) {
-	perspectiveRepo := &mockPerspectiveRepository{}
-	userRepo := &mockUserRepoForPerspective{}
-
-	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
-	longClaim := ""
-	for i := 0; i < 256; i++ {
-		longClaim += "a"
-	}
-	input := portservices.CreatePerspectiveInput{
-		Claim:  longClaim,
-		UserID: 1,
-	}
-
-	result, err := svc.Create(context.Background(), input)
-
-	assert.Nil(t, result)
-	require.Error(t, err)
-	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
-	assert.Contains(t, err.Error(), "claim must be 255 characters or less")
-}
-
 func TestPerspectiveCreate_UserNotFound(t *testing.T) {
 	perspectiveRepo := &mockPerspectiveRepository{}
 	userRepo := &mockUserRepoForPerspective{
@@ -196,7 +157,6 @@ func TestPerspectiveCreate_UserNotFound(t *testing.T) {
 
 	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
 	input := portservices.CreatePerspectiveInput{
-		Claim:  "Test claim",
 		UserID: 999,
 	}
 
@@ -213,7 +173,6 @@ func TestPerspectiveCreate_InvalidUserID(t *testing.T) {
 
 	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
 	input := portservices.CreatePerspectiveInput{
-		Claim:  "Test claim",
 		UserID: 0,
 	}
 
@@ -231,7 +190,6 @@ func TestPerspectiveCreate_RatingTooHigh(t *testing.T) {
 	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
 	quality := 10001
 	input := portservices.CreatePerspectiveInput{
-		Claim:   "Test claim",
 		UserID:  1,
 		Quality: &quality,
 	}
@@ -250,7 +208,6 @@ func TestPerspectiveCreate_RatingNegative(t *testing.T) {
 	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
 	agreement := -1
 	input := portservices.CreatePerspectiveInput{
-		Claim:     "Test claim",
 		UserID:    1,
 		Agreement: &agreement,
 	}
@@ -260,27 +217,6 @@ func TestPerspectiveCreate_RatingNegative(t *testing.T) {
 	assert.Nil(t, result)
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, domain.ErrInvalidRating))
-}
-
-func TestPerspectiveCreate_DuplicateClaim(t *testing.T) {
-	perspectiveRepo := &mockPerspectiveRepository{
-		getByUserAndClaimFn: func(ctx context.Context, userID int, claim string) (*domain.Perspective, error) {
-			return &domain.Perspective{ID: 1, Claim: claim, UserID: userID}, nil
-		},
-	}
-	userRepo := &mockUserRepoForPerspective{}
-
-	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
-	input := portservices.CreatePerspectiveInput{
-		Claim:  "Existing claim",
-		UserID: 1,
-	}
-
-	result, err := svc.Create(context.Background(), input)
-
-	assert.Nil(t, result)
-	require.Error(t, err)
-	assert.True(t, errors.Is(err, domain.ErrDuplicateClaim))
 }
 
 func TestPerspectiveCreate_RepositoryError(t *testing.T) {
@@ -293,7 +229,6 @@ func TestPerspectiveCreate_RepositoryError(t *testing.T) {
 
 	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
 	input := portservices.CreatePerspectiveInput{
-		Claim:  "Test claim",
 		UserID: 1,
 	}
 
@@ -309,7 +244,6 @@ func TestPerspectiveCreate_RepositoryError(t *testing.T) {
 func TestPerspectiveGetByID_Success(t *testing.T) {
 	expected := &domain.Perspective{
 		ID:      1,
-		Claim:   "Test claim",
 		UserID:  1,
 		Privacy: domain.PrivacyPublic,
 	}
@@ -406,8 +340,8 @@ func TestPerspectiveDelete_InvalidID(t *testing.T) {
 func TestPerspectiveList_Success(t *testing.T) {
 	expected := &domain.PaginatedPerspectives{
 		Items: []*domain.Perspective{
-			{ID: 1, Claim: "Claim 1", UserID: 1},
-			{ID: 2, Claim: "Claim 2", UserID: 1},
+			{ID: 1, UserID: 1},
+			{ID: 2, UserID: 1},
 		},
 		HasNext: false,
 		HasPrev: false,

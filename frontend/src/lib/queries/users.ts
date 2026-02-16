@@ -17,3 +17,21 @@ export const LIST_USERS = gql`
 		}
 	}
 `;
+
+export interface CreateUserInput {
+	username: string;
+	email?: string;
+}
+
+export interface CreateUserResponse {
+	createUser: User;
+}
+
+export const CREATE_USER = gql`
+	mutation CreateUser($input: CreateUserInput!) {
+		createUser(input: $input) {
+			id
+			username
+		}
+	}
+`;
