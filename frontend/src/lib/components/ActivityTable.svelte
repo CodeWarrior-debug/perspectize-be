@@ -234,7 +234,8 @@
 			valueFormatter: (params) => truncateDescription(params.value, 80),
 			tooltipComponent: DescriptionTooltip,
 			tooltipField: 'description',
-			headerTooltip: 'Video description from YouTube API'
+			headerTooltip: 'Video description from YouTube API',
+			hide: true
 		},
 		{
 			colId: 'updatedAt',
@@ -250,7 +251,8 @@
 				return val ? new Date(val) : null;
 			},
 			valueFormatter: dateValueFormatter,
-			headerTooltip: 'Last updated in Perspectize'
+			headerTooltip: 'Last updated in Perspectize',
+			hide: true
 		},
 
 		{
@@ -267,7 +269,8 @@
 				return val ? new Date(val) : null;
 			},
 			valueFormatter: dateValueFormatter,
-			headerTooltip: 'Date added to Perspectize'
+			headerTooltip: 'Date added to Perspectize',
+			hide: true
 		}
 	];
 
@@ -280,7 +283,7 @@
 				return params.valueFormatted ?? params.value ?? '';
 			},
 		},
-		tooltipShowDelay: 500,
+		tooltipShowDelay: 1000,
 		tooltipInteraction: true,
 		getRowId: contentRowId,
 		domLayout: 'normal',
