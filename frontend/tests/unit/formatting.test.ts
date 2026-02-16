@@ -301,6 +301,15 @@ describe('itemCellRenderer', () => {
 		const span = result.querySelector('span');
 		expect(span?.textContent).toBe('No URL');
 	});
+
+	it('adds thumbnail-mobile-hide class to thumbnail', () => {
+		const result = itemCellRenderer({
+			data: { name: 'Video with thumbnail', url: 'https://youtube.com/watch?v=test123' }
+		}) as HTMLElement;
+
+		const img = result.querySelector('img');
+		expect(img?.className).toContain('thumbnail-mobile-hide');
+	});
 });
 
 describe('typeCellRenderer', () => {

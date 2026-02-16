@@ -87,3 +87,10 @@
 	/* Brand */
 	--color-logo-purple: #8b5cf6;
 }
+
+/* Mobile-specific utilities */
+@media (max-width: 767px) {
+	.thumbnail-mobile-hide {
+		display: none;
+	}
+}

@@ -119,7 +119,7 @@ export function itemCellRenderer(params: { data?: { name: string; url: string | 
 		const img = document.createElement('img');
 		img.src = `https://i.ytimg.com/vi/${videoId}/default.jpg`;
 		img.alt = '';
-		img.className = 'w-10 h-8 object-cover rounded';
+		img.className = 'w-10 h-8 object-cover rounded thumbnail-mobile-hide';
 		container.appendChild(img);
 	}
 

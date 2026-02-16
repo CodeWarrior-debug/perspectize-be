@@ -41,6 +41,7 @@
 	let sortOrder = $state<'ASC' | 'DESC'>('DESC');
 	let filterText = $state<string>('');
 	let debounceTimer: ReturnType<typeof setTimeout>;
+	let isMobile = $state(false);
 
 	// TanStack Query for data fetching
 	let currentCursor = $derived(cursors[currentPage]);
@@ -292,6 +293,30 @@
 		cursors = [null];
 	}
 
+	// Mobile breakpoint detection
+	$effect(() => {
+		if (typeof window === 'undefined') return;
+		const mq = window.matchMedia('(max-width: 767px)');
+		const handler = (e: MediaQueryListEvent | MediaQueryList) => {
+			isMobile = 'matches' in e ? e.matches : (e as MediaQueryListEvent).matches;
+		};
+		handler(mq);
+		mq.addEventListener('change', handler);
+		return () => mq.removeEventListener('change', handler);
+	});
+
+	// Mobile column visibility
+	$effect(() => {
+		if (!gridApi) return;
+		if (isMobile) {
+			gridApi.setColumnsVisible(['duration', 'views', 'likes', 'publishDate', 'channel', 'createdAt', 'updatedAt', 'tags', 'description'], false);
+			gridApi.setColumnsVisible(['item', 'type'], true);
+		} else {
+			gridApi.setColumnsVisible(['item', 'type', 'duration', 'views', 'likes', 'publishDate'], true);
+			gridApi.setColumnsVisible(['channel', 'createdAt', 'updatedAt', 'tags', 'description'], false);
+		}
+	});
+
 	// Update loading state reactively
 	$effect(() => {
 		if (gridApi) {
@@ -307,13 +332,13 @@
 	</div>
 
 	<!-- Manual Pagination Controls -->
-	<div class="flex items-center justify-between px-4 py-2 border-t border-border">
-		<div class="flex items-center gap-4">
-			<div class="text-sm text-muted-foreground">
-				{totalCount} total items
+	<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0 px-2 md:px-4 py-2 border-t border-border text-xs md:text-sm">
+		<div class="flex items-center gap-2 md:gap-4">
+			<div class="text-muted-foreground">
+				{totalCount} total
 			</div>
-			<div class="flex items-center gap-2">
-				<label for="pageSize" class="text-sm text-muted-foreground">Page size:</label>
+			<div class="hidden md:flex items-center gap-2">
+				<label for="pageSize" class="text-muted-foreground">Page size:</label>
 				<select
 					id="pageSize"
 					value={pageSize}
@@ -333,9 +358,9 @@
 				disabled={currentPage === 0}
 				class="px-3 py-1 text-sm border border-input rounded-md bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
 			>
-				Previous
+				<span class="hidden sm:inline">Previous</span><span class="sm:hidden">&lt;</span>
 			</button>
-			<span class="text-sm text-muted-foreground">
+			<span class="text-muted-foreground">
 				Page {currentPage + 1} of {Math.ceil(totalCount / pageSize) || 1}
 			</span>
 			<button
@@ -343,7 +368,7 @@
 				disabled={currentPage >= Math.ceil(totalCount / pageSize) - 1}
 				class="px-3 py-1 text-sm border border-input rounded-md bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
 			>
-				Next
+				<span class="hidden sm:inline">Next</span><span class="sm:hidden">&gt;</span>
 			</button>
 		</div>
 	</div>
