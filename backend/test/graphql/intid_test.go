@@ -2,6 +2,7 @@ package graphql_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"testing"
 
 	"github.com/CodeWarrior-debug/perspectize/backend/pkg/graphql"
@@ -246,6 +247,64 @@ func TestUnmarshalIntID_Float64(t *testing.T) {
 			result, err := graphql.UnmarshalIntID(tt.input)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestUnmarshalIntID_JSONNumber(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    json.Number
+		expected int
+		hasError bool
+	}{
+		{
+			name:     "valid integer",
+			input:    json.Number("42"),
+			expected: 42,
+			hasError: false,
+		},
+		{
+			name:     "zero",
+			input:    json.Number("0"),
+			expected: 0,
+			hasError: false,
+		},
+		{
+			name:     "negative number",
+			input:    json.Number("-1"),
+			expected: -1,
+			hasError: false,
+		},
+		{
+			name:     "large number",
+			input:    json.Number("999999"),
+			expected: 999999,
+			hasError: false,
+		},
+		{
+			name:     "non-integer number",
+			input:    json.Number("42.7"),
+			expected: 0,
+			hasError: true,
+		},
+		{
+			name:     "invalid number",
+			input:    json.Number("abc"),
+			expected: 0,
+			hasError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := graphql.UnmarshalIntID(tt.input)
+			if tt.hasError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, result)
+			}
 		})
 	}
 }
