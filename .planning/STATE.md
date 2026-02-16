@@ -5,25 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-<<<<<<< claude/plan-gsd-workflow-3OFvn
-**Current focus:** Phases 3.2, 3.3 (obsolete), 5 complete — Phase 4 (Add Perspective Flow) is next
+**Current focus:** Phase 3.2 complete (8/8 plans) — Phase 4 (Add Perspective Flow) is next
 
 ## Current Position
 
 Phase: 3.2 of 10 (Activity Page Beta Quality) — COMPLETE
-Plan: 4/4 complete
-Status: Phase complete — All 4 plans delivered: backend YouTube fields, popover dialog, ActivityTable rewrite, integration polish
-Last activity: 2026-02-15 — Marked Phase 3.2 complete (verified via code review + deployed site)
-=======
-**Current focus:** Phase 3.2 complete — Phase 3.3 (Repository Rename & Folder Restructure) next
-
-## Current Position
-
-Phase: 03.2 of 10 (Activity Page Beta Quality)
-Plan: 8 of 8 complete
-Status: Phase complete
+Plan: 8/8 complete
+Status: Phase complete — All 8 plans delivered (backend YouTube fields, popover dialog, ActivityTable rewrite, integration polish, navy header, filters, mobile responsive, FormPopover/Select)
 Last activity: 2026-02-16 — Completed 03.2-08-PLAN.md (mobile-responsive popovers and styled select)
->>>>>>> main
 
 Progress: [████████████████████] 100%
 
@@ -42,11 +31,7 @@ Progress: [████████████████████] 100%
 | 02-data-layer-activity | 2 | 9 min | 4.5 min |
 | 03-add-video-flow | 2 | 8 min | 4 min |
 | 03.1-design-token-system | 2 | 6 min | 3 min |
-<<<<<<< claude/plan-gsd-workflow-3OFvn
-| 03.2-activity-page-beta-quality | 4 | 20 min | 5 min |
-=======
 | 03.2-activity-page-beta-quality | 8 | 36 min | 4.5 min |
->>>>>>> main
 | 07-backend-architecture | 3 | 7 min | 2.3 min |
 | 07.1-orm-migration-sqlx-to-gorm | 3 | 8 min | 2.7 min |
 | 07.2-gorm-cursor-paginator | 2 | 4 min | 2 min |
@@ -367,12 +352,7 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 
 ## Session Continuity
 
-<<<<<<< claude/plan-gsd-workflow-3OFvn
-Last session: 2026-02-15
-Stopped at: Phases 3.2, 3.3 (obsolete), 5 marked complete — roadmap cleaned up
-=======
 Last session: 2026-02-16
-Stopped at: Completed 03.2-08-PLAN.md — Mobile-responsive popovers and styled select
->>>>>>> main
+Stopped at: Phase 3.2 complete (8/8 plans), Phase 3.3 obsolete, Phase 5 deployment complete
 Resume file: None
 Next up: Phase 4 (Add Perspective Flow) — core feature, 2 plans
