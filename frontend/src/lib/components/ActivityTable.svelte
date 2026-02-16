@@ -251,7 +251,7 @@
 			valueFormatter: dateValueFormatter,
 			headerTooltip: 'Last updated in Perspectize'
 		},
-		// Hidden columns
+
 		{
 			colId: 'createdAt',
 			field: 'createdAt',
@@ -265,7 +265,6 @@
 				const val = params.data?.createdAt;
 				return val ? new Date(val) : null;
 			},
-			hide: true,
 			valueFormatter: dateValueFormatter,
 			headerTooltip: 'Date added to Perspectize'
 		}
@@ -362,8 +361,8 @@
 			gridApi.setColumnsVisible(['duration', 'views', 'likes', 'publishDate', 'channel', 'createdAt', 'updatedAt', 'tags', 'description'], false);
 			gridApi.setColumnsVisible(['item', 'type'], true);
 		} else {
-			gridApi.setColumnsVisible(['item', 'type', 'duration', 'views', 'likes', 'publishDate'], true);
-			gridApi.setColumnsVisible(['channel', 'createdAt', 'updatedAt', 'tags', 'description'], false);
+			gridApi.setColumnsVisible(['item', 'type', 'duration', 'createdAt', 'updatedAt'], true);
+			gridApi.setColumnsVisible(['views', 'likes', 'publishDate', 'channel', 'tags', 'description'], false);
 		}
 	});
 
