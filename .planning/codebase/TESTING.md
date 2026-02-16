@@ -1,149 +1,135 @@
 # Testing Patterns
 
-**Analysis Date:** 2026-02-07
+**Analysis Date:** 2026-02-16
 
-## Test Framework
+## Backend: Go Testing
 
-### Go
+### Test Framework
 
 **Runner:**
-- Go standard `testing` package (built-in)
-- Config: `Makefile` with targets for running tests
-- No external test runner or discovery tool
+- Standard library `testing` package
+- Execute: `make test` or `go test -v -cover -coverpkg=./internal/...,./pkg/... ./...`
 
 **Assertion Library:**
-- `github.com/stretchr/testify/assert` — Non-fatal assertions (`assert.Equal()`, `assert.Nil()`, `assert.Contains()`, `assert.True()`, `assert.False()`)
-- `github.com/stretchr/testify/require` — Fatal assertions (`require.NoError()`, `require.Equal()`) that stop test on failure immediately
+- `github.com/stretchr/testify/assert` (assertions)
+- `github.com/stretchr/testify/require` (assertions that fail test)
 
 **Run Commands:**
 ```bash
-make test                     # Run all tests with coverage
-make test-coverage            # Generate HTML coverage report (→ coverage.html)
-go test -v ./...              # Run all tests with verbose output
-go test -v ./internal/core/services          # Run tests in specific package
-go test -v -run TestGetByID ./internal/...   # Run specific test by name
+make test              # Run all tests with coverage
+make test-coverage     # Run tests, generate coverage report → coverage.html
+go test ./...          # Run all tests
+go test -v ./...       # Verbose output
+go test -run TestName  # Run specific test
+go test -short ./...   # Skip integration tests (use t.Skip())
 ```
 
-### TypeScript/Svelte
-
-**Runner:**
-- Vitest (configured in `vite.config.ts`)
-- Environment: jsdom
-- Setup files: `tests/setup.ts`
-
-**Assertion Library:**
-- `vitest` built-in assertions (`expect()`, `toBe()`, `toEqual()`, `toContain()`, `toThrow()`)
-- `@testing-library/jest-dom` for DOM matchers (optional)
-
-**Run Commands:**
-```bash
-pnpm run test              # Run tests in watch mode
-pnpm run test:run          # Run all tests once
-pnpm run test:coverage     # Generate coverage report
-pnpm run test:duplication  # Code duplication check (jscpd)
-```
-
-## Test File Organization
-
-### Go
+### Test File Organization
 
 **Location:**
-- Centralized in `test/` directory at project root
-- Mirrored structure from source:
-  ```
-  backend/
-  ├── internal/core/services/content_service.go    (source)
-  ├── test/services/content_service_test.go        (test)
-  ├── internal/core/domain/content.go              (source)
-  └── test/domain/content_test.go                  (test)
-  ```
-
-**Naming:**
-- Test files: `{subject}_test.go` (e.g., `content_service_test.go`, `errors_test.go`)
-- Package: `{subject}_test` (e.g., `package services_test`, `package domain_test`)
-- Test functions: `Test{FunctionName}` (e.g., `TestGetByID_Success`, `TestGetByID_NotFound`)
+- Separate `test/` directory at project root (not co-located with source)
+- Mirror source structure: `test/{domain|services|repositories}/{name}_test.go`
 
 **Directory Structure:**
 ```
-backend/test/
-├── services/
-│   ├── content_service_test.go
-│   ├── perspective_service_test.go
-│   └── user_service_test.go
-├── domain/
-│   ├── content_test.go
-│   ├── errors_test.go
-│   ├── perspective_test.go
-│   └── user_test.go
-├── resolvers/
-│   └── content_resolver_test.go
-├── config/
-│   └── config_test.go
-├── database/
-│   └── postgres_test.go
-└── youtube/
-    └── parser_test.go
+backend/
+├── internal/
+│   ├── core/
+│   │   ├── domain/
+│   │   ├── services/
+│   │   └── ports/
+│   └── adapters/
+│       └── repositories/postgres/
+└── test/
+    ├── config/
+    ├── database/
+    ├── domain/
+    ├── services/
+    ├── repositories/
+    ├── resolvers/
+    ├── youtube/
+    └── graphql/
 ```
-
-### TypeScript/Svelte
-
-**Location:**
-- Tests in `tests/` directory mirroring `src/` structure
-- Co-located with source for unit tests or in `tests/{category}/`
-  ```
-  frontend/
-  ├── src/lib/utils.ts
-  ├── tests/unit/utils.test.ts
-  ├── src/lib/stores/userSelection.svelte.ts
-  └── tests/unit/stores-userSelection.test.ts
-  ```
 
 **Naming:**
-- Test files: `*.test.ts` or `*.spec.ts`
-- Kebab-case for multi-word tests: `queries-users.test.ts`, `stores-userSelection.test.ts`
-- Test suites: `describe('name', () => { ... })`
-- Test cases: `it('should do something', () => { ... })`
+- Test files: `{entity}_{test_scope}_test.go` (e.g., `content_service_test.go`)
+- Benchmark files: `{entity}_bench_test.go` (e.g., `perspective_service_bench_test.go`)
+- Package name: `{source_package}_test` (e.g., `services_test` for testing `services` package)
 
-**Directory Structure:**
-```
-frontend/tests/
-├── setup.ts
-├── unit/
-│   ├── utils.test.ts
-│   ├── queries-client.test.ts
-│   ├── queries-content.test.ts
-│   ├── queries-users.test.ts
-│   ├── stores-userSelection.test.ts
-│   └── shadcn-barrel.test.ts
-├── components/
-│   └── (component tests here)
-├── fixtures/
-│   └── (mock data)
-└── helpers/
-    └── (test utilities)
-```
+### Test Structure
 
-## Test Structure
+**Suite Organization:**
 
-### Go
+Go uses table-driven tests. Each test is a function starting with `Test`:
 
-**Suite Organization Pattern (from `test/services/content_service_test.go`):**
 ```go
 package services_test
 
 import (
     "context"
-    "errors"
     "testing"
-    "github.com/stretchr/testify/assert"
-    "github.com/stretchr/testify/require"
+
     "github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
     "github.com/CodeWarrior-debug/perspectize/backend/internal/core/services"
+    "github.com/stretchr/testify/assert"
+    "github.com/stretchr/testify/require"
 )
 
-// Mock implementation of interface
+// Test function: TestGetByID_Success
+func TestGetByID_Success(t *testing.T) {
+    url := "https://youtube.com/watch?v=abc123"
+    expected := &domain.Content{
+        ID:          1,
+        Name:        "Test Video",
+        URL:         &url,
+        ContentType: domain.ContentTypeYouTube,
+    }
+
+    repo := &mockContentRepository{
+        getByIDFn: func(ctx context.Context, id int) (*domain.Content, error) {
+            assert.Equal(t, 1, id)
+            return expected, nil
+        },
+    }
+
+    svc := services.NewContentService(repo, &mockYouTubeClient{})
+    result, err := svc.GetByID(context.Background(), 1)
+
+    require.NoError(t, err)
+    assert.Equal(t, expected, result)
+}
+```
+
+**Patterns:**
+
+1. **Test naming:** `Test{FunctionName}_{Scenario}` (e.g., `TestGetByID_Success`, `TestGetByID_InvalidID`)
+2. **Setup:** Create mocks and service instances inline
+3. **Act:** Call the function
+4. **Assert:** Use `require` for critical assertions (fail test immediately), `assert` for checks
+5. **Cleanup:** Implicit (no defer needed for simple mocks)
+
+### Mocking
+
+**Framework:** Manual mock structs (no external mocking library)
+
+**Pattern:**
+
+Mocks implement interfaces with function pointers:
+
+```go
+// mockContentRepository implements repositories.ContentRepository for testing
 type mockContentRepository struct {
-    getByIDFn func(ctx context.Context, id int) (*domain.Content, error)
+    createFn   func(ctx context.Context, content *domain.Content) (*domain.Content, error)
+    getByIDFn  func(ctx context.Context, id int) (*domain.Content, error)
+    getByURLFn func(ctx context.Context, url string) (*domain.Content, error)
+    listFn     func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
+}
+
+func (m *mockContentRepository) Create(ctx context.Context, content *domain.Content) (*domain.Content, error) {
+    if m.createFn != nil {
+        return m.createFn(ctx, content)
+    }
+    return content, nil
 }
 
 func (m *mockContentRepository) GetByID(ctx context.Context, id int) (*domain.Content, error) {
@@ -153,120 +139,298 @@ func (m *mockContentRepository) GetByID(ctx context.Context, id int) (*domain.Co
     return nil, domain.ErrNotFound
 }
 
-// Test cases grouped by method
-func TestGetByID_Success(t *testing.T) {
-    expected := &domain.Content{ID: 1, Name: "Test"}
-    repo := &mockContentRepository{
-        getByIDFn: func(ctx context.Context, id int) (*domain.Content, error) {
-            assert.Equal(t, 1, id)  // Assert input
-            return expected, nil
-        },
-    }
-    svc := services.NewContentService(repo)
+// ... implement all interface methods
+```
 
-    result, err := svc.GetByID(context.Background(), 1)
+**Usage:**
 
-    require.NoError(t, err)  // Fatal if error
-    assert.Equal(t, expected, result)  // Non-fatal assertion
+```go
+repo := &mockContentRepository{
+    getByIDFn: func(ctx context.Context, id int) (*domain.Content, error) {
+        assert.Equal(t, 1, id)
+        return expected, nil
+    },
 }
+svc := services.NewContentService(repo, &mockYouTubeClient{})
+```
 
-func TestGetByID_NotFound(t *testing.T) {
-    repo := &mockContentRepository{
-        getByIDFn: func(ctx context.Context, id int) (*domain.Content, error) {
-            return nil, domain.ErrNotFound
-        },
+**What to Mock:**
+- Repository interfaces (database access)
+- Service interfaces (external APIs like YouTube)
+- Any port interface
+
+**What NOT to Mock:**
+- Domain models (use real instances)
+- Conversion functions (test with real data)
+- Error creation (use real domain errors)
+
+### Fixtures and Factories
+
+**Test Data:**
+
+No dedicated fixture files. Test data created inline:
+
+```go
+func TestGetByID_Success(t *testing.T) {
+    url := "https://youtube.com/watch?v=abc123"
+    expected := &domain.Content{
+        ID:          1,
+        Name:        "Test Video",
+        URL:         &url,
+        ContentType: domain.ContentTypeYouTube,
     }
-    svc := services.NewContentService(repo)
-
-    result, err := svc.GetByID(context.Background(), 999)
-
-    assert.Nil(t, result)
-    require.Error(t, err)
-    assert.True(t, errors.Is(err, domain.ErrNotFound))
+    // ... test continues
 }
 ```
 
-**Patterns:**
-- Mock interfaces implement methods with `Fn` field callbacks
-- Table-driven tests for multiple input combinations
-- One assertion per test (or grouped logically)
-- Use `require.NoError()` for setup errors that should stop test
-- Use `assert.Equal()` for business logic assertions
-- Context always passed: `context.Background()` for unit tests
-- Subtest naming: `TestFunctionName_Scenario` or `TestFunctionName_ErrorCondition`
+**Helpers in Test File:**
 
-### TypeScript/Svelte
+Common assertions extracted to helpers:
+```go
+func clearConfigEnvVars(t *testing.T) {
+    t.Setenv("DATABASE_URL", "")
+    t.Setenv("YOUTUBE_API_KEY", "")
+    t.Setenv("DATABASE_PASSWORD", "")
+}
+```
 
-**Suite Organization Pattern (from `tests/unit/utils.test.ts`):**
+### Coverage
+
+**Requirements:** Not enforced (no coverage gate in CI)
+
+**View Coverage:**
+```bash
+make test-coverage  # Generates coverage.html
+go test -cover ./...  # Command-line output
+```
+
+**Coverage tracked in:**
+- `coverage.out` (raw)
+- `coverage.html` (visual report)
+
+## Frontend: Vitest Testing
+
+### Test Framework
+
+**Runner:**
+- `vitest` (Vite-native test runner)
+- Config: Defaults in `package.json`, no `vitest.config.ts`
+
+**Assertion Library:**
+- `vitest` assertions (expect API)
+- `@testing-library/svelte` (component testing)
+- `@testing-library/jest-dom` (DOM assertions)
+
+**Run Commands:**
+```bash
+pnpm run test       # Watch mode
+pnpm run test:run   # Run once (CI)
+pnpm run test:coverage  # Coverage report
+```
+
+### Test File Organization
+
+**Location:**
+- Co-located with source in `tests/` directory
+- Mirror structure: `tests/{unit|components}/{name}.test.ts`
+
+**Directory Structure:**
+```
+frontend/
+├── src/lib/
+│   ├── components/
+│   ├── queries/
+│   ├── stores/
+│   └── utils/
+└── tests/
+    ├── setup.ts           # Global test setup
+    ├── helpers/
+    │   └── TestWrapper.svelte
+    ├── unit/              # Utility and query tests
+    │   ├── formatting.test.ts
+    │   ├── queries-content.test.ts
+    │   ├── youtube.test.ts
+    │   └── ...
+    └── components/        # Component tests
+        ├── ActivityTable.test.ts
+        ├── Header.test.ts
+        ├── UserSelector.test.ts
+        └── ...
+```
+
+**Naming:**
+- Test files: `{source}.test.ts`
+- Setup file: `setup.ts` (auto-loaded by vitest)
+- Example: `formatting.test.ts` tests `src/lib/utils/formatting.ts`
+
+### Test Structure
+
+**Suite Organization:**
+
 ```typescript
-import { describe, it, expect } from 'vitest';
-import { cn } from '$lib/utils';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-describe('cn() utility', () => {
-    it('returns empty string for no arguments', () => {
-        expect(cn()).toBe('');
+describe('formatDuration', () => {
+    it('returns dash for null length', () => {
+        expect(formatDuration(null, null)).toBe('—');
     });
 
-    it('passes through a single class', () => {
-        expect(cn('text-red-500')).toBe('text-red-500');
+    it('formats seconds as minutes:seconds', () => {
+        expect(formatDuration(300, 'seconds')).toBe('5:00');
     });
 
-    it('merges multiple classes', () => {
-        const result = cn('px-4', 'py-2', 'text-sm');
-        expect(result).toContain('px-4');
-        expect(result).toContain('py-2');
-    });
-
-    it('handles conditional classes via clsx', () => {
-        const isActive = true;
-        const result = cn('base', isActive && 'active');
-        expect(result).toContain('active');
+    it('formats large durations', () => {
+        expect(formatDuration(3661, 'seconds')).toBe('61:01');
     });
 });
 ```
 
 **Patterns:**
-- Descriptive test names with `it('should...')`
-- One logical assertion per test
-- Setup shared state with `beforeEach()`
-- Clear arrange-act-assert structure within test body
-- `describe()` for test grouping by feature/function
 
-## Mocking
+1. **Suite:** `describe(description, () => { ... })`
+2. **Test:** `it(description, () => { ... })`
+3. **Setup:** `beforeEach(() => { ... })`
+4. **Assertion:** `expect(value).toBe(expected)`
+5. **Mocking:** `vi.mock(module)`, `vi.fn()`
 
-### Go
+### Mocking
 
-**Pattern:** Hand-written mocks implementing interfaces
-```go
-type mockContentRepository struct {
-    createFn   func(ctx context.Context, content *domain.Content) (*domain.Content, error)
-    getByIDFn  func(ctx context.Context, id int) (*domain.Content, error)
-    getByURLFn func(ctx context.Context, url string) (*domain.Content, error)
-}
+**Framework:** `vitest` built-in (vi.mock, vi.fn, vi.spyOn)
 
-func (m *mockContentRepository) Create(ctx context.Context, content *domain.Content) (*domain.Content, error) {
-    if m.createFn != nil {
-        return m.createFn(ctx, content)
+**Pattern - Module Mocks:**
+
+```typescript
+// Mock entire module
+vi.mock('$lib/queries/client', () => ({
+    graphqlClient: {
+        request: vi.fn()
     }
-    return content, nil  // Default behavior
-}
+}));
+
+// In hoisted scope
+const { mockRequest } = vi.hoisted(() => ({
+    mockRequest: vi.fn()
+}));
+
+// Use in test
+beforeEach(() => {
+    mockRequest.mockResolvedValue(mockDataResponse);
+});
+```
+
+**Pattern - Component Mocks:**
+
+```typescript
+// Mock AG Grid component (complex library)
+vi.mock('ag-grid-svelte5', () => ({
+    default: vi.fn(() => ({
+        $$: {},
+        $set: vi.fn(),
+        $on: vi.fn(),
+        $destroy: vi.fn(),
+    })),
+}));
 ```
 
 **What to Mock:**
-- Repository interfaces (use function fields for behavior)
-- External service clients (YouTube API, etc.)
-- Database connections (use sqlmock for integration tests)
+- External API clients (GraphQL queries)
+- Complex third-party components (AG Grid, query providers)
+- SvelteKit built-ins (`$app/navigation`, `$app/stores`, `$app/environment`)
 
 **What NOT to Mock:**
-- Domain models — construct real instances
-- Error wrapping logic — test with real errors
-- Validation rules — test with real inputs
+- Simple utility functions (format functions, extractors)
+- Component logic (test real behavior)
+- TanStack Query itself (mock the client instead)
 
-### TypeScript/Svelte
+### Fixtures and Factories
 
-**Pattern:** Vitest vi.mock() for module mocking in setup
+**Test Data:**
+
+Defined inline in test file:
+
 ```typescript
-// tests/setup.ts
+const mockEmptyResponse = {
+    content: {
+        items: [],
+        pageInfo: {
+            hasNextPage: false,
+            hasPreviousPage: false,
+            startCursor: null,
+            endCursor: null
+        },
+        totalCount: 0
+    }
+};
+
+const mockDataResponse = {
+    content: {
+        items: [
+            {
+                id: '1',
+                name: 'Test Video',
+                url: 'https://youtube.com/watch?v=abc',
+                contentType: 'YOUTUBE',
+                // ... more fields
+            }
+        ],
+        pageInfo: { /* ... */ },
+        totalCount: 25
+    }
+};
+```
+
+**Test Wrapper Helper:**
+
+Global wrapper for component tests (`tests/helpers/TestWrapper.svelte`):
+
+```typescript
+function renderWithQuery() {
+    const queryClient = new QueryClient({
+        defaultOptions: {
+            queries: {
+                retry: false,
+                gcTime: 0,
+                staleTime: 0
+            },
+            mutations: { retry: false }
+        }
+    });
+    return render(TestWrapper, {
+        props: {
+            queryClient,
+            component: ActivityTable,
+            props: {}
+        }
+    });
+}
+```
+
+### Coverage
+
+**Requirements:** Not enforced in CI (no coverage gate)
+
+**View Coverage:**
+```bash
+pnpm run test:coverage  # Generates coverage/ directory
+```
+
+**Detection of Gaps:** Test results show which lines/branches covered
+
+## Global Test Setup
+
+**Backend:** No global setup (each test is independent)
+
+**Frontend:** `tests/setup.ts`
+
+Contains:
+- SvelteKit environment mocks (`$app/environment`, `$app/navigation`, `$app/stores`)
+- `window.matchMedia` mock for responsive tests
+- Global Jest-DOM assertions
+
+```typescript
+import '@testing-library/jest-dom/vitest';
+import { vi } from 'vitest';
+
 vi.mock('$app/environment', () => ({
     browser: true,
     dev: true,
@@ -274,302 +438,165 @@ vi.mock('$app/environment', () => ({
 }));
 
 vi.mock('$app/stores', () => ({
-    page: readable({ url: new URL('http://localhost'), ... })
+    page: readable({
+        url: new URL('http://localhost'),
+        params: {},
+        // ... more page store properties
+    }),
+    // ... other stores
 }));
-```
 
-**What to Mock:**
-- SvelteKit internals (`$app/environment`, `$app/stores`, `$app/navigation`)
-- Static assets (`$lib/assets/favicon.svg`)
-- External services (GraphQL client)
-
-**What NOT to Mock:**
-- Utility functions — import and test directly
-- Components — test with real instances
-- Store behavior — test actual store code
-
-### Module Reset Pattern (TypeScript)
-
-```typescript
-// tests/unit/stores-userSelection.test.ts
-import { beforeEach, vi } from 'vitest';
-
-describe('userSelection store', () => {
-    beforeEach(() => {
-        sessionStorage.clear();
-        vi.resetModules();  // Re-import store with fresh state
-    });
-
-    it('loads stored user ID', async () => {
-        sessionStorage.setItem('perspectize:selectedUserId', '42');
-        const store = await import('$lib/stores/userSelection.svelte');
-        expect(store.selectedUserId.value).toBe(42);
-    });
+Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        // ... match media implementation
+    }))
 });
 ```
 
-## Fixtures and Factories
+## Integration vs Unit Tests
 
-### Go
+**Backend:**
 
-**Test Data Creation Pattern:**
-- Inline construction in test functions
-- Domain models created directly: `&domain.Content{ID: 1, Name: "Test"}`
-- No factory functions (tests self-contained)
+Unit tests (most common):
+- No database dependency
+- Mock repositories
+- Fast execution
+- Located in `test/{services,domain}/`
 
-**Example from `test/services/content_service_test.go`:**
-```go
-func TestCreateFromYouTube_Success(t *testing.T) {
-    metadata := &portservices.VideoMetadata{
-        Title:       "Test Video Title",
-        Description: "A great video",
-        Duration:    300,
-        ChannelName: "Test Channel",
-        Response:    json.RawMessage(`{"items":[]}`),
-    }
-    // ... use metadata in test
-}
-```
+Integration tests (when DB needed):
+- Marked with database setup
+- Auto-skip via `t.Skip()` if database unavailable
+- Test against real PostgreSQL (via docker-compose)
+- Located in `test/{repositories}/`
 
-### TypeScript/Svelte
+**Frontend:**
 
-**Fixtures Directory:** `tests/fixtures/`
-- Reusable mock data
-- Example: `tests/fixtures/users.ts` with mock user objects
+Unit tests (most common):
+- Test utility functions and formatting
+- Mock external API clients
+- No browser rendering (JSDOM)
 
-**Example from `tests/fixtures/`:**
+Component tests (limited):
+- Test component instantiation and basic rendering
+- Mock complex child components (AG Grid)
+- TanStack Query and AG Grid have known JSDOM limitations
+- Full integration testing via manual verification or Playwright
+
+## Known Limitations
+
+**Frontend Component Testing:**
+
+AG Grid + TanStack Query rendering in JSDOM has limitations:
+- AG Grid mocked component doesn't trigger lifecycle (onGridReady)
+- TanStack Query queries don't execute in JSDOM
+- Tests verify component instantiation, not full behavior
+
+Per test file comment in `tests/components/ActivityTable.test.ts`:
 ```typescript
-// tests/fixtures/users.ts
-export const mockUsers = [
-    { id: '1', username: 'alice', email: 'alice@example.com' },
-    { id: '2', username: 'bob', email: 'bob@example.com' }
-];
+/**
+ * ActivityTable Tests
+ *
+ * LIMITATION: AG Grid + TanStack Query rendering in JSDOM has known limitations.
+ * AG Grid's mocked component doesn't trigger lifecycle hooks (onGridReady), and
+ * TanStack Query queries don't execute in this test environment.
+ *
+ * These tests verify component instantiation. Full integration testing requires
+ * browser environment (manual verification or Playwright E2E tests).
+ */
 ```
-
-**Usage in Tests:**
-```typescript
-import { mockUsers } from '../fixtures/users';
-
-it('displays user list', () => {
-    const query = createQuery(() => ({
-        queryKey: ['users'],
-        queryFn: () => Promise.resolve({ users: mockUsers })
-    }));
-    // ... test with mockUsers
-});
-```
-
-## Coverage
-
-### Go
-
-**Requirements:** None enforced
-- Targets: Check actual coverage via HTML report
-- View coverage: `make test-coverage` → opens `coverage.html` in browser
-
-**Typical Coverage:**
-- Core domain/services: 80-90%
-- Repositories: 85%+
-- Resolvers: 70-80%
-
-### TypeScript/Svelte
-
-**Requirements:** Configured thresholds in `vite.config.ts`
-```typescript
-coverage: {
-    provider: 'v8',
-    thresholds: {
-        lines: 80,
-        functions: 80,
-        branches: 75,
-        statements: 80
-    }
-}
-```
-
-**View Coverage:**
-```bash
-pnpm run test:coverage
-```
-
-**Exclusions:**
-- `node_modules/`, `.svelte-kit/`
-- `**/*.d.ts`
-- Config files, setup files
-- `src/lib/components/shadcn/**` (third-party)
-- `src/routes/**` (SvelteKit routes)
 
 ## Test Types
 
-### Go
-
-**Unit Tests:**
-- Location: `test/services/`, `test/domain/`, `test/repositories/`
+**Go Unit Tests:**
 - Scope: Single function/method
-- Mocks: All external dependencies
-- Database: Not used (mocked repositories)
-- Example: `TestContentService.GetByID()` tests only service logic
+- Dependencies: Mocked
+- Execution: <100ms typically
+- Example: `TestGetByID_Success` tests only service GetByID logic
 
-**Integration Tests:**
-- Location: `test/resolvers/`, `test/database/`
-- Scope: Multiple components working together
-- Mocks: External services only (YouTube API)
-- Database: Real PostgreSQL connection (auto-skip if unavailable)
-- Pattern: Auto-skip when DB not available
-  ```go
-  func TestGetByID_WithDB(t *testing.T) {
-      db := setupTestDB(t)  // Skip test if DB unavailable
-      // ... test with real DB
-  }
-  ```
+**Go Integration Tests:**
+- Scope: Service + repository + database
+- Dependencies: Real PostgreSQL (skipped if unavailable)
+- Execution: 100ms - 1s
+- Example: Tests in `test/repositories/` exercise full CRUD with DB
 
-### TypeScript/Svelte
+**TypeScript Unit Tests:**
+- Scope: Utility functions
+- Dependencies: Mocked or none
+- Execution: <50ms
+- Example: `formatDuration`, `formatDate` tests
 
-**Unit Tests:**
-- Location: `tests/unit/`
-- Scope: Single function, utility, or store logic
-- Mocks: SvelteKit internals
-- Example: `utils.test.ts` tests `cn()` utility in isolation
-
-**Component Tests (not fully implemented):**
-- Would use `@testing-library/svelte`
-- Located in `tests/components/`
-- Test component behavior, not implementation
-
-**No E2E Tests Currently:**
-- Would use Playwright or Cypress
-- Not configured in this project
+**TypeScript Component Tests:**
+- Scope: Component instantiation
+- Dependencies: Child components mocked
+- Execution: 50-200ms
+- Example: `Header.test.ts` verifies rendering and props
+- Note: Limited by JSDOM (see Known Limitations)
 
 ## Common Patterns
 
-### Go Async Testing
+**Async Testing (Go):**
 
 ```go
-func TestGetContentAsync(t *testing.T) {
-    // Create channel for async result
-    result := make(chan *domain.Content)
-    go func() {
-        content, _ := service.GetByID(context.Background(), 1)
-        result <- content
-    }()
-
-    // Wait for result with timeout
-    select {
-    case content := <-result:
-        assert.NotNil(t, content)
-    case <-time.After(time.Second):
-        t.Fatal("operation timed out")
+func TestCreateFromYouTube_Success(t *testing.T) {
+    // Mocks return results immediately (no goroutines)
+    repo := &mockContentRepository{
+        createFn: func(ctx context.Context, content *domain.Content) (*domain.Content, error) {
+            return content, nil
+        },
     }
-}
-```
-
-**OR use context with timeout:**
-```go
-func TestGetByIDWithTimeout(t *testing.T) {
-    ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-    defer cancel()
-
-    result, err := service.GetByID(ctx, 1)
+    svc := services.NewContentService(repo, &mockYouTubeClient{})
+    
+    result, err := svc.CreateFromYouTube(context.Background(), "https://...", 1)
     require.NoError(t, err)
     assert.NotNil(t, result)
 }
 ```
 
-### Go Error Testing
-
-```go
-func TestGetByID_InvalidID_Zero(t *testing.T) {
-    svc := services.NewContentService(&mockContentRepository{})
-
-    result, err := svc.GetByID(context.Background(), 0)
-
-    assert.Nil(t, result)
-    require.Error(t, err)
-    assert.True(t, errors.Is(err, domain.ErrInvalidInput))  // Check error type
-    assert.Contains(t, err.Error(), "content id must be a positive integer")  // Check message
-}
-
-func TestCreateFromYouTube_AlreadyExists(t *testing.T) {
-    repo := &mockContentRepository{
-        getByURLFn: func(ctx context.Context, url string) (*domain.Content, error) {
-            return &domain.Content{ID: 1}, nil  // Already exists
-        },
-    }
-
-    result, err := svc.CreateFromYouTube(context.Background(), url, idExtractor)
-
-    assert.Nil(t, result)
-    require.Error(t, err)
-    assert.True(t, errors.Is(err, domain.ErrAlreadyExists))
-}
-```
-
-### TypeScript Async Testing
+**Async Testing (TypeScript):**
 
 ```typescript
-it('loads data from GraphQL', async () => {
-    const { result } = renderHook(() =>
-        createQuery(() => ({
-            queryKey: ['data'],
-            queryFn: () => graphqlClient.request(QUERY)
-        }))
-    );
-
+it('loads data on mount', async () => {
+    mockRequest.mockResolvedValue(mockDataResponse);
+    
+    render(ActivityTable);
+    
     // Wait for query to resolve
     await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
+        expect(mockRequest).toHaveBeenCalled();
     });
-
-    expect(result.current.data).toBeDefined();
 });
 ```
 
-### TypeScript Error Testing
+**Error Testing (Go):**
+
+```go
+func TestGetByID_InvalidID(t *testing.T) {
+    svc := services.NewContentService(&mockContentRepository{}, &mockYouTubeClient{})
+    
+    _, err := svc.GetByID(context.Background(), -1)
+    
+    require.Error(t, err)
+    assert.ErrorIs(t, err, domain.ErrInvalidInput)
+}
+```
+
+**Error Testing (TypeScript):**
 
 ```typescript
-it('handles query errors', async () => {
-    vi.spyOn(graphqlClient, 'request').mockRejectedValueOnce(
-        new Error('Network error')
-    );
-
-    const { result } = renderHook(() =>
-        createQuery(() => ({
-            queryKey: ['data'],
-            queryFn: () => graphqlClient.request(QUERY)
-        }))
-    );
-
+it('returns error message on failure', async () => {
+    mockRequest.mockRejectedValue(new Error('Network error'));
+    
+    render(AddVideoPopover);
+    
     await waitFor(() => {
-        expect(result.current.error).toBeDefined();
-    });
-});
-```
-
-### TypeScript Store Testing with Reset
-
-```typescript
-describe('userSelection store', () => {
-    beforeEach(() => {
-        sessionStorage.clear();
-        vi.resetModules();  // Force re-import with clean state
-    });
-
-    it('persists to session storage', async () => {
-        const store = await import('$lib/stores/userSelection.svelte');
-        store.setSelectedUserId(42);
-
-        expect(sessionStorage.getItem('perspectize:selectedUserId')).toBe('42');
-    });
-
-    it('loads from session storage on init', async () => {
-        sessionStorage.setItem('perspectize:selectedUserId', '42');
-        const store = await import('$lib/stores/userSelection.svelte');
-
-        expect(store.selectedUserId.value).toBe(42);
+        expect(screen.getByText(/error/i)).toBeInTheDocument();
     });
 });
 ```
 
 ---
 
-*Testing analysis: 2026-02-07*
+*Testing analysis: 2026-02-16*

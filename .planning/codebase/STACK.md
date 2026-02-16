@@ -1,6 +1,6 @@
 # Technology Stack
 
-**Analysis Date:** 2026-02-13
+**Analysis Date:** 2026-02-16
 
 ## Languages
 
@@ -29,7 +29,7 @@
 
 **Backend:**
 - gqlgen 0.17.86 - Schema-first GraphQL code generation and server
-- chi/v5 2.5.5 - HTTP router and middleware
+- chi/v5 5.2.5 - HTTP router and middleware
 - pgx/v5 5.7.6 - PostgreSQL driver with connection pooling
 - GORM 1.31.1 - Object-relational mapping (ORM migration in progress from sqlx)
   - gorm.io/gorm 1.31.1 - ORM core
@@ -74,7 +74,7 @@
 - gqlgen 0.17.86 - Schema-first GraphQL code generation with type binding and resolver generation
 - pgx/v5 5.7.6 - PostgreSQL wire protocol driver with connection pooling and prepared statements
 - GORM 1.31.1 - ORM for query building, dynamic filtering, and migration support (current migration from sqlx)
-- chi/v5 2.5.5 - HTTP router and middleware stack
+- chi/v5 5.2.5 - HTTP router and middleware stack
 - testify 1.11.1 - Testing assertions and mocking utilities
 
 **Critical Frontend:**
@@ -89,7 +89,7 @@
 - golangci-lint - Backend linting (invoked via `make lint`)
 - golang-migrate - Schema migration tool (invoked via `make migrate-*` commands)
 - svelte-check 4.3.5 - Svelte static type checking
-- @sveltejs/adapter-auto 7.0.0 - SvelteKit deployment adapter
+- @sveltejs/adapter-static 3.0.10 - SvelteKit static site adapter
 - @tailwindcss/vite 4.1.18 - Tailwind CSS Vite plugin integration
 
 ## Configuration
@@ -106,12 +106,13 @@
 - `backend/.env` and `backend/.env.example` - Environment variable templates
 - `frontend/vite.config.ts` - Vite build configuration with SvelteKit plugin, Tailwind integration, Vitest setup
 - `frontend/tsconfig.json` - TypeScript strict mode configuration with bundler module resolution
+- `frontend/svelte.config.js` - SvelteKit configuration with static adapter
 - `backend/Makefile` - Build, test, migration, and development commands
 
 **Configuration Source Priority:**
 1. Environment variables (highest priority, overrides all)
 2. `.env` file (if present)
-3. Hardcoded defaults in config packages
+3. Config JSON file defaults
 
 ## Platform Requirements
 
@@ -148,13 +149,13 @@
 
 **Drivers:**
 - pgx/v5 5.7.6 (native PostgreSQL wire protocol, high-performance)
-- GORM ORM layer (active migration from sqlx)
+- GORM 1.31.1 ORM layer
 
 **Connection Details:**
 - Uses `DATABASE_URL` environment variable for connection string
 - Docker service: `perspectize-postgres-go` on port 5432
 - Local development defaults: user `testuser`, password `testpass`, database `testdb`
-- Connection pooling: Max open 25, max idle 5, max lifetime 5 minutes (hardcoded in `pkg/database/postgres.go`)
+- Connection pooling: Max open 25, max idle 5, max lifetime 5 minutes
 
 **Migrations:**
 - Tool: golang-migrate (via `make migrate-*` commands)
@@ -232,4 +233,4 @@
 
 ---
 
-*Stack analysis: 2026-02-13*
+*Stack analysis: 2026-02-16*

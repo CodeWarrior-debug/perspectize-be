@@ -1,1106 +1,230 @@
 # Codebase Concerns
 
-**Analysis Date:** 2026-02-07
-
-Comprehensive review of technical debt, bugs, and risk areas. Primary source: `KNOWN_BUGS.md` (comprehensive audit 2026-02-07), verified against actual codebase. Organized by severity and impact.
-
----
-
-## CRITICAL ISSUES
-
-### C-01: No Authentication or Authorization
-
-**Risk:** Any client can CRUD any user's data. Complete security bypass.
-
-**Files:**
-- `backend/cmd/server/main.go` (line 74-93: no auth middleware)
-- `backend/internal/adapters/graphql/resolvers/schema.resolvers.go` (no auth checks in any mutation)
-
-**Problem:** GraphQL resolvers process all queries without verifying user identity or permissions. A malicious client can:
-- List all users with email addresses exposed
-- Create perspectives/content for any user
-- Modify/delete any user's data
-- Modify/delete any content
-
-**Impact:** Application unsuitable for multi-user deployment. Data integrity cannot be guaranteed.
-
-**Fix approach:**
-1. Add authentication middleware (JWT, OAuth2, or session-based)
-2. Inject authenticated user into request context
-3. Add authorization checks in all mutations (e.g., `perspective.userID == currentUser.ID`)
-4. Update GraphQL schema to include `Query.me` endpoint
-5. Add `user` input parameter to mutations instead of deriving from auth context
-
----
-
-### C-02: Cursor Pagination Broken for Non-ID Sorts
-
-**Risk:** Wrong pages returned when sorting by name/date.
-
-**Files:**
-- `backend/internal/adapters/repositories/postgres/content_repository.go:207-336`
-- `backend/internal/adapters/repositories/postgres/perspective_repository.go:233-362`
-
-**Problem:** Keyset pagination cursor only encodes `id`:
-```go
-// cursor format: base64("id:<id>")
-```
-
-When sorting by `CREATED_AT` or `NAME`, the next page query uses the last ID but wrong sort direction, producing duplicates or missing rows.
-
-**Correct keyset pagination requires:**
-- Encode both `id` AND the sort column value in cursor
-- Construct WHERE clause with compound condition: `(sortCol, id) > (lastSortVal, lastId)`
-
-**Impact:** Pagination UX broken for any content/perspective list sorted by date or name. Users see duplicates or missing items.
-
-**Fix approach:**
-1. Redesign cursor to encode `{id, sortColumnValue}` as JSON then base64
-2. Update `decodeCursor` to extract both values
-3. Refactor WHERE clause construction to use compound keyset logic
-4. Add tests for pagination with non-ID sorts (currently zero coverage)
-
----
-
-### C-03: XSS Vulnerability in AG Grid cellRenderer
-
-**Risk:** User-controlled data interpolated into HTML without escaping.
-
-**Files:** `frontend/src/lib/components/ActivityTable.svelte:64-70`
-
-**Problem:**
-```svelte
-cellRenderer: (params: { data?: ContentRow }) => {
-    if (!params.data) return '';
-    if (params.data.url) {
-        return `<a href="${params.data.url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">${params.data.name}</a>`;
-    }
-    return params.data.name;
-}
-```
-
-If `params.data.name` contains `<img src=x onerror=alert(1)>` or `params.data.url` contains `javascript:alert(1)`, it executes in the grid cell.
-
-**Impact:** XSS attack via backend response. Attacker can steal session tokens, post as user, modify page.
-
-**Fix approach:**
-1. Use `document.createElement()` instead of template string interpolation
-2. Or use AG Grid's built-in sanitization (check ag-grid-svelte5 options)
-3. Or use Svelte template syntax with `{@html ...}` guards for explicit trust boundary
-
----
-
-### C-04: No GraphQL Query Complexity Limiting
-
-**Risk:** DoS vector via deeply nested queries.
-
-**Files:** `backend/cmd/server/main.go:75` (handler initialization)
-
-**Problem:** gqlgen server has no complexity calculator configured. Query like:
-```graphql
-query {
-  perspectives { perspectives { perspectives { ... } } }
-}
-```
-will cause unbounded recursion or O(n²) query execution.
-
-**Impact:** Attacker can crash backend with single malicious query.
-
-**Fix approach:**
-1. Add `complexity.go` with `ComplexityCalculator` function
-2. Register in handler config before `NewDefaultServer()`
-3. Set complexity budget (e.g., 1000) and check before execution
-4. Test with nested query bombs
-
----
-
-### C-05: Wildcard CORS Configuration
-
-**Risk:** `Access-Control-Allow-Origin: *` allows any origin.
-
-**Files:** `backend/cmd/server/main.go:80`
-
-**Problem:**
-```go
-w.Header().Set("Access-Control-Allow-Origin", "*")
-```
-
-A malicious website can make requests to the GraphQL API on behalf of your users' browsers (if authentication were in place). Combined with C-01 (no auth), this is less critical but still wrong.
-
-**Impact:** Cross-site request forgery (CSRF) possible once auth is added. Currently moot due to C-01.
-
-**Fix approach:**
-1. Replace wildcard with explicit frontend URL (e.g., `https://perspectize.com`)
-2. Use environment variable for origin (dev = `http://localhost:5173`, prod = frontend domain)
-3. Update `frontend/CLAUDE.md` to document required CORS setup
-
----
-
-### C-06: Silent JSON Unmarshal Failure
-
-**Risk:** Corrupted data silently omitted from responses.
-
-**Files:** `backend/internal/adapters/repositories/postgres/perspective_repository.go:419-426`
-
-**Problem:** `categorizedRatings` JSON field is unmarshaled without error checking:
-```go
-json.Unmarshal([]byte(dbCategorizedRatings), &categorizedRatings)
-// error is ignored — bad data becomes nil array
-```
-
-If database contains invalid JSON, response silently drops the field instead of failing or logging.
-
-**Impact:** Users see incomplete perspective data without knowing why. Data loss appears random.
-
-**Fix approach:**
-1. Add error check: `if err := json.Unmarshal(...); err != nil { return nil, fmt.Errorf(...) }`
-2. Add structured logging to all JSON unmarshal operations
-3. Add repository tests for malformed JSON handling
-
----
-
-### C-07: Silent Duration Parse Failure
-
-**Risk:** Bad duration defaults to 0 seconds, indistinguishable from real short video.
-
-**Files:** `backend/internal/adapters/youtube/client.go:90-93`
-
-**Problem:**
-```go
-duration, _ := time.ParseDuration(durationStr)
-// error is ignored
-```
-
-If YouTube API returns unparseable duration string, the field silently becomes 0 without logging.
-
-**Impact:** UI displays "0 seconds" for videos with bad metadata. No visibility into data quality.
-
-**Fix approach:**
-1. Add error handling with structured log
-2. Or return `*int` (nil if unparseable) instead of silent 0
-3. Add tests for non-ISO8601 duration formats
-
----
-
-### C-08: Five Silent Parse Failures in Domain Conversion
-
-**Risk:** Response, viewCount, likeCount, commentCount all silently become nil on parse error.
-
-**Files:** `backend/internal/adapters/graphql/resolvers/helpers.go:36-63`
-
-**Problem:** `domainToModel` unmarshal errors are silently discarded:
-```go
-json.Unmarshal(c.Response, &response)  // error ignored
-strconv.Atoi(c.ViewCount)              // error ignored
-strconv.Atoi(c.LikeCount)              // error ignored
-strconv.Atoi(c.CommentCount)           // error ignored
-```
-
-**Impact:** Incomplete data in GraphQL responses with no error signal. Users can't tell if counts are 0 or corrupted.
-
-**Fix approach:**
-1. Add error handling and structured logging for all conversions
-2. Return error from `domainToModel` or use proper nullable fields
-3. Add resolver tests for malformed input
-
----
-
-### C-09: GraphQL Playground Exposed Unconditionally
-
-**Risk:** Introspection enabled without environment check.
-
-**Files:** `backend/cmd/server/main.go:92`
-
-**Problem:**
-```go
-http.Handle("/", playground.Handler("GraphQL Playground", "/graphql"))
-```
-
-Playground is accessible in production, exposes schema to anyone.
-
-**Impact:** Schema enumeration enables targeted attacks. Best practice is to disable in production.
-
-**Fix approach:**
-1. Check `APP_ENV` or `DEBUG` env var
-2. Only register playground in dev mode
-3. Also disable GraphQL introspection in production (see C-10)
-
----
-
-### C-10: GraphQL Introspection Enabled Without Restriction
-
-**Risk:** Full schema introspection available to all clients.
-
-**Files:** `backend/cmd/server/main.go:75` (no introspection config)
-
-**Problem:** gqlgen server has default `IntrospectionEnabled: true`. Combined with exposed playground (C-09), attackers enumerate all queries/mutations.
-
-**Impact:** Complete API surface visible. Enables reconnaissance for targeted attacks.
-
-**Fix approach:**
-1. Add introspection config check:
-   ```go
-   cfg := generated.Config{
-       IntrospectionEnabled: os.Getenv("ENABLE_INTROSPECTION") == "true",
-   }
-   ```
-2. Default to false in production
-3. Allow override for dev/staging only
-
----
-
-## HIGH PRIORITY ISSUES
-
-### H-01: Adapter-to-Adapter Coupling
-
-**Risk:** Violates hexagonal architecture dependency rule.
-
-**Files:** `backend/internal/adapters/graphql/resolvers/schema.resolvers.go:16,23`
-
-**Problem:** Resolver imports YouTube adapter directly:
-```go
-import "github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/youtube"
-```
-
-Dependencies should flow: adapter → service → port. Adapter never talks to adapter.
-
-**Impact:** Services layer bypassed. Tight coupling makes testing and swapping implementations difficult.
-
-**Fix approach:**
-1. Verify all YouTube operations are in `ContentService` (they should be)
-2. Remove direct youtube imports from resolvers
-3. Add architecture test to prevent adapter-to-adapter imports
-
----
-
-### H-02: Resolver Depends on Concrete Service Types
-
-**Risk:** Missing service port interfaces.
-
-**Files:** `backend/internal/adapters/graphql/resolvers/resolver.go:12-16`
-
-**Problem:**
-```go
-type Resolver struct {
-    contentService *services.ContentService  // concrete, not interface
-    userService *services.UserService        // concrete, not interface
-    perspectiveService *services.PerspectiveService
-}
-```
-
-Should depend on interfaces, not concrete types.
-
-**Impact:** Can't mock services for testing. Resolver tests must use real service implementations.
-
-**Fix approach:**
-1. Create port interfaces: `ContentServicePort`, `UserServicePort`, `PerspectiveServicePort`
-2. Update resolver to accept interfaces
-3. Update `cmd/server/main.go` wiring
-4. Update resolver tests to use mocks
-
----
-
-### H-03: ListAll() Users Has No Pagination
-
-**Risk:** Unbounded query result set.
-
-**Files:** `backend/internal/adapters/repositories/postgres/user_repository.go:98-114`
-
-**Problem:**
-```go
-func (r *UserRepository) ListAll(ctx context.Context) ([]domain.User, error) {
-    // SELECT * FROM users — no LIMIT
-}
-```
-
-Query returns all users. If 10,000 users exist, all rows loaded into memory.
-
-**Impact:** Memory exhaustion DoS. Unbounded response size (C-10 + H-03 = attacker can request massive response).
-
-**Fix approach:**
-1. Add `limit int` parameter (or use cursor pagination from H-03)
-2. Default to reasonable limit (50-100)
-3. Return error if limit exceeds max (1000)
-4. Update GraphQL schema to require pagination
-
----
-
-### H-04 & H-05: GraphQL Type Schema Issues
-
-**Risk:** Weak API contracts.
-
-**Files:** `backend/schema.graphql`
-
-**Problems:**
-- **H-04:** Timestamps as `String!` instead of custom `DateTime` scalar (lines 9-10, 56-58, 77-78)
-- **H-05:** `contentType` uses `String!` instead of defined `ContentType` enum (line 70)
-
-**Impact:** No type safety for timestamps (clients must parse manually). Content type values not enumerated (clients don't know valid values).
-
-**Fix approach:**
-1. Define `scalar DateTime` in schema
-2. Implement DateTime scalar resolver for serialization
-3. Update all timestamp fields to `DateTime!`
-4. Define `ContentType` enum (e.g., `YOUTUBE`, `VIMEO`)
-5. Bind enum in `gqlgen.yml`
-6. Update content type storage to use enum values
-
----
-
-### H-06 & H-07: Race Conditions on Uniqueness Checks
-
-**Risk:** Duplicate inserts possible under concurrent load.
-
-**Files:**
-- `backend/internal/core/services/perspective_service.go:91-97` (duplicate claim check)
-- `backend/internal/core/services/user_service.go:49-65` (duplicate user check)
-
-**Problem:** Classic TOCTOU (time-of-check-time-of-use) race:
-```go
-// Thread A: Check if claim exists
-existing, _ := r.FindByClaimAndUser(ctx, claim, userID)
-if existing != nil {
-    return nil, ErrAlreadyExists
-}
-// [Thread B inserts here]
-// Thread A: Insert new claim
-r.Create(ctx, ...)  // UNIQUE constraint violated at DB level
-```
-
-**Impact:** Under load, concurrent create requests can both pass the check and fail at database, causing errors or partial inserts.
-
-**Fix approach:**
-1. Use database UNIQUE constraint as the sole source of truth
-2. Catch DB unique violation error and return `ErrAlreadyExists`
-3. Remove app-level duplicate check
-4. Or use database-level transactions with explicit locks
-
----
-
-### H-08: YouTube API Response Stored Verbatim
-
-**Risk:** Bloat and information leakage.
-
-**Files:** `backend/internal/adapters/youtube/client.go:100`
-
-**Problem:** Entire YouTube API response (with metadata, thumbnails, etc.) stored in `Content.response: JSON` field. YouTube response is ~5KB per video.
-
-**Impact:** Database bloat. Unnecessary data stored increases backup size, query time. No use case for storing full response.
-
-**Fix approach:**
-1. Parse response and extract only needed fields (title, duration, viewCount, etc.)
-2. Store structured fields, not raw JSON
-3. Remove `response: JSON` from schema (or make it optional for debugging)
-4. Backfill existing data to remove YouTube responses
-
----
-
-### H-09: Hardcoded Config Path
-
-**Risk:** Config not flexible for deployments.
-
-**Files:** `backend/cmd/server/main.go:27`
-
-**Problem:**
-```go
-cfg, err := config.Load("config/config.example.json")
-```
-
-Path is hardcoded. Works in dev, fails in containers where file structure differs.
-
-**Impact:** Docker builds fail. Production deployment requires workarounds.
-
-**Fix approach:**
-1. Use environment variable: `CONFIG_PATH = os.Getenv("CONFIG_PATH")`
-2. Default to reasonable path if unset
-3. Test in Docker container
-4. Document in `.env.example`
-
----
-
-### H-10: User Email Addresses Exposed
-
-**Risk:** GDPR/privacy violation. Enables spam/phishing.
-
-**Files:** `backend/internal/adapters/graphql/resolvers/schema.resolvers.go:302-315` (users query)
-
-**Problem:** `Query.users` returns list with email addresses. No access control.
-
-**Impact:** Scraping tool can dump all user emails. Violates privacy regulations.
-
-**Fix approach:**
-1. Add authentication check to `users` query
-2. Only return own email, not others'
-3. Or remove email from public user type, add separate `Query.me` endpoint
-4. Audit other endpoints for exposed PII
-
----
-
-### H-11: No Rate Limiting
-
-**Risk:** Brute force, enumeration, DoS attacks.
-
-**Files:** `backend/cmd/server/main.go` (no middleware)
-
-**Problem:** No rate limiting on GraphQL endpoint. Attacker can spam queries without throttling.
-
-**Impact:** Username enumeration (list all users via H-03 + H-11). Password brute force if auth added. Query complexity bombs (C-04).
-
-**Fix approach:**
-1. Add rate limiting middleware (e.g., `ulule/limiter`)
-2. Limit by IP address (or user ID if authenticated)
-3. Different limits for mutations vs queries
-4. Return 429 Too Many Requests when exceeded
-
----
-
-### H-12: YouTube API Key Exposure Risk
-
-**Risk:** Key compromise enables unauthorized YouTube API calls.
-
-**Files:**
-- `backend/internal/adapters/youtube/client.go:53-57,76` (key in URL, error messages)
-- Stored in config and environment
-
-**Problem:** API key may appear in:
-- HTTP error responses if request fails
-- Server logs if key validation fails
-- GitHub commits if `.env` checked in (see `.gitignore`)
-
-**Impact:** Attacker can use compromised key to spam YouTube API, incurring charges.
-
-**Fix approach:**
-1. Never log API key (sanitize in error messages)
-2. Add validation at startup (try dummy request, catch error, don't log key)
-3. Use Cloud Key Management (e.g., AWS Secrets Manager) instead of env vars
-4. Rotate key regularly
-5. Audit git history: `git log -S "AIza" --`
-
----
-
-### H-13: Sensitive Data Leaked in GraphQL Errors
-
-**Risk:** Database schema/structure exposed via error messages.
-
-**Files:** `backend/internal/adapters/graphql/resolvers/schema.resolvers.go:31,47,99,152,173`
-
-**Problem:** Resolvers use `%w` formatting which wraps underlying errors:
-```go
-return nil, fmt.Errorf("failed to find content: %w", err)
-// If err = "column 'foo' does not exist", attacker sees DB schema
-```
-
-**Impact:** SQL errors expose schema structure, table names, columns. Enables targeted SQL injection attempts.
-
-**Fix approach:**
-1. Return generic error to GraphQL clients: `fmt.Errorf("internal server error")`
-2. Log full error server-side with structured logging
-3. Add middleware to scrub errors before returning to client
-4. Test: deliberately trigger DB errors, verify no schema leakage
-
----
-
-### H-14 & H-15: No HTTPS/TLS and HTTP Timeouts
-
-**Risk:** Man-in-the-middle attacks and Slowloris DoS.
-
-**Files:** `backend/cmd/server/main.go:99` (http.ListenAndServe with no config)
-
-**Problems:**
-- **H-14:** No TLS/HTTPS. Traffic is unencrypted.
-- **H-15:** Server has no timeouts. Slowloris attacker can open slow connections forever.
-
-**Impact:** Credentials/API keys transmitted in plaintext. Server hangs waiting for slow clients.
-
-**Fix approach:**
-1. Use `http.Server` with timeouts:
-   ```go
-   srv := &http.Server{
-       Addr:         ":8080",
-       ReadTimeout:  15 * time.Second,
-       WriteTimeout: 15 * time.Second,
-       IdleTimeout:  60 * time.Second,
-   }
-   ```
-2. For HTTPS: use `ListenAndServeTLS` with cert/key or reverse proxy (Caddy/Nginx)
-3. Document TLS setup in deployment guide
-
----
-
-### H-16: Inconsistent Not-Found Error Handling
-
-**Risk:** Inconsistent GraphQL contracts.
-
-**Files:** `backend/internal/adapters/graphql/resolvers/schema.resolvers.go:274,289,326`
-
-**Problem:** Some resolvers return `nil, nil` (errors hidden from GraphQL) while others return proper errors:
-```go
-// Line 274: return nil, nil
-// Line 289: return nil, nil
-// vs ContentByID: returns error
-```
-
-**Impact:** Clients expect errors but get nulls. Silent failures hard to debug.
-
-**Fix approach:**
-1. Standardize: always return `(T, error)` with proper error handling
-2. GraphQL layer converts errors to null fields as needed
-3. Add resolver tests asserting error behavior
-
----
-
-### H-17 & H-18: Missing Svelte Error Boundaries
-
-**Risk:** Unhandled errors show blank page or default error.
-
-**Files:**
-- `frontend/src/routes/` (missing `+error.svelte`)
-- `frontend/src/` (missing `hooks.client.ts`, `hooks.server.ts`)
-
-**Problem:** No error boundary component. Errors outside TanStack Query are invisible to users.
-
-**Impact:** If header fails to load, entire page is broken. Users see nothing or generic "Error" message.
-
-**Fix approach:**
-1. Create `src/routes/+error.svelte` with graceful error UI
-2. Create `src/hooks.client.ts` to catch client-side errors
-3. Log to error tracking service (see H-24 for client infra)
-
----
-
-### H-19 & H-20: .env Load Failure and Empty API Key Validation
-
-**Risk:** Silent misconfiguration.
-
-**Files:** `backend/cmd/server/main.go:24` (.env ignored) and `youtube/client.go:23` (no key validation)
-
-**Problems:**
-- `.env` load failure is silently ignored: `_ = godotenv.Load()`
-- YouTube API key not validated at startup. Fails with cryptic 403 at runtime.
-
-**Impact:** Typo in .env goes unnoticed. Configuration errors only surface when queries run.
-
-**Fix approach:**
-1. Warn if .env file expected but missing: `if _, err := os.Stat(".env"); err != nil && os.Getenv("ENVIRONMENT") != "production" { log.Warn(...) }`
-2. Add config validation: `if cfg.YouTube.APIKey == "" { log.Fatal("YOUTUBE_API_KEY required") }`
-3. Test YouTube key at startup with dummy request
-
----
-
-### H-21: WriteString Return Ignored
-
-**Risk:** Response corruption.
-
-**Files:** `backend/pkg/graphql/intid.go:17`
-
-**Problem:**
-```go
-func (i IntID) MarshalJSON() ([]byte, error) {
-    _, _ = io.WriteString(...) // return value ignored
-}
-```
-
-If `WriteString` fails, no error is returned. Response may be incomplete.
-
-**Impact:** IntID serialization silently fails. Clients receive null IDs.
-
-**Fix approach:**
-1. Check return value: `if n, err := io.WriteString(...); err != nil { return nil, err }`
-2. Add tests for WriteString error cases
-
----
-
-### H-22: prerender = true Without SSR
-
-**Risk:** Architectural mismatch.
-
-**Files:** `frontend/src/routes/+layout.ts:1`
-
-**Problem:**
-```typescript
-export const prerender = true;
-```
-
-With `adapter-static`, this tells SvelteKit to prerender all routes as static HTML. But the app fetches dynamic GraphQL data, making prerender pointless. App runs as SPA.
-
-**Impact:** Build time wastage. No SEO benefit (content is JS-rendered). Confusing architecture.
-
-**Fix approach:**
-1. Set `prerender = false` to use SPA mode explicitly
-2. Or actually leverage prerendering by fetching data at build time (requires build-time GraphQL endpoint)
-
----
-
-### H-23: No TypeScript Types from GraphQL Schema
-
-**Risk:** Manual duplication and drift.
-
-**Files:** `frontend/src/lib/components/` (all component files)
-
-**Problem:** Type definitions for GraphQL responses are manually written in Svelte components:
-```typescript
-interface ContentItem {
-    id: string;
-    name: string;
-    // ... manually duplicated from schema
-}
-```
-
-No code generation from schema. Changes to GraphQL schema require manual updates.
-
-**Impact:** Types drift from schema. Type safety lost. Updates require multiple changes.
-
-**Fix approach:**
-1. Use `graphql-codegen` to generate TypeScript types from GraphQL schema
-2. Run as part of build: `gql-codegen` before `pnpm build`
-3. Import types from generated file
-4. All types stay in sync with schema
-
----
-
-### H-24: GraphQL Client Missing Error/Timeout Infrastructure
-
-**Risk:** No error recovery, no timeout protection.
-
-**Files:** `frontend/src/lib/queries/client.ts:1-7`
-
-**Problem:**
-```typescript
-const graphqlClient = new GraphQLClient("http://localhost:8080/graphql");
-```
-
-Client has no:
-- Error interceptor to catch network errors
-- Timeout configuration (requests hang forever)
-- Authorization header support
-- Request/response logging
-
-**Impact:** Network errors not handled. Queries that fail are invisible. No auth infrastructure.
-
-**Fix approach:**
-1. Add error interceptor to catch network failures
-2. Set timeout (e.g., 30 seconds)
-3. Add `headers` callback to inject auth token (prepare for C-01 fix)
-4. Add request/response logging
-
----
-
-### H-25: No Content Security Policy
-
-**Risk:** XSS/injection attacks.
-
-**Files:** `frontend/app.html` (no CSP header)
-
-**Problem:** No CSP header restricts what scripts can run. Combined with C-05 (innerHTML XSS), attacks easier.
-
-**Impact:** XSS payloads can load external scripts, exfiltrate data.
-
-**Fix approach:**
-1. Add CSP header in `app.html` or server middleware
-2. Recommended: `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'` (AG Grid needs unsafe-inline)
-3. Report violations to logging service
-
----
-
-### H-26: No CI/CD or Security Scanning
-
-**Risk:** No automated checks for regressions, secrets, vulnerable dependencies.
-
-**Files:** `.github/` (missing workflows)
-
-**Problem:** No GitHub Actions workflows for:
-- Testing on every commit
-- Dependency scanning (Dependabot)
-- Secret scanning (SAST)
-- Container scanning if Docker used
-
-**Impact:** Vulnerable packages not detected. Secrets committed. Breaking changes merged.
-
-**Fix approach:**
-1. Add `.github/workflows/test.yml` for Go tests
-2. Add `.github/workflows/test-fe.yml` for frontend tests
-3. Enable Dependabot in repo settings
-4. Add SAST scanning (e.g., `github/super-linter`)
-5. Document CI requirements in CLAUDE.md
-
----
-
-## MEDIUM PRIORITY ISSUES
-
-### M-01: Dual PostgreSQL Driver Dependencies
-
-**Issue:** `lib/pq` and `pgx/v5` both imported
-
-**Files:** `backend/go.mod:10-11`
-
-**Impact:** Unnecessary bloat, potential conflicts. Choose one.
-
-**Fix:** Remove unused driver. If using sqlx, use `pgx` driver exclusively.
-
----
-
-### M-02: Hardcoded Database Connection Pool Settings
-
-**Issue:** No configuration for pool size, timeout.
-
-**Files:** `backend/pkg/database/postgres.go:21-23`
-
-**Problem:** Max 25 open connections, 5 idle hard-coded.
-
-**Fix:** Load from env vars with sensible defaults.
-
----
-
-### M-03: CreateFromYouTube Returns Error Instead of Idempotent Result
-
-**Issue:** Error response for duplicate, should be idempotent.
-
-**Files:** `backend/internal/core/services/content_service.go:30-36`
-
-**Fix:** Check for `ErrAlreadyExists` and return existing item, not error.
-
----
-
-### M-04: Schema Type Inconsistency
-
-**Issue:** `deletePerspective` uses `ID` scalar instead of `IntID`.
-
-**Files:** `backend/schema.graphql:185`
-
-**Fix:** Standardize all IDs to use `IntID` scalar.
-
----
-
-### M-05: Function Parameter Instead of Dependency Injection
-
-**Issue:** `CreateFromYouTube` accepts `extractVideoID` as parameter.
-
-**Files:** `backend/internal/core/services/content_service.go:28`
-
-**Fix:** Inject into service constructor instead.
-
----
-
-### M-06: No Request Logging Middleware
-
-**Issue:** Uses default `net/http` mux, no middleware chain.
-
-**Files:** `backend/cmd/server/main.go:91-94`
-
-**Impact:** No visibility into request/response for debugging.
-
-**Fix:** Add request logging middleware (use `chi` router with middleware).
-
----
-
-### M-07: Inconsistent Not-Found Error Handling
-
-**Issue:** Different approaches across resolvers (see H-16).
-
-**Files:** `backend/internal/adapters/graphql/resolvers/schema.resolvers.go`
-
-**Fix:** Standardize error return pattern.
-
----
-
-### M-08: Missing Nested Field Resolvers
-
-**Issue:** `user` and `content` fields on Perspective return null instead of fetching.
-
-**Files:** `backend/internal/adapters/graphql/resolvers/helpers.go:70-107`
-
-**Problem:**
-```graphql
-type Perspective {
-    user: User  # Always null
-    content: Content  # Always null
-}
-```
-
-Clients must separately fetch user/content after fetching perspective.
-
-**Fix:** Implement field resolvers to fetch nested objects.
-
----
-
-### M-09: No Graceful Shutdown Handler
-
-**Issue:** Server kills in-flight requests on shutdown.
-
-**Files:** `backend/cmd/server/main.go:99`
-
-**Fix:** Add signal handler for SIGTERM with graceful shutdown timeout.
-
----
-
-### M-10: No Health Check Endpoint
-
-**Issue:** Load balancers/orchestrators have no way to check health.
-
-**Files:** `backend/cmd/server/main.go:91-93`
-
-**Fix:** Add `/health` (liveness) and `/ready` (readiness) endpoints.
-
----
-
-### M-11: Missing Input Length Validation
-
-**Issue:** No length checks on description, labels, categorizedRatings.
-
-**Files:** `backend/internal/core/services/perspective_service.go`, `user_service.go`
-
-**Impact:** Unbounded inputs can cause performance issues.
-
-**Fix:** Add validator: `description max 1000 chars`, `labels max 10 items`, etc.
-
----
-
-### M-12: DB Credentials in Logs on Failure
-
-**Issue:** Connection string may appear in logs.
-
-**Files:** `backend/cmd/server/main.go:43-44`, `config.go:83`
-
-**Fix:** Sanitize DSN before logging (redact password).
-
----
-
-### M-13: Unbounded JSON Field
-
-**Issue:** `response: JSON` field stores full YouTube response (~5KB per item).
-
-**Files:** `backend/schema.graphql:77`
-
-**Impact:** Bloats database, unnecessary data in queries.
-
-**Fix:** See H-08.
-
----
-
-### M-14: Missing Security Headers
-
-**Issue:** No X-Content-Type-Options, X-Frame-Options, HSTS, etc.
-
-**Files:** `backend/cmd/server/main.go`
-
-**Fix:** Add security headers middleware:
-```go
-w.Header().Set("X-Content-Type-Options", "nosniff")
-w.Header().Set("X-Frame-Options", "DENY")
-w.Header().Set("Strict-Transport-Security", "max-age=31536000")
-```
-
----
-
-### M-15: No CSRF Protection
-
-**Issue:** No anti-CSRF tokens.
-
-**Files:** `backend/cmd/server/main.go:93`
-
-**Impact:** Moot until C-01 (auth) is fixed, but should be added.
-
-**Fix:** Add CSRF middleware after auth implemented.
-
----
-
-### M-16: Update Does Not Check RowsAffected
-
-**Issue:** Race condition on concurrent updates.
-
-**Files:** `backend/internal/adapters/repositories/postgres/perspective_repository.go:187-209`
-
-**Problem:** Unlike Delete, Update doesn't check if row was actually modified (optimistic lock missing).
-
-**Fix:** Check `result.RowsAffected() > 0` or add `version` column for optimistic locking.
-
----
-
-### M-17: No DATABASE_URL Format Validation
-
-**Issue:** Invalid URL accepted without error.
-
-**Files:** `backend/internal/config/config.go:79-84`
-
-**Fix:** Validate DSN format at startup.
-
----
-
-### M-18: Duplicated Type Definitions Across Components
-
-**Issue:** ContentItem, ContentRow, User types manually defined in multiple files.
-
-**Files:** `frontend/src/lib/components/ActivityTable.svelte`, `+page.svelte`, `UserSelector.svelte`
-
-**Fix:** See H-23 (use codegen).
-
----
-
-### M-19: No Server-Side Pagination Integration
-
-**Issue:** Content query hard-codes 100 items fetch.
-
-**Files:** `frontend/src/routes/+page.svelte:33-34`
-
-**Problem:**
-```typescript
-const query = createQuery(() => ({
-    queryFn: () => listContent({ first: 100 })  // Hard-coded
-}));
-```
-
-AG Grid pagination not integrated with server. Fetches all 100 items then paginates client-side.
-
-**Fix:** Integrate AG Grid pagination with cursor pagination from server.
-
----
-
-### M-20: selectedUserId Store Not Consumed
-
-**Issue:** Wired but never used.
-
-**Files:** `frontend/src/lib/stores/userSelection.svelte.ts`, `src/routes/+page.svelte`
-
-**Fix:** Either use in content query filter or remove.
-
----
-
-### M-21: Unused Type Guards
-
-**Issue:** ContentResponse/ContentItem interfaces declared but never used as type guards.
-
-**Files:** `frontend/src/routes/+page.svelte:8-28`
-
-**Fix:** Remove unused types or implement runtime validation.
-
----
-
-### M-22: Search Input Not Debounced
-
-**Issue:** AG Grid filter triggered on every keystroke.
-
-**Files:** `frontend/src/routes/+page.svelte:30`, `ActivityTable.svelte:130-133`
-
-**Impact:** Excessive queries sent to server.
-
-**Fix:** Add 300ms debounce to search input.
-
----
-
-### M-23: No Error Recovery UI
-
-**Issue:** Error states have no retry button.
-
-**Files:** `frontend/src/routes/+page.svelte:70-73`, `UserSelector.svelte:37-40`
-
-**Fix:** Add retry button on error, call `query.refetch()`.
-
----
-
-### M-24: Dead Code in Production
-
-**Issue:** AGGridTest.svelte never imported but in component tree.
-
-**Files:** `frontend/src/lib/components/AGGridTest.svelte`
-
-**Fix:** Delete or comment.
-
----
-
-### M-25: HTTP Fallback for GraphQL Endpoint
-
-**Issue:** Fallback uses HTTP not HTTPS.
-
-**Files:** `frontend/src/lib/queries/client.ts:3`
-
-**Problem:**
-```typescript
-const endpoint = process.env.VITE_GRAPHQL_URL || "http://localhost:8080/graphql";
-```
-
-**Fix:** Use HTTPS in production endpoint.
-
----
-
-### M-26: Retry Configuration Retries All Errors
-
-**Issue:** `retry: 1` retries 4xx errors (should only retry network/5xx).
-
-**Files:** `frontend/src/routes/+layout.svelte:15`, `+page.svelte:40`
-
-**Fix:** Use `shouldRetry: (failureCount, error) => error.status >= 500 || !error.response`
-
----
-
-### M-27: formatDate Silently Produces Invalid Date
-
-**Issue:** Bad input produces "Invalid Date" string instead of error.
-
-**Files:** `frontend/src/lib/components/ActivityTable.svelte:48-53`
-
-**Fix:** Add validation or return fallback with warning.
-
----
-
-### M-28: No Secret Rotation or Vault Integration
-
-**Issue:** Secrets stored in .env, no rotation mechanism.
-
-**Impact:** Compromised secret is permanent.
-
-**Fix:** Use AWS Secrets Manager, HashiCorp Vault, or 1Password for rotation.
-
----
-
-## LOW PRIORITY ISSUES
-
-### L-01 through L-22
-
-Code style, unused dependencies, test organization issues. See `KNOWN_BUGS.md` lines 88-110 for full details.
-
-**Priority fixes:**
-- **L-16:** Remove `@tanstack/svelte-form` (unused dependency)
-- **L-23:** Inject `ref` prop instead of using `any` type
-
----
-
-## UI BUGS (Phase 2.1)
-
-See `KNOWN_BUGS.md` "UI Bugs" section (lines 111-121) for mobile responsiveness issues.
-
-**Critical (P1):**
-- BUG-001: Header overflow at 375px
-- BUG-002: Pagination bar broken at 375px
-- BUG-003: Sticky header clipping persists on scroll
-
----
-
-## TEST COVERAGE GAPS
-
-**Critical (P1):**
-- T-01: `PerspectiveService.Update()` — 100-line mutation with zero tests
-- T-02: No resolver tests for User/Perspective queries/mutations
-- T-03: No tests for `helpers.go` domain-to-model conversion with silent JSON parse failures
-
-**High (P2):**
-- T-04: No repository-layer tests
-- T-05: No YouTube API client tests
-- T-06: No `IntID` scalar tests
-
-See `KNOWN_BUGS.md` lines 122-138 for complete test gap inventory.
-
----
-
-## Impact Summary
-
-| Severity | Count | Primary Risk | Key Issues |
-|----------|-------|--------------|------------|
-| Critical | 5 | Security (no auth), Data integrity | C-01, C-02, C-03, C-04, C-05 |
-| High | 22 | Operational (errors, crashes, DoS) | H-01–H-26 |
-| Medium | 28 | Code quality, maintainability | M-01–M-28 |
-| Low | 22 | Style, cleanup | L-01–L-22 |
-| **Total** | **77** | **Multi-layer** | Requires coordinated fixes |
-
----
-
-*Audit completed 2026-02-07. See `KNOWN_BUGS.md` for complete metadata and source documentation.*
+**Analysis Date:** 2026-02-16
+
+## Tech Debt
+
+**YouTube Client Lacks Dependency Injection for Testing:**
+- Issue: `youtube.Client` constructor (`NewClient`) creates a hardcoded `http.Client{}` with no way to inject a test client. Tests cannot mock YouTube API responses without hitting the real API.
+- Files: `backend/internal/adapters/youtube/client.go` (lines 24-29)
+- Impact: Cannot fully unit-test YouTube metadata fetching. Current tests are either integration tests or skip comprehensive coverage.
+- Fix approach: Add `NewClientWithHTTPClient(apiKey string, httpClient *http.Client)` constructor or `NewClientWithBaseURL(apiKey string, baseURL string)` to allow `httptest.Server` injection. See TODO comment in `backend/test/youtube/client_test.go` (line 353).
+
+**Hand-Rolled Cursor Pagination Instead of Library:**
+- Issue: Cursor encoding/decoding implemented manually via helpers in `backend/internal/adapters/repositories/postgres/helpers.go`. Works but reinvents the wheel.
+- Files: `backend/internal/adapters/repositories/postgres/helpers.go` (lines 90-155), `gorm_content_repository.go`, `gorm_perspective_repository.go`
+- Impact: More code to maintain, higher risk of pagination bugs. Library would provide type-safe field specification and automatic keyset query building.
+- Fix approach: Integrate `gorm-cursor-paginator` library (already imported, partially used). Replace manual cursor logic with paginator's cursor handling. Simplify `List` method queries. See FEATURE_BACKLOG.md (HIGH PRIORITY).
+
+**Incomplete GraphQL Filter Schema:**
+- Issue: `ContentFilter` input type in GraphQL schema has TODO comment indicating missing filters. Currently only supports `contentType`, but search and date range filtering are planned but not implemented.
+- Files: `backend/internal/adapters/graphql/generated/generated.go` (line 912 comment in schema)
+- Impact: Limited filtering capability in Activity Table. Workaround: client-side filtering over fetched data (see client-side pagination below).
+- Fix approach: Extend `ContentFilter` input with `search`, `dateRange`, and other fields. Add resolver logic to apply filters in GORM repository queries.
+
+**Sticky Header Color Token Workaround:**
+- Issue: Sticky header uses `bg-white` hardcoded instead of semantic `bg-background` token because `--color-background` wasn't defined in design system.
+- Files: `frontend/src/lib/components/Header.svelte` (changed from `bg-background` to `bg-white` in commit b42c457)
+- Impact: Cosmetic; header works but doesn't respect theme color scheme. Will break if dark mode is added.
+- Fix approach: Define complete color theme in `frontend/src/app.css` with all semantic tokens (`--color-background`, `--color-foreground`, `--color-border`, etc.). Then revert header to `bg-background`.
+
+**Client-Side Pagination Prefetch Strategy:**
+- Issue: GraphQL `ListContent` query uses `first: pageSize` (configurable) to prefetch data, but AG Grid only displays 10 per page. Total fetch size is not adaptive.
+- Files: `frontend/src/lib/components/ActivityTable.svelte` (line ~62: `first: pageSize`)
+- Impact: Scalability concern at 100+ items. When content exceeds prefetched amount, client-side filtering breaks (only operates on loaded data). No total count exposed to UI.
+- Fix approach: (1) Expose `totalCount` from GraphQL query so UI knows total server-side content. (2) Make prefetch adaptive or implement true server-side pagination. (3) Switch to server-side row model in AG Grid for seamless remote pagination. See FEATURE_BACKLOG.md "Server-Side Sorting and Filtering".
+
+## Known Bugs
+
+**Slow COUNT(*) and JSONB ORDER BY Queries:**
+- Symptoms: `SELECT count(*) FROM "content"` takes 200-400ms; JSONB path ORDER BY queries take 150-200ms. Full GraphQL request latency 395-541ms at ~50 rows.
+- Files: `backend/internal/adapters/repositories/postgres/gorm_content_repository.go`, slow query logger in `backend/pkg/database/postgres.go`
+- Trigger: Any pagination request that calls `List()` repository method with sorting by JSONB fields (viewCount, likeCount, publishedAt).
+- Workaround: Queries are slow but correct; will degrade further at 1000+ rows without indexing.
+- Root cause: GORM generates `SELECT count(*)` without filtering applied, and JSONB path extraction (`response->'items'->0->'statistics'->>'viewCount'`) has no index.
+
+**Client-Side Filtering Doesn't Filter Full Dataset:**
+- Symptoms: AG Grid's client-side sort/filter in ActivityTable only reorders/filters visible page. Filtering "Views" shows only the highest views on current page, not globally highest.
+- Files: `frontend/src/lib/components/ActivityTable.svelte` (lines 52-79: query with `first: pageSize`, filter applied client-side)
+- Trigger: Any sort/filter when total content exceeds current page size.
+- Workaround: Currently acceptable because dataset is small (~50 items). Becomes obvious UX bug at 200+ items.
+- Root cause: Server-side pagination + client-side sort/filter = filtering only what's loaded. Need server-side sort/filter parameters in GraphQL query.
+
+**GraphQL Client Lacks Authentication Headers:**
+- Symptoms: `graphqlClient` has empty `headers: {}` — no auth tokens, no CSRF protection. All users share the same unauthenticated client.
+- Files: `frontend/src/lib/queries/client.ts` (line 15)
+- Trigger: Currently not an issue because backend has no authentication enforcement, but will be critical when auth is added.
+- Workaround: None — backend currently allows any request.
+- Root cause: Auth architecture not yet designed. See FEATURE_BACKLOG.md "Authentication Architecture Design".
+
+**CORS Allows All Origins:**
+- Symptoms: Backend CORS middleware sets `Access-Control-Allow-Origin: *`, allowing any domain to make requests.
+- Files: `backend/cmd/server/main.go` (lines 125-136)
+- Trigger: Any cross-origin request is accepted.
+- Workaround: For development only; must be restricted before production.
+- Root cause: Development convenience setting left in place. CLAUDE.md notes: "Restrict to frontend's production origin before deploying."
+
+## Security Considerations
+
+**Unrestricted GraphQL Introspection:**
+- Risk: GraphQL introspection is publicly available, exposing the full schema to anyone. No authentication required to discover field names, types, and resolver structure.
+- Files: `backend/internal/adapters/graphql/generated/generated.go` (gqlgen default config), `backend/cmd/server/main.go` (GraphQL handler setup)
+- Current mitigation: None. Introspection is enabled by default in gqlgen.
+- Recommendations: (1) Disable introspection in production via gqlgen config (`introspection = false` or via handler options). (2) Implement authentication and only allow introspection for authenticated users in development environments. (3) Consider rate limiting to GraphQL endpoint.
+
+**No Input Validation on User-Supplied Text:**
+- Risk: Perspective claims, user descriptions, and other text fields are stored and displayed without sanitization. If HTML rendering is added later, XSS is possible.
+- Files: All mutation resolvers in `backend/internal/adapters/graphql/resolvers/schema.resolvers.go` accept unvalidated text input.
+- Current mitigation: Go's template system (if used) escapes by default. Currently no HTML rendering frontend-side.
+- Recommendations: (1) Add length limits to text fields (e.g., max 5000 chars for claims). (2) Validate and sanitize on backend before storage. (3) Use content security policies in frontend HTML. (4) Never render user HTML without sanitization library (e.g., DOMPurify).
+
+**Rate Limiting Not Implemented:**
+- Risk: No rate limiting on GraphQL endpoint. A malicious actor can spam requests, exhausting database connections or causing DoS.
+- Files: `backend/cmd/server/main.go` (no rate limiting middleware present)
+- Current mitigation: None. Database connection pooling provides some soft limit (25 max open connections by default).
+- Recommendations: (1) Add rate limiting middleware per IP/user (e.g., `golang.org/x/time/rate`). (2) Implement tiered limits: strict for anonymous users, relaxed for authenticated users. (3) Log and monitor for abuse patterns.
+
+**YouTube API Key Exposed in Logs:**
+- Risk: YouTube API key is passed as constructor argument to `youtube.Client` without masking. If logged via slog, it could leak in error messages.
+- Files: `backend/internal/adapters/youtube/client.go`, `backend/cmd/server/main.go` (line 96: logs "YOUTUBE_API_KEY is empty" but doesn't log the actual key)
+- Current mitigation: Weak. Key is only mentioned in warning when empty; actual key is not logged directly.
+- Recommendations: (1) Add API key masking in error messages (show only first 3 and last 3 chars). (2) Audit all slog calls to ensure no accidental key logging. (3) Use structured logging with redaction helpers for sensitive fields.
+
+**System User (Sentinel) Can Be Modified But Guarded:**
+- Risk: A sentinel user with ID -1 exists for operations without a real user (e.g., admin actions). UpdateUser checks for sentinel, but Delete operation must also be guarded.
+- Files: `backend/internal/adapters/graphql/resolvers/schema.resolvers.go` (lines 92-113: `DeleteUser` resolver), `backend/internal/core/services/user_service.go`
+- Current mitigation: `UpdateUser` includes sentinel check (line 82: `ErrSentinelUser`). Must verify `DeleteUser` service has same protection.
+- Recommendations: (1) Ensure `DeleteUser` service method checks for sentinel user and rejects. (2) Add unit tests for sentinel protection on both Update and Delete. (3) Consider making sentinel ID system constant to prevent accidental deletion.
+
+## Performance Bottlenecks
+
+**JSONB Response Column Dominates Storage:**
+- Problem: The `content.response` JSONB column stores full YouTube API responses and accounts for 93.7% of all content table data (118 KB of 126 KB at 49 rows).
+- Files: `backend/migrations/000002_update_response_jsonb.up.sql` (creates response column), database queries that retrieve response
+- Cause: YouTube API response includes unused fields (status, topicDetails, recordingDetails, etc.) alongside needed fields (snippet, statistics, contentDetails).
+- Improvement path: (1) **Trim on ingest** — Store only JSONB paths the app reads (snippet.title, statistics.*, etc.), drop unused nested objects. (2) **Extract to columns** — Promote frequently queried JSONB paths (viewCount, likeCount, publishedAt, channelTitle) to dedicated columns for indexing and sort performance. (3) **Compress** — Use `pg_lz_compress` if full response audit trail needed.
+- Priority: Low at current scale (49 rows, 8 MB DB). Revisit at 1000+ rows. Related to slow JSONB query issue above.
+
+**N+1 Query Risk in Perspective Resolvers:**
+- Problem: Resolving perspectives on content may fetch user info per perspective without batching (DataLoader).
+- Files: `backend/internal/adapters/graphql/resolvers/schema.resolvers.go` (perspective resolvers)
+- Cause: GraphQL resolvers resolve nested fields independently. At 10 perspectives, this could be 10 separate user queries.
+- Improvement path: Implement DataLoader pattern in GraphQL resolver to batch user queries. Batch load all users referenced by a page of perspectives in one DB query.
+- Priority: Low at current scale (small datasets). Becomes noticeable at 1000+ perspectives.
+
+**Slow Pagination Count Query:**
+- Problem: `SELECT count(*) FROM "content"` scans entire table and takes 200-400ms even with 50 rows. Will scale linearly with data.
+- Files: GORM `List()` method in `gorm_content_repository.go`
+- Cause: No indexes on frequently filtered columns; count query runs before filters applied.
+- Improvement path: (1) Add B-tree indexes on frequently filtered columns (content_type). (2) Use estimated count for pagination (PostgreSQL `pg_stat_user_tables`) to avoid expensive exact counts. (3) Cache total count with TTL for pagination use case. (4) Use keyset pagination WITHOUT total count — many modern UIs don't show "Page X of Y", just "Next" button.
+- Priority: Low now, High at 10K+ rows.
+
+## Fragile Areas
+
+**GraphQL Generated Code Contains Panics:**
+- Files: `backend/internal/adapters/graphql/generated/generated.go` (lines 6006, 6094, 6185, 6233, etc.) — multiple `panic("unknown field ...")` statements in unmarshaling code.
+- Why fragile: Auto-generated code is never edited directly. If schema changes break the unmarshaling logic, panics are not caught by tests. Schema validation should catch this, but panic is worse than returning error.
+- Safe modification: (1) Do not edit generated file directly. (2) After schema changes, run `make graphql-gen` and test thoroughly. (3) Panic recovery middleware (`backend/pkg/middleware/recovery.go`) will catch panics and log them as errors.
+- Test coverage: Panic recovery should catch panics. Verify middleware is wired in `backend/cmd/server/main.go` (line 122: `r.Use(perfmw.Recoverer)`).
+
+**Activity Table Complex State Management:**
+- Files: `frontend/src/lib/components/ActivityTable.svelte` (424 lines with cursor stack, page state, sort state, filter state, grid state)
+- Why fragile: Multiple state variables (`cursors`, `currentPage`, `sortBy`, `sortOrder`, `filterText`) are tightly coupled. Changing pagination logic could break sort/filter behavior. Cursor stack management is error-prone.
+- Safe modification: (1) Before changing pagination, write tests for next/prev page transitions with sorted data. (2) Document cursor stack management clearly (why `cursors[currentPage]` is used, how hasNextPage affects stack). (3) Consider extracting pagination logic into custom hook (e.g., `useCursorPagination`). (4) Add debug logging for cursor state during development.
+- Test coverage: Likely no tests for ActivityTable. Add integration tests for pagination + sort combinations.
+
+**Repository Filter Logic with String Conversion:**
+- Files: `backend/internal/adapters/repositories/postgres/gorm_content_repository.go` (lines 94: `strings.ToLower(string(*params.Filter.ContentType))`)
+- Why fragile: Enum-to-string conversion happens in repository. If domain enum changes, SQL queries will silently break (database stores lowercase, domain is uppercase by convention). No validation that converted string is valid enum value.
+- Safe modification: (1) Use enum conversion helpers (`contentTypeToDBValue`, `contentTypeFromDBValue` in `helpers.go`). (2) Add tests that verify round-trip conversion: `domainEnum -> dbString -> domainEnum` should be identity.
+- Test coverage: Check if tests exist for enum conversions. If not, add tests in test suite.
+
+**Hard-Coded Query Parameters:**
+- Files: `frontend/src/lib/components/ActivityTable.svelte` (lines 52-79: query with dynamic `first: pageSize`)
+- Why fragile: If a request fails silently with "limit exceeded" error from backend, client won't know. No error boundaries around fetch.
+- Safe modification: (1) Add error handling in ActivityTable's `queryFn` to log and display fetch failures. (2) Validate `pageSize` against server limit before sending. (3) Add comments explaining why specific limits are chosen.
+- Test coverage: Add tests for fetch failure scenarios.
+
+## Scaling Limits
+
+**Database Connection Pool Scaling:**
+- Current capacity: 25 max open connections (default in `backend/pkg/database/postgres.go`, line 26)
+- Limit: At ~100 concurrent users with keep-alive, connection pool may saturate. Neon (PostgreSQL provider) has connection limits (e.g., 100 connections on free tier).
+- Scaling path: (1) Increase `DB_MAX_OPEN_CONNS` env var (configurable, read in `backend/pkg/database/postgres.go` lines 36-39). (2) Implement connection pooling middleware (PgBouncer or similar) to multiplex connections. (3) For Fly.io deployment with Neon, consider managed connection pooling. (4) Optimize query duration to reduce connection hold time.
+
+**In-Memory GraphQL Query Caching:**
+- Current capacity: No backend cache. TanStack Query uses browser memory for `staleTime: 60 * 1000` (60-second cache per query).
+- Limit: Browser memory limit ~50-100 MB for cached responses. At 1000+ items with large JSONB responses, frontend memory usage grows linearly.
+- Scaling path: (1) Implement Redis cache on backend for hot data (frequently accessed content). (2) Implement incremental/subscription queries to reduce payload per request. (3) Compress responses (gzip already done by HTTP layer). (4) Implement pagination + infinite scroll instead of loading all items at once.
+
+**CORS Wildcard at Scale:**
+- Current capacity: Unlimited. Any origin can request.
+- Limit: If frontend domain is compromised or a competitor tries to abuse the API, requests are not rejected.
+- Scaling path: (1) Restrict CORS to specific frontend origin before production. (2) Implement per-IP rate limiting. (3) Add API key or JWT authentication (planned in Phase 9).
+
+## Dependencies at Risk
+
+**GORM Version Pinning:**
+- Risk: GORM is deeply integrated into repository layer. If a security issue is found, upgrading GORM could introduce breaking changes.
+- Impact: Forced to stay on vulnerable version if not managed carefully.
+- Migration plan: (1) Keep GORM up-to-date with minor/patch versions regularly (no cost). (2) For major versions, plan a refactor cycle (e.g., GORM v2 to v3). (3) Alternatively, migrate to sqlc (type-safe SQL generation) to reduce ORM dependency.
+- Priority: Low (GORM is stable). Monitor security advisories.
+
+**gqlgen Code Generation Coupling:**
+- Risk: GraphQL resolvers are tightly coupled to gqlgen-generated types (model.Content, model.User, etc.). If gqlgen version changes, type definitions could shift.
+- Impact: Potential breaking changes on `make graphql-gen`.
+- Migration plan: (1) Keep gqlgen version pinned (currently v0.17.86). (2) Before upgrading, run full test suite (`go test ./...`) to catch generated code changes. (3) Consider wrapping generated types in domain types to decouple resolvers.
+- Priority: Low (gqlgen is stable). Currently pinned.
+
+**No Automated Dependency Security Scanning:**
+- Risk: Go modules could have vulnerabilities. No Dependabot or similar checking for security updates.
+- Impact: Could ship with known vulnerable dependencies.
+- Mitigation: (1) Enable Dependabot on GitHub (auto-creates PRs for updates). (2) Run `go mod tidy && go mod verify` before commits. (3) Periodically audit with `go list -u -m all`.
+- Priority: Medium (standard practice).
+
+## Missing Critical Features
+
+**Authentication Not Implemented:**
+- Problem: Backend accepts any request without auth. Frontend has no user context. All data is public.
+- Blocks: (1) User-scoped data (my perspectives vs. others' perspectives). (2) Secure content creation (prevent spoofing). (3) Admin operations. (4) Data privacy compliance.
+- Mitigation: Currently acceptable for MVP. Phase 9 (Security Hardening) will address. See FEATURE_BACKLOG.md "Authentication Architecture Design".
+
+**Authorization / Permissions:**
+- Problem: No role-based access control (RBAC). No way to prevent users from deleting others' content or modifying system data.
+- Blocks: Multi-user features (collaboration, moderation, content ownership).
+- Mitigation: Sentinel user mechanism exists (ErrSentinelUser) but comprehensive RBAC is missing.
+
+**Error Boundaries in Frontend:**
+- Problem: GraphQL query errors in ActivityTable are not caught or displayed to user. If fetch fails, user sees no data with no error message.
+- Blocks: Good error UX (showing "Error loading content" vs. silent failure).
+- Mitigation: Add error UI to ActivityTable to display `query.isError` and `query.error`.
+
+## Test Coverage Gaps
+
+**YouTube Client Integration:**
+- What's not tested: Comprehensive YouTube API mocking. Current tests likely skip due to lack of dependency injection.
+- Files: `backend/test/youtube/client_test.go` (has TODO at line 353 for refactoring)
+- Risk: YouTube integration could have bugs that only surface in production or with real API changes.
+- Priority: High — YouTube integration is core feature.
+
+**Pagination Edge Cases:**
+- What's not tested: Page boundary conditions (last page with fewer items, cursor validity), sort + pagination interaction, filter + pagination interaction.
+- Files: `backend/test/services/`, repository test files
+- Risk: Pagination could have off-by-one errors or lose data at page boundaries.
+- Priority: High — pagination is visible to all users.
+
+**ActivityTable Interaction Tests:**
+- What's not tested: Sort by clicking headers, filter by typing, page navigation, grid state persistence.
+- Files: `frontend/src/lib/components/ActivityTable.svelte`
+- Risk: Frontend bugs only caught by manual testing. Regressions on refactor.
+- Priority: Medium — requires browser testing (Playwright or Cypress).
+
+**Error Handling Paths:**
+- What's not tested: Service layer error conditions (validation failures, missing resources). Resolvers catch errors but may not handle all cases.
+- Files: `backend/internal/adapters/graphql/resolvers/`, `backend/internal/core/services/`
+- Risk: Unhandled errors could leak implementation details or fail silently.
+- Priority: Medium — covered by integration tests but not isolated unit tests.
+
+---
+
+*Concerns audit: 2026-02-16*

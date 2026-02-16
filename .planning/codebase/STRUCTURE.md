@@ -1,490 +1,391 @@
 # Codebase Structure
 
-**Analysis Date:** 2026-02-07
+**Analysis Date:** 2026-02-16
 
 ## Directory Layout
 
 ```
-perspectize/ (repository root)
-├── backend/                 # Go GraphQL backend (ACTIVE)
-│   ├── cmd/server/
-│   │   └── main.go                 # Server entry point, dependency wiring
-│   │
+perspectize/
+├── backend/
+│   ├── cmd/
+│   │   └── server/
+│   │       └── main.go                 # Server entry point
 │   ├── internal/
-│   │   ├── core/                   # Hexagonal domain layer
-│   │   │   ├── domain/             # Pure domain models, enums, errors
-│   │   │   │   ├── content.go
-│   │   │   │   ├── perspective.go
-│   │   │   │   ├── user.go
-│   │   │   │   ├── pagination.go
-│   │   │   │   └── errors.go
-│   │   │   │
-│   │   │   ├── ports/              # Interface contracts
-│   │   │   │   ├── repositories/
-│   │   │   │   │   ├── content_repository.go
-│   │   │   │   │   ├── perspective_repository.go
-│   │   │   │   │   └── user_repository.go
-│   │   │   │   └── services/
-│   │   │   │       └── youtube_client.go
-│   │   │   │
-│   │   │   └── services/           # Business logic orchestration
-│   │   │       ├── content_service.go
-│   │   │       ├── perspective_service.go
-│   │   │       └── user_service.go
-│   │   │
-│   │   ├── adapters/               # Infrastructure implementations
-│   │   │   ├── graphql/            # PRIMARY: GraphQL HTTP API
-│   │   │   │   ├── resolvers/
-│   │   │   │   │   └── resolver.go (DI container + wiring)
-│   │   │   │   ├── generated/      # Auto-generated (do NOT edit)
-│   │   │   │   └── model/          # Auto-generated GraphQL types
-│   │   │   │
-│   │   │   ├── repositories/       # SECONDARY: Database access
-│   │   │   │   └── postgres/
-│   │   │   │       ├── content_repository.go
-│   │   │   │       ├── perspective_repository.go
-│   │   │   │       └── user_repository.go
-│   │   │   │
-│   │   │   └── youtube/            # SECONDARY: YouTube API client
-│   │   │       ├── client.go
-│   │   │       └── parser.go
-│   │   │
-│   │   ├── config/                 # Configuration loading
-│   │   │   └── config.go
-│   │   │
-│   │   └── middleware/             # HTTP middleware (empty, future use)
-│   │
-│   ├── pkg/                        # Public shared packages
-│   │   ├── database/               # DB connection/pooling
-│   │   │   └── postgres.go
-│   │   └── graphql/                # Custom scalars
-│   │       └── intid.go
-│   │
-│   ├── test/                       # Test files (non-standard location)
+│   │   ├── adapters/
+│   │   │   ├── graphql/
+│   │   │   │   ├── generated/          # gqlgen auto-generated code
+│   │   │   │   ├── model/              # GraphQL input/output types
+│   │   │   │   └── resolvers/          # GraphQL resolver implementations
+│   │   │   ├── repositories/
+│   │   │   │   └── postgres/           # PostgreSQL GORM repository implementations
+│   │   │   └── youtube/                # YouTube API v3 client
 │   │   ├── config/
-│   │   ├── database/
-│   │   ├── domain/
-│   │   ├── resolvers/
-│   │   ├── services/
-│   │   └── youtube/
-│   │
-│   ├── migrations/                 # SQL migration files
-│   │   ├── 000001_create_content.up.sql
-│   │   ├── 000001_create_content.down.sql
-│   │   └── ... (numbered sequence)
-│   │
-│   ├── config/                     # Configuration files
-│   │   └── config.example.json
-│   │
-│   ├── schema.graphql              # GraphQL schema (schema-first)
-│   ├── gqlgen.yml                  # gqlgen configuration
-│   ├── Makefile                    # Build/test commands
-│   ├── go.mod / go.sum             # Go dependencies
-│   ├── .env.example                # Environment template
-│   ├── .gitignore
-│   ├── docker-compose.yml          # Local PostgreSQL setup
-│   ├── CLAUDE.md                   # Backend instructions
-│   └── README.md
+│   │   │   ├── config.go               # Configuration loading
+│   │   │   └── validation.go           # Config validation
+│   │   └── core/
+│   │       ├── domain/                 # Domain models, no external deps
+│   │       ├── ports/                  # Interfaces for repositories/services
+│   │       │   ├── repositories/       # Repository port interfaces
+│   │       │   └── services/           # Service port interfaces
+│   │       └── services/               # Business logic implementations
+│   ├── pkg/
+│   │   ├── database/                   # Database connection, pooling
+│   │   ├── graphql/                    # GraphQL utilities (IntID scalar, timing)
+│   │   ├── logger/                     # Structured logging setup
+│   │   └── middleware/                 # HTTP middleware
+│   ├── migrations/                     # SQL migration files (.up.sql / .down.sql)
+│   ├── schema.graphql                  # GraphQL schema definition
+│   ├── gqlgen.yml                      # GraphQL code generation config
+│   ├── Makefile                        # Build and development tasks
+│   ├── go.mod                          # Go module definition
+│   ├── go.sum                          # Go dependencies lockfile
+│   ├── .env.example                    # Example environment variables
+│   └── docker-compose.yml              # Local PostgreSQL container config
 │
-│
-├── frontend/                 # SvelteKit frontend (ACTIVE)
+├── frontend/
 │   ├── src/
-│   │   ├── routes/                 # SvelteKit file-based routing
-│   │   │   ├── +layout.svelte      # Root layout (QueryClientProvider, Header, Toaster)
-│   │   │   ├── +layout.ts          # Prerender config
-│   │   │   └── +page.svelte        # Home page (activity feed with AG Grid)
-│   │   │
+│   │   ├── routes/
+│   │   │   ├── +layout.svelte          # Root layout (QueryClientProvider, Header)
+│   │   │   ├── +layout.ts              # Layout config (prerender)
+│   │   │   └── +page.svelte            # Home page (ActivityTable)
 │   │   ├── lib/
-│   │   │   ├── components/         # Reusable Svelte 5 components
-│   │   │   │   ├── Header.svelte
-│   │   │   │   ├── ActivityTable.svelte (AG Grid content table)
-│   │   │   │   ├── UserSelector.svelte
-│   │   │   │   ├── PageWrapper.svelte
-│   │   │   │   ├── AGGridTest.svelte
-│   │   │   │   └── shadcn/         # shadcn-svelte UI primitives
-│   │   │   │       └── button/
-│   │   │   │
-│   │   │   ├── queries/            # TanStack Query + GraphQL definitions
-│   │   │   │   ├── client.ts       # GraphQLClient singleton (VITE_GRAPHQL_URL)
-│   │   │   │   ├── content.ts      # Content queries (gql templates)
-│   │   │   │   └── users.ts        # User queries (gql templates)
-│   │   │   │
-│   │   │   ├── stores/             # Svelte runes reactive state
-│   │   │   │   └── userSelection.svelte.ts
-│   │   │   │
-│   │   │   ├── utils/              # Utility functions
-│   │   │   │   └── utils.ts
-│   │   │   │
-│   │   │   ├── assets/             # Static bundled assets
-│   │   │   │   └── favicon.svg
-│   │   │   │
-│   │   │   └── index.ts            # Barrel export
-│   │   │
-│   │   ├── app.css                 # Global styles (Tailwind v4 + custom theme)
-│   │   └── app.html                # HTML shell
-│   │
-│   ├── static/                     # Public static files (not bundled)
-│   │
-│   ├── tests/                      # Vitest test files
-│   │
-│   ├── build/                      # Build output (generated)
-│   │
-│   ├── coverage/                   # Code coverage reports (generated)
-│   │
-│   ├── svelte.config.js            # SvelteKit configuration
-│   ├── vite.config.ts              # Vite configuration
-│   ├── tsconfig.json               # TypeScript configuration
-│   ├── tailwind.config.ts          # Tailwind v4 theme config
-│   ├── components.json             # shadcn-svelte configuration
-│   ├── package.json                # npm dependencies
-│   ├── pnpm-lock.yaml              # pnpm lockfile
-│   ├── .npmrc                      # npm registry config
-│   ├── .gitignore
-│   ├── CLAUDE.md                   # Frontend instructions
-│   └── README.md
+│   │   │   ├── components/
+│   │   │   │   ├── shadcn/             # shadcn-svelte UI primitives
+│   │   │   │   ├── ActivityTable.svelte   # AG Grid data table wrapper
+│   │   │   │   ├── AddVideoDialog.svelte  # Modal for URL input
+│   │   │   │   ├── AddVideoPopover.svelte # Lightweight URL input
+│   │   │   │   ├── CreateUserPopover.svelte # User creation
+│   │   │   │   ├── FormPopover.svelte     # Generic form popover
+│   │   │   │   ├── Header.svelte          # Navigation header
+│   │   │   │   ├── PageWrapper.svelte     # Layout container
+│   │   │   │   ├── UserSelector.svelte    # User dropdown
+│   │   │   │   ├── DescriptionTooltip.ts  # AG Grid cell renderer
+│   │   │   │   └── TagsTooltip.ts         # AG Grid cell renderer
+│   │   │   ├── queries/
+│   │   │   │   ├── client.ts           # GraphQL client setup
+│   │   │   │   ├── content.ts          # Content GraphQL queries
+│   │   │   │   ├── users.ts            # User GraphQL queries
+│   │   │   │   ├── keys.ts             # TanStack Query key factories
+│   │   │   │   └── hooks/
+│   │   │   │       ├── useAddVideo.ts  # Add video mutation hook
+│   │   │   │       └── useCreateUser.ts # Create user mutation hook
+│   │   │   ├── stores/
+│   │   │   │   └── userSelection.svelte.ts # User selection state
+│   │   │   ├── utils/                  # Helper utilities
+│   │   │   └── assets/                 # Static assets (favicon, fonts)
+│   │   ├── app.css                     # Global styles, Tailwind config, design tokens
+│   │   └── app.html                    # HTML shell
+│   ├── tests/
+│   │   ├── unit/                       # Unit tests
+│   │   ├── components/                 # Component tests
+│   │   ├── fixtures/                   # Test data
+│   │   └── helpers/                    # Test utilities
+│   ├── package.json                    # Dependencies, pnpm scripts
+│   ├── tsconfig.json                   # TypeScript configuration
+│   ├── vite.config.ts                  # Vite build configuration
+│   ├── vitest.config.ts                # Vitest test configuration
+│   ├── svelte.config.js                # SvelteKit configuration
+│   ├── tailwind.config.ts              # Tailwind configuration
+│   └── .env.example                    # Example build-time env vars
 │
+├── .docs/
+│   ├── ARCHITECTURE.md                 # System design and hexagonal architecture
+│   ├── LOCAL_DEVELOPMENT.md            # Development environment setup
+│   ├── DOMAIN_GUIDE.md                 # Domain layer rules
+│   ├── GO_PATTERNS.md                  # Go error handling and DB patterns
+│   ├── AGENTS.md                       # AI agent routing guide
+│   └── GITHUB_PROJECTS.md              # GitHub Projects v2 workflow
 │
-├── perspectize/                 # Legacy C# (DEPRECATED - ignore)
-│   ├── Services/
-│   ├── controllers/
-│   └── ... (legacy code)
+├── .planning/
+│   ├── PROJECT.md                      # Project overview
+│   ├── ROADMAP.md                      # Feature roadmap
+│   ├── STATE.md                        # Current state and blockers
+│   ├── codebase/
+│   │   ├── STACK.md                    # Technology stack analysis
+│   │   ├── INTEGRATIONS.md             # External APIs and services
+│   │   ├── ARCHITECTURE.md             # Architecture and layers
+│   │   ├── STRUCTURE.md                # This file - directory guide
+│   │   ├── CONVENTIONS.md              # Coding standards
+│   │   ├── TESTING.md                  # Testing patterns
+│   │   └── CONCERNS.md                 # Technical debt and issues
+│   ├── phases/                         # GSD workflow phases
+│   └── research/                       # Research and investigation
 │
+├── .claude/
+│   ├── docs/                           # How-to guides
+│   ├── agents/                         # Subagent definitions
+│   └── skills/                         # Reusable skill definitions
 │
-├── .docs/                          # Shared documentation
-│   ├── ARCHITECTURE.md
-│   ├── LOCAL_DEVELOPMENT.md
-│   ├── AGENTS.md
-│   ├── DOMAIN_GUIDE.md
-│   ├── GO_PATTERNS.md
-│   ├── GITHUB_PROJECTS.md
-│   └── VERIFICATION.md
-│
-├── .planning/                      # GSD workflow artifacts
-│   ├── codebase/                   # Codebase analysis documents
-│   │   ├── ARCHITECTURE.md         # This monorepo's patterns
-│   │   ├── STRUCTURE.md            # This file
-│   │   ├── CONVENTIONS.md          # Code style rules
-│   │   ├── TESTING.md              # Testing patterns
-│   │   ├── STACK.md                # Technology stack
-│   │   ├── INTEGRATIONS.md         # External API integrations
-│   │   └── CONCERNS.md             # Technical debt and issues
-│   │
-│   └── phases/                     # GSD phase planning
-│       └── {phase-id}/
-│           └── {plan}-PLAN.md
-│
-├── .git/                           # Git repository
-├── .github/                        # GitHub workflows
-├── CLAUDE.md                       # Root project instructions (YOU ARE HERE)
-├── README.md                       # Root README
+├── README.md                           # Project overview and setup
+├── FEATURE_BACKLOG.md                  # Future features not tied to phases
+├── CLAUDE.md                           # Root Claude instructions
+├── LICENSE
 └── .gitignore
 ```
 
 ## Directory Purposes
 
-### Backend (backend/)
+**backend/cmd/server/**
+- Purpose: Application entry point
+- Contains: `main.go` - database setup, service wiring, router initialization
+- Key files: `main.go` (~193 lines) - wires entire backend system
 
-**`cmd/server/`**
-- Entry point for the application
-- `main.go`: Loads config, initializes database, wires dependencies, starts HTTP server
-- Startup sequence: config → DB connect → adapters → services → resolver wiring → listen
+**backend/internal/core/domain/**
+- Purpose: Pure domain models, business entities
+- Contains: Content, User, Perspective, Pagination models
+- Constraint: Zero external imports except stdlib
+- Key files:
+  - `content.go` - Content entity (URL, type, metadata)
+  - `user.go` - User entity (username, email, role)
+  - `perspective.go` - Perspective entity (quality, agreement ratings)
+  - `errors.go` - Domain error types (ErrNotFound, ErrValidation, etc.)
 
-**`internal/core/domain/`**
-- Pure domain models with zero framework dependencies
-- `content.go` — Content entity with JSONB response field
-- `perspective.go` — Perspective entity with 4-dimensional rating system
-- `user.go` — User entity
-- `pagination.go` — Pagination types and cursor abstractions
-- `errors.go` — Domain-specific error constants
+**backend/internal/core/ports/**
+- Purpose: Interface definitions for hexagonal architecture
+- Contains: Repository and Service interfaces
+- Pattern: Defined here, implemented in adapters/
+- Key files:
+  - `repositories/content_repository.go` - Port for content persistence
+  - `repositories/user_repository.go` - Port for user persistence
+  - `repositories/perspective_repository.go` - Port for perspective persistence
+  - `services/youtube_client.go` - Port for YouTube integration
 
-**`internal/core/ports/{repositories,services}/`**
-- Interface contracts between core and adapters
-- Repository ports: ContentRepository, UserRepository, PerspectiveRepository
-- Service ports: YouTubeClient interface
+**backend/internal/core/services/**
+- Purpose: Business logic and orchestration
+- Contains: Service implementations
+- Pattern: Injected dependencies (repositories, external clients)
+- Key files:
+  - `content_service.go` - Create/list/filter content, YouTube integration
+  - `user_service.go` - Create/list/filter users, statistics
+  - `perspective_service.go` - Create/update perspectives, filtering
 
-**`internal/core/services/`**
-- Business logic implementations using dependency injection
-- `content_service.go` — ContentService (CreateFromYouTube, GetByID, ListContent)
-- `user_service.go` — UserService (Create, GetByID, GetByUsername)
-- `perspective_service.go` — PerspectiveService (Create, GetByID, Update, Delete, ListPerspectives)
+**backend/internal/adapters/graphql/**
+- Purpose: PRIMARY adapter - GraphQL API endpoint
+- Contains: Resolver implementations, generated code
+- Pattern: Implements generated resolver interfaces
+- Key files:
+  - `generated/generated.go` - Auto-generated by gqlgen
+  - `resolvers/*.go` - Resolver implementations
+  - `model/models_gen.go` - GraphQL type definitions
 
-**`internal/adapters/graphql/`**
-- PRIMARY adapter: GraphQL HTTP API entry point
-- `resolvers/resolver.go` — Dependency injection container
-- `generated/` — Auto-generated by gqlgen (never edit)
-- `model/` — Auto-generated GraphQL type definitions
+**backend/internal/adapters/repositories/postgres/**
+- Purpose: SECONDARY adapter - PostgreSQL persistence
+- Contains: GORM models and repository implementations
+- Pattern: Convert domain ↔ GORM models, implement repository ports
+- Key files:
+  - `gorm_models.go` - GORM model structs with database tags
+  - `gorm_mappers.go` - Bidirectional conversion functions
+  - `gorm_content_repository.go` - ContentRepository implementation
+  - `gorm_user_repository.go` - UserRepository implementation
+  - `gorm_perspective_repository.go` - PerspectiveRepository implementation
+  - `helpers.go` - Cursor encoding, sort mapping, type converters
 
-**`internal/adapters/repositories/postgres/`**
-- SECONDARY adapter: PostgreSQL database implementations
-- Implements port interfaces using sqlx
-- Cursor-based pagination pattern, JSONB handling
+**backend/internal/adapters/youtube/**
+- Purpose: SECONDARY adapter - YouTube API integration
+- Contains: YouTube API client and response parsing
+- Pattern: Implements YouTubeClient port interface
+- Key files:
+  - `client.go` - HTTP client for YouTube API v3
+  - `parser.go` - Extract video ID from URLs, transform API responses
 
-**`internal/adapters/youtube/`**
-- SECONDARY adapter: YouTube Data API client
-- Implements YouTubeClient port interface
+**backend/pkg/database/**
+- Purpose: Database connection and pooling
+- Contains: GORM setup, connection utilities
+- Key files:
+  - `postgres.go` - ConnectGORM(), PingGORM() functions
+  - `postgres_test.go` - Integration tests
+  - `stats.go` - DB connection pool stats
+  - `plugins.go` - Slow query logger
 
-**`migrations/`**
-- SQL migration files (numbered sequence)
-- Executed via golang-migrate: `make migrate-up`
+**backend/pkg/middleware/**
+- Purpose: HTTP request/response processing
+- Key files:
+  - `timing.go` - Request timing and latency logging
+  - `recovery.go` - Panic recovery with JSON error responses
 
-**`config/`**
-- Configuration files
-- `config.example.json` — Configuration template
+**backend/pkg/graphql/**
+- Purpose: GraphQL utilities and extensions
+- Key files:
+  - `intid.go` - Custom scalar for integers in GraphQL
+  - `timing.go` - GraphQL operation performance logging
 
-### Frontend (frontend/)
+**backend/migrations/**
+- Purpose: Database schema evolution
+- Format: `{sequence}_{name}.{up|down}.sql`
+- Current migrations:
+  - 000001_create_content.sql - Content table
+  - 000002_update_response_jsonb.sql - JSONB for YouTube responses
+  - 000003_update_length_numeric.sql - Duration field
+  - 000004_add_perspectives_users.sql - Perspectives and users tables
+  - 000005_add_user_timestamps.sql - Timestamps
+  - 000006_user_mutations_sentinel.sql - Sentinel user system
+  - 000007_remove_claim_add_system_user.sql - Remove claim, add system user
+  - 000008_add_user_active.sql - Active status
+  - 000009_add_user_role.sql - User roles (ADMIN, SENTINEL, DEFAULT)
+  - 000010_drop_content_unique_name.sql - Allow duplicate names
 
-**`src/routes/`**
-- SvelteKit file-based routing
-- `+layout.svelte` — Root layout (QueryClientProvider, Header, Toaster wrapper)
-- `+page.svelte` — Home page (activity feed with search and AG Grid table)
+**frontend/src/routes/**
+- Purpose: SvelteKit file-based routing
+- Pattern: File = URL route
+- Key files:
+  - `+layout.svelte` - Root layout wraps all pages with QueryClientProvider, Header, Toaster
+  - `+page.svelte` - Home page with ActivityTable and controls
 
-**`src/lib/components/`**
-- Reusable Svelte 5 components using runes
-- `Header.svelte` — Top navigation bar
-- `ActivityTable.svelte` — AG Grid content table with sorting, pagination, search
-- `UserSelector.svelte` — User filter dropdown
-- `PageWrapper.svelte` — Page container with consistent styling
-- `shadcn/` — shadcn-svelte UI primitives (button)
+**frontend/src/lib/components/**
+- Purpose: Reusable Svelte 5 components
+- Pattern: Component per .svelte file
+- Core components:
+  - `ActivityTable.svelte` - Main data grid (AG Grid wrapper, ~400 lines)
+  - `AddVideoPopover.svelte` - Quick video add interface
+  - `UserSelector.svelte` - User selection dropdown
+  - `Header.svelte` - Navigation and branding
 
-**`src/lib/queries/`**
-- TanStack Query + GraphQL integration
-- `client.ts` — GraphQLClient singleton configured with VITE_GRAPHQL_URL
-- `content.ts` — Content query definitions using gql tagged templates
-- `users.ts` — User query definitions
+**frontend/src/lib/queries/**
+- Purpose: GraphQL queries and TanStack Query integration
+- Pattern: gql-tagged query strings, TanStack Query hooks
+- Key files:
+  - `client.ts` - GraphQLClient with endpoint configuration
+  - `content.ts` - Content queries (list, get, by URL)
+  - `users.ts` - User queries (list, get, by username)
+  - `keys.ts` - TanStack Query key factories
+  - `hooks/useAddVideo.ts` - Add video mutation wrapper
+  - `hooks/useCreateUser.ts` - Create user mutation wrapper
 
-**`src/lib/stores/`**
-- Svelte 5 runes reactive state modules
-- `userSelection.svelte.ts` — User filter selection state
+**frontend/src/lib/stores/**
+- Purpose: Svelte state management (non-query state)
+- Pattern: .svelte.ts files with $state() runes
+- Key files:
+  - `userSelection.svelte.ts` - Selected user context
 
-**`src/lib/utils/`**
-- Helper/utility functions
-- `utils.ts` — Date formatting, string utilities, etc.
-
-**`src/lib/assets/`**
-- Static assets bundled by Vite
-- `favicon.svg` — App icon
-
-**`tests/`**
-- Vitest test files
-- Structure mirrors src/ organization
+**frontend/tests/**
+- Purpose: Vitest test files
+- Pattern: Mirrors src/ structure
+- Key areas:
+  - `unit/` - Pure function tests
+  - `components/` - Svelte component tests
+  - `fixtures/` - Test data
+  - `helpers/` - Test utilities
 
 ## Key File Locations
 
-### Backend Entry Points
-- `backend/cmd/server/main.go` — Application startup
-- `backend/schema.graphql` — GraphQL schema definition
-- `backend/gqlgen.yml` — gqlgen code generation config
+**Entry Points:**
+- Backend: `backend/cmd/server/main.go` - HTTP server startup, dependency injection
+- Frontend: `frontend/src/routes/+layout.svelte` - Root layout, app wrapper
+- Build (backend): `backend/Makefile` - Build targets and development commands
+- Build (frontend): `frontend/package.json` - npm scripts for build/dev
 
-### Backend Configuration
-- `backend/config/config.example.json` — Config template
-- `backend/.env.example` — Environment variables template
-- `backend/Makefile` — Build commands and targets
+**Configuration:**
+- Backend config: `backend/internal/config/config.go` - Load and validate
+- Frontend config: `frontend/vite.config.ts` - Vite/SvelteKit build setup
+- Database: `backend/migrations/` - Schema definitions
+- GraphQL: `backend/schema.graphql` - API schema, `backend/gqlgen.yml` - codegen config
 
-### Backend Domain Models
-- `backend/internal/core/domain/content.go`
-- `backend/internal/core/domain/perspective.go`
-- `backend/internal/core/domain/user.go`
-- `backend/internal/core/domain/pagination.go`
-- `backend/internal/core/domain/errors.go`
+**Core Logic:**
+- Business logic: `backend/internal/core/services/` - Service implementations
+- Data access: `backend/internal/adapters/repositories/postgres/` - Query execution
+- API layer: `backend/internal/adapters/graphql/resolvers/` - Endpoint handlers
+- UI: `frontend/src/lib/components/ActivityTable.svelte` - Main interface
 
-### Backend Services
-- `backend/internal/core/services/content_service.go`
-- `backend/internal/core/services/perspective_service.go`
-- `backend/internal/core/services/user_service.go`
-
-### Backend Repositories
-- `backend/internal/adapters/repositories/postgres/content_repository.go`
-- `backend/internal/adapters/repositories/postgres/perspective_repository.go`
-- `backend/internal/adapters/repositories/postgres/user_repository.go`
-
-### Backend GraphQL
-- `backend/schema.graphql` — Schema definition
-- `backend/internal/adapters/graphql/resolvers/resolver.go` — Resolver DI container
-- `backend/internal/adapters/graphql/generated/generated.go` — Auto-generated (do not edit)
-
-### Frontend Entry Points
-- `frontend/src/routes/+layout.svelte` — Root layout
-- `frontend/src/routes/+page.svelte` — Home page
-- `frontend/src/app.html` — HTML shell
-
-### Frontend Configuration
-- `frontend/svelte.config.js` — SvelteKit config
-- `frontend/vite.config.ts` — Vite config
-- `frontend/tailwind.config.ts` — Tailwind v4 theme
-- `frontend/components.json` — shadcn-svelte config
-- `frontend/tsconfig.json` — TypeScript config
-
-### Frontend Components
-- `frontend/src/lib/components/Header.svelte` — Top navigation
-- `frontend/src/lib/components/ActivityTable.svelte` — Content grid
-- `frontend/src/lib/components/UserSelector.svelte` — User filter
-- `frontend/src/lib/components/PageWrapper.svelte` — Page wrapper
-
-### Frontend Queries
-- `frontend/src/lib/queries/client.ts` — GraphQL client
-- `frontend/src/lib/queries/content.ts` — Content queries
-- `frontend/src/lib/queries/users.ts` — User queries
+**Testing:**
+- Backend tests: `backend/test/` - Test mocks and fixtures
+- Frontend tests: `frontend/tests/` - Vitest test files
+- Integrations: `backend/test/database/` - DB connection tests
 
 ## Naming Conventions
 
-### Backend (Go)
-
 **Files:**
-- Domain models: `{entity}.go` (e.g., `content.go`, `user.go`)
-- Services: `{entity}_service.go` (e.g., `content_service.go`)
-- Repositories: `{entity}_repository.go` (e.g., `user_repository.go`)
-- Tests: `{unit}_test.go` (e.g., `content_service_test.go`)
+- Domain models: singular lowercase, no prefix (`content.go`, `user.go`)
+- Services: singular + `_service.go` (`content_service.go`)
+- Repositories: singular + `_repository.go` or `gorm_` prefix (`gorm_content_repository.go`)
+- Resolvers: singular + `_resolver.go` or `resolvers_gen.go` (gqlgen convention)
+- Tests: `{file}_test.go` (Go), `{component}.test.ts` or `{file}.spec.ts` (Svelte)
 - Migrations: `{sequence}_{description}.{up|down}.sql`
+- Components: PascalCase (`.svelte` files)
 
-**Go Identifiers:**
-- Types: PascalCase (Content, ContentService, ContentRepository)
-- Methods: PascalCase (GetByID, ListContent, Create)
-- Unexported functions: camelCase (contentTypeToDBValue, rowToDomain)
-- Variables: camelCase (contentID, pageSize, err)
-- Constants: UPPERCASE for enums (ContentTypeYouTube, PrivacyPublic)
+**Directories:**
+- Go packages: lowercase, no underscores (`internal/adapters/repositories/postgres`)
+- Frontend components: lowercase, dash-separated (`shadcn`, `queries`, `stores`)
+- Routes: kebab-case or reserved SvelteKit syntax (`+layout.svelte`, `+page.svelte`)
+- Features: by domain (content, user, perspective)
 
-**GraphQL Schema:**
-- Types: PascalCase (Content, Perspective, User)
-- Enum values: UPPERCASE (YOUTUBE, PUBLIC, PENDING)
-- Field names: camelCase (createdAt, viewCount)
-- Input types: PascalCase + "Input" (CreateContentFromYouTubeInput)
+**Functions/Methods:**
+- Go: camelCase starting lowercase (`GetByID`, `CreateFromYouTube`)
+- Svelte: camelCase or PascalCase (components are PascalCase)
+- GraphQL: camelCase queries and mutations (`listContent`, `createContent`)
 
-### Frontend (Svelte/TypeScript)
-
-**Files:**
-- Components: PascalCase (ActivityTable.svelte, Header.svelte)
-- Non-components: camelCase (client.ts, content.ts, utils.ts)
-- Test files: `{name}.test.ts` or `{name}.spec.ts`
-
-**TypeScript Identifiers:**
-- Types: PascalCase (ContentItem, ContentResponse, GridOptions)
-- Interfaces: PascalCase (GridOptions)
-- Functions: camelCase (formatDuration, formatDate)
-- Constants: UPPERCASE (GRAPHQL_ENDPOINT)
-- Variables: camelCase (rowData, searchText, gridApi)
-
-**Svelte Identifiers:**
-- State: camelCase via `$state()` (let items = $state([]))
-- Props: camelCase via `$props()` destructuring
-- Event handlers: camelCase (onClick, onGridReady)
-- Stores: camelCase (userSelection)
+**Variables:**
+- Go: camelCase (`userID`, `contentList`)
+- TypeScript: camelCase (`selectedUser`, `isLoading`)
+- GraphQL: camelCase (`createdAt`, `userId`)
 
 ## Where to Add New Code
 
-### Adding a Backend Feature
+**New Feature (Backend):**
+1. Domain model: `backend/internal/core/domain/{feature}.go`
+2. Repository port: `backend/internal/core/ports/repositories/{feature}_repository.go`
+3. Service: `backend/internal/core/services/{feature}_service.go`
+4. Repository impl: `backend/internal/adapters/repositories/postgres/gorm_{feature}_repository.go`
+5. GraphQL schema: Add type and mutations to `backend/schema.graphql`
+6. Generate: `make graphql-gen`
+7. Resolvers: Implement in `backend/internal/adapters/graphql/resolvers/{feature}_resolver.go`
+8. Wire: Add to `backend/cmd/server/main.go`
+9. Tests: Add to `backend/test/{service|resolver}/{feature}_test.go`
 
-1. **Domain model:** `internal/core/domain/{entity}.go`
-   - Define struct with optional fields as pointers
-   - Add enums if needed
+**New Component/UI (Frontend):**
+1. Component: `frontend/src/lib/components/{FeatureName}.svelte`
+2. Queries (if needed): `frontend/src/lib/queries/{feature}.ts`
+3. Hooks (if needed): `frontend/src/lib/queries/hooks/use{Feature}.ts`
+4. Tests: `frontend/tests/components/{FeatureName}.test.ts`
+5. Styles: Use Tailwind utilities in component `class=` attributes
+6. Types: Add interfaces to query file or separate `types/` directory
 
-2. **Repository port:** `internal/core/ports/repositories/{entity}_repository.go`
-   - Define interface with CRUD methods
+**New Utility:**
+- Shared helpers: `backend/internal/adapters/repositories/postgres/helpers.go` (DB helpers) or `backend/pkg/` (general utilities)
+- Frontend helpers: `frontend/src/lib/utils/` (utility functions)
 
-3. **Service:** `internal/core/services/{entity}_service.go`
-   - Implement business logic
-   - Depend on ports (not concrete adapters)
-   - Use error wrapping: `fmt.Errorf("%w: ...", domain.Err...)`
-
-4. **Repository implementation:** `internal/adapters/repositories/postgres/{entity}_repository.go`
-   - Implement port interface
-   - Use sqlx for database access
-
-5. **GraphQL schema:** `schema.graphql`
-   - Add type, inputs, queries/mutations
-
-6. **Generate GraphQL:** `make graphql-gen`
-   - Regenerates resolver skeleton
-
-7. **GraphQL resolvers:** Update `internal/adapters/graphql/resolvers/schema.resolvers.go`
-   - Implement generated methods
-   - Call services, map to GraphQL types
-
-8. **Wire in main:** Update `cmd/server/main.go`
-   - Create repository with db connection
-   - Create service with repo dependency
-   - Add service to resolver
-
-9. **Tests:** Add in `test/{services,resolvers}/`
-
-### Adding a Frontend Component
-
-1. **New component:** `src/lib/components/YourComponent.svelte`
-   - Use Svelte 5 runes exclusively
-   - Props via `$props()`
-   - Render children via `{@render children()}`
-
-2. **New query:** `src/lib/queries/{entity}.ts`
-   - Define gql tagged template
-   - Export query constant
-
-3. **Usage:** In page/component:
-   ```svelte
-   const query = createQuery(() => ({
-     queryKey: ['entity'],
-     queryFn: () => graphqlClient.request(QUERY)
-   }));
-   ```
-
-4. **Tests:** `tests/{path}/{component}.test.ts`
-   - Use Vitest
-   - Mock TanStack Query if needed
-
-### Adding a Migration
-
-```bash
-cd backend
-make migrate-create
-# Prompts for name, creates numbered files
-# Edit .up.sql and .down.sql
-make migrate-up      # Test forward
-make migrate-down    # Test rollback
-```
+**New Endpoint:**
+- Existing service: Add mutation/query to `backend/schema.graphql`, regenerate, implement resolver
+- New service flow: Follow "New Feature" process above
 
 ## Special Directories
 
-**`.planning/codebase/`**
-- Purpose: Codebase analysis documents (ARCHITECTURE.md, STRUCTURE.md, etc.)
+**backend/migrations/**
+- Purpose: Version-controlled database schema
+- Generated: No (hand-written)
 - Committed: Yes
-- Generated: No (manually created via /gsd:map-codebase)
+- Tool: golang-migrate
+- Run: `make migrate-up` (apply), `make migrate-down` (rollback)
+- New: `make migrate-create` prompts for name, creates .up.sql and .down.sql files
 
-**`backend/migrations/`**
-- Purpose: Version-controlled SQL migrations
-- Committed: Yes
-- Generated: No (manually created)
-- Tool: golang-migrate (make migrate-*)
+**backend/.svelte-kit/**
+- Purpose: SvelteKit generated files (routes, types, etc.)
+- Generated: Yes (auto-generated by SvelteKit)
+- Committed: No (.gitignored)
+- Regenerate: `pnpm run prepare` or automatic during dev
 
-**`backend/internal/adapters/graphql/generated/`**
-- Purpose: gqlgen auto-generated code
-- Committed: Yes
-- Generated: Yes (make graphql-gen)
-- Edit: Never (changes only via schema.graphql)
-
-**`backend/internal/adapters/graphql/model/`**
-- Purpose: GraphQL model types auto-generated from schema
-- Committed: Yes
-- Generated: Yes (make graphql-gen)
-- Edit: Never
-
-**`frontend/.svelte-kit/`**
-- Purpose: SvelteKit build cache and generated types
-- Committed: No (.gitignore)
+**frontend/.svelte-kit/**
+- Purpose: SvelteKit build artifacts and generated types
 - Generated: Yes
+- Committed: No
+- Regenerate: Automatic, or manual `npx svelte-kit sync`
 
-**`frontend/build/`**
-- Purpose: Production build output
-- Committed: No (.gitignore)
-- Generated: Yes (pnpm run build)
+**backend/tmp/**
+- Purpose: Temporary build artifacts
+- Generated: Yes
+- Committed: No
 
-**`frontend/coverage/`**
+**frontend/build/**
+- Purpose: Production frontend build output
+- Generated: Yes (by `vite build`)
+- Committed: No
+- Location: Static files ready for deployment
+
+**frontend/coverage/**
 - Purpose: Test coverage reports
-- Committed: No (.gitignore)
-- Generated: Yes (pnpm run test:coverage)
-
-**`frontend/node_modules/`**
-- Purpose: npm dependencies
-- Committed: No (.gitignore)
-- Generated: Yes (pnpm install)
+- Generated: Yes (by `vitest run --coverage`)
+- Committed: No (typically)
+- View: `coverage/index.html` after `pnpm run test:coverage`
 
 ---
 
-*Structure analysis: 2026-02-07*
+*Structure analysis: 2026-02-16*
