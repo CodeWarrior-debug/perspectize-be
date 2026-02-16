@@ -107,8 +107,9 @@ perspectize/
 │   │   ├── STRUCTURE.md                # This file - directory guide
 │   │   ├── CONVENTIONS.md              # Coding standards
 │   │   ├── TESTING.md                  # Testing patterns
-│   │   └── CONCERNS.md                 # Technical debt and issues
+│   │   └── CONCERNS.md                 # Technical debt and issues (gitignored — private)
 │   ├── phases/                         # GSD workflow phases
+│   │   ├── bugs/                       # Persistent bug tracking phase (gitignored — private)
 │   └── research/                       # Research and investigation
 │
 ├── .claude/
