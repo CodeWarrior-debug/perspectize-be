@@ -20,6 +20,7 @@
 		contentRowId
 	} from '$lib/utils/formatting';
 	import { TagsTooltip } from '$lib/components/TagsTooltip';
+	import { DescriptionTooltip } from '$lib/components/DescriptionTooltip';
 
 	// GraphQL ContentSortBy to AG Grid colId mapping
 	const SORT_FIELD_MAP: Record<string, string> = {
@@ -230,7 +231,8 @@
 			sortable: false,
 			filter: 'agTextColumnFilter',
 			valueFormatter: (params) => truncateDescription(params.value, 80),
-			tooltipValueGetter: (params) => params.data?.description ?? '',  // full text, not truncated
+			tooltipComponent: DescriptionTooltip,
+			tooltipField: 'description',
 			headerTooltip: 'Video description from YouTube API'
 		},
 		{
