@@ -84,6 +84,7 @@
 	const rowData = $derived(contentQuery.data?.content.items ?? []);
 	const totalCount = $derived(contentQuery.data?.content.totalCount ?? 0);
 	const loading = $derived(contentQuery.isLoading || contentQuery.isPlaceholderData);
+	const error = $derived(contentQuery.error);
 
 	const modules = [ClientSideRowModelModule];
 
@@ -375,10 +376,27 @@
 </script>
 
 <div class="flex flex-col h-full gap-4">
-	<!-- AG Grid -->
-	<div class="flex-1 min-h-0" style="--ag-row-height: 44px; --ag-header-height: 40px;">
-		<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
-	</div>
+	<!-- Error State -->
+	{#if contentQuery.isError}
+		<div class="flex-1 min-h-0 flex items-center justify-center">
+			<div class="text-center py-12 px-4">
+				<p class="text-muted-foreground mb-4">
+					Failed to load content. Please try again.
+				</p>
+				<button
+					onclick={() => contentQuery.refetch()}
+					class="px-4 py-2 text-sm font-medium border border-input rounded-md bg-background hover:bg-accent"
+				>
+					Retry
+				</button>
+			</div>
+		</div>
+	{:else}
+		<!-- AG Grid -->
+		<div class="flex-1 min-h-0" style="--ag-row-height: 44px; --ag-header-height: 40px;">
+			<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
+		</div>
+	{/if}
 
 	<!-- Manual Pagination Controls -->
 	<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0 px-2 md:px-4 py-2 border-t border-border text-xs md:text-sm">
