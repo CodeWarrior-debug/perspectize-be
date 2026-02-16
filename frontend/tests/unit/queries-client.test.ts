@@ -36,7 +36,8 @@ describe('GraphQL client', () => {
 		try {
 			await import('$lib/queries/client');
 			expect(consoleSpy).toHaveBeenCalledWith(
-				'VITE_GRAPHQL_URL is not set — GraphQL requests will fail in production'
+				'VITE_GRAPHQL_URL is not set — GraphQL requests will fail in production.',
+				'Set VITE_GRAPHQL_URL as a BUILD_TIME environment variable in your deployment platform.'
 			);
 		} finally {
 			import.meta.env.PROD = originalEnv;
