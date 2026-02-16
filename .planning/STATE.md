@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 
 ## Current Position
 
-Phase: 8 of 10 (User Integration Flow)
-Plan: 1/1 complete
-Status: Phase 8 complete, Phase 7.4 complete
-Last activity: 2026-02-15 — Executed 07.4-01 and 08-01, gofmt cleanup
+Phase: 03.2 of 10 (Activity Page Beta Quality)
+Plan: 6 of 8 complete
+Status: In progress
+Last activity: 2026-02-15 — Completed 03.2-06-PLAN.md (column filters and icon centering)
 
-Progress: [█████████████████] 100%
+Progress: [██████████████████░░] 75%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 29
+- Total plans completed: 30
 - Average duration: 3.4 min
-- Total execution time: 1.73 hours
+- Total execution time: 1.78 hours
 
 **By Phase:**
 
@@ -31,7 +31,7 @@ Progress: [█████████████████] 100%
 | 02-data-layer-activity | 2 | 9 min | 4.5 min |
 | 03-add-video-flow | 2 | 8 min | 4 min |
 | 03.1-design-token-system | 2 | 6 min | 3 min |
-| 03.2-activity-page-beta-quality | 3 | 16 min | 5.3 min |
+| 03.2-activity-page-beta-quality | 4 | 19 min | 4.75 min |
 | 07-backend-architecture | 3 | 7 min | 2.3 min |
 | 07.1-orm-migration-sqlx-to-gorm | 3 | 8 min | 2.7 min |
 | 07.2-gorm-cursor-paginator | 2 | 4 min | 2 min |
@@ -40,8 +40,8 @@ Progress: [█████████████████] 100%
 | 08-user-integration-flow | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 2 min, 2 min, 4 min, 3 min, 3 min (avg: 2.8 min)
-- Trend: Excellent — Phase 08 complete, performance monitoring baselines established
+- Last 5 plans: 2 min, 4 min, 3 min, 3 min, 3 min (avg: 3 min)
+- Trend: Excellent — Consistent execution velocity
 
 *Updated after each plan completion*
 
@@ -95,6 +95,9 @@ Recent decisions affecting current work:
 - [03.2-03]: 500ms debounce on floating filters to reduce server requests
 - [03.2-03]: formatCount utility: null → '--', <1K → '500', 1K-1M → '1.2K', ≥1M → '1.2M'
 - [03.2-03]: Cell renderers using createElement (not innerHTML) for XSS safety
+- [03.2-06]: Explicit AG Grid filter types (agTextColumnFilter, agNumberColumnFilter) for all data columns
+- [03.2-06]: agTextColumnFilter for date column (formatted dates are strings, not Date objects)
+- [03.2-06]: h-full w-full required on AG Grid cell renderers for flexbox centering to fill entire cell
 - [07.3-02]: Shared mutation hooks pattern for eliminating duplication (useAddVideo extracts common logic)
 - [07.3-02]: Query invalidation via queryKeys factory instead of custom events (removed window.dispatchEvent pattern)
 - [07.3-03]: TanStack Query createQuery with keepPreviousData for ActivityTable (replaced manual fetchData)
@@ -337,5 +340,5 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Phase 08 complete — 07.4-01 and 08-01 both executed. Next: Phase 8.1 (API & Schema Quality)
+Stopped at: Completed 03.2-06-PLAN.md — Column filters and icon centering fixed
 Resume file: None
