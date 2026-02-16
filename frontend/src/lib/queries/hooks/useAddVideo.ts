@@ -1,7 +1,7 @@
 import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 import { toast } from 'svelte-sonner';
 import { graphqlClient } from '../client';
-import { CREATE_CONTENT_FROM_YOUTUBE, type CreateContentResponse } from '../content';
+import { CREATE_CONTENT_FROM_YOUTUBE, type CreateContentResponse, type ContentResponse } from '../content';
 import { queryKeys } from '../keys';
 import { getSelectedUserId } from '$lib/stores/userSelection.svelte';
 
@@ -19,9 +19,34 @@ export function useAddVideo() {
 			});
 		},
 		onSuccess: (data: CreateContentResponse) => {
-			const name = data?.createContentFromYouTube?.name ?? 'video';
-			toast.success(`Added: ${name}`);
-			queryClient.invalidateQueries({ queryKey: queryKeys.content.lists() });
+			const newItem = data?.createContentFromYouTube;
+			toast.success(`Added: ${newItem?.name ?? 'video'}`);
+
+			if (newItem) {
+				// Insert new item at top of all active list caches
+				queryClient.setQueriesData<ContentResponse>(
+					{ queryKey: queryKeys.content.lists() },
+					(oldData) => {
+						if (!oldData) return oldData;
+						return {
+							content: {
+								...oldData.content,
+								items: [newItem, ...oldData.content.items],
+								totalCount: (oldData.content.totalCount ?? 0) + 1,
+							},
+						};
+					}
+				);
+
+				// Mark stale for eventual consistency (no immediate refetch)
+				queryClient.invalidateQueries({
+					queryKey: queryKeys.content.lists(),
+					refetchType: 'none',
+				});
+			} else {
+				// Fallback: full refetch if response shape is unexpected
+				queryClient.invalidateQueries({ queryKey: queryKeys.content.lists() });
+			}
 		},
 		onError: (err: Error) => {
 			console.error('[AddVideo] mutation failed:', err);

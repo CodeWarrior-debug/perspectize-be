@@ -6,6 +6,7 @@ import AddVideoDialog from '$lib/components/AddVideoDialog.svelte';
 const {
 	mockMutate,
 	mockInvalidateQueries,
+	mockSetQueriesData,
 	mockToastSuccess,
 	mockToastError,
 	mockValidate,
@@ -13,6 +14,7 @@ const {
 } = vi.hoisted(() => ({
 	mockMutate: vi.fn(),
 	mockInvalidateQueries: vi.fn(),
+	mockSetQueriesData: vi.fn(),
 	mockToastSuccess: vi.fn(),
 	mockToastError: vi.fn(),
 	mockValidate: vi.fn(),
@@ -32,6 +34,7 @@ vi.mock('@tanstack/svelte-query', () => ({
 	}),
 	useQueryClient: vi.fn(() => ({
 		invalidateQueries: mockInvalidateQueries,
+		setQueriesData: mockSetQueriesData,
 	})),
 }));
 
@@ -91,7 +94,7 @@ describe('AddVideoDialog mutation callbacks', () => {
 		render(AddVideoDialog, { props: { open: true } });
 	});
 
-	it('onSuccess shows toast with video name and invalidates cache', () => {
+	it('onSuccess shows toast with video name and inserts into cache', () => {
 		expect(capturedMutationOptions).toBeDefined();
 
 		capturedMutationOptions.onSuccess({
@@ -99,7 +102,11 @@ describe('AddVideoDialog mutation callbacks', () => {
 		});
 
 		expect(mockToastSuccess).toHaveBeenCalledWith('Added: Test Video');
-		expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['app', 'content', 'list'] });
+		expect(mockSetQueriesData).toHaveBeenCalled();
+		expect(mockInvalidateQueries).toHaveBeenCalledWith({
+			queryKey: ['app', 'content', 'list'],
+			refetchType: 'none',
+		});
 	});
 
 	it('onSuccess handles null response gracefully', () => {
@@ -108,7 +115,8 @@ describe('AddVideoDialog mutation callbacks', () => {
 		capturedMutationOptions.onSuccess(null);
 
 		expect(mockToastSuccess).toHaveBeenCalledWith('Added: video');
-		expect(mockInvalidateQueries).toHaveBeenCalled();
+		// Null response falls back to full refetch
+		expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['app', 'content', 'list'] });
 	});
 
 	it('onSuccess handles missing nested properties', () => {
