@@ -57,8 +57,12 @@ describe('GraphQL query definitions', () => {
 					lengthUnits: 'SECONDS',
 					viewCount: 1000,
 					likeCount: 100,
-					commentCount: 50,
+					channelTitle: 'Test Channel',
+					publishedAt: '2024-01-01',
+					tags: ['test'],
+					description: 'Test description',
 					createdAt: '2024-01-01',
+					updatedAt: '2024-01-01',
 				},
 			};
 			expect(response).toBeDefined();
@@ -173,7 +177,10 @@ describe('GraphQL query definitions', () => {
 		it('requests YouTube-specific metadata fields', () => {
 			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('viewCount');
 			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('likeCount');
-			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('commentCount');
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('channelTitle');
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('publishedAt');
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('tags');
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('description');
 		});
 
 		it('requests length fields', () => {
@@ -181,8 +188,9 @@ describe('GraphQL query definitions', () => {
 			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('lengthUnits');
 		});
 
-		it('requests createdAt timestamp', () => {
+		it('requests timestamp fields', () => {
 			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('createdAt');
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('updatedAt');
 		});
 	});
 });
