@@ -13,11 +13,13 @@
 		durationValueGetter,
 		dateValueFormatter,
 		formatCount,
+		formatCountExact,
 		formatPublishDate,
 		formatTags,
 		truncateDescription,
 		contentRowId
 	} from '$lib/utils/formatting';
+	import { TagsTooltip } from '$lib/components/TagsTooltip';
 
 	// GraphQL ContentSortBy to AG Grid colId mapping
 	const SORT_FIELD_MAP: Record<string, string> = {
@@ -41,6 +43,7 @@
 	let sortOrder = $state<'ASC' | 'DESC'>('DESC');
 	let filterText = $state<string>('');
 	let debounceTimer: ReturnType<typeof setTimeout>;
+	let isMobile = $state(false);
 
 	// TanStack Query for data fetching
 	let currentCursor = $derived(cursors[currentPage]);
@@ -102,112 +105,167 @@
 		headerHeight: 40,
 	});
 
+	// flex = clamp-like: proportional sizing with min/max constraints
 	const columnDefs: ColDef<ContentItem>[] = [
 		{
 			colId: 'item',
 			headerName: 'Item',
-			flex: 2,
+			flex: 3.5,
+			minWidth: 200,
 			sortable: true,
-			filter: true,
-			floatingFilter: true,
+			filter: 'agTextColumnFilter',
 			cellRenderer: itemCellRenderer,
+			tooltipValueGetter: (params) => params.data?.name ?? '',
 			headerTooltip: 'Video title and thumbnail from YouTube API'
 		},
 		{
 			colId: 'type',
 			headerName: 'Type',
-			width: 80,
-			sortable: false,
+			flex: 0.5,
+			minWidth: 60,
+			maxWidth: 90,
+			sortable: true,
+			filter: 'agTextColumnFilter',
+			valueGetter: (params) => {
+				const t = params.data?.contentType;
+				if (!t) return '';
+				return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+			},
+			filterValueGetter: (params) => {
+				return params.data?.contentType?.toLowerCase() ?? '';
+			},
 			cellRenderer: typeCellRenderer,
-			headerTooltip: 'Content type (YouTube video)'
+			headerTooltip: 'Content type'
 		},
 		{
 			colId: 'duration',
 			headerName: 'Length',
-			width: 100,
-			sortable: false,
+			flex: 0.7,
+			minWidth: 70,
+			maxWidth: 120,
+			sortable: true,
+			filter: 'agNumberColumnFilter',
 			valueGetter: durationValueGetter,
+			comparator: (_valueA, _valueB, nodeA, nodeB) => {
+				const a = nodeA?.data?.length ?? 0;
+				const b = nodeB?.data?.length ?? 0;
+				return a - b;
+			},
 			headerTooltip: 'Video duration from YouTube API'
 		},
 		{
 			colId: 'views',
 			field: 'viewCount',
 			headerName: 'Views',
-			width: 100,
+			flex: 0.8,
+			minWidth: 70,
+			maxWidth: 130,
 			sortable: true,
-			floatingFilter: true,
+			filter: 'agNumberColumnFilter',
 			valueFormatter: (params) => formatCount(params.value),
+			tooltipValueGetter: (params) => formatCountExact(params.data?.viewCount ?? null),
 			headerTooltip: 'View count from YouTube API'
 		},
 		{
 			colId: 'likes',
 			field: 'likeCount',
 			headerName: 'Likes',
-			width: 100,
+			flex: 0.8,
+			minWidth: 70,
+			maxWidth: 130,
 			sortable: true,
-			floatingFilter: true,
+			filter: 'agNumberColumnFilter',
 			valueFormatter: (params) => formatCount(params.value),
+			tooltipValueGetter: (params) => formatCountExact(params.data?.likeCount ?? null),
 			headerTooltip: 'Like count from YouTube API'
 		},
 		{
 			colId: 'publishDate',
 			field: 'publishedAt',
 			headerName: 'Date',
-			width: 140,
+			flex: 1,
+			minWidth: 100,
+			maxWidth: 150,
 			sortable: true,
-			floatingFilter: true,
+			filter: 'agDateColumnFilter',
+			filterValueGetter: (params) => {
+				const val = params.data?.publishedAt;
+				return val ? new Date(val) : null;
+			},
 			valueFormatter: (params) => formatPublishDate(params.value),
 			headerTooltip: 'Publish date from YouTube API'
 		},
-		// Hidden columns
 		{
 			colId: 'channel',
 			field: 'channelTitle',
 			headerName: 'Channel',
-			width: 160,
-			sortable: false,
-			hide: true,
+			flex: 1.2,
+			minWidth: 100,
+			maxWidth: 200,
+			sortable: true,
+			filter: 'agTextColumnFilter',
 			headerTooltip: 'Channel name from YouTube API'
-		},
-		{
-			colId: 'createdAt',
-			field: 'createdAt',
-			headerName: 'Date Added',
-			width: 140,
-			sortable: true,
-			hide: true,
-			valueFormatter: dateValueFormatter,
-			headerTooltip: 'Date added to Perspectize'
-		},
-		{
-			colId: 'updatedAt',
-			field: 'updatedAt',
-			headerName: 'Date Updated',
-			width: 140,
-			sortable: true,
-			hide: true,
-			valueFormatter: dateValueFormatter,
-			headerTooltip: 'Last updated in Perspectize'
 		},
 		{
 			colId: 'tags',
 			field: 'tags',
 			headerName: 'Tags',
-			width: 200,
+			flex: 1.5,
+			minWidth: 120,
+			maxWidth: 250,
 			sortable: false,
-			hide: true,
+			filter: 'agTextColumnFilter',
+			filterValueGetter: (params) => formatTags(params.data?.tags ?? null),
 			valueFormatter: (params) => formatTags(params.value),
+			tooltipComponent: TagsTooltip,
+			tooltipField: 'tags',
 			headerTooltip: 'Tags from YouTube API'
 		},
 		{
 			colId: 'description',
 			field: 'description',
 			headerName: 'Description',
-			flex: 1,
+			flex: 2,
+			minWidth: 150,
 			sortable: false,
-			hide: true,
-			valueFormatter: (params) => truncateDescription(params.value, 100),
+			filter: 'agTextColumnFilter',
+			valueFormatter: (params) => truncateDescription(params.value, 80),
+			tooltipValueGetter: (params) => params.data?.description ?? '',  // full text, not truncated
 			headerTooltip: 'Video description from YouTube API'
+		},
+		{
+			colId: 'updatedAt',
+			field: 'updatedAt',
+			headerName: 'Updated',
+			flex: 1,
+			minWidth: 100,
+			maxWidth: 150,
+			sortable: true,
+			filter: 'agDateColumnFilter',
+			filterValueGetter: (params) => {
+				const val = params.data?.updatedAt;
+				return val ? new Date(val) : null;
+			},
+			valueFormatter: dateValueFormatter,
+			headerTooltip: 'Last updated in Perspectize'
+		},
+		// Hidden columns
+		{
+			colId: 'createdAt',
+			field: 'createdAt',
+			headerName: 'Date Added',
+			flex: 1,
+			minWidth: 100,
+			maxWidth: 150,
+			sortable: true,
+			filter: 'agDateColumnFilter',
+			filterValueGetter: (params) => {
+				const val = params.data?.createdAt;
+				return val ? new Date(val) : null;
+			},
+			hide: true,
+			valueFormatter: dateValueFormatter,
+			headerTooltip: 'Date added to Perspectize'
 		}
 	];
 
@@ -216,7 +274,12 @@
 		pagination: false, // Manual pagination
 		defaultColDef: {
 			resizable: true,
+			tooltipValueGetter: (params) => {
+				return params.valueFormatted ?? params.value ?? '';
+			},
 		},
+		tooltipShowDelay: 500,
+		tooltipInteraction: true,
 		getRowId: contentRowId,
 		domLayout: 'normal',
 		suppressCellFocus: true,
@@ -246,19 +309,18 @@
 			clearTimeout(debounceTimer);
 			debounceTimer = setTimeout(() => {
 				const filterModel = event.api.getFilterModel();
-				// Collect all filter values into a single search string
-				const filters = Object.values(filterModel)
-					.map((f: any) => f.filter)
-					.filter(Boolean)
-					.join(' ');
-				filterText = filters;
-
-				// Reset to first page (query auto-refetches via key change)
-				currentPage = 0;
-				cursors = [null];
+				// Only send Item column filter to server search
+				const itemFilter = (filterModel as Record<string, any>)['item']?.filter ?? '';
+				if (itemFilter !== filterText) {
+					filterText = itemFilter;
+					// Reset to first page (query auto-refetches via key change)
+					currentPage = 0;
+					cursors = [null];
+				}
+				// Other column filters (Type, Length, etc.) work client-side via AG Grid
 			}, 500);
 		},
-		overlayNoRowsTemplate: '<div class="py-12 text-center text-muted-foreground">No items yet - add the first one!</div>'
+		overlayNoRowsTemplate: '<div class="py-12 text-center text-muted-foreground">No items</div>'
 	};
 
 	function handleNextPage() {
@@ -279,6 +341,30 @@
 		cursors = [null];
 	}
 
+	// Mobile breakpoint detection
+	$effect(() => {
+		if (typeof window === 'undefined') return;
+		const mq = window.matchMedia('(max-width: 767px)');
+		const handler = (e: MediaQueryListEvent | MediaQueryList) => {
+			isMobile = 'matches' in e ? e.matches : (e as MediaQueryListEvent).matches;
+		};
+		handler(mq);
+		mq.addEventListener('change', handler);
+		return () => mq.removeEventListener('change', handler);
+	});
+
+	// Mobile column visibility
+	$effect(() => {
+		if (!gridApi) return;
+		if (isMobile) {
+			gridApi.setColumnsVisible(['duration', 'views', 'likes', 'publishDate', 'channel', 'createdAt', 'updatedAt', 'tags', 'description'], false);
+			gridApi.setColumnsVisible(['item', 'type'], true);
+		} else {
+			gridApi.setColumnsVisible(['item', 'type', 'duration', 'views', 'likes', 'publishDate'], true);
+			gridApi.setColumnsVisible(['channel', 'createdAt', 'updatedAt', 'tags', 'description'], false);
+		}
+	});
+
 	// Update loading state reactively
 	$effect(() => {
 		if (gridApi) {
@@ -289,18 +375,18 @@
 
 <div class="flex flex-col h-full gap-4">
 	<!-- AG Grid -->
-	<div class="flex-1 min-h-0">
+	<div class="flex-1 min-h-0" style="--ag-row-height: 44px; --ag-header-height: 40px;">
 		<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
 	</div>
 
 	<!-- Manual Pagination Controls -->
-	<div class="flex items-center justify-between px-4 py-2 border-t border-border">
-		<div class="flex items-center gap-4">
-			<div class="text-sm text-muted-foreground">
-				{totalCount} total items
+	<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0 px-2 md:px-4 py-2 border-t border-border text-xs md:text-sm">
+		<div class="flex items-center gap-2 md:gap-4">
+			<div class="text-muted-foreground">
+				{totalCount} total
 			</div>
-			<div class="flex items-center gap-2">
-				<label for="pageSize" class="text-sm text-muted-foreground">Page size:</label>
+			<div class="hidden md:flex items-center gap-2">
+				<label for="pageSize" class="text-muted-foreground">Page size:</label>
 				<select
 					id="pageSize"
 					value={pageSize}
@@ -320,9 +406,9 @@
 				disabled={currentPage === 0}
 				class="px-3 py-1 text-sm border border-input rounded-md bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
 			>
-				Previous
+				<span class="hidden sm:inline">Previous</span><span class="sm:hidden">&lt;</span>
 			</button>
-			<span class="text-sm text-muted-foreground">
+			<span class="text-muted-foreground">
 				Page {currentPage + 1} of {Math.ceil(totalCount / pageSize) || 1}
 			</span>
 			<button
@@ -330,7 +416,7 @@
 				disabled={currentPage >= Math.ceil(totalCount / pageSize) - 1}
 				class="px-3 py-1 text-sm border border-input rounded-md bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
 			>
-				Next
+				<span class="hidden sm:inline">Next</span><span class="sm:hidden">&gt;</span>
 			</button>
 		</div>
 	</div>

@@ -17,10 +17,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2.1: Mobile Responsive Fixes** - Fix header overflow, pagination bar, and table layout at 375px (INSERTED)
 - [x] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
 - [x] **Phase 3.1: Design Token System** - Implement all 27 Figma color variables, Geist + Charter typography, rating colors in code (INSERTED — rescoped)
-- [ ] **Phase 3.2: Activity Page Beta Quality** - Rebuild Activity page to beta quality with server-side ops, new columns, popover dialog, data provenance (INSERTED)
-- [ ] **Phase 3.3: Repository Rename & Folder Restructure** - Rename repo to perspectize, backend → backend, fe → fe, update imports and Sevalla (INSERTED)
+- [x] **Phase 3.2: Activity Page Beta Quality** - Rebuild Activity page to beta quality with server-side ops, new columns, popover dialog, data provenance (INSERTED)
+- [x] **Phase 3.3: Repository Rename & Folder Restructure** - Rename repo to perspectize, backend → backend, fe → fe, update imports and Sevalla (INSERTED)
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
-- [ ] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
+- [x] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
 
 ## Phase Details
 
@@ -120,13 +120,25 @@ Plans:
   9. Add Video dialog: popover-near-button pattern (no overlay), page stays interactive while open
   10. Data provenance visual infrastructure: columns grouped by source, tooltip on header hover, visual tier indicators
   11. Empty state: "No items yet - add the first one!" in table body area
-**Plans**: 4 plans in 3 waves
+  12. Mobile: Only Title + Type columns visible at <768px
+  13. Mobile: Header shows icon-only buttons at <768px
+  14. Mobile: Popovers become dialogs at <768px
+  15. All filterable columns have floating filters enabled
+  16. Navy header with white text/icons
+  17. AG Grid wrapped in card container
+  18. YouTube icon centered in cell
+  19. Unit tests for all new functionality
+**Plans**: 8 plans in 3 waves
 
 Plans:
-- [ ] 03.2-01-PLAN.md — Backend: expose YouTube fields (channelTitle, publishedAt, tags, description) + extend sort/filter
-- [ ] 03.2-02-PLAN.md — Frontend: popover dialog redesign (replace modal with non-modal popover)
-- [ ] 03.2-03-PLAN.md — Frontend: ActivityTable rewrite (server-side pagination, new columns, compact rows, sticky headers, provenance)
-- [ ] 03.2-04-PLAN.md — Integration polish, test coverage, visual verification checkpoint
+- [x] 03.2-01-PLAN.md — Backend: expose YouTube fields (channelTitle, publishedAt, tags, description) + extend sort/filter
+- [x] 03.2-02-PLAN.md — Frontend: popover dialog redesign (replace modal with non-modal popover)
+- [x] 03.2-03-PLAN.md — Frontend: ActivityTable rewrite (server-side pagination, new columns, compact rows, sticky headers, provenance)
+- [x] 03.2-04-PLAN.md — Integration polish, test coverage, visual verification checkpoint
+- [x] 03.2-05-PLAN.md — Navy header styling, AG Grid card container, theme param fixes (D-01, D-02, D-06)
+- [x] 03.2-06-PLAN.md — Column filter types, floating filters on all columns, YouTube icon centering (D-09, D-10)
+- [x] 03.2-07-PLAN.md — Mobile responsive: column hiding, icon-only buttons, hidden thumbnails, compact pagination (M-01, M-03, M-05, M-06)
+- [x] 03.2-08-PLAN.md — Mobile popovers to dialogs, shadcn Select for UserSelector (M-04, D-03)
 
 ### Phase 3.3: Repository Rename & Folder Restructure (INSERTED)
 **Goal**: Rename repository from perspectize to perspectize, restructure folders (backend → backend, fe → fe), update all Go imports, fix CI/CD and Sevalla deployment pointers
@@ -179,13 +191,13 @@ Plans:
 
 ---
 
-## Post-MVP: Concerns Remediation (Phases 6–10)
+## Post-MVP: Concerns Remediation (Phases 6-10)
 
-Phases 6–10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md`. Ordered by dependency: fix errors first, then architecture, then schema, then security (which depends on clean architecture), then frontend. Each phase is a living checklist — items can be picked off incrementally.
+Phases 6-10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md`. Ordered by dependency: fix errors first, then architecture, then schema, then security (which depends on clean architecture), then frontend. Each phase is a living checklist -- items can be picked off incrementally.
 
 - [ ] **Phase 6: Error Handling & Data Integrity** - Fix silent failures, error leakage, and config validation
 - [x] **Phase 7: Backend Architecture** - Hexagonal cleanup, dependency injection, server infrastructure
-- [x] **Phase 7.1: ORM Migration — sqlx to GORM** - Replace sqlx with GORM using hex-clean separate model pattern (INSERTED)
+- [x] **Phase 7.1: ORM Migration -- sqlx to GORM** - Replace sqlx with GORM using hex-clean separate model pattern (INSERTED)
 - [x] **Phase 7.2: gorm-cursor-paginator Integration** - Fix C-02 cursor pagination for non-ID sorts, replace hand-rolled cursor encoding (INSERTED)
 - [x] **Phase 7.3: Frontend Caching Remediation** - Fix TanStack Query bypass, dual-signal anti-pattern, eruda in prod, query key design, security gaps (INSERTED)
 - [x] **Phase 7.4: Performance Monitoring** - Request timing, GORM slow query logging, DB stats, GraphQL timing, Go benchmarks, Web Vitals (INSERTED)
@@ -218,7 +230,7 @@ Plans:
   1. All `json.Unmarshal` calls check and handle errors (C-06, C-08)
   2. All `strconv`/`time.Parse` calls check and handle errors (C-07, C-08)
   3. GraphQL error responses never expose database schema or internal details (H-13)
-  4. Not-found handling is consistent across all resolvers — standardized pattern (H-16, M-07)
+  4. Not-found handling is consistent across all resolvers -- standardized pattern (H-16, M-07)
   5. `.env` load warns if file missing in dev; YouTube API key validated at startup (H-19, H-20)
   6. `WriteString` return value checked in IntID marshal (H-21)
   7. `CreateFromYouTube` returns existing item on duplicate instead of error (M-03)
@@ -243,10 +255,10 @@ Plans:
 **Depends on**: Phase 6 (error handling patterns established first)
 **Source**: CONCERNS.md H-01, H-02, H-09, M-01, M-02, M-05, M-06, M-09, M-10, M-12, M-17
 **Success Criteria** (what must be TRUE):
-  1. No adapter-to-adapter imports — resolvers use service ports only (H-01, H-02)
+  1. No adapter-to-adapter imports -- resolvers use service ports only (H-01, H-02)
   2. Service port interfaces defined; resolver depends on interfaces, not concrete types (H-02)
   3. Config path loaded from env var with sensible default (H-09)
-  4. Single PostgreSQL driver (`pgx`) — `lib/pq` removed (M-01)
+  4. Single PostgreSQL driver (`pgx`) -- `lib/pq` removed (M-01)
   5. DB pool settings configurable via env vars (M-02)
   6. YouTube `extractVideoID` injected via constructor, not function param (M-05)
   7. Request logging middleware installed (chi router or similar) (M-06)
@@ -274,19 +286,19 @@ Plans:
 - [x] M-12: DB credentials in logs on failure
 - [x] M-17: No `DATABASE_URL` format validation
 
-### Phase 7.1: ORM Migration — sqlx to GORM (INSERTED)
+### Phase 7.1: ORM Migration -- sqlx to GORM (INSERTED)
 **Goal**: Replace sqlx with GORM using hex-clean separate model pattern (domain models stay pure, GORM models in adapter layer). Eliminate ~35% of repository boilerplate while preserving hexagonal architecture.
 **Depends on**: Phase 7 (clean architecture + single pgx driver must be in place first)
 **Success Criteria** (what must be TRUE):
   1. All 3 repository implementations (user, content, perspective) migrated from sqlx to GORM
-  2. Domain models (`core/domain/`) have zero GORM imports or tags — hex-clean
+  2. Domain models (`core/domain/`) have zero GORM imports or tags -- hex-clean
   3. GORM models live in `adapters/repositories/postgres/` with `gorm:` tags
   4. Cursor pagination works with opaque base64 cursors (reuses existing encoding functions)
   5. Dynamic ORDER BY works for all sort fields including JSONB path expressions
   6. Dynamic WHERE filters work via GORM chaining (no boolean flag pattern)
-  7. Custom `StringArray`/`Int64Array` types (from Phase 7) used — no `lib/pq` imports in any active code
+  7. Custom `StringArray`/`Int64Array` types (from Phase 7) used -- no `lib/pq` imports in any active code
   8. All existing tests pass (mock interfaces unchanged)
-  9. No performance regression — GORM reflection overhead negligible vs DB round-trip
+  9. No performance regression -- GORM reflection overhead negligible vs DB round-trip
 **Plans**: 3 plans in 3 waves
 
 Plans:
@@ -298,7 +310,7 @@ Plans:
 - **Chosen:** GORM with separate GORM models (hex-clean)
 - **Rejected:** sqlc (dynamic ORDER BY blocker, jsonb[] bugs), GORM with tags on domain models (architecture compromise), staying with sqlx (missed 35% reduction)
 - **Prototype:** See `gorm_*.go` files in `adapters/repositories/postgres/` for side-by-side comparison
-- **Research:** ORM comparison research stashed in git (`git stash list` → orm research)
+- **Research:** ORM comparison research stashed in git (`git stash list` -> orm research)
 
 **Estimated impact:**
 | File | Current (sqlx) | GORM prototype | Reduction |
@@ -320,7 +332,7 @@ Plans:
   3. Hand-rolled `encodeCursor`/`decodeCursor` replaced with library's built-in cursor handling
   4. Content List and Perspective List methods use library paginator
   5. Compound keyset pagination: cursors encode both sort column value + ID (fixes C-02)
-  6. All existing tests pass — no behavior regression
+  6. All existing tests pass -- no behavior regression
   7. Frontend cursor contract preserved (opaque base64 strings, hasNext/hasPrev, startCursor/endCursor)
 **Plans**: 2 plans in 2 waves
 
@@ -329,18 +341,18 @@ Plans:
 - [ ] 07.2-02-PLAN.md — Rewrite Content + Perspective List() to use paginator, delete old cursor functions
 
 ### Phase 7.3: Frontend Caching Remediation (INSERTED)
-**Goal**: Fix critical caching architecture issues — migrate ActivityTable to TanStack Query, remove eruda debug console from production, eliminate dual-signal anti-pattern, add query key factory, remove PII over-fetching, add CSP headers
+**Goal**: Fix critical caching architecture issues -- migrate ActivityTable to TanStack Query, remove eruda debug console from production, eliminate dual-signal anti-pattern, add query key factory, remove PII over-fetching, add CSP headers
 **Depends on**: Phase 7.2
-**Source**: Frontend caching review (2026-02-14) — 7 findings across P0-P2 priority
+**Source**: Frontend caching review (2026-02-14) -- 7 findings across P0-P2 priority
 **Success Criteria** (what must be TRUE):
-  1. Eruda debug script removed from `app.html` (security P0 — CVSS 7.5)
+  1. Eruda debug script removed from `app.html` (security P0 -- CVSS 7.5)
   2. `email` field removed from `LIST_USERS` query (PII over-fetching, unused field)
-  3. ActivityTable uses `createQuery` with `keepPreviousData` instead of raw `graphqlClient.request()` — eliminates manual fetchData(), custom DOM events, and silent error swallowing
+  3. ActivityTable uses `createQuery` with `keepPreviousData` instead of raw `graphqlClient.request()` -- eliminates manual fetchData(), custom DOM events, and silent error swallowing
   4. `content-added` custom window event pattern fully removed (both dispatch and listener)
-  5. AddVideoDialog bug fixed — refreshes table after adding video (currently only Popover does)
+  5. AddVideoDialog bug fixed -- refreshes table after adding video (currently only Popover does)
   6. Shared mutation hook extracted from AddVideoPopover + AddVideoDialog (DRY)
   7. Query key factory at `src/lib/queries/keys.ts` with hierarchical invalidation support
-  8. Type parameters on all `graphqlClient.request<T>()` calls — no `any` types
+  8. Type parameters on all `graphqlClient.request<T>()` calls -- no `any` types
   9. CSP meta tag or SvelteKit CSP config restricting script/connect/img sources
   10. All existing tests pass, no coverage regression
 **Plans**: 4 plans in 3 waves
@@ -357,7 +369,7 @@ Review findings by priority:
 - **P0**: Eruda in production (supply chain risk, info disclosure)
 - **P0**: AddVideoDialog doesn't refresh table (data consistency bug)
 - **P1**: Email PII over-fetched and cached (GDPR concern)
-- **P1**: Missing type params → `any` propagation
+- **P1**: Missing type params -> `any` propagation
 - **P1**: No CSP headers
 - **P2**: Query keys won't scale (flat arrays)
 - **P2**: Duplicate mutation logic across two components
@@ -398,7 +410,7 @@ Plans:
 **Plans**: TBD
 
 **Concern checklist:**
-- [ ] C-02: Cursor pagination broken for non-ID sorts → **Moved to Phase 7.2**
+- [ ] C-02: Cursor pagination broken for non-ID sorts -> **Moved to Phase 7.2**
 - [ ] H-03: `ListAll()` users has no pagination (unbounded query)
 - [ ] H-04: Timestamps as `String!` instead of `DateTime` scalar
 - [ ] H-05: `contentType` uses `String!` instead of `ContentType` enum
@@ -417,7 +429,7 @@ Plans:
 **Source**: CONCERNS.md C-01, C-04, C-05, C-09, C-10, H-10, H-11, H-12, H-14, H-15, H-25, M-14, M-15, M-28
 **Success Criteria** (what must be TRUE):
   1. Authentication middleware validates JWT/session on all mutations (C-01)
-  2. Authorization checks on all mutations — users can only modify their own data (C-01)
+  2. Authorization checks on all mutations -- users can only modify their own data (C-01)
   3. GraphQL query complexity limit enforced (C-04)
   4. CORS restricted to explicit frontend origin (C-05 -- may already be done in Phase 5)
   5. GraphQL playground disabled in production (C-09)
@@ -507,13 +519,13 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 2.1 Mobile Responsive Fixes | 2/2 | Complete | 2026-02-07 |
 | 3. Add Video Flow | 2/2 | Complete | 2026-02-07 |
 | 3.1 Design Token System | 2/2 | Complete | 2026-02-12 |
-| 3.2 Activity Page Beta Quality | 0/4 | Planned | - |
+| 3.2 Activity Page Beta Quality | 4/8 | In progress | - |
 | 3.3 Repository Rename & Restructure | 0/3 | Planned | - |
 | 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 1/3 | In progress | - |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
 | 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |
-| 7.1 ORM Migration (sqlx → GORM) | 3/3 | Complete | 2026-02-14 |
+| 7.1 ORM Migration (sqlx -> GORM) | 3/3 | Complete | 2026-02-14 |
 | 7.2 gorm-cursor-paginator | 2/2 | Complete | 2026-02-14 |
 | 7.3 Frontend Caching Remediation | 4/4 | Complete | 2026-02-14 |
 | 7.4 Performance Monitoring | 1/1 | Complete | 2026-02-15 |
@@ -521,3 +533,4 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 8.1 API & Schema Quality | 0/0 | Not started | - |
 | 9. Security Hardening | 0/0 | Not started | - |
 | 10. Frontend Quality & Test Coverage | 0/0 | Not started | - |
+

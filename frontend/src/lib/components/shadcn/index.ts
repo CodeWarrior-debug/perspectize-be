@@ -4,3 +4,4 @@ export { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 export { Input } from "./input/index.js";
 export { Label } from "./label/index.js";
 export { Popover, PopoverContent, PopoverTrigger } from "./popover/index.js";
+export { Select, SelectTrigger, SelectContent, SelectItem } from "./select/index.js";
