@@ -501,31 +501,39 @@ Plans:
   13. Repository-layer tests exist (T-04)
   14. YouTube API client tested (T-05)
   15. `IntID` scalar tested (T-06)
-**Plans**: TBD
+**Plans**: 6 plans in 3 waves
+
+Plans:
+- [ ] 10-01-PLAN.md — GraphQL Code Generator setup (client-preset, codegen.ts, generated types)
+- [ ] 10-02-PLAN.md — Error boundaries and GraphQL client enhancements (+error.svelte, hooks.client.ts, timeout, selective retry)
+- [ ] 10-03-PLAN.md — Backend service and resolver tests (PerspectiveService.Update, User/Perspective resolvers)
+- [ ] 10-04-PLAN.md — Backend helper and scalar tests (helpers.go converters, IntID scalar)
+- [ ] 10-05-PLAN.md — Backend repository integration tests (Content/Perspective List with DB, pagination, sorting, filtering)
+- [ ] 10-06-PLAN.md — Frontend coverage gaps and dead code detection (Knip setup, tooltip tests, coverage thresholds)
 
 **Concern checklist:**
-- [ ] C-03: XSS vulnerability in AG Grid cellRenderer
-- [ ] H-17: Missing `+error.svelte` error boundary
-- [ ] H-18: Missing `hooks.client.ts` / `hooks.server.ts`
-- [ ] H-22: `prerender = true` without SSR (architectural mismatch)
-- [ ] H-23: No TypeScript types generated from GraphQL schema
-- [ ] H-24: GraphQL client missing error/timeout infrastructure
-- [ ] M-18: Duplicated type definitions across components
-- [ ] M-19: No server-side pagination integration (hard-coded 100)
-- [ ] M-20: `selectedUserId` store not consumed
-- [ ] M-21: Unused type guards
+- [x] C-03: XSS vulnerability in AG Grid cellRenderer → **ALREADY FIXED** (createElement used, not innerHTML)
+- [ ] H-17: Missing `+error.svelte` error boundary → **10-02**
+- [ ] H-18: Missing `hooks.client.ts` / `hooks.server.ts` → **10-02**
+- [x] H-22: `prerender = true` without SSR (architectural mismatch) → **ALREADY FIXED** (prerender false in +layout.ts)
+- [ ] H-23: No TypeScript types generated from GraphQL schema → **10-01**
+- [ ] H-24: GraphQL client missing error/timeout infrastructure → **10-02**
+- [ ] M-18: Duplicated type definitions across components → **10-01** (codegen eliminates duplication)
+- [x] M-19: No server-side pagination integration (hard-coded 100) → **ALREADY FIXED** (Phase 3.2)
+- [ ] M-20: `selectedUserId` store not consumed → **10-06** (Knip detection)
+- [ ] M-21: Unused type guards → **10-06** (Knip detection)
 - [ ] M-22: Search input not debounced
-- [ ] M-23: No error recovery UI (no retry button)
-- [ ] M-24: Dead code (`AGGridTest.svelte`)
-- [ ] M-25: HTTP fallback for GraphQL endpoint
-- [ ] M-26: Retry configuration retries all errors (should only retry 5xx)
-- [ ] T-01: `PerspectiveService.Update()` -- zero tests
-- [ ] T-02: No resolver tests
-- [ ] T-03: No `helpers.go` conversion tests
-- [ ] T-04: No repository-layer tests
-- [ ] T-05: No YouTube API client tests
-- [ ] T-06: No `IntID` scalar tests
-- [ ] L-*: Low priority cleanup (see Bug Backlog L-01 through L-22)
+- [ ] M-23: No error recovery UI (no retry button) → **10-02**
+- [ ] M-24: Dead code (`AGGridTest.svelte`) → **10-06** (Knip detection, note: AGGridTest.svelte not found, may already be removed)
+- [ ] M-25: HTTP fallback for GraphQL endpoint → **10-02** (HTTPS auto-upgrade in client)
+- [ ] M-26: Retry configuration retries all errors (should only retry 5xx) → **10-02**
+- [ ] T-01: `PerspectiveService.Update()` -- zero tests → **10-03**
+- [ ] T-02: No resolver tests → **10-03**
+- [ ] T-03: No `helpers.go` conversion tests → **10-04**
+- [ ] T-04: No repository-layer tests → **10-05**
+- [ ] T-05: No YouTube API client tests → **DEFERRED** (requires client refactor for testability, 15 tests currently skipped)
+- [ ] T-06: No `IntID` scalar tests → **10-04**
+- [ ] L-*: Low priority cleanup (see Bug Backlog L-01 through L-22) → **DEFERRED** (low priority)
 
 ## Progress
 
@@ -552,4 +560,4 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 8. User Integration Flow | 1/1 | Complete | 2026-02-15 |
 | 8.1 API & Schema Quality | 0/5 | Not started | - |
 | 9. Security Hardening | 0/6 | Not started | - |
-| 10. Frontend Quality & Test Coverage | 0/0 | Not started | - |
+| 10. Frontend Quality & Test Coverage | 0/6 | Not started | - |
