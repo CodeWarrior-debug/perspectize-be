@@ -18,9 +18,15 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
 - [x] **Phase 3.1: Design Token System** - Implement all 27 Figma color variables, Geist + Charter typography, rating colors in code (INSERTED — rescoped)
 - [x] **Phase 3.2: Activity Page Beta Quality** - Rebuild Activity page to beta quality with server-side ops, new columns, popover dialog, data provenance (INSERTED)
+<<<<<<< claude/plan-gsd-workflow-3OFvn
+- [x] **Phase 3.3: Repository Rename & Folder Restructure** - OBSOLETE — repo already named `perspectize`, folders already `backend/` + `frontend/` (INSERTED)
+- [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
+- [x] **Phase 5: Testing + Deployment** - Coverage met, deployed on Sevalla, CORS working (wildcard — restriction deferred to Phase 9)
+=======
 - [x] **Phase 3.3: Repository Rename & Folder Restructure** - Rename repo to perspectize, backend → backend, fe → fe, update imports and Sevalla (INSERTED)
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
 - [x] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
+>>>>>>> main
 
 ## Phase Details
 
@@ -135,10 +141,13 @@ Plans:
 - [x] 03.2-02-PLAN.md — Frontend: popover dialog redesign (replace modal with non-modal popover)
 - [x] 03.2-03-PLAN.md — Frontend: ActivityTable rewrite (server-side pagination, new columns, compact rows, sticky headers, provenance)
 - [x] 03.2-04-PLAN.md — Integration polish, test coverage, visual verification checkpoint
+<<<<<<< claude/plan-gsd-workflow-3OFvn
+=======
 - [x] 03.2-05-PLAN.md — Navy header styling, AG Grid card container, theme param fixes (D-01, D-02, D-06)
 - [x] 03.2-06-PLAN.md — Column filter types, floating filters on all columns, YouTube icon centering (D-09, D-10)
 - [x] 03.2-07-PLAN.md — Mobile responsive: column hiding, icon-only buttons, hidden thumbnails, compact pagination (M-01, M-03, M-05, M-06)
 - [x] 03.2-08-PLAN.md — Mobile popovers to dialogs, shadcn Select for UserSelector (M-04, D-03)
+>>>>>>> main
 
 ### Phase 3.3: Repository Rename & Folder Restructure (INSERTED)
 **Goal**: Rename repository from perspectize to perspectize, restructure folders (backend → backend, fe → fe), update all Go imports, fix CI/CD and Sevalla deployment pointers
@@ -153,9 +162,9 @@ Plans:
 **Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 03.3-01-PLAN.md — GitHub repo rename (checkpoint) + Go module path refactor (imports, gqlgen.yml, tests)
-- [ ] 03.3-02-PLAN.md — Folder rename (git mv) + bulk path updates across CI/CD, CLAUDE.md, docs, planning
-- [ ] 03.3-03-PLAN.md — Deployment config update (checkpoint) + push to GitHub + CI/CD verification
+- [x] 03.3-01-PLAN.md — OBSOLETE (repo already named perspectize, Go module path already correct)
+- [x] 03.3-02-PLAN.md — OBSOLETE (folders already backend/ and frontend/)
+- [x] 03.3-03-PLAN.md — OBSOLETE (Sevalla already deployed with current structure)
 
 ### Phase 4: Add Perspective Flow
 **Goal**: Users can create perspectives on videos with ratings, Like text, and Review text
@@ -187,7 +196,7 @@ Plans:
 Plans:
 - [x] 05-01-PLAN.md — Coverage verification — SKIPPED (thresholds already met: 87.6% stmts, 90.1% lines)
 - [x] 05-02-PLAN.md — Sevalla static site deployment (cleanup GitHub Pages artifacts, deploy frontend) — COMPLETED (deployed manually)
-- [ ] 05-03-PLAN.md — CORS configuration with rs/cors and Sevalla frontend origin
+- [x] 05-03-PLAN.md — SKIPPED (CORS already working with wildcard `*`; restriction to specific origin deferred to Phase 9 C-05)
 
 ---
 
@@ -235,20 +244,24 @@ Plans:
   6. `WriteString` return value checked in IntID marshal (H-21)
   7. `CreateFromYouTube` returns existing item on duplicate instead of error (M-03)
   8. `formatDate` handles invalid input gracefully (M-27)
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
+
+Plans:
+- [ ] 06-01-PLAN.md — Fix silent failures: log CategorizedRatings parse, idempotent CreateFromYouTube, IntID WriteString check
+- [ ] 06-02-PLAN.md — Standardize not-found handling, sanitize GraphQL errors, enforce YouTube API key in production
 
 **Concern checklist:**
-- [ ] C-06: Silent JSON unmarshal in perspective repository
-- [ ] C-07: Silent duration parse in YouTube client
-- [ ] C-08: Five silent parse failures in `domainToModel` helpers
-- [ ] H-13: Sensitive data leaked in GraphQL errors (use generic client errors, log full errors server-side)
-- [ ] H-16: Inconsistent not-found error handling across resolvers
-- [ ] H-19: `.env` load failure silently ignored
-- [ ] H-20: Empty YouTube API key not validated at startup
-- [ ] H-21: `WriteString` return value ignored in IntID
-- [ ] M-03: `CreateFromYouTube` returns error instead of idempotent result
-- [ ] M-07: Inconsistent not-found (duplicate of H-16)
-- [ ] M-27: `formatDate` silently produces "Invalid Date"
+- [ ] C-06: Silent JSON unmarshal in perspective repository → **06-01**
+- [x] C-07: Silent duration parse in YouTube client → **ALREADY FIXED** (parser.go returns fmt.Errorf)
+- [x] C-08: Five silent parse failures in `domainToModel` helpers → **MOSTLY FIXED** (parseStatCount logs via slog.Warn; remaining: CategorizedRatings in gorm_mappers → 06-01)
+- [ ] H-13: Sensitive data leaked in GraphQL errors → **06-02**
+- [ ] H-16: Inconsistent not-found error handling across resolvers → **06-02**
+- [x] H-19: `.env` load failure silently ignored → **ALREADY FIXED** (main.go warns unless production)
+- [ ] H-20: Empty YouTube API key not validated at startup → **06-02** (warn → fatal in production)
+- [ ] H-21: `WriteString` return value ignored in IntID → **06-01**
+- [ ] M-03: `CreateFromYouTube` returns error instead of idempotent result → **06-01**
+- [ ] M-07: Inconsistent not-found (duplicate of H-16) → **06-02**
+- [x] M-27: `formatDate` silently produces "Invalid Date" → **ALREADY FIXED** (returns '—' for invalid input)
 
 ### Phase 7: Backend Architecture
 **Goal**: Clean up hexagonal architecture violations, add proper dependency injection, and harden server infrastructure
@@ -337,8 +350,8 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 07.2-01-PLAN.md — Add gorm-cursor-paginator dep, dummy GORM model fields, sort rule builder functions
-- [ ] 07.2-02-PLAN.md — Rewrite Content + Perspective List() to use paginator, delete old cursor functions
+- [x] 07.2-01-PLAN.md — Add gorm-cursor-paginator dep, dummy GORM model fields, sort rule builder functions
+- [x] 07.2-02-PLAN.md — Rewrite Content + Perspective List() to use paginator, delete old cursor functions
 
 ### Phase 7.3: Frontend Caching Remediation (INSERTED)
 **Goal**: Fix critical caching architecture issues -- migrate ActivityTable to TanStack Query, remove eruda debug console from production, eliminate dual-signal anti-pattern, add query key factory, remove PII over-fetching, add CSP headers
@@ -519,10 +532,15 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 2.1 Mobile Responsive Fixes | 2/2 | Complete | 2026-02-07 |
 | 3. Add Video Flow | 2/2 | Complete | 2026-02-07 |
 | 3.1 Design Token System | 2/2 | Complete | 2026-02-12 |
+<<<<<<< claude/plan-gsd-workflow-3OFvn
+| 3.2 Activity Page Beta Quality | 4/4 | Complete | 2026-02-14 |
+| 3.3 Repository Rename & Restructure | 0/3 | Obsolete | 2026-02-15 |
+=======
 | 3.2 Activity Page Beta Quality | 4/8 | In progress | - |
 | 3.3 Repository Rename & Restructure | 0/3 | Planned | - |
+>>>>>>> main
 | 4. Add Perspective Flow | 0/2 | Not started | - |
-| 5. Testing + Deployment | 1/3 | In progress | - |
+| 5. Testing + Deployment | 2/3 | Complete | 2026-02-15 |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
 | 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |
 | 7.1 ORM Migration (sqlx -> GORM) | 3/3 | Complete | 2026-02-14 |
