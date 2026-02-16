@@ -108,7 +108,7 @@
 			headerName: 'Item',
 			flex: 2,
 			sortable: true,
-			filter: true,
+			filter: 'agTextColumnFilter',
 			floatingFilter: true,
 			cellRenderer: itemCellRenderer,
 			headerTooltip: 'Video title and thumbnail from YouTube API'
@@ -135,6 +135,7 @@
 			headerName: 'Views',
 			width: 100,
 			sortable: true,
+			filter: 'agNumberColumnFilter',
 			floatingFilter: true,
 			valueFormatter: (params) => formatCount(params.value),
 			headerTooltip: 'View count from YouTube API'
@@ -145,6 +146,7 @@
 			headerName: 'Likes',
 			width: 100,
 			sortable: true,
+			filter: 'agNumberColumnFilter',
 			floatingFilter: true,
 			valueFormatter: (params) => formatCount(params.value),
 			headerTooltip: 'Like count from YouTube API'
@@ -155,6 +157,7 @@
 			headerName: 'Date',
 			width: 140,
 			sortable: true,
+			filter: 'agTextColumnFilter',
 			floatingFilter: true,
 			valueFormatter: (params) => formatPublishDate(params.value),
 			headerTooltip: 'Publish date from YouTube API'
@@ -166,6 +169,8 @@
 			headerName: 'Channel',
 			width: 160,
 			sortable: false,
+			filter: 'agTextColumnFilter',
+			floatingFilter: true,
 			hide: true,
 			headerTooltip: 'Channel name from YouTube API'
 		},
@@ -175,6 +180,8 @@
 			headerName: 'Date Added',
 			width: 140,
 			sortable: true,
+			filter: 'agTextColumnFilter',
+			floatingFilter: true,
 			hide: true,
 			valueFormatter: dateValueFormatter,
 			headerTooltip: 'Date added to Perspectize'
@@ -185,6 +192,8 @@
 			headerName: 'Date Updated',
 			width: 140,
 			sortable: true,
+			filter: 'agTextColumnFilter',
+			floatingFilter: true,
 			hide: true,
 			valueFormatter: dateValueFormatter,
 			headerTooltip: 'Last updated in Perspectize'
@@ -195,6 +204,8 @@
 			headerName: 'Tags',
 			width: 200,
 			sortable: false,
+			filter: 'agTextColumnFilter',
+			floatingFilter: true,
 			hide: true,
 			valueFormatter: (params) => formatTags(params.value),
 			headerTooltip: 'Tags from YouTube API'
@@ -205,6 +216,8 @@
 			headerName: 'Description',
 			flex: 1,
 			sortable: false,
+			filter: 'agTextColumnFilter',
+			floatingFilter: true,
 			hide: true,
 			valueFormatter: (params) => truncateDescription(params.value, 100),
 			headerTooltip: 'Video description from YouTube API'
@@ -289,7 +302,7 @@
 
 <div class="flex flex-col h-full gap-4">
 	<!-- AG Grid -->
-	<div class="flex-1 min-h-0">
+	<div class="flex-1 min-h-0" style="--ag-row-height: 44px; --ag-header-height: 40px;">
 		<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
 	</div>
 
