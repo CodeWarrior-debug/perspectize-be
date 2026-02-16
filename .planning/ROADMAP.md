@@ -18,15 +18,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
 - [x] **Phase 3.1: Design Token System** - Implement all 27 Figma color variables, Geist + Charter typography, rating colors in code (INSERTED — rescoped)
 - [x] **Phase 3.2: Activity Page Beta Quality** - Rebuild Activity page to beta quality with server-side ops, new columns, popover dialog, data provenance (INSERTED)
-<<<<<<< claude/plan-gsd-workflow-3OFvn
 - [x] **Phase 3.3: Repository Rename & Folder Restructure** - OBSOLETE — repo already named `perspectize`, folders already `backend/` + `frontend/` (INSERTED)
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
 - [x] **Phase 5: Testing + Deployment** - Coverage met, deployed on Sevalla, CORS working (wildcard — restriction deferred to Phase 9)
-=======
-- [x] **Phase 3.3: Repository Rename & Folder Restructure** - Rename repo to perspectize, backend → backend, fe → fe, update imports and Sevalla (INSERTED)
-- [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
-- [x] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
->>>>>>> main
 
 ## Phase Details
 
@@ -141,13 +135,10 @@ Plans:
 - [x] 03.2-02-PLAN.md — Frontend: popover dialog redesign (replace modal with non-modal popover)
 - [x] 03.2-03-PLAN.md — Frontend: ActivityTable rewrite (server-side pagination, new columns, compact rows, sticky headers, provenance)
 - [x] 03.2-04-PLAN.md — Integration polish, test coverage, visual verification checkpoint
-<<<<<<< claude/plan-gsd-workflow-3OFvn
-=======
 - [x] 03.2-05-PLAN.md — Navy header styling, AG Grid card container, theme param fixes (D-01, D-02, D-06)
 - [x] 03.2-06-PLAN.md — Column filter types, floating filters on all columns, YouTube icon centering (D-09, D-10)
 - [x] 03.2-07-PLAN.md — Mobile responsive: column hiding, icon-only buttons, hidden thumbnails, compact pagination (M-01, M-03, M-05, M-06)
 - [x] 03.2-08-PLAN.md — Mobile popovers to dialogs, shadcn Select for UserSelector (M-04, D-03)
->>>>>>> main
 
 ### Phase 3.3: Repository Rename & Folder Restructure (INSERTED)
 **Goal**: Rename repository from perspectize to perspectize, restructure folders (backend → backend, fe → fe), update all Go imports, fix CI/CD and Sevalla deployment pointers
@@ -532,13 +523,8 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 2.1 Mobile Responsive Fixes | 2/2 | Complete | 2026-02-07 |
 | 3. Add Video Flow | 2/2 | Complete | 2026-02-07 |
 | 3.1 Design Token System | 2/2 | Complete | 2026-02-12 |
-<<<<<<< claude/plan-gsd-workflow-3OFvn
-| 3.2 Activity Page Beta Quality | 4/4 | Complete | 2026-02-14 |
+| 3.2 Activity Page Beta Quality | 8/8 | Complete | 2026-02-16 |
 | 3.3 Repository Rename & Restructure | 0/3 | Obsolete | 2026-02-15 |
-=======
-| 3.2 Activity Page Beta Quality | 4/8 | In progress | - |
-| 3.3 Repository Rename & Restructure | 0/3 | Planned | - |
->>>>>>> main
 | 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 2/3 | Complete | 2026-02-15 |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
