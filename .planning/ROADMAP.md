@@ -18,9 +18,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
 - [x] **Phase 3.1: Design Token System** - Implement all 27 Figma color variables, Geist + Charter typography, rating colors in code (INSERTED — rescoped)
 - [x] **Phase 3.2: Activity Page Beta Quality** - Rebuild Activity page to beta quality with server-side ops, new columns, popover dialog, data provenance (INSERTED)
-- [ ] **Phase 3.3: Repository Rename & Folder Restructure** - Rename repo to perspectize, backend → backend, fe → fe, update imports and Sevalla (INSERTED)
+- [x] **Phase 3.3: Repository Rename & Folder Restructure** - Rename repo to perspectize, backend → backend, fe → fe, update imports and Sevalla (INSERTED)
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
-- [ ] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
+- [x] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
 
 ## Phase Details
 
@@ -533,3 +533,4 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 8.1 API & Schema Quality | 0/0 | Not started | - |
 | 9. Security Hardening | 0/0 | Not started | - |
 | 10. Frontend Quality & Test Coverage | 0/0 | Not started | - |
+
