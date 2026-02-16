@@ -92,6 +92,16 @@ gh api repos/CodeWarrior-debug/perspectize/pulls/123/comments
 
 GitHub Projects v2: See [.docs/GITHUB_PROJECTS.md](.docs/GITHUB_PROJECTS.md).
 
+### PR Merge Preferences
+
+```bash
+gh pr merge 123 --squash --delete-branch --admin
+```
+
+- `--squash` — Single commit (cleaner history)
+- `--delete-branch` — Auto-delete branch after merge
+- `--admin` — Bypass branch protection when needed
+
 ## Branch Naming
 
 **Always branch from updated `main`:** `git checkout main && git pull origin main && git checkout -b <name>`
