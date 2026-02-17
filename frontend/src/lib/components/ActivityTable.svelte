@@ -360,16 +360,20 @@
 		return () => mq.removeEventListener('change', handler);
 	});
 
-	// Mobile column visibility
+	// Mobile column visibility — deferred to next frame so AG Grid column components are ready
 	$effect(() => {
 		if (!gridApi || !gridReady) return;
-		if (isMobile) {
-			gridApi.setColumnsVisible(['duration', 'views', 'likes', 'publishDate', 'channel', 'createdAt', 'updatedAt', 'tags', 'description'], false);
-			gridApi.setColumnsVisible(['item', 'type'], true);
-		} else {
-			gridApi.setColumnsVisible(['item', 'type', 'duration', 'createdAt', 'updatedAt'], true);
-			gridApi.setColumnsVisible(['views', 'likes', 'publishDate', 'channel', 'tags', 'description'], false);
-		}
+		const api = gridApi;
+		const mobile = isMobile;
+		requestAnimationFrame(() => {
+			if (mobile) {
+				api.setColumnsVisible(['duration', 'views', 'likes', 'publishDate', 'channel', 'createdAt', 'updatedAt', 'tags', 'description'], false);
+				api.setColumnsVisible(['item', 'type'], true);
+			} else {
+				api.setColumnsVisible(['item', 'type', 'duration', 'createdAt', 'updatedAt'], true);
+				api.setColumnsVisible(['views', 'likes', 'publishDate', 'channel', 'tags', 'description'], false);
+			}
+		});
 	});
 
 	// Update loading state reactively
