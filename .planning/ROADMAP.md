@@ -535,10 +535,39 @@ Plans:
 - [ ] T-06: No `IntID` scalar tests → **10-04**
 - [ ] L-*: Low priority cleanup (see Bug Backlog L-01 through L-22) → **DEFERRED** (low priority)
 
+---
+
+## v1.1 Feature Phases (11-16)
+
+Phases 11-15 planned from FEATURE_BACKLOG.md. Phase 16 added for mobile app research.
+
+- [ ] **Phase 11: Database Optimization** - Indexing, query performance, connection pooling tuning
+- [ ] **Phase 12: Authentication** - Clerk-based auth replacing user dropdown selector
+- [ ] **Phase 13: Content Categories** - Organize content by category/topic
+- [ ] **Phase 14: AG Grid Power Features** - Advanced table features, column grouping, export
+- [ ] **Phase 15: Discover Page** - Content discovery and recommendation interface
+- [ ] **Phase 16: Mobile App Strategy** - Research native mobile approaches for SvelteKit SPA
+
+### Phase 16: Mobile App Strategy
+**Goal**: Research and evaluate native mobile app approaches (Capacitor, Tauri, PWA) for wrapping the existing SvelteKit SPA. Produce a recommendation with proof-of-concept.
+**Depends on**: Phase 12 (auth must exist before shipping a mobile app)
+**Plans**: 0 plans
+
+**Research scope:**
+- Capacitor (Ionic) — WebView wrapper, native plugin ecosystem, App Store/Play Store distribution
+- Tauri Mobile — Rust-based, smaller binaries, newer mobile support (stability assessment)
+- PWA — Service worker, manifest, offline support, installable from browser (no app store)
+- Evaluation criteria: native API access (camera, push notifications, biometrics), offline support, app store distribution, development effort, bundle size, update mechanism
+- SvelteKit adapter-static compatibility with each approach
+- Proof-of-concept with recommended approach
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 16 to break down)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 7.3 -> 7.4 -> 8 -> 8.1 -> 9 -> 10
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 7.3 -> 7.4 -> 8 -> 8.1 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -561,3 +590,9 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 8.1 API & Schema Quality | 0/5 | Not started | - |
 | 9. Security Hardening | 0/6 | Not started | - |
 | 10. Frontend Quality & Test Coverage | 0/6 | Not started | - |
+| 11. Database Optimization | 0/3 | Not started | - |
+| 12. Authentication | 0/3 | Not started | - |
+| 13. Content Categories | 0/3 | Not started | - |
+| 14. AG Grid Power Features | 0/3 | Not started | - |
+| 15. Discover Page | 0/3 | Not started | - |
+| 16. Mobile App Strategy | 0/0 | Not started | - |

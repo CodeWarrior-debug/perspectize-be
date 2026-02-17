@@ -189,6 +189,7 @@ Recent decisions affecting current work:
 - Phase 07.3 inserted after Phase 7.2: Frontend Caching Remediation (URGENT) — Comprehensive caching review found ActivityTable bypasses TanStack Query entirely, eruda debug console in production, dual-signal anti-pattern, PII over-fetching, missing CSP. Auth architecture design deferred to FEATURE_BACKLOG.md.
 - Phase 07.4 inserted after Phase 7.3: Performance Monitoring — Establish measurable performance baselines before application grows in complexity. slog-based instrumentation, no new infrastructure deps.
 - Phase 08 (User Integration Flow) inserted — Frontend create user flow with shared FormPopover, optional email in schema.
+- Phase 16 added: Mobile App Strategy — Research native mobile approaches (Capacitor, Tauri, PWA) for SvelteKit SPA. Depends on Phase 12 (auth).
 
 ### Project-Level Plan Requirements
 
