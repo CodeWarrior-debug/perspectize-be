@@ -10,9 +10,8 @@ Known bugs and technical concerns are tracked **privately** — they are never c
 
 | File | Purpose |
 |------|---------|
-| `KNOWN_BUGS.md` (root) | Legacy bug inventory — migrated to planning phase |
-| `.planning/codebase/CONCERNS.md` | Technical debt catalog — referenced by phase plans |
 | `.planning/phases/bugs/` | **Persistent GSD phase** for bug fixes — backlog, plans, closed log |
+| `.planning/codebase/CONCERNS.md` | Technical debt catalog — referenced by phase plans |
 
 These files exist only on developer machines. They are listed in `.gitignore` and are never pushed to the remote.
 
@@ -32,9 +31,10 @@ Unlike numbered phases (1, 2, 3...) that complete and close, `.planning/phases/b
 
 1. **Discover** a bug during development, review, or testing
 2. **Log** it in `.planning/phases/bugs/BACKLOG.md` with severity and location
-3. **Plan** the fix using a standard GSD plan file (`BUG-{id}-PLAN.md`)
-4. **Fix** on a `bugfix/BUGS-{id}-description` branch
-5. **Close** by moving the entry to `CLOSED.md` with PR reference
+3. **Create a GitHub issue** using the bug report template (`.github/ISSUE_TEMPLATE/bug_report.md`) — omit sensitive details like exact file paths, line numbers, or security vulnerability specifics. The issue provides public tracking; the backlog holds the full detail.
+4. **Plan** the fix using a standard GSD plan file (`BUG-{id}-PLAN.md`)
+5. **Fix** on a `bugfix/BUGS-{id}-description` branch
+6. **Close** by moving the entry to `CLOSED.md` with PR reference
 
 ### Integration with Numbered Phases
 
@@ -45,7 +45,7 @@ Some numbered phases (e.g., Phase 6: Error Handling, Phase 9: Security Hardening
 
 ## For New Developers
 
-After cloning the repo, you won't have the private bug files. Ask a team member for the current `KNOWN_BUGS.md` and `.planning/phases/bugs/` contents. These are shared out-of-band (not via git).
+After cloning the repo, you won't have the private bug files. Ask a team member for the current `.planning/phases/bugs/` and `.planning/codebase/CONCERNS.md` contents. These are shared out-of-band (not via git).
 
 ## Rationale
 

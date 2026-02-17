@@ -185,5 +185,7 @@ See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow
 - [Feature Backlog](FEATURE_BACKLOG.md) — Future ideas and enhancements not tied to any milestone. Capture ideas here during development; evaluate when planning new work.
 - [Bug Tracking](.docs/BUG_TRACKING.md) — How known bugs are tracked privately (gitignored files, persistent bugs phase)
 
+**Bug logging (MANDATORY):** When you discover a bug during development, review, or testing, log it in `.planning/phases/bugs/BACKLOG.md` with severity and location. Also create a GitHub issue using the bug report template — keep sensitive details (exact paths, line numbers, security specifics) in the backlog only. When a bug is fixed, move it to `.planning/phases/bugs/CLOSED.md` with the PR reference. These files are gitignored — never commit them.
+
 **External references:**
 - [gqlgen](https://gqlgen.com/) | [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/) | [Effective Go](https://go.dev/doc/effective_go) | [PostgreSQL 17](https://www.postgresql.org/docs/17/)
