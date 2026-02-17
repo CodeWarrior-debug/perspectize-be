@@ -360,7 +360,8 @@
 		return () => mq.removeEventListener('change', handler);
 	});
 
-	// Mobile column visibility — deferred to next frame so AG Grid column components are ready
+	// Responsive column visibility — deferred to next frame so AG Grid column components are ready
+	// Mobile: only Item + Type. Desktop: restore colDef defaults (hide: description, updatedAt, createdAt)
 	$effect(() => {
 		if (!gridApi || !gridReady) return;
 		const api = gridApi;
@@ -370,8 +371,8 @@
 				api.setColumnsVisible(['duration', 'views', 'likes', 'publishDate', 'channel', 'createdAt', 'updatedAt', 'tags', 'description'], false);
 				api.setColumnsVisible(['item', 'type'], true);
 			} else {
-				api.setColumnsVisible(['item', 'type', 'duration', 'createdAt', 'updatedAt'], true);
-				api.setColumnsVisible(['views', 'likes', 'publishDate', 'channel', 'tags', 'description'], false);
+				api.setColumnsVisible(['item', 'type', 'duration', 'views', 'likes', 'publishDate', 'channel', 'tags'], true);
+				api.setColumnsVisible(['description', 'updatedAt', 'createdAt'], false);
 			}
 		});
 	});

@@ -113,6 +113,8 @@ Uses `ag-grid-svelte5` wrapper (bundles AG Grid v32.x). **Do NOT install `ag-gri
 
 Full setup and examples: [docs/AG_GRID.md](docs/AG_GRID.md)
 
+**Column visibility gotcha:** `ActivityTable.svelte` controls visibility in TWO places that must stay in sync: `hide: true` in colDef (initial default) and `$effect` with `setColumnsVisible()` (responsive override — runs on gridReady, always wins). When adding/changing columns, update BOTH. See [ADDING_AG_GRID_COLUMN.md](../.claude/docs/ADDING_AG_GRID_COLUMN.md) Decision 7.
+
 ## Figma Design Workflow
 
 - **[docs/FIGMA.md](docs/FIGMA.md)** — Figma file reference (file key, pages, variables, code↔Figma mapping)
