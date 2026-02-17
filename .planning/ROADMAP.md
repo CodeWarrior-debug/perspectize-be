@@ -551,7 +551,7 @@ Phases 11-15 planned from FEATURE_BACKLOG.md. Phase 16 added for mobile app rese
 ### Phase 16: Mobile App Strategy
 **Goal**: Research and evaluate native mobile app approaches (Capacitor, Tauri, PWA) for wrapping the existing SvelteKit SPA. Produce a recommendation with proof-of-concept.
 **Depends on**: Phase 12 (auth must exist before shipping a mobile app)
-**Plans**: 0 plans
+**Plans**: 2 plans in 2 waves
 
 **Research scope:**
 - Capacitor (Ionic) — WebView wrapper, native plugin ecosystem, App Store/Play Store distribution
@@ -562,7 +562,8 @@ Phases 11-15 planned from FEATURE_BACKLOG.md. Phase 16 added for mobile app rese
 - Proof-of-concept with recommended approach
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 16 to break down)
+- [ ] 16-01-PLAN.md — Capacitor integration + PWA configuration (install deps, init platforms, manifest, service worker)
+- [ ] 16-02-PLAN.md — POC verification in iOS Simulator + recommendation document (checkpoint)
 
 ## Progress
 
