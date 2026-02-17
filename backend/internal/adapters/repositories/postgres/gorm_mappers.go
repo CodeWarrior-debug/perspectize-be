@@ -12,10 +12,14 @@ func userModelToDomain(m *UserModel) *domain.User {
 	if m == nil {
 		return nil
 	}
+	email := ""
+	if m.Email != nil {
+		email = *m.Email
+	}
 	return &domain.User{
 		ID:        m.ID,
 		Username:  m.Username,
-		Email:     m.Email,
+		Email:     email,
 		Role:      domain.UserRole(strings.ToUpper(m.Role)),
 		Active:    m.Active,
 		CreatedAt: m.CreatedAt,
@@ -28,10 +32,14 @@ func userDomainToModel(u *domain.User) *UserModel {
 	if u == nil {
 		return nil
 	}
+	var email *string
+	if u.Email != "" {
+		email = &u.Email
+	}
 	return &UserModel{
 		ID:       u.ID,
 		Username: u.Username,
-		Email:    u.Email,
+		Email:    email,
 		Role:     strings.ToLower(string(u.Role)),
 		Active:   u.Active,
 		// CreatedAt and UpdatedAt are managed by GORM
