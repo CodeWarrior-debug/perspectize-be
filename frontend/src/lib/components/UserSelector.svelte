@@ -42,11 +42,15 @@
 
 <div class="flex items-center gap-2">
 	{#if usersQuery.isLoading}
-		<div class="h-9 rounded-md border border-primary-foreground/30 bg-primary-foreground/10 px-3 text-sm text-primary-foreground flex items-center opacity-50">
+		<div
+			class="h-9 rounded-md border border-primary-foreground/30 bg-primary-foreground/10 px-3 text-sm text-primary-foreground flex items-center opacity-50"
+		>
 			Loading users...
 		</div>
 	{:else if usersQuery.error}
-		<div class="h-9 rounded-md border border-primary-foreground/30 bg-primary-foreground/10 px-3 text-sm text-destructive flex items-center">
+		<div
+			class="h-9 rounded-md border border-primary-foreground/30 bg-primary-foreground/10 px-3 text-sm text-destructive flex items-center"
+		>
 			Error loading users
 		</div>
 	{:else if usersQuery.data}

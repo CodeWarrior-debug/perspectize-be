@@ -14,9 +14,9 @@
 			queries: {
 				enabled: browser, // Only run queries in browser
 				staleTime: 60 * 1000, // 1 minute
-				retry: 1
-			}
-		}
+				retry: 1,
+			},
+		},
 	});
 
 	let { children } = $props();

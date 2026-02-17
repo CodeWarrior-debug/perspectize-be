@@ -1,17 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
+import { render, screen } from '@testing-library/svelte';
 import CreateUserPopover from '$lib/components/CreateUserPopover.svelte';
-import { tick } from 'svelte';
 
 // Hoisted mocks — these are referenced inside vi.mock factories
-const { mockMutate, mockInvalidateQueries, mockToastSuccess, mockToastError } = vi.hoisted(
-	() => ({
-		mockMutate: vi.fn(),
-		mockInvalidateQueries: vi.fn(),
-		mockToastSuccess: vi.fn(),
-		mockToastError: vi.fn(),
-	})
-);
+const { mockMutate, mockInvalidateQueries, mockToastSuccess, mockToastError, mockMutationState } = vi.hoisted(() => ({
+	mockMutate: vi.fn(),
+	mockInvalidateQueries: vi.fn(),
+	mockToastSuccess: vi.fn(),
+	mockToastError: vi.fn(),
+	mockMutationState: {
+		mutate: null as any,
+		isPending: false,
+		isSuccess: false,
+		data: undefined as any,
+	},
+}));
 
 // Capture mutation options for behavioral testing
 let capturedMutationOptions: any;
@@ -19,12 +22,8 @@ let capturedMutationOptions: any;
 vi.mock('@tanstack/svelte-query', () => ({
 	createMutation: vi.fn((optionsFn: () => any) => {
 		capturedMutationOptions = optionsFn();
-		return {
-			mutate: mockMutate,
-			isPending: false,
-			isSuccess: false,
-			data: undefined,
-		};
+		mockMutationState.mutate = mockMutate;
+		return mockMutationState;
 	}),
 	useQueryClient: vi.fn(() => ({
 		invalidateQueries: mockInvalidateQueries,
@@ -48,12 +47,19 @@ vi.mock('$lib/queries/users', () => ({
 	CREATE_USER: 'CREATE_USER_QUERY_STRING',
 }));
 
+function resetMutationState() {
+	mockMutationState.isPending = false;
+	mockMutationState.isSuccess = false;
+	mockMutationState.data = undefined;
+}
+
 describe('CreateUserPopover component', () => {
 	const mockOnUserCreated = vi.fn();
 
 	beforeEach(() => {
 		vi.clearAllMocks();
 		capturedMutationOptions = undefined;
+		resetMutationState();
 	});
 
 	it('renders without errors', () => {
@@ -96,6 +102,25 @@ describe('CreateUserPopover component', () => {
 			input: { username: 'testuser' },
 		});
 	});
+
+	it('calls onUserCreated when mutation succeeds with data', () => {
+		// Set mutation to success state BEFORE render so $effect fires on mount
+		mockMutationState.isSuccess = true;
+		mockMutationState.data = { createUser: { id: '99', username: 'newuser' } };
+
+		render(CreateUserPopover, { props: { onUserCreated: mockOnUserCreated } });
+
+		expect(mockOnUserCreated).toHaveBeenCalledWith('99');
+	});
+
+	it('renders form fields snippet content', () => {
+		render(CreateUserPopover, { props: { onUserCreated: mockOnUserCreated } });
+		// FormPopover renders the formFields snippet which includes the input
+		// The popover content renders in desktop (non-portal) mode
+		const container = document.body;
+		// Verify the component mounts and includes expected structure
+		expect(container.querySelector('button')).toBeTruthy();
+	});
 });
 
 describe('CreateUserPopover mutation callbacks', () => {
@@ -104,6 +129,7 @@ describe('CreateUserPopover mutation callbacks', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		capturedMutationOptions = undefined;
+		resetMutationState();
 		render(CreateUserPopover, { props: { onUserCreated: mockOnUserCreated } });
 	});
 

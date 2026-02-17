@@ -5,7 +5,7 @@ import {
 	type User,
 	type UsersResponse,
 	type CreateUserInput,
-	type CreateUserResponse
+	type CreateUserResponse,
 } from '$lib/queries/users';
 
 describe('User Queries', () => {
@@ -32,7 +32,7 @@ describe('User Queries', () => {
 
 		it('exports CreateUserResponse interface', () => {
 			const response: CreateUserResponse = {
-				createUser: { id: '1', username: 'newuser' }
+				createUser: { id: '1', username: 'newuser' },
 			};
 			expect(response).toBeDefined();
 		});

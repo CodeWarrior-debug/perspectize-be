@@ -40,7 +40,7 @@ export const selectedUserId = {
 	set value(newValue: number | null) {
 		_selectedUserId = newValue;
 		syncToSession(newValue);
-	}
+	},
 };
 
 // Helper to clear selection

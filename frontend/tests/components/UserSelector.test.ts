@@ -3,11 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/svelte';
 import UserSelector from '$lib/components/UserSelector.svelte';
 
 // Hoisted mocks for store functions and query state
-const {
-	mockSetSelectedUserId,
-	mockGetSelectedUserId,
-	mockQueryState,
-} = vi.hoisted(() => ({
+const { mockSetSelectedUserId, mockGetSelectedUserId, mockQueryState } = vi.hoisted(() => ({
 	mockSetSelectedUserId: vi.fn(),
 	mockGetSelectedUserId: vi.fn((): number | null => null),
 	mockQueryState: {
@@ -17,7 +13,7 @@ const {
 			users: [
 				{ id: '1', username: 'alice' },
 				{ id: '2', username: 'bob' },
-			]
+			],
 		} as { users: { id: string; username: string }[] } | null,
 	},
 }));
@@ -67,7 +63,7 @@ function resetQueryState() {
 		users: [
 			{ id: '1', username: 'alice' },
 			{ id: '2', username: 'bob' },
-		]
+		],
 	};
 }
 

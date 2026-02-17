@@ -22,6 +22,6 @@ export function useCreateUser() {
 			} else {
 				toast.error('Failed to create user. Please try again.');
 			}
-		}
+		},
 	}));
 }

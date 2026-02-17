@@ -1,5 +1,15 @@
 <script lang="ts">
-	import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Button, Input, Label } from '$lib/components/shadcn';
+	import {
+		Dialog,
+		DialogContent,
+		DialogHeader,
+		DialogTitle,
+		DialogDescription,
+		DialogFooter,
+		Button,
+		Input,
+		Label,
+	} from '$lib/components/shadcn';
 	import { useAddVideo } from '$lib/queries/hooks/useAddVideo';
 	import { validateYouTubeUrl } from '$lib/utils/youtube';
 
@@ -67,12 +77,7 @@
 			</div>
 
 			<DialogFooter>
-				<Button
-					type="button"
-					variant="outline"
-					onclick={() => (open = false)}
-					disabled={mutation.isPending}
-				>
+				<Button type="button" variant="outline" onclick={() => (open = false)} disabled={mutation.isPending}>
 					Cancel
 				</Button>
 				<Button type="submit" disabled={mutation.isPending || !url.trim()}>

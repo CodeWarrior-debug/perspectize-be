@@ -15,7 +15,7 @@ export function useAddVideo() {
 				throw new Error('No user selected');
 			}
 			return graphqlClient.request<CreateContentResponse>(CREATE_CONTENT_FROM_YOUTUBE, {
-				input: { url, userId }
+				input: { url, userId },
 			});
 		},
 		onSuccess: (data: CreateContentResponse) => {
@@ -24,19 +24,16 @@ export function useAddVideo() {
 
 			if (newItem) {
 				// Insert new item at top of all active list caches
-				queryClient.setQueriesData<ContentResponse>(
-					{ queryKey: queryKeys.content.lists() },
-					(oldData) => {
-						if (!oldData) return oldData;
-						return {
-							content: {
-								...oldData.content,
-								items: [newItem, ...oldData.content.items],
-								totalCount: (oldData.content.totalCount ?? 0) + 1,
-							},
-						};
-					}
-				);
+				queryClient.setQueriesData<ContentResponse>({ queryKey: queryKeys.content.lists() }, (oldData) => {
+					if (!oldData) return oldData;
+					return {
+						content: {
+							...oldData.content,
+							items: [newItem, ...oldData.content.items],
+							totalCount: (oldData.content.totalCount ?? 0) + 1,
+						},
+					};
+				});
 
 				// Mark stale for eventual consistency (no immediate refetch)
 				queryClient.invalidateQueries({
@@ -62,6 +59,6 @@ export function useAddVideo() {
 			} else {
 				toast.error('Failed to add video. Please try again.');
 			}
-		}
+		},
 	}));
 }

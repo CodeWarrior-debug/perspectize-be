@@ -155,17 +155,22 @@ If yes:
 | Visible on desktop by default | `hide: false` (or omit) |
 | Hidden by default (column menu toggle) | `hide: true` |
 
-### Mobile visibility
+### Responsive visibility (`$effect` override)
 
-Update the `$effect` block in ActivityTable.svelte that toggles columns:
+**IMPORTANT:** Column visibility is controlled in TWO places that must stay in sync:
+
+1. **`hide: true`** in the colDef — sets the initial default
+2. **`$effect` block** in ActivityTable.svelte — overrides visibility on mobile/desktop breakpoint changes
+
+The `$effect` always runs on `gridReady`, so it wins. If you only set `hide: true` in colDef but don't update the `$effect`, the column will still show on desktop.
 
 ```typescript
-// Currently mobile shows: item, type only
-// Desktop shows: item, type, duration, views, likes, publishDate
-// Hidden on all by default: channel, createdAt, updatedAt, tags, description
+// Mobile: item, type only
+// Desktop: item, type, duration, views, likes, publishDate, channel, tags
+// Hidden on desktop: description, updatedAt, createdAt
 ```
 
-Add your column to the appropriate visibility list in both the `isMobile` and desktop branches.
+**When adding a column:** Add it to the appropriate `setColumnsVisible` list in BOTH the `isMobile` and desktop branches of the `$effect`.
 
 ---
 
@@ -179,11 +184,11 @@ Insert the `ColDef` in the `columnDefs` array at the desired position. Current o
 4. views
 5. likes
 6. publishDate
-7. channel (hidden)
-8. createdAt (hidden)
-9. updatedAt (hidden)
-10. tags (hidden)
-11. description (hidden)
+7. channel
+8. tags
+9. description (hidden)
+10. updatedAt (hidden)
+11. createdAt (hidden)
 
 ---
 

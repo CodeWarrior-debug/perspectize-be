@@ -129,7 +129,7 @@ describe('nameCellRenderer', () => {
 
 	it('returns anchor element when URL is present', () => {
 		const result = nameCellRenderer({
-			data: { name: 'My Video', url: 'https://youtube.com/watch?v=abc' }
+			data: { name: 'My Video', url: 'https://youtube.com/watch?v=abc' },
 		});
 		expect(result).toBeInstanceOf(HTMLAnchorElement);
 		const anchor = result as HTMLAnchorElement;
@@ -142,7 +142,7 @@ describe('nameCellRenderer', () => {
 
 	it('returns span element when URL is null', () => {
 		const result = nameCellRenderer({
-			data: { name: 'No URL Video', url: null }
+			data: { name: 'No URL Video', url: null },
 		});
 		expect(result).toBeInstanceOf(HTMLSpanElement);
 		expect((result as HTMLSpanElement).textContent).toBe('No URL Video');
@@ -150,7 +150,7 @@ describe('nameCellRenderer', () => {
 
 	it('returns span element when URL is empty string', () => {
 		const result = nameCellRenderer({
-			data: { name: 'Empty URL', url: '' as unknown as null }
+			data: { name: 'Empty URL', url: '' as unknown as null },
 		});
 		expect(result).toBeInstanceOf(HTMLSpanElement);
 		expect((result as HTMLSpanElement).textContent).toBe('Empty URL');
@@ -299,7 +299,7 @@ describe('itemCellRenderer', () => {
 
 	it('renders container with thumbnail and title link', () => {
 		const result = itemCellRenderer({
-			data: { name: 'My Video', url: 'https://youtube.com/watch?v=abc123' }
+			data: { name: 'My Video', url: 'https://youtube.com/watch?v=abc123' },
 		}) as HTMLElement;
 
 		expect(result).toBeInstanceOf(HTMLDivElement);
@@ -320,7 +320,7 @@ describe('itemCellRenderer', () => {
 
 	it('renders without thumbnail when no video ID', () => {
 		const result = itemCellRenderer({
-			data: { name: 'No URL', url: null }
+			data: { name: 'No URL', url: null },
 		}) as HTMLElement;
 
 		expect(result.querySelector('img')).toBeNull();
@@ -330,7 +330,7 @@ describe('itemCellRenderer', () => {
 
 	it('adds thumbnail-mobile-hide class to thumbnail', () => {
 		const result = itemCellRenderer({
-			data: { name: 'Video with thumbnail', url: 'https://youtube.com/watch?v=test123' }
+			data: { name: 'Video with thumbnail', url: 'https://youtube.com/watch?v=test123' },
 		}) as HTMLElement;
 
 		const img = result.querySelector('img');
@@ -345,7 +345,7 @@ describe('typeCellRenderer', () => {
 
 	it('renders YouTube play icon with full centering', () => {
 		const result = typeCellRenderer({
-			data: { contentType: 'youtube_video' }
+			data: { contentType: 'youtube_video' },
 		}) as HTMLElement;
 
 		expect(result).toBeInstanceOf(HTMLDivElement);
@@ -366,7 +366,7 @@ describe('typeCellRenderer', () => {
 
 	it('includes sr-only span with content type for filter matching', () => {
 		const result = typeCellRenderer({
-			data: { contentType: 'YOUTUBE' }
+			data: { contentType: 'YOUTUBE' },
 		}) as HTMLElement;
 
 		const hidden = result.querySelector('.sr-only');

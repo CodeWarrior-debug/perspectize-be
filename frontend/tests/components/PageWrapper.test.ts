@@ -5,13 +5,13 @@ import { createRawSnippet } from 'svelte';
 
 function createChildrenSnippet(text: string = 'Test content') {
 	return createRawSnippet(() => ({
-		render: () => `<span>${text}</span>`
+		render: () => `<span>${text}</span>`,
 	}));
 }
 
 function renderWrapper(props: Record<string, unknown> = {}) {
 	const result = render(PageWrapper, {
-		props: { children: createChildrenSnippet(), ...props }
+		props: { children: createChildrenSnippet(), ...props },
 	});
 	const main = result.container.querySelector('main');
 	return { ...result, main };
@@ -25,7 +25,7 @@ describe('PageWrapper component', () => {
 
 	it('renders the provided children content', () => {
 		const { container } = render(PageWrapper, {
-			props: { children: createChildrenSnippet('Hello World') }
+			props: { children: createChildrenSnippet('Hello World') },
 		});
 		expect(container.textContent).toContain('Hello World');
 	});
