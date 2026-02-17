@@ -37,6 +37,7 @@
 
 	// State management
 	let gridApi = $state<GridApi | null>(null);
+	let gridReady = $state(false);
 	let pageSize = $state(10);
 	let currentPage = $state(0);
 	let cursors = $state<(string | null)[]>([null]); // Stack of cursors for pagination
@@ -290,6 +291,7 @@
 		suppressCellFocus: true,
 		onGridReady: (params) => {
 			gridApi = params.api;
+			gridReady = true;
 		},
 		onSortChanged: (event: SortChangedEvent) => {
 			const sortModel = event.api.getColumnState()
@@ -360,7 +362,7 @@
 
 	// Mobile column visibility
 	$effect(() => {
-		if (!gridApi) return;
+		if (!gridApi || !gridReady) return;
 		if (isMobile) {
 			gridApi.setColumnsVisible(['duration', 'views', 'likes', 'publishDate', 'channel', 'createdAt', 'updatedAt', 'tags', 'description'], false);
 			gridApi.setColumnsVisible(['item', 'type'], true);
