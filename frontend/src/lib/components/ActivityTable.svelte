@@ -45,7 +45,8 @@
 	let sortOrder = $state<'ASC' | 'DESC'>('DESC');
 	let filterText = $state<string>('');
 	let debounceTimer: ReturnType<typeof setTimeout>;
-	let isMobile = $state(false);
+	// Responsive tier: 'xs' (<445px), 'sm' (445-639px), 'md' (640-899px), 'lg' (900px+)
+	let responsiveTier = $state<'xs' | 'sm' | 'md' | 'lg'>('lg');
 
 	// TanStack Query for data fetching
 	let currentCursor = $derived(cursors[currentPage]);
@@ -349,35 +350,50 @@
 		cursors = [null];
 	}
 
-	// Mobile breakpoint detection
+	// Responsive breakpoint detection — 4 tiers for progressive column reveal
 	$effect(() => {
 		if (typeof window === 'undefined') return;
-		const mq = window.matchMedia('(max-width: 767px)');
-		const handler = (e: MediaQueryListEvent | MediaQueryList) => {
-			isMobile = 'matches' in e ? e.matches : (e as MediaQueryListEvent).matches;
+		const mqSm = window.matchMedia('(min-width: 445px)');
+		const mqMd = window.matchMedia('(min-width: 640px)');
+		const mqLg = window.matchMedia('(min-width: 900px)');
+		const update = () => {
+			if (mqLg.matches) responsiveTier = 'lg';
+			else if (mqMd.matches) responsiveTier = 'md';
+			else if (mqSm.matches) responsiveTier = 'sm';
+			else responsiveTier = 'xs';
 		};
-		handler(mq);
-		mq.addEventListener('change', handler);
-		return () => mq.removeEventListener('change', handler);
+		update();
+		mqSm.addEventListener('change', update);
+		mqMd.addEventListener('change', update);
+		mqLg.addEventListener('change', update);
+		return () => {
+			mqSm.removeEventListener('change', update);
+			mqMd.removeEventListener('change', update);
+			mqLg.removeEventListener('change', update);
+		};
 	});
 
-	// Responsive column visibility — deferred to next frame so AG Grid column components are ready
-	// Mobile: only Item + Type. Desktop: restore colDef defaults (hide: description, updatedAt, createdAt)
+	// Responsive column visibility — progressive reveal by tier
+	// xs (<445px):  Item, Type
+	// sm (445-639): Item, Type, Channel
+	// md (640-899): Item, Type, Channel, Duration, Date
+	// lg (900+):    Item, Type, Channel, Duration, Date, Views, Likes, Tags
 	$effect(() => {
 		if (!gridApi || !gridReady) return;
 		const api = gridApi;
-		const mobile = isMobile;
+		const tier = responsiveTier;
 		requestAnimationFrame(() => {
-			if (mobile) {
-				api.setColumnsVisible(
-					['duration', 'views', 'likes', 'publishDate', 'channel', 'createdAt', 'updatedAt', 'tags', 'description'],
-					false,
-				);
-				api.setColumnsVisible(['item', 'type'], true);
-			} else {
-				api.setColumnsVisible(['item', 'type', 'duration', 'views', 'likes', 'publishDate', 'channel', 'tags'], true);
-				api.setColumnsVisible(['description', 'updatedAt', 'createdAt'], false);
-			}
+			const alwaysVisible = ['item', 'type'];
+			const smCols = ['channel'];
+			const mdCols = ['duration', 'publishDate'];
+			const lgCols = ['views', 'likes', 'tags'];
+			const alwaysHidden = ['description', 'updatedAt', 'createdAt'];
+
+			api.setColumnsVisible(alwaysVisible, true);
+			api.setColumnsVisible(alwaysHidden, false);
+			api.setColumnsVisible(smCols, tier !== 'xs');
+			api.setColumnsVisible(mdCols, tier === 'md' || tier === 'lg');
+			api.setColumnsVisible(lgCols, tier === 'lg');
 		});
 	});
 
