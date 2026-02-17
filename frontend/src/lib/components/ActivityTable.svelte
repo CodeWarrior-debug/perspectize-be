@@ -17,22 +17,22 @@
 		formatPublishDate,
 		formatTags,
 		truncateDescription,
-		contentRowId
+		contentRowId,
 	} from '$lib/utils/formatting';
 	import { TagsTooltip } from '$lib/components/TagsTooltip';
 	import { DescriptionTooltip } from '$lib/components/DescriptionTooltip';
 
 	// GraphQL ContentSortBy to AG Grid colId mapping
 	const SORT_FIELD_MAP: Record<string, string> = {
-		'item': 'NAME',
-		'type': 'NAME', // type not sortable in backend, fallback to NAME
-		'duration': 'NAME', // duration not sortable, fallback to NAME
-		'views': 'VIEW_COUNT',
-		'likes': 'LIKE_COUNT',
-		'publishDate': 'PUBLISHED_AT',
-		'channel': 'NAME', // channel not sortable, fallback
-		'createdAt': 'CREATED_AT',
-		'updatedAt': 'UPDATED_AT'
+		item: 'NAME',
+		type: 'NAME', // type not sortable in backend, fallback to NAME
+		duration: 'NAME', // duration not sortable, fallback to NAME
+		views: 'VIEW_COUNT',
+		likes: 'LIKE_COUNT',
+		publishDate: 'PUBLISHED_AT',
+		channel: 'NAME', // channel not sortable, fallback
+		createdAt: 'CREATED_AT',
+		updatedAt: 'UPDATED_AT',
 	};
 
 	// State management
@@ -56,7 +56,7 @@
 			sortOrder,
 			search: filterText,
 			first: pageSize,
-			after: currentCursor
+			after: currentCursor,
 		}),
 		queryFn: async () => {
 			const response = await graphqlClient.request<ContentResponse>(LIST_CONTENT, {
@@ -65,7 +65,7 @@
 				sortBy,
 				sortOrder,
 				filter: filterText ? { search: filterText } : undefined,
-				includeTotalCount: true
+				includeTotalCount: true,
 			});
 
 			// Update cursors stack for next page
@@ -119,7 +119,7 @@
 			filter: 'agTextColumnFilter',
 			cellRenderer: itemCellRenderer,
 			tooltipValueGetter: (params) => params.data?.name ?? '',
-			headerTooltip: 'Video title and thumbnail from YouTube API'
+			headerTooltip: 'Video title and thumbnail from YouTube API',
 		},
 		{
 			colId: 'type',
@@ -138,7 +138,7 @@
 				return params.data?.contentType?.toLowerCase() ?? '';
 			},
 			cellRenderer: typeCellRenderer,
-			headerTooltip: 'Content type'
+			headerTooltip: 'Content type',
 		},
 		{
 			colId: 'duration',
@@ -154,7 +154,7 @@
 				const b = nodeB?.data?.length ?? 0;
 				return a - b;
 			},
-			headerTooltip: 'Video duration from YouTube API'
+			headerTooltip: 'Video duration from YouTube API',
 		},
 		{
 			colId: 'views',
@@ -167,7 +167,7 @@
 			filter: 'agNumberColumnFilter',
 			valueFormatter: (params) => formatCount(params.value),
 			tooltipValueGetter: (params) => formatCountExact(params.data?.viewCount ?? null),
-			headerTooltip: 'View count from YouTube API'
+			headerTooltip: 'View count from YouTube API',
 		},
 		{
 			colId: 'likes',
@@ -180,7 +180,7 @@
 			filter: 'agNumberColumnFilter',
 			valueFormatter: (params) => formatCount(params.value),
 			tooltipValueGetter: (params) => formatCountExact(params.data?.likeCount ?? null),
-			headerTooltip: 'Like count from YouTube API'
+			headerTooltip: 'Like count from YouTube API',
 		},
 		{
 			colId: 'publishDate',
@@ -196,7 +196,7 @@
 				return val ? new Date(val) : null;
 			},
 			valueFormatter: (params) => formatPublishDate(params.value),
-			headerTooltip: 'Publish date from YouTube API'
+			headerTooltip: 'Publish date from YouTube API',
 		},
 		{
 			colId: 'channel',
@@ -207,7 +207,7 @@
 			maxWidth: 200,
 			sortable: true,
 			filter: 'agTextColumnFilter',
-			headerTooltip: 'Channel name from YouTube API'
+			headerTooltip: 'Channel name from YouTube API',
 		},
 		{
 			colId: 'tags',
@@ -222,7 +222,7 @@
 			valueFormatter: (params) => formatTags(params.value),
 			tooltipComponent: TagsTooltip,
 			tooltipField: 'tags',
-			headerTooltip: 'Tags from YouTube API'
+			headerTooltip: 'Tags from YouTube API',
 		},
 		{
 			colId: 'description',
@@ -236,7 +236,7 @@
 			tooltipComponent: DescriptionTooltip,
 			tooltipField: 'description',
 			headerTooltip: 'Video description from YouTube API',
-			hide: true
+			hide: true,
 		},
 		{
 			colId: 'updatedAt',
@@ -253,7 +253,7 @@
 			},
 			valueFormatter: dateValueFormatter,
 			headerTooltip: 'Last updated in Perspectize',
-			hide: true
+			hide: true,
 		},
 
 		{
@@ -271,8 +271,8 @@
 			},
 			valueFormatter: dateValueFormatter,
 			headerTooltip: 'Date added to Perspectize',
-			hide: true
-		}
+			hide: true,
+		},
 	];
 
 	const gridOptions: GridOptions<ContentItem> = {
@@ -294,8 +294,9 @@
 			gridReady = true;
 		},
 		onSortChanged: (event: SortChangedEvent) => {
-			const sortModel = event.api.getColumnState()
-				.filter(col => col.sort)
+			const sortModel = event.api
+				.getColumnState()
+				.filter((col) => col.sort)
 				.sort((a, b) => (a.sortIndex ?? 0) - (b.sortIndex ?? 0));
 
 			if (sortModel.length > 0) {
@@ -327,7 +328,7 @@
 				// Other column filters (Type, Length, etc.) work client-side via AG Grid
 			}, 500);
 		},
-		overlayNoRowsTemplate: '<div class="py-12 text-center text-muted-foreground">No items</div>'
+		overlayNoRowsTemplate: '<div class="py-12 text-center text-muted-foreground">No items</div>',
 	};
 
 	function handleNextPage() {
@@ -368,7 +369,10 @@
 		const mobile = isMobile;
 		requestAnimationFrame(() => {
 			if (mobile) {
-				api.setColumnsVisible(['duration', 'views', 'likes', 'publishDate', 'channel', 'createdAt', 'updatedAt', 'tags', 'description'], false);
+				api.setColumnsVisible(
+					['duration', 'views', 'likes', 'publishDate', 'channel', 'createdAt', 'updatedAt', 'tags', 'description'],
+					false,
+				);
 				api.setColumnsVisible(['item', 'type'], true);
 			} else {
 				api.setColumnsVisible(['item', 'type', 'duration', 'views', 'likes', 'publishDate', 'channel', 'tags'], true);
@@ -390,9 +394,7 @@
 	{#if contentQuery.isError}
 		<div class="flex-1 min-h-0 flex items-center justify-center">
 			<div class="text-center py-12 px-4">
-				<p class="text-muted-foreground mb-4">
-					Failed to load content. Please try again.
-				</p>
+				<p class="text-muted-foreground mb-4">Failed to load content. Please try again.</p>
 				<button
 					onclick={() => contentQuery.refetch()}
 					class="px-4 py-2 text-sm font-medium border border-input rounded-md bg-background hover:bg-accent"
@@ -409,7 +411,9 @@
 	{/if}
 
 	<!-- Manual Pagination Controls -->
-	<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0 px-2 md:px-4 py-2 border-t border-border text-xs md:text-sm">
+	<div
+		class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0 px-2 md:px-4 py-2 border-t border-border text-xs md:text-sm"
+	>
 		<div class="flex items-center gap-2 md:gap-4">
 			<div class="text-muted-foreground">
 				{totalCount} total

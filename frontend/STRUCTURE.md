@@ -111,9 +111,9 @@ Tailwind v4 uses `@theme` in CSS instead of a `tailwind.config.js` file. Configu
 
 ```css
 @theme {
-  --default-font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  --color-primary: oklch(0.216 0.006 56.043); /* Navy #1a365d */
-  --color-primary-foreground: oklch(0.985 0.001 106.423);
+	--default-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+	--color-primary: oklch(0.216 0.006 56.043); /* Navy #1a365d */
+	--color-primary-foreground: oklch(0.985 0.001 106.423);
 }
 ```
 
@@ -129,7 +129,7 @@ Import via `$lib/components/ui/button`:
 
 ```svelte
 <script>
-  import { Button } from '$lib/components/ui/button';
+	import { Button } from '$lib/components/ui/button';
 </script>
 
 <Button variant="default">Primary Button</Button>
@@ -139,13 +139,13 @@ Import via `$lib/components/ui/button`:
 
 Tailwind CSS v4 default breakpoints:
 
-| Breakpoint | Min Width | Target Devices        |
-|------------|-----------|------------------------|
-| `sm`       | 640px     | Small tablets          |
-| `md`       | 768px     | Tablets (portrait)     |
+| Breakpoint | Min Width | Target Devices               |
+| ---------- | --------- | ---------------------------- |
+| `sm`       | 640px     | Small tablets                |
+| `md`       | 768px     | Tablets (portrait)           |
 | `lg`       | 1024px    | Tablets (landscape), laptops |
-| `xl`       | 1280px    | Desktop                |
-| `2xl`      | 1536px    | Large desktop          |
+| `xl`       | 1280px    | Desktop                      |
+| `2xl`      | 1536px    | Large desktop                |
 
 ### Responsive Design Pattern
 
@@ -171,10 +171,10 @@ Query and mutation definitions live in `src/lib/queries/`:
 import { createQuery, createMutation } from '@tanstack/svelte-query';
 
 export function perspectiveQuery(id: number) {
-  return createQuery(() => ({
-    queryKey: ['perspective', id],
-    queryFn: () => fetchPerspective(id)
-  }));
+	return createQuery(() => ({
+		queryKey: ['perspective', id],
+		queryFn: () => fetchPerspective(id),
+	}));
 }
 ```
 
@@ -186,17 +186,17 @@ Form logic lives in component files (not separate utilities):
 
 ```svelte
 <script lang="ts">
-  import { createForm } from '@tanstack/svelte-form';
+	import { createForm } from '@tanstack/svelte-form';
 
-  const form = createForm(() => ({
-    defaultValues: {
-      claim: '',
-      quality: 50
-    },
-    onSubmit: async ({ value }) => {
-      // Submit logic
-    }
-  }));
+	const form = createForm(() => ({
+		defaultValues: {
+			claim: '',
+			quality: 50,
+		},
+		onSubmit: async ({ value }) => {
+			// Submit logic
+		},
+	}));
 </script>
 ```
 
@@ -207,31 +207,31 @@ Shared types live in `src/lib/types/`:
 ```typescript
 // src/lib/types/perspective.ts
 export interface Perspective {
-  id: number;
-  claim: string;
-  quality: number;
-  agreement: number;
-  privacy: Privacy;
+	id: number;
+	claim: string;
+	quality: number;
+	agreement: number;
+	privacy: Privacy;
 }
 
 export enum Privacy {
-  PUBLIC = 'PUBLIC',
-  PRIVATE = 'PRIVATE'
+	PUBLIC = 'PUBLIC',
+	PRIVATE = 'PRIVATE',
 }
 ```
 
 ## Example File Purposes
 
-| File | Purpose |
-|------|---------|
-| `src/routes/+page.svelte` | Home page (landing, search) |
-| `src/routes/perspectives/+page.svelte` | Browse perspectives (grid, filters) |
-| `src/lib/components/PerspectiveCard.svelte` | Perspective display card |
-| `src/lib/components/PerspectiveForm.svelte` | Create/edit perspective form |
-| `src/lib/components/PerspectiveGrid.svelte` | AG Grid wrapper for perspectives |
-| `src/lib/queries/perspectives.ts` | TanStack Query definitions |
-| `src/lib/utils/validation.ts` | Validation utilities |
-| `src/lib/types/perspective.ts` | TypeScript types |
+| File                                        | Purpose                             |
+| ------------------------------------------- | ----------------------------------- |
+| `src/routes/+page.svelte`                   | Home page (landing, search)         |
+| `src/routes/perspectives/+page.svelte`      | Browse perspectives (grid, filters) |
+| `src/lib/components/PerspectiveCard.svelte` | Perspective display card            |
+| `src/lib/components/PerspectiveForm.svelte` | Create/edit perspective form        |
+| `src/lib/components/PerspectiveGrid.svelte` | AG Grid wrapper for perspectives    |
+| `src/lib/queries/perspectives.ts`           | TanStack Query definitions          |
+| `src/lib/utils/validation.ts`               | Validation utilities                |
+| `src/lib/types/perspective.ts`              | TypeScript types                    |
 
 ## Scripts
 

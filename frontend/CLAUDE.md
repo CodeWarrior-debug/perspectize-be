@@ -42,14 +42,14 @@ pnpm run test         # Tests in watch mode
 
 This project uses **Svelte 5 runes** exclusively. Do not use Svelte 4 syntax.
 
-| Svelte 5 (use this) | Svelte 4 (do NOT use) |
-|----------------------|-----------------------|
-| `let count = $state(0)` | `let count = 0` with `$:` |
-| `let doubled = $derived(count * 2)` | `$: doubled = count * 2` |
-| `let { data, children } = $props()` | `export let data` |
-| `$effect(() => { ... })` | `onMount` / `$:` side effects |
-| `{@render children()}` | `<slot />` |
-| `onclick={handler}` | `on:click={handler}` |
+| Svelte 5 (use this)                 | Svelte 4 (do NOT use)         |
+| ----------------------------------- | ----------------------------- |
+| `let count = $state(0)`             | `let count = 0` with `$:`     |
+| `let doubled = $derived(count * 2)` | `$: doubled = count * 2`      |
+| `let { data, children } = $props()` | `export let data`             |
+| `$effect(() => { ... })`            | `onMount` / `$:` side effects |
+| `{@render children()}`              | `<slot />`                    |
+| `onclick={handler}`                 | `on:click={handler}`          |
 
 **Additional rules:** Never use `$effect` for derivation (use `$derived`). Render children via `{@render children()}` with `let { children } = $props()`.
 
@@ -65,15 +65,15 @@ Queries use `graphql-request` with TanStack Svelte Query.
 
 ```svelte
 <script lang="ts">
-  import { createQuery } from '@tanstack/svelte-query';
-  import { graphqlClient } from '$lib/queries/client';
-  import { LIST_CONTENT } from '$lib/queries/content';
+	import { createQuery } from '@tanstack/svelte-query';
+	import { graphqlClient } from '$lib/queries/client';
+	import { LIST_CONTENT } from '$lib/queries/content';
 
-  // Function wrapper pattern — pass a function returning options
-  const query = createQuery(() => ({
-    queryKey: ['content'],
-    queryFn: () => graphqlClient.request(LIST_CONTENT)
-  }));
+	// Function wrapper pattern — pass a function returning options
+	const query = createQuery(() => ({
+		queryKey: ['content'],
+		queryFn: () => graphqlClient.request(LIST_CONTENT),
+	}));
 </script>
 
 <!-- Access as reactive object properties (NO $ prefix) -->
@@ -89,8 +89,8 @@ Per-icon imports from `@lucide/svelte` for tree-shaking:
 
 ```svelte
 <script lang="ts">
-  import XIcon from '@lucide/svelte/icons/x';
-  import PlusIcon from '@lucide/svelte/icons/plus';
+	import XIcon from '@lucide/svelte/icons/x';
+	import PlusIcon from '@lucide/svelte/icons/plus';
 </script>
 
 <XIcon class="size-4" />
@@ -122,11 +122,11 @@ Full setup and examples: [docs/AG_GRID.md](docs/AG_GRID.md)
 
 ## Self-Verification (Chrome DevTools MCP)
 
-| Step | Tool | Purpose |
-|------|------|---------|
-| Navigate | `mcp__chrome-devtools__navigate_page` | Load frontend URL |
-| Screenshot | `mcp__chrome-devtools__take_screenshot` | Visual verification |
-| Snapshot | `mcp__chrome-devtools__take_snapshot` | DOM structure |
-| Resize | `mcp__chrome-devtools__resize_page` | Responsive (375/768/1024px) |
-| Console | `mcp__chrome-devtools__list_console_messages` | JS errors |
-| Interact | `mcp__chrome-devtools__click` | Buttons, navigation |
+| Step       | Tool                                          | Purpose                     |
+| ---------- | --------------------------------------------- | --------------------------- |
+| Navigate   | `mcp__chrome-devtools__navigate_page`         | Load frontend URL           |
+| Screenshot | `mcp__chrome-devtools__take_screenshot`       | Visual verification         |
+| Snapshot   | `mcp__chrome-devtools__take_snapshot`         | DOM structure               |
+| Resize     | `mcp__chrome-devtools__resize_page`           | Responsive (375/768/1024px) |
+| Console    | `mcp__chrome-devtools__list_console_messages` | JS errors                   |
+| Interact   | `mcp__chrome-devtools__click`                 | Buttons, navigation         |

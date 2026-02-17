@@ -10,7 +10,7 @@
 		DialogContent,
 		DialogHeader,
 		DialogTitle,
-		DialogDescription
+		DialogDescription,
 	} from '$lib/components/shadcn';
 
 	let {
@@ -65,11 +65,7 @@
 </script>
 
 {#if isMobile}
-	<Button
-		variant={triggerVariant}
-		size={triggerSize}
-		onclick={() => (open = true)}
-	>
+	<Button variant={triggerVariant} size={triggerSize} onclick={() => (open = true)}>
 		{@render triggerIcon()}
 		<span class="hidden sm:inline">{triggerLabel}</span>
 	</Button>
@@ -82,9 +78,7 @@
 			<form onsubmit={handleSubmit}>
 				{@render formFields()}
 				<div class="flex gap-2 justify-end mt-4">
-					<Button type="button" variant="outline" onclick={() => (open = false)} disabled={isPending}>
-						Cancel
-					</Button>
+					<Button type="button" variant="outline" onclick={() => (open = false)} disabled={isPending}>Cancel</Button>
 					<Button type="submit" disabled={isPending || isSubmitDisabled}>
 						{isPending ? pendingLabel : submitLabel}
 					</Button>
@@ -111,13 +105,7 @@
 					{@render formFields()}
 
 					<div class="flex gap-2 justify-end">
-						<Button
-							type="button"
-							variant="outline"
-							size="sm"
-							onclick={() => (open = false)}
-							disabled={isPending}
-						>
+						<Button type="button" variant="outline" size="sm" onclick={() => (open = false)} disabled={isPending}>
 							Cancel
 						</Button>
 						<Button type="submit" size="sm" disabled={isPending || isSubmitDisabled}>

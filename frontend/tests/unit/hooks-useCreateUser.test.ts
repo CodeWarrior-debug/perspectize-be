@@ -1,13 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Hoisted mocks — these are referenced inside vi.mock factories
-const { mockMutate, mockInvalidateQueries, mockToastSuccess, mockToastError } =
-	vi.hoisted(() => ({
-		mockMutate: vi.fn(),
-		mockInvalidateQueries: vi.fn(),
-		mockToastSuccess: vi.fn(),
-		mockToastError: vi.fn(),
-	}));
+const { mockMutate, mockInvalidateQueries, mockToastSuccess, mockToastError } = vi.hoisted(() => ({
+	mockMutate: vi.fn(),
+	mockInvalidateQueries: vi.fn(),
+	mockToastSuccess: vi.fn(),
+	mockToastError: vi.fn(),
+}));
 
 // Capture mutation options for behavioral testing
 let capturedMutationOptions: any;
@@ -95,10 +94,7 @@ describe('useCreateUser hook', () => {
 			const input = { username: 'testuser' };
 			await capturedMutationOptions.mutationFn(input);
 
-			expect(graphqlClient.request).toHaveBeenCalledWith(
-				expect.anything(),
-				{ input }
-			);
+			expect(graphqlClient.request).toHaveBeenCalledWith(expect.anything(), { input });
 		});
 
 		it('passes the full CREATE_USER mutation document', async () => {
@@ -193,9 +189,7 @@ describe('useCreateUser hook', () => {
 
 			capturedMutationOptions.onError(error);
 
-			expect(mockToastError).toHaveBeenCalledWith(
-				'A user with that username already exists'
-			);
+			expect(mockToastError).toHaveBeenCalledWith('A user with that username already exists');
 		});
 
 		it('matches "already exists" case-insensitively', () => {
@@ -203,9 +197,7 @@ describe('useCreateUser hook', () => {
 
 			capturedMutationOptions.onError(error);
 
-			expect(mockToastError).toHaveBeenCalledWith(
-				'A user with that username already exists'
-			);
+			expect(mockToastError).toHaveBeenCalledWith('A user with that username already exists');
 		});
 
 		it('shows generic error toast for unknown errors', () => {
@@ -213,9 +205,7 @@ describe('useCreateUser hook', () => {
 
 			capturedMutationOptions.onError(error);
 
-			expect(mockToastError).toHaveBeenCalledWith(
-				'Failed to create user. Please try again.'
-			);
+			expect(mockToastError).toHaveBeenCalledWith('Failed to create user. Please try again.');
 		});
 
 		it('shows generic error toast for validation errors', () => {
@@ -223,9 +213,7 @@ describe('useCreateUser hook', () => {
 
 			capturedMutationOptions.onError(error);
 
-			expect(mockToastError).toHaveBeenCalledWith(
-				'Failed to create user. Please try again.'
-			);
+			expect(mockToastError).toHaveBeenCalledWith('Failed to create user. Please try again.');
 		});
 
 		it('shows generic error toast for network errors', () => {
@@ -233,9 +221,7 @@ describe('useCreateUser hook', () => {
 
 			capturedMutationOptions.onError(error);
 
-			expect(mockToastError).toHaveBeenCalledWith(
-				'Failed to create user. Please try again.'
-			);
+			expect(mockToastError).toHaveBeenCalledWith('Failed to create user. Please try again.');
 		});
 
 		it('handles error messages with extra whitespace', () => {
@@ -243,9 +229,7 @@ describe('useCreateUser hook', () => {
 
 			capturedMutationOptions.onError(error);
 
-			expect(mockToastError).toHaveBeenCalledWith(
-				'A user with that username already exists'
-			);
+			expect(mockToastError).toHaveBeenCalledWith('A user with that username already exists');
 		});
 	});
 
@@ -295,10 +279,7 @@ describe('useCreateUser hook', () => {
 			const input = { username: 'testuser' };
 			await capturedMutationOptions.mutationFn(input);
 
-			expect(graphqlClient.request).toHaveBeenCalledWith(
-				expect.anything(),
-				{ input: { username: 'testuser' } }
-			);
+			expect(graphqlClient.request).toHaveBeenCalledWith(expect.anything(), { input: { username: 'testuser' } });
 		});
 
 		it('accepts CreateUserInput with username and email', async () => {
@@ -310,10 +291,9 @@ describe('useCreateUser hook', () => {
 			const input = { username: 'testuser', email: 'test@example.com' };
 			await capturedMutationOptions.mutationFn(input);
 
-			expect(graphqlClient.request).toHaveBeenCalledWith(
-				expect.anything(),
-				{ input: { username: 'testuser', email: 'test@example.com' } }
-			);
+			expect(graphqlClient.request).toHaveBeenCalledWith(expect.anything(), {
+				input: { username: 'testuser', email: 'test@example.com' },
+			});
 		});
 	});
 });

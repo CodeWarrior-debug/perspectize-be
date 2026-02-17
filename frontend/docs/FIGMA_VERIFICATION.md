@@ -24,45 +24,45 @@
 
 #### Collection: Theme / Light (22 variables)
 
-| Variable Name | Expected Hex | Usage |
-|---------------|-------------|-------|
-| `background` | `#FFFFFF` | Page background |
-| `foreground` | `#0A0A0A` | Default text |
-| `card` | `#FFFFFF` | Card/surface background |
-| `card-foreground` | `#0A0A0A` | Text on cards |
-| `popover` | `#FFFFFF` | Dropdown/dialog background |
-| `popover-foreground` | `#0A0A0A` | Text in popovers |
-| `primary` | `#1A365D` | Buttons, links, header (navy) |
-| `primary-foreground` | `#F0F4F8` | Text on primary |
-| `secondary` | `#F5F5F5` | Secondary buttons, tags |
-| `secondary-foreground` | `#171717` | Text on secondary |
-| `muted` | `#F5F5F5` | Subtle backgrounds |
-| `muted-foreground` | `#525252` | Placeholder text, captions |
-| `accent` | `#F5F5F5` | Hover highlights |
-| `accent-foreground` | `#171717` | Text on accent |
-| `destructive` | `#DC2626` | Error states, delete actions |
-| `destructive-foreground` | `#FFFFFF` | Text on destructive |
-| `border` | `#E5E5E5` | Default borders |
-| `input` | `#E5E5E5` | Input borders |
-| `ring` | `#1A365D` | Focus ring (matches primary) |
-| `chart-1` | `#1A365D` | Chart color 1 |
-| `chart-2` | `#2563EB` | Chart color 2 |
-| `chart-3` | `#525252` | Chart color 3 |
+| Variable Name            | Expected Hex | Usage                         |
+| ------------------------ | ------------ | ----------------------------- |
+| `background`             | `#FFFFFF`    | Page background               |
+| `foreground`             | `#0A0A0A`    | Default text                  |
+| `card`                   | `#FFFFFF`    | Card/surface background       |
+| `card-foreground`        | `#0A0A0A`    | Text on cards                 |
+| `popover`                | `#FFFFFF`    | Dropdown/dialog background    |
+| `popover-foreground`     | `#0A0A0A`    | Text in popovers              |
+| `primary`                | `#1A365D`    | Buttons, links, header (navy) |
+| `primary-foreground`     | `#F0F4F8`    | Text on primary               |
+| `secondary`              | `#F5F5F5`    | Secondary buttons, tags       |
+| `secondary-foreground`   | `#171717`    | Text on secondary             |
+| `muted`                  | `#F5F5F5`    | Subtle backgrounds            |
+| `muted-foreground`       | `#525252`    | Placeholder text, captions    |
+| `accent`                 | `#F5F5F5`    | Hover highlights              |
+| `accent-foreground`      | `#171717`    | Text on accent                |
+| `destructive`            | `#DC2626`    | Error states, delete actions  |
+| `destructive-foreground` | `#FFFFFF`    | Text on destructive           |
+| `border`                 | `#E5E5E5`    | Default borders               |
+| `input`                  | `#E5E5E5`    | Input borders                 |
+| `ring`                   | `#1A365D`    | Focus ring (matches primary)  |
+| `chart-1`                | `#1A365D`    | Chart color 1                 |
+| `chart-2`                | `#2563EB`    | Chart color 2                 |
+| `chart-3`                | `#525252`    | Chart color 3                 |
 
 #### Collection: Rating (4 variables)
 
-| Variable Name | Expected Hex | Usage |
-|---------------|-------------|-------|
-| `positive` | `#16A34A` | High scores, Agree |
-| `negative` | `#DC2626` | Low scores, Disagree |
-| `neutral` | `#525252` | Mid scores |
-| `undecided` | `#D4D4D4` | No opinion |
+| Variable Name | Expected Hex | Usage                |
+| ------------- | ------------ | -------------------- |
+| `positive`    | `#16A34A`    | High scores, Agree   |
+| `negative`    | `#DC2626`    | Low scores, Disagree |
+| `neutral`     | `#525252`    | Mid scores           |
+| `undecided`   | `#D4D4D4`    | No opinion           |
 
 #### Collection: Brand (1 variable)
 
-| Variable Name | Expected Hex | Usage |
-|---------------|-------------|-------|
-| `logo-purple` | `#7C3AED` | Logo primary color |
+| Variable Name | Expected Hex | Usage              |
+| ------------- | ------------ | ------------------ |
+| `logo-purple` | `#7C3AED`    | Logo primary color |
 
 ### How to verify a variable value
 
@@ -79,16 +79,19 @@
 ### Where to look
 
 **Option A -- Right panel:**
+
 1. Select any text element on the canvas.
 2. In the right panel under "Text", click the style name (four-dot icon).
 3. Browse available text styles.
 
 **Option B -- Assets panel:**
+
 1. Open the Assets panel (left sidebar, book icon, or press **Alt+2** / **Opt+2**).
 2. Search for style names like "Display", "H1", "Body".
 3. Text styles appear under the "Text styles" section.
 
 **Option C -- Local styles dialog:**
+
 1. Click the canvas background (deselect everything).
 2. In the right panel, look for "Local styles" or use the menu: **File > Local styles**.
 
@@ -96,23 +99,23 @@
 
 #### Geist styles (6)
 
-| Style Name | Font | Size | Line Height | Weight |
-|-----------|------|------|-------------|--------|
-| Display | Geist | 36px | 40px | Bold (700) |
-| H1 | Geist | 30px | 36px | SemiBold (600) |
-| H2 | Geist | 24px | 32px | SemiBold (600) |
-| H3 | Geist | 20px | 28px | SemiBold (600) |
-| Label | Geist | 14px | 20px | Medium (500) |
-| Small / Caption | Geist | 12px | 16px | Regular (400) |
+| Style Name      | Font  | Size | Line Height | Weight         |
+| --------------- | ----- | ---- | ----------- | -------------- |
+| Display         | Geist | 36px | 40px        | Bold (700)     |
+| H1              | Geist | 30px | 36px        | SemiBold (600) |
+| H2              | Geist | 24px | 32px        | SemiBold (600) |
+| H3              | Geist | 20px | 28px        | SemiBold (600) |
+| Label           | Geist | 14px | 20px        | Medium (500)   |
+| Small / Caption | Geist | 12px | 16px        | Regular (400)  |
 
 #### Charter styles (4)
 
-| Style Name | Font | Size | Line Height | Weight |
-|-----------|------|------|-------------|--------|
-| Body Large | Charter | 16px | 24px | Regular (400) |
-| Body | Charter | 14px | 20px | Regular (400) |
-| Body Italic | Charter | 14px | 20px | Italic (400i) |
-| Body Bold | Charter | 14px | 20px | Bold (700) |
+| Style Name  | Font    | Size | Line Height | Weight        |
+| ----------- | ------- | ---- | ----------- | ------------- |
+| Body Large  | Charter | 16px | 24px        | Regular (400) |
+| Body        | Charter | 14px | 20px        | Regular (400) |
+| Body Italic | Charter | 14px | 20px        | Italic (400i) |
+| Body Bold   | Charter | 14px | 20px        | Bold (700)    |
 
 ### How to verify a text style
 
@@ -162,10 +165,10 @@ Right-click the file name in the tab bar and select **Show version history**. Lo
 
 Figma has two separate systems for colors:
 
-| System | Panel Location | Purpose |
-|--------|---------------|---------|
-| **Variables** | Variables panel (diamond icon) | Modern system, supports modes (light/dark), used by Make for tokens |
-| **Color Styles** | Right panel > "Color styles" section | Legacy system, still widely used |
+| System           | Panel Location                       | Purpose                                                             |
+| ---------------- | ------------------------------------ | ------------------------------------------------------------------- |
+| **Variables**    | Variables panel (diamond icon)       | Modern system, supports modes (light/dark), used by Make for tokens |
+| **Color Styles** | Right panel > "Color styles" section | Legacy system, still widely used                                    |
 
 Make might have created Color Styles instead of Variables, or vice versa. Check both panels.
 
@@ -215,21 +218,21 @@ If Figma Make does not apply changes correctly, you can create them by hand.
 
 Use this table after completing each step. Mark the "Verified" column once you confirm the output in Figma.
 
-| Step | Output | Where to Check | What to Confirm | Verified |
-|------|--------|----------------|-----------------|----------|
-| 1. Color Variables | 27 color variables in 3 collections | Variables panel (diamond icon) | Collections: Theme/Light (22), Rating (4), Brand (1). Hex values match spec. | [ ] |
-| 2. Typography | 10 text styles (6 Geist + 4 Charter) | Assets panel > Text styles | Style names, font families, sizes, weights, line heights all match spec. | [ ] |
-| 3. Buttons | Button component with 6 variants | Assets panel > Components | Variants: Default, Secondary, Destructive, Outline, Ghost, Link. States: default, hover, disabled. Uses `primary` variable for fill. | [ ] |
-| 4. Form Inputs | Input, Label, Textarea components | Assets panel > Components | Input has border using `input` variable, focus ring using `ring` variable. Label uses Geist Medium 14px. | [ ] |
-| 5. Card Components | VideoCard, ReviewCard components | Assets panel > Components | Card background uses `card` variable. Border uses `border` variable. Correct padding and corner radius. | [ ] |
-| 6. Dialog | Dialog component with overlay | Assets panel > Components | Semi-transparent overlay backdrop. Dialog surface uses `card` variable. Close button present. | [ ] |
-| 7. Header | Header component with nav | Assets panel > Components | Background uses `primary` (#1A365D). Text/icons use `primary-foreground`. Height 64px. Logo left, actions right. | [ ] |
-| 8. Home Page | Full page frame at 1440px wide | Pages list (left sidebar) | Contains Header + PageWrapper + content area. Max-width 1280px centered. | [ ] |
-| 9. Add Video Dialog | Dialog overlay on page | Pages list (left sidebar) | Dialog centered over page with backdrop. Form fields for YouTube URL. Uses Dialog component from Step 6. | [ ] |
-| 10. Video Detail | Video detail page frame | Pages list (left sidebar) | Video player/thumbnail area, metadata section, perspectives list. Uses Card and typography styles. | [ ] |
-| 11. User Profile | Profile page frame | Pages list (left sidebar) | User info section, activity/history list. Uses established components. | [ ] |
-| 12. Responsive | Mobile (375px) and tablet (768px) variants | Pages list (left sidebar) | Key pages adapted for smaller viewports. Header collapses. Grid stacks to single column. | [ ] |
-| 13. Empty/Loading | Skeleton and empty state components | Assets panel > Components | Skeleton placeholder shapes (pulsing rectangles). Empty state with illustration/message and CTA. | [ ] |
+| Step                | Output                                     | Where to Check                 | What to Confirm                                                                                                                      | Verified |
+| ------------------- | ------------------------------------------ | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| 1. Color Variables  | 27 color variables in 3 collections        | Variables panel (diamond icon) | Collections: Theme/Light (22), Rating (4), Brand (1). Hex values match spec.                                                         | [ ]      |
+| 2. Typography       | 10 text styles (6 Geist + 4 Charter)       | Assets panel > Text styles     | Style names, font families, sizes, weights, line heights all match spec.                                                             | [ ]      |
+| 3. Buttons          | Button component with 6 variants           | Assets panel > Components      | Variants: Default, Secondary, Destructive, Outline, Ghost, Link. States: default, hover, disabled. Uses `primary` variable for fill. | [ ]      |
+| 4. Form Inputs      | Input, Label, Textarea components          | Assets panel > Components      | Input has border using `input` variable, focus ring using `ring` variable. Label uses Geist Medium 14px.                             | [ ]      |
+| 5. Card Components  | VideoCard, ReviewCard components           | Assets panel > Components      | Card background uses `card` variable. Border uses `border` variable. Correct padding and corner radius.                              | [ ]      |
+| 6. Dialog           | Dialog component with overlay              | Assets panel > Components      | Semi-transparent overlay backdrop. Dialog surface uses `card` variable. Close button present.                                        | [ ]      |
+| 7. Header           | Header component with nav                  | Assets panel > Components      | Background uses `primary` (#1A365D). Text/icons use `primary-foreground`. Height 64px. Logo left, actions right.                     | [ ]      |
+| 8. Home Page        | Full page frame at 1440px wide             | Pages list (left sidebar)      | Contains Header + PageWrapper + content area. Max-width 1280px centered.                                                             | [ ]      |
+| 9. Add Video Dialog | Dialog overlay on page                     | Pages list (left sidebar)      | Dialog centered over page with backdrop. Form fields for YouTube URL. Uses Dialog component from Step 6.                             | [ ]      |
+| 10. Video Detail    | Video detail page frame                    | Pages list (left sidebar)      | Video player/thumbnail area, metadata section, perspectives list. Uses Card and typography styles.                                   | [ ]      |
+| 11. User Profile    | Profile page frame                         | Pages list (left sidebar)      | User info section, activity/history list. Uses established components.                                                               | [ ]      |
+| 12. Responsive      | Mobile (375px) and tablet (768px) variants | Pages list (left sidebar)      | Key pages adapted for smaller viewports. Header collapses. Grid stacks to single column.                                             | [ ]      |
+| 13. Empty/Loading   | Skeleton and empty state components        | Assets panel > Components      | Skeleton placeholder shapes (pulsing rectangles). Empty state with illustration/message and CTA.                                     | [ ]      |
 
 ---
 
@@ -237,12 +240,12 @@ Use this table after completing each step. Mark the "Verified" column once you c
 
 ### Prompt phrasing
 
-| Instead of... | Say... |
-|---------------|--------|
-| "Create color tokens" | "Create Figma color variables in this file" |
-| "Add typography" | "Create local text styles in this Figma file" |
-| "Make a button" | "Create a Button component in this Figma file with variants for Default, Secondary, and Destructive" |
-| "Design the home page" | "Create a new page called 'Home' with a frame at 1440x900px containing..." |
+| Instead of...          | Say...                                                                                               |
+| ---------------------- | ---------------------------------------------------------------------------------------------------- |
+| "Create color tokens"  | "Create Figma color variables in this file"                                                          |
+| "Add typography"       | "Create local text styles in this Figma file"                                                        |
+| "Make a button"        | "Create a Button component in this Figma file with variants for Default, Secondary, and Destructive" |
+| "Design the home page" | "Create a new page called 'Home' with a frame at 1440x900px containing..."                           |
 
 ### General guidelines
 
@@ -264,12 +267,12 @@ Use this table after completing each step. Mark the "Verified" column once you c
 
 ## 8. Quick Reference: Figma Panel Locations
 
-| Panel | How to Open | What It Shows |
-|-------|------------|---------------|
-| Variables | Right panel > diamond icon, or **Window > Variables** | Color variables organized by collection |
-| Color Styles | Right panel > circle/palette icon (when no element selected) | Legacy color style definitions |
-| Text Styles | Assets panel > search, or right panel "Text" section > four-dot icon | Text style definitions |
-| Assets | Left sidebar > book icon, or **Alt/Opt + 2** | Components, styles, and variables |
-| Pages | Left sidebar > top section | List of pages in the file |
-| Version History | Right-click file tab > "Show version history" | Timestamped file snapshots |
-| Layers | Left sidebar > layers icon, or **Alt/Opt + 1** | Layer hierarchy of current page |
+| Panel           | How to Open                                                          | What It Shows                           |
+| --------------- | -------------------------------------------------------------------- | --------------------------------------- |
+| Variables       | Right panel > diamond icon, or **Window > Variables**                | Color variables organized by collection |
+| Color Styles    | Right panel > circle/palette icon (when no element selected)         | Legacy color style definitions          |
+| Text Styles     | Assets panel > search, or right panel "Text" section > four-dot icon | Text style definitions                  |
+| Assets          | Left sidebar > book icon, or **Alt/Opt + 2**                         | Components, styles, and variables       |
+| Pages           | Left sidebar > top section                                           | List of pages in the file               |
+| Version History | Right-click file tab > "Show version history"                        | Timestamped file snapshots              |
+| Layers          | Left sidebar > layers icon, or **Alt/Opt + 1**                       | Layer hierarchy of current page         |
