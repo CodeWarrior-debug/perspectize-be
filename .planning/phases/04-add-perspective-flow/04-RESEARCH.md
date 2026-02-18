@@ -1,698 +1,730 @@
 # Phase 4: Add Perspective Flow - Research
 
-**Researched:** 2026-02-07
-**Domain:** Form management with TanStack Form Svelte, multi-field validation, progress bar visualization
-**Confidence:** MEDIUM
+**Researched:** 2026-02-18
+**Domain:** Full-stack perspective CRUD — PostgreSQL schema migration, Go hexagonal architecture, SvelteKit + AG Grid popover UI
+**Confidence:** HIGH (all findings verified from codebase inspection + existing patterns)
+
+---
 
 ## Summary
 
-Phase 4 implements a perspective creation form with four rating inputs (Quality, Agreement, Importance, Confidence), Like text, Review text, and video selection. The core challenge is integrating TanStack Form's Svelte adapter (first use in the project) with the existing shadcn-svelte components, GraphQL mutations, and toast notifications.
+This phase adds the "Perspectize" action to the Activity table: users can create and edit perspectives (ratings + text) on content items from a per-row popover. It also adds the claim content type and a simple @reference token system. The backend already has a complete perspective CRUD stack (domain, service, repository, resolvers, GraphQL schema). The frontend has zero perspective-facing UI beyond what the backend exposes — everything is greenfield on that side.
 
-**Key technical areas:**
-1. **TanStack Form Svelte adapter** - Form state management with `createForm` and field composition pattern using Svelte 5 snippets
-2. **Rating inputs** - Number inputs (0-10000 range) paired with shadcn Progress component for visualization
-3. **Video selector** - shadcn Combobox or Select component connected to existing content query
-4. **Form validation** - Field-level validation with error display via toast notifications before submission
-5. **User attribution** - Integration with Phase 2's user selection store (`getSelectedUserId()`)
+The primary backend work is a schema migration (additive: two new FK columns on `perspectives`, a GIN index, JSONB custom fields column) plus new `claim` content type support. The primary frontend work is a new AG Grid column with custom cell renderers for +/silhouette-with-glasses icons, a new `PerspectivePopover` component (larger than existing FormPopover), two mutation hooks (`useCreatePerspective` / `useUpdatePerspective`), and a `perspectives.ts` query file. A new `claims.ts` query file handles claim creation as a content mutation.
 
-**Primary recommendation:** Use TanStack Form with field-level validation, shadcn Progress component for rating visualization, shadcn Select/Combobox for video selection, and integrate with existing toast system for error feedback. Follow the established Svelte 5 runes patterns and type-based component organization.
+**Primary recommendation:** Follow the established hex-clean pattern exactly. The perspective service already validates ratings and handles all optional fields. Add the new schema columns, update domain/GORM models + mappers, extend the GraphQL schema, and build the frontend popover following the AddVideoPopover pattern.
+
+---
 
 ## Standard Stack
 
-The established libraries/tools for this domain:
+### Core (already in project — no new installs needed)
 
-### Core
 | Library | Version | Purpose | Why Standard |
 |---------|---------|---------|--------------|
-| @tanstack/svelte-form | 1.28.0 | Form state management | Already installed in Phase 1, type-safe, Svelte 5 compatible, field-level validation |
-| shadcn-svelte Progress | latest | Progress bar visualization | Matches existing design system, accessible, animates smoothly |
-| svelte-sonner | 1.0.7 | Toast notifications | Already configured (top-right, 2s auto-dismiss) for validation errors |
+| gqlgen | current (schema-first) | Go GraphQL | Already wired; add new fields, run `make graphql-gen` |
+| GORM + pgx/v5 | current | PostgreSQL ORM | Hex-clean pattern established in codebase |
+| golang-migrate | current | SQL migrations | All 11 existing migrations use this |
+| TanStack Svelte Query v5 | current | Data fetching + cache | Existing pattern: `createMutation` with function wrapper |
+| graphql-request | current | GraphQL client | `graphqlClient.request()` used in all hooks |
+| svelte-sonner | current | Toast notifications | Used in `useAddVideo`, `useCreateUser` |
+| AG Grid Svelte5 | v32.x | Table column | `ag-grid-svelte5` wrapper, `cellRenderer` pattern |
+| shadcn-svelte | current | UI primitives | `Popover`, `Dialog`, `Input`, `Label`, `Button` |
+| Lucide Svelte | current | Icons | `@lucide/svelte/icons/{name}` per-icon imports |
 
 ### Supporting
+
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| shadcn-svelte Select | latest | Video dropdown selector | Simple video selection (< 50 videos) |
-| shadcn-svelte Combobox | latest | Video search+select | Searchable video selection (if > 50 videos or filtering needed) |
-| shadcn-svelte Textarea | latest | Review text input | Multi-line freeform text entry |
+| Vitest + Testing Library | current | Unit tests | TEST-05 requires component + hook unit tests |
+| pilagod/gorm-cursor-paginator/v2 | current | Cursor pagination | Already used in perspective repository List() |
 
-### Alternatives Considered
-| Instead of | Could Use | Tradeoff |
-|------------|-----------|----------|
-| TanStack Form | Svelte native bindings + manual validation | TanStack provides built-in validation timing, error state management, and field composition — manual approach is more verbose |
-| shadcn Progress | Custom SVG progress bar | shadcn Progress is accessible, animated, and matches theme — custom is more work |
-| Combobox | Native `<select>` with `<datalist>` | Native datalist has poor cross-browser support and styling limitations |
+### No New Dependencies Required
 
-**Installation:**
-```bash
-# Progress component
-pnpm dlx shadcn-svelte@latest add progress
+All libraries are already installed. No `npm install` or `go get` needed.
 
-# Select component (for simple dropdown)
-pnpm dlx shadcn-svelte@latest add select
-
-# Combobox component (for searchable dropdown)
-pnpm dlx shadcn-svelte@latest add combobox
-
-# Textarea component (for Review field)
-pnpm dlx shadcn-svelte@latest add textarea
-
-# TanStack Form already installed (Phase 1)
-```
+---
 
 ## Architecture Patterns
 
-### Recommended Project Structure
+### Recommended Project Structure (new files only)
+
 ```
+backend/
+├── migrations/
+│   └── 000012_add_perspective_refs_claims.up.sql   # New columns, GIN index, custom_fields JSONB
+│   └── 000012_add_perspective_refs_claims.down.sql
+├── internal/core/domain/
+│   └── perspective.go           # Add PrimaryPerspectiveID, RelatedPerspectiveIDs, CustomFields
+│   └── content.go               # Add ContentTypeClaim constant
+├── internal/adapters/repositories/postgres/
+│   └── gorm_models.go           # Add PerspectiveModel fields + new IntArray type
+│   └── gorm_mappers.go          # Update bidirectional mappers
+│   └── gorm_perspective_repository.go  # No changes needed (Save() covers new columns)
+├── schema.graphql               # Add fields to Perspective type + inputs; add claim to ContentType enum
+└── internal/adapters/graphql/resolvers/
+    └── schema.resolvers.go      # Update CreatePerspective + UpdatePerspective resolvers
+
 frontend/src/lib/
-├── components/
-│   ├── AddPerspectiveDialog.svelte    # Main form dialog
-│   ├── RatingInput.svelte             # Reusable rating input + progress bar
-│   ├── VideoSelector.svelte           # Video selection dropdown/combobox
-│   └── shadcn/
-│       ├── progress/                  # shadcn Progress component
-│       ├── select/                    # shadcn Select component
-│       ├── combobox/                  # shadcn Combobox component (if needed)
-│       └── textarea/                  # shadcn Textarea component
 ├── queries/
-│   └── perspectives.ts                # CREATE_PERSPECTIVE mutation
-└── utils/
-    └── validation.ts                  # Form validation helpers (if needed)
+│   ├── perspectives.ts          # New: GQL definitions + TS interfaces
+│   └── keys.ts                  # Add perspectives key factory
+├── queries/hooks/
+│   ├── useCreatePerspective.ts  # New: createMutation following useAddVideo pattern
+│   └── useUpdatePerspective.ts  # New: createMutation for edit mode
+├── components/
+│   └── PerspectivePopover.svelte # New: larger FormPopover-like, CREATE + UPDATE modes
+
+frontend/tests/
+├── unit/
+│   └── hooks-useCreatePerspective.test.ts
+│   └── hooks-useUpdatePerspective.test.ts
+└── components/
+    └── PerspectivePopover.test.ts
 ```
 
-### Pattern 1: TanStack Form with Svelte 5 Snippets
-**What:** Use `createForm` to manage form state, `form.Field` component with Svelte 5 `{#snippet children(field)}` for field rendering
-**When to use:** All forms in the project (establishes pattern for future forms)
-**Example:**
-```svelte
-<script lang="ts">
-  import { createForm } from '@tanstack/svelte-form';
-  import { toast } from 'svelte-sonner';
+### Pattern 1: Hex-Clean Domain Extension
 
-  const form = createForm(() => ({
-    defaultValues: {
-      claim: '',
-      quality: null,
-      agreement: null,
-      importance: null,
-      confidence: null,
-      like: '',
-      review: '',
-      contentID: null,
-    },
-    onSubmit: async ({ value }) => {
-      // Validate that required fields are set
-      if (!value.claim || value.quality === null) {
-        toast.error('Please fill in all required fields');
-        return;
-      }
+**What:** Add new fields to domain model, GORM model, and mappers in sync — the established pattern from migration 000004 and existing perspective code.
 
-      // Submit mutation
-      try {
-        await mutation.mutateAsync(value);
-        toast.success('Perspective created successfully');
-      } catch (error) {
-        toast.error('Failed to create perspective');
-      }
-    },
-  }));
-</script>
+**When to use:** Any new perspective column needs changes in all 3 layers.
 
-<form onsubmit={(e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  form.handleSubmit();
-}}>
-  <form.Field name="claim">
-    {#snippet children(field)}
-      <label for={field.name}>Claim *</label>
-      <input
-        id={field.name}
-        name={field.name}
-        value={field.state.value}
-        onblur={field.handleBlur}
-        oninput={(e) => field.handleChange(e.target.value)}
-      />
-      {#if field.state.meta.errors.length > 0}
-        <span class="text-destructive text-sm">{field.state.meta.errors[0]}</span>
-      {/if}
-    {/snippet}
-  </form.Field>
+**Example — domain.Perspective additions:**
+```go
+// Source: backend/internal/core/domain/perspective.go (extend existing struct)
+type Perspective struct {
+    // ... existing fields unchanged ...
 
-  <button type="submit">Submit</button>
-</form>
+    // Phase 4 additions
+    PrimaryPerspectiveID   *int    // FK to perspectives.id (optional)
+    RelatedPerspectiveIDs  []int   // int[] stored as PostgreSQL integer[] with GIN index
+    CustomFields           []byte  // JSONB column for user-defined fields (json.RawMessage)
+}
 ```
-**Source:** [TanStack Form Svelte Quick Start](https://tanstack.com/form/v1/docs/framework/svelte/quick-start)
 
-### Pattern 2: Rating Input with Progress Visualization
-**What:** Pair number input (0-10000) with shadcn Progress component to visualize rating value
-**When to use:** All four rating fields (Quality, Agreement, Importance, Confidence)
+**Example — GORM model additions:**
+```go
+// Source: backend/internal/adapters/repositories/postgres/gorm_models.go (extend PerspectiveModel)
+type PerspectiveModel struct {
+    // ... existing fields unchanged ...
+
+    // Phase 4 additions
+    PrimaryPerspectiveID  *int       `gorm:"column:primary_perspective_id"`
+    RelatedPerspectiveIDs Int64Array `gorm:"type:integer[];column:related_perspective_ids"`
+    CustomFields          []byte     `gorm:"type:jsonb;column:custom_fields"`
+}
+```
+
+**Example — migration:**
+```sql
+-- 000012_add_perspective_refs_claims.up.sql
+ALTER TABLE public.perspectives
+    ADD COLUMN IF NOT EXISTS primary_perspective_id integer NULL,
+    ADD COLUMN IF NOT EXISTS related_perspective_ids integer[] NULL DEFAULT '{}',
+    ADD COLUMN IF NOT EXISTS custom_fields jsonb NULL;
+
+ALTER TABLE public.perspectives
+    ADD CONSTRAINT perspectives_primary_perspective_fk
+        FOREIGN KEY (primary_perspective_id)
+        REFERENCES public.perspectives(id)
+        ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS perspectives_related_perspective_ids_gin
+    ON public.perspectives USING GIN (related_perspective_ids);
+```
+
+**Why SET NULL for ON DELETE on primary_perspective_id:** If a referenced perspective is deleted, the FK pointer becomes null automatically — the row continues to exist with just that reference cleared. CASCADE would delete the referencing perspective, which is destructive and undesirable.
+
+### Pattern 2: GraphQL Schema Extension (additive)
+
+**What:** Add new optional fields to existing `Perspective` type and `CreatePerspectiveInput`/`UpdatePerspectiveInput`. Do not break existing fields.
+
+**Example — schema.graphql additions:**
+```graphql
+# Add to existing Perspective type
+type Perspective {
+  # ... existing fields ...
+  primaryPerspectiveID: ID          # NEW optional
+  relatedPerspectiveIDs: [ID!]      # NEW optional array
+  customFields: JSON                # NEW optional JSONB
+}
+
+# Add to existing CreatePerspectiveInput
+input CreatePerspectiveInput {
+  # ... existing fields ...
+  primaryPerspectiveID: IntID       # NEW optional
+  relatedPerspectiveIDs: [IntID!]   # NEW optional array
+  customFields: JSON                # NEW optional
+  reviewText: String                # NEW — maps to existing `description` field
+}
+
+# Extend ContentType enum
+enum ContentType {
+  YOUTUBE
+  CLAIM                             # NEW
+}
+```
+
+After changes: `cd backend && make graphql-gen`
+
+### Pattern 3: Shared Mutation Hook (useCreatePerspective)
+
+**What:** TanStack `createMutation` with function wrapper, toast notifications, query cache invalidation. Mirrors `useAddVideo` exactly.
+
+**When to use:** All perspective mutations follow this pattern.
+
 **Example:**
-```svelte
-<script lang="ts">
-  import { Progress } from '$lib/components/shadcn/progress';
+```typescript
+// Source: pattern from frontend/src/lib/queries/hooks/useAddVideo.ts
+import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+import { toast } from 'svelte-sonner';
+import { graphqlClient } from '../client';
+import { CREATE_PERSPECTIVE, type CreatePerspectiveResponse } from '../perspectives';
+import { queryKeys } from '../keys';
+import { getSelectedUserId } from '$lib/stores/userSelection.svelte';
 
-  let { value = $bindable(null), label, name, field } = $props<{
-    value: number | null;
-    label: string;
-    name: string;
-    field?: any; // TanStack Form field API
-  }>();
+export function useCreatePerspective() {
+    const queryClient = useQueryClient();
 
-  const MAX_RATING = 10000;
+    return createMutation(() => ({
+        mutationFn: async (input: { contentId: string; /* ...other fields */ }) => {
+            const userId = getSelectedUserId();
+            if (userId === null) throw new Error('No user selected');
+            return graphqlClient.request<CreatePerspectiveResponse>(CREATE_PERSPECTIVE, {
+                input: { userID: userId, contentID: Number(input.contentId), /* ... */ }
+            });
+        },
+        onSuccess: () => {
+            toast.success('Perspective saved');
+            queryClient.invalidateQueries({ queryKey: queryKeys.perspectives.lists() });
+        },
+        onError: (err: Error) => {
+            toast.error('Failed to save perspective. Please try again.');
+        }
+    }));
+}
+```
 
-  function handleInput(event: Event) {
-    const target = event.target as HTMLInputElement;
-    const numValue = parseInt(target.value, 10);
-    if (Number.isNaN(numValue) || numValue < 0) {
-      value = 0;
-    } else if (numValue > MAX_RATING) {
-      value = MAX_RATING;
-    } else {
-      value = numValue;
+### Pattern 4: AG Grid Custom Cell Renderer for Perspective Column
+
+**What:** A `cellRenderer` returning an `HTMLElement` with either a "+" icon or a silhouette-with-glasses icon, depending on whether the row's content has a perspective from the selected user.
+
+**Critical constraint:** AG Grid cell renderers in this project return `HTMLElement` (see `itemCellRenderer`, `typeCellRenderer` in `formatting.ts`). They are NOT Svelte components — they are plain DOM elements. Popover components CANNOT be embedded inside a cell renderer.
+
+**Resolution pattern:** The AG Grid column shows icon-only state. Clicking/hovering the icon triggers the popover by setting a Svelte state variable (e.g., `activePerspectiveContentId`) that controls the popover `open` state. The popover lives in the parent `ActivityTable.svelte` template (or inline on the page), not inside the cell.
+
+**Example column def:**
+```typescript
+// In ActivityTable.svelte columnDefs
+{
+    colId: 'perspective',
+    headerName: '',                   // No header text — icon only via headerComponent
+    headerTooltip: 'Your perspective',
+    width: 48,
+    minWidth: 48,
+    maxWidth: 48,
+    sortable: false,
+    filter: false,
+    cellRenderer: perspectiveCellRenderer,
+    onCellClicked: (params) => {
+        // Set active row for popover (open if no existing perspective)
+        if (!params.data.userPerspective) {
+            activePerspectiveRow = params.data;
+            perspectivePopoverOpen = true;
+        }
+    },
+    // Hover for edit mode handled differently — see Pitfall 2
+}
+```
+
+**Header component:** The Perspectize glasses icon as header requires a `headerComponent`. The simplest implementation is an inline `headerComponent` function returning an `HTMLElement` with the SVG icon, consistent with how `typeCellRenderer` works.
+
+### Pattern 5: "Perspectize" Per-User Perspective Data in the Content Query
+
+**What:** The content query must include each row's perspective for the selected user. This requires either:
+- A separate `perspectives` query filtered by `userId + contentId`, or
+- Embedding perspective data in the content query response.
+
+**Chosen approach (research recommendation):** Separate query. The `content` query returns content items. For the perspective column, maintain a parallel `perspectives` query filtered by `userID` (the selected user). The frontend merges the two by `contentId` via a `Map<contentId, perspective>`.
+
+**Why not embedding:** The GraphQL `Content` type does not have a perspectives field, and adding one changes the content resolver significantly. Keeping queries separate maintains clean separation and aligns with the existing pattern where users and content are separate queries.
+
+**How the merge works:**
+```typescript
+// In ActivityTable.svelte or a derived computation
+const userPerspectivesMap = $derived(() => {
+    const map = new Map<string, Perspective>();
+    for (const p of perspectivesQuery.data?.perspectives.items ?? []) {
+        if (p.contentID) map.set(p.contentID, p);
     }
-    field?.handleChange(value);
-  }
-</script>
+    return map;
+});
 
-<div class="space-y-2">
-  <label for={name} class="text-sm font-medium">{label}</label>
-  <input
-    id={name}
-    type="number"
-    min="0"
-    max={MAX_RATING}
-    value={value ?? 0}
-    oninput={handleInput}
-    onblur={field?.handleBlur}
-    class="h-9 w-24 rounded-md border border-input bg-background px-3 text-sm"
-  />
-  <Progress value={value ?? 0} max={MAX_RATING} class="h-2" />
-  <p class="text-xs text-muted-foreground">
-    {value ?? 0} / {MAX_RATING}
-  </p>
-</div>
+// When rendering the perspective column:
+const perspective = userPerspectivesMap.get(params.data.id);
+// Shows "+" if null, silhouette-glasses if defined
 ```
-**Source:** [shadcn-svelte Progress component](https://shadcn-svelte.com/docs/components/progress)
 
-### Pattern 3: Video Selector with Existing Content Query
-**What:** Use TanStack Query to fetch content list, render in shadcn Select or Combobox
-**When to use:** Video selection field in perspective form
-**Example:**
+### Pattern 6: PerspectivePopover Component
+
+**What:** A larger version of `FormPopover.svelte` with two modes — create (empty) and edit (pre-populated). It is NOT using `FormPopover.svelte` directly because the perspective form is significantly more complex (multiple rating inputs, two text areas, claim section, validation).
+
+**Structure:**
 ```svelte
+<!-- PerspectivePopover.svelte -->
 <script lang="ts">
-  import { createQuery } from '@tanstack/svelte-query';
-  import { graphqlClient } from '$lib/queries/client';
-  import { LIST_CONTENT } from '$lib/queries/content';
+    let {
+        contentId,         // The content item being perspectized
+        contentName,       // For display
+        existingPerspective = null,  // null = create mode; object = edit mode
+        onClose,
+        open = $bindable(false),
+    } = $props();
 
-  let { value = $bindable(null), field } = $props<{
-    value: number | null;
-    field?: any;
-  }>();
-
-  const contentQuery = createQuery(() => ({
-    queryKey: ['content'],
-    queryFn: () => graphqlClient.request(LIST_CONTENT),
-    staleTime: 5 * 60 * 1000,
-  }));
-
-  function handleChange(event: Event) {
-    const target = event.target as HTMLSelectElement;
-    const newValue = target.value ? parseInt(target.value, 10) : null;
-    value = newValue;
-    field?.handleChange(newValue);
-  }
+    // Two mutation hooks, one active based on mode
+    const createMutation = useCreatePerspective();
+    const updateMutation = useUpdatePerspective();
+    // ...rating state, validation, submit handler
 </script>
-
-{#if contentQuery.isLoading}
-  <select disabled class="h-9 rounded-md border border-input bg-background px-3 text-sm">
-    <option>Loading videos...</option>
-  </select>
-{:else if contentQuery.data}
-  <select
-    value={value ? String(value) : ''}
-    onchange={handleChange}
-    onblur={field?.handleBlur}
-    class="h-9 rounded-md border border-input bg-background px-3 text-sm"
-  >
-    <option value="">Select video...</option>
-    {#each contentQuery.data.content.items as content}
-      <option value={content.id}>{content.name}</option>
-    {/each}
-  </select>
-{/if}
 ```
-**Source:** Adapted from UserSelector.svelte (Phase 2 pattern)
 
-### Pattern 4: Form Validation with Toast Notifications
-**What:** Display validation errors via toast notifications BEFORE submission, inline errors during typing
-**When to use:** All form validation (required fields, field constraints)
-**Example:**
-```svelte
-<script lang="ts">
-  import { createForm } from '@tanstack/svelte-form';
-  import { toast } from 'svelte-sonner';
+**Mobile behavior:** Becomes Dialog at <768px — same media query pattern as `FormPopover.svelte`. Copy the `$effect` media query pattern verbatim.
 
-  const form = createForm(() => ({
-    defaultValues: { /* ... */ },
-    onSubmit: async ({ value }) => {
-      // Pre-submission validation
-      const errors: string[] = [];
+**Trigger mechanism:** Unlike FormPopover (which owns its trigger button), the PerspectivePopover is triggered externally by the AG Grid column click. The component receives `open` as a bindable prop and `contentId`/`existingPerspective` props set by the parent before opening.
 
-      if (!value.claim?.trim()) {
-        errors.push('Claim is required');
-      }
-      if (value.quality === null || value.quality < 0 || value.quality > 10000) {
-        errors.push('Quality rating must be between 0 and 10000');
-      }
-      // ... other validations
+### Pattern 7: @Reference Token Storage and Display
 
-      if (errors.length > 0) {
-        errors.forEach(err => toast.error(err));
-        return;
-      }
+**What:** `@this` / `@here` tokens in claim text are stored raw. Display resolves them to the parent content's name. Implementation is simple string replacement at render time.
 
-      // Submit mutation
-      // ...
-    },
-  }));
+**Storage:** `INSERT` with raw text: `"@this ran 22.3 mph in the 1987 game"` — no parsing on write.
 
-  // Field-level validation (optional, for inline errors)
-  const validateClaim = (value: string) => {
-    if (!value?.trim()) return 'Claim is required';
-    if (value.length < 3) return 'Claim must be at least 3 characters';
-    return undefined;
-  };
-</script>
-
-<form.Field name="claim" validators={{ onChange: validateClaim }}>
-  {#snippet children(field)}
-    <input
-      value={field.state.value}
-      oninput={(e) => field.handleChange(e.target.value)}
-      onblur={field.handleBlur}
-    />
-    {#if field.state.meta.errors.length > 0}
-      <span class="text-destructive text-sm">{field.state.meta.errors[0]}</span>
-    {/if}
-  {/snippet}
-</form.Field>
+**Display resolver:**
+```typescript
+// Simple function — no library needed
+export function resolveAtReference(
+    text: string,
+    parentContentName: string
+): string {
+    return text.replace(/@this|@here/g, parentContentName);
+}
 ```
-**Source:** [Form validation best practices](https://www.nngroup.com/articles/errors-forms-design-guidelines/) and [TanStack Form validation guide](https://tanstack.com/form/v1/docs/framework/react/guides/validation)
 
-### Pattern 5: Dialog State Reset on Open
-**What:** Reset form state when dialog opens to prevent stale data
-**When to use:** All dialog-based forms
-**Example:**
-```svelte
-<script lang="ts">
-  import { Dialog } from '$lib/components/shadcn/dialog';
+**Hover:** Wrap resolved text in a span with a tooltip showing "Reference to: {parentContentName}". Use a `DescriptionTooltip`-style pattern.
 
-  let { open = $bindable(false) } = $props();
+### Pattern 8: Claim Creation Flow
 
-  const form = createForm(() => ({ /* ... */ }));
+**What:** Within the `PerspectivePopover`, a "Add Claim" section (button or tab — Claude's discretion) opens a sub-form for entering claim text. On submit, calls `createContentFromYouTube`... wait — claims use a different mutation.
 
-  // Reset form when dialog opens
-  $effect(() => {
-    if (open) {
-      form.reset();
-    }
-  });
-</script>
+**Claim creation mutation:** Claims are content rows with `content_type = 'claim'`. The existing `createContentFromYouTube` mutation is YouTube-specific. Phase 4 needs either:
+1. A new `createClaim` mutation in GraphQL (new resolver), or
+2. Extending `createContentFromYouTube` to a generic `createContent` mutation.
 
-<Dialog.Root bind:open>
-  <Dialog.Content>
-    <form onsubmit={/* ... */}>
-      <!-- Form fields -->
-    </form>
-  </Dialog.Content>
-</Dialog.Root>
+**Recommendation:** Add a new `createClaim(input: CreateClaimInput!): Content!` mutation. Keep `createContentFromYouTube` unchanged to avoid breaking existing callers.
+
+**`CreateClaimInput` fields:**
+```graphql
+input CreateClaimInput {
+    text: String!          # The claim text (may contain @this/@here)
+    userID: IntID!         # Who created it
+    parentContentID: IntID! # The content item being claimed about
+}
 ```
-**Source:** Phase 3 research (dialog pattern established)
+
+**Backend:** New resolver delegates to `ContentService.CreateClaim()` or a new claim-specific service method. The domain creates a `Content` row with `content_type = "claim"` and stores `parentContentID` as JSONB metadata (in the `response` column) since the `content` table has no FK column for parent content in this phase.
+
+**Simpler alternative:** Since the `content` table's `response` column is JSONB, store `{ "parentContentId": 123, "text": "..." }` there. The claim's `name` field holds the display text (resolved from @reference at read time). This avoids any new columns.
 
 ### Anti-Patterns to Avoid
-- **Using `$effect()` for derived values** — Use `$derived()` instead (Svelte 5 convention)
-- **Manually managing form state with `$state()`** — Use TanStack Form's `createForm` for consistency
-- **Validating empty required fields on input** — Only validate on blur/submit to avoid interrupting user flow
-- **Disabling submit without pending state** — Always check `mutation.isPending` to prevent double-submission
-- **Showing technical error messages to users** — Map GraphQL errors to user-friendly messages
+
+- **Svelte component as AG Grid cell renderer:** Cannot mount Svelte components in AG Grid cells in this project. Use `HTMLElement` returning functions and lift popover state to parent.
+- **Embedding perspective data in content query:** Don't add `perspectives` to the `Content` GraphQL type — keeps the existing query shape clean and avoids N+1 issues.
+- **FormPopover reuse for PerspectivePopover:** FormPopover's `onSubmit` signature and single-action flow don't fit the dual create/edit mode. Build `PerspectivePopover.svelte` as a standalone component that internally uses shadcn primitives directly.
+- **Using Svelte 4 syntax:** All reactive state must use `$state`, `$derived`, `$effect`. No `export let`, no `$:`, no `on:event`.
+- **Rating as float in GraphQL:** Keep ratings as `Int` in GraphQL (0–10000). Display conversion (divide by 100) is client-side only.
+
+---
 
 ## Don't Hand-Roll
 
-Problems that look simple but have existing solutions:
-
 | Problem | Don't Build | Use Instead | Why |
 |---------|-------------|-------------|-----|
-| Form state management | Custom `$state()` with manual validation | `@tanstack/svelte-form` | Built-in validation timing (onChange, onBlur, onSubmit), error state management, field composition, type safety |
-| Progress bar component | Custom SVG with transform calculations | `shadcn-svelte Progress` | Accessible, animated, themed, tested across browsers |
-| Video search dropdown | Native `<select>` + manual filtering | `shadcn-svelte Combobox` | Keyboard navigation, accessible, popover positioning, focus management |
-| Form validation errors | `console.log` or inline-only errors | Toast notifications + inline errors | Users expect both toast feedback (immediate) and inline errors (context) |
-| Rating input constraints | Unvalidated number input | Number input with min/max + validation | Prevents invalid values, provides clear constraints, validates edge cases (NaN, negative, overflow) |
+| Integer array scanner for PostgreSQL | Custom string parser | Existing `Int64Array` type in `array_types.go` | Already handles `{1,2,3}` PostgreSQL format |
+| Toast notifications | Custom notification component | `svelte-sonner` (`toast.success`, `toast.error`) | Already wired in layout |
+| Popover/dialog mobile responsive | Custom modal logic | Copy media query `$effect` from `FormPopover.svelte` | Same 768px breakpoint pattern |
+| Query cache invalidation | Manual state reset | `queryClient.invalidateQueries` with key factory | TanStack handles stale-while-revalidate |
+| GraphQL type generation | Manual type writing | `make graphql-gen` after schema changes | gqlgen regenerates all model types |
+| FK cascade behavior | Application-level deletion propagation | PostgreSQL `ON DELETE SET NULL` | DB enforces referential integrity |
+| @reference resolution | Full mention/hashtag library | Simple `String.replace(/@this|@here/g, name)` | Scope is only two fixed tokens |
 
-**Key insight:** Form UX is deceptively complex — validation timing, error display, focus management, accessibility, and edge cases multiply quickly. TanStack Form handles these concerns, and shadcn-svelte components provide accessible, themed UI primitives.
+**Key insight:** The existing codebase has all the plumbing — new code is almost entirely additive. The repository's `Save()` (GORM) automatically handles new nullable columns once the GORM model has the fields.
+
+---
 
 ## Common Pitfalls
 
-### Pitfall 1: TanStack Form Schema Validation Type System Gap
-**What goes wrong:** Using Zod schema with TanStack Form results in validation running but errors not displaying
-**Why it happens:** TanStack Form's error array is loosely typed as `unknown` to allow flexibility, leading to type system gaps when using schema validation libraries
-**How to avoid:** Use field-level validators (functions returning `string | undefined`) instead of schema validators, or use custom form hooks with pre-bound validation
-**Warning signs:** Field validates (console shows validation running) but `field.state.meta.errors` is empty or incorrectly typed
+### Pitfall 1: AG Grid Column Visibility Must Be Updated in TWO Places
 
-**Source:** [Avoiding TanStack Form Pitfalls](https://matthuggins.com/blog/posts/avoiding-tanstack-form-pitfalls)
+**What goes wrong:** Adding the `perspective` column to `columnDefs` with `hide: false` shows it on desktop, but the `$effect` block that runs on `gridReady` overwrites visibility. If the new column is not added to the `$effect`'s `setColumnsVisible` calls, it may be hidden unexpectedly.
 
-### Pitfall 2: Form State Not Resetting Between Dialog Opens
-**What goes wrong:** User opens dialog, enters data, closes dialog, reopens → old data still in form
-**Why it happens:** Dialog visibility and form state are separate; hiding dialog doesn't reset `createForm` state
-**How to avoid:** Call `form.reset()` in `$effect()` watching dialog `open` prop
-**Warning signs:** Stale input values when reopening dialog after previous attempt
+**Why it happens:** The `$effect` in `ActivityTable.svelte` calls `setColumnsVisible` with explicit column lists for both mobile and desktop — it always wins because it runs after grid ready.
 
-```svelte
-$effect(() => {
-  if (open) {
-    form.reset();
-  }
-});
-```
+**How to avoid:** Add `'perspective'` to the appropriate `setColumnsVisible(['perspective', ...others], true/false)` calls in BOTH the mobile and desktop branches of the `$effect`. Add to desktop-visible list.
 
-### Pitfall 3: Validation Fires on Every Keystroke (Poor UX)
-**What goes wrong:** User types "Qua" in claim field, sees "Must be at least 5 characters" error while typing
-**Why it happens:** Using `onChange` validator without considering UX — validation fires on every input event
-**How to avoid:** Use `onBlur` for field-level validation (validates when user leaves field), reserve `onChange` for simple constraints (max length)
-**Warning signs:** Users complain about "annoying" or "distracting" error messages while typing
+**Warning signs:** Column appears in column menu but not in table after `gridReady`.
 
-**UX best practice:** Validate on blur for semantic errors (required, format), validate on change only for constraints (max length, character whitelist)
+### Pitfall 2: Hover-to-Edit on an AG Grid Row Is Not Standard
 
-**Source:** [Form validation UX best practices](https://www.nngroup.com/articles/errors-forms-design-guidelines/)
+**What goes wrong:** AG Grid has `onCellClicked` but no native "hover cell to open popover" API. Attempting to attach hover events directly to cell renderers leads to inconsistent behavior when the cell re-renders.
 
-### Pitfall 4: Number Input Accepts Non-Numeric Values
-**What goes wrong:** User types "abc" in rating input, form state becomes NaN or empty string
-**Why it happens:** HTML `<input type="number">` allows non-numeric input, returns empty string for invalid input
-**How to avoid:** Parse input with `parseInt()` in `oninput` handler, clamp to min/max range, handle NaN explicitly
-**Warning signs:** Form submits with NaN values, backend rejects request, user confused why rating "disappeared"
+**Why it happens:** AG Grid recycles cell DOM nodes (virtual scrolling). Event listeners attached manually inside `cellRenderer` may be lost on re-render.
 
-```svelte
-function handleInput(event: Event) {
-  const target = event.target as HTMLInputElement;
-  const numValue = parseInt(target.value, 10);
-  if (Number.isNaN(numValue) || numValue < 0) {
-    value = 0;
-  } else if (numValue > 10000) {
-    value = 10000;
-  } else {
-    value = numValue;
-  }
-}
-```
+**How to avoid:** Use `onCellMouseOver` and `onCellMouseOut` grid events at the grid level (not per-cell) to detect hover, OR use a dedicated icon button inside the cell renderer that uses a `data-content-id` attribute, and attach a delegated event listener to the grid container. The recommended approach: in the `cellRenderer` function, return an `<button>` element. The cell click handler in `gridOptions.onCellClicked` dispatches to the right action based on whether `existingPerspective` is set.
 
-### Pitfall 5: GraphQL Mutation Errors Are Not User-Friendly
-**What goes wrong:** Backend returns "Field validation error: userID is required", user sees technical error in toast
-**Why it happens:** GraphQL-request throws with raw error message, not extracted/mapped to user-friendly text
-**How to avoid:** Wrap mutation in try/catch, parse error message, map to user-friendly text, show generic fallback
-**Warning signs:** Toast shows constraint violation errors, null pointer exceptions, or GraphQL operation names
+**Alternative (simpler):** Use `onCellClicked` for both create and edit — single click opens the popover in create or edit mode. The hover UX can be approximated with a CSS `:hover` state on the cell icon (change opacity) without triggering the popover. This avoids the hover-open-popover complexity entirely and is more accessible.
 
-```typescript
-try {
-  await mutation.mutateAsync(value);
-  toast.success('Perspective created successfully');
-} catch (error) {
-  const message = error.message || '';
-  if (message.includes('userID') || message.includes('user')) {
-    toast.error('Please select a user before submitting');
-  } else if (message.includes('claim')) {
-    toast.error('Claim is required');
-  } else {
-    toast.error('Failed to create perspective. Please try again.');
-  }
-}
-```
+**Warning signs:** Popover opens and closes unexpectedly, or doesn't open on hover.
 
-### Pitfall 6: Rating Input Range (0-10000) Is Not Usable
-**What goes wrong:** User tries to set rating to 5000 using number input, typing "5000" character by character triggers validation/clamping, frustrating
-**Why it happens:** Number input with strict validation can interfere with typing flow
-**How to avoid:** Validate on blur, not on input; OR provide slider as alternative input method alongside number input
-**Warning signs:** Users struggle to enter precise values, complaints about "jumpy" inputs
+### Pitfall 3: The `perspectives` Query Needs to Filter by Selected User
 
-**UX recommendation:** Provide both number input (for precision) AND visual progress bar (for quick approximate values). Consider adding a slider if users request it.
+**What goes wrong:** If the perspectives query fetches all perspectives (no user filter), the perspective column would show all users' perspectives for a given content row, not just the current user's.
+
+**Why it happens:** `PerspectiveFilter` accepts `userID` as optional. It must be passed.
+
+**How to avoid:** The `useCreatePerspective` hook (and the perspectives query) must always filter by `getSelectedUserId()`. If no user is selected, show "+" icons in all rows (no perspective possible to display) and disable perspective creation with a toast.
+
+**Warning signs:** Perspective icons show for wrong user's perspective.
+
+### Pitfall 4: `make graphql-gen` Must Run After Schema Changes
+
+**What goes wrong:** Editing `schema.graphql` does not automatically update `internal/adapters/graphql/model/models_gen.go` or the resolver method signatures. Compilation fails with "undefined field" or "missing method" errors.
+
+**Why it happens:** gqlgen is schema-first; generated code is not auto-run.
+
+**How to avoid:** After every `schema.graphql` change, run `cd backend && make graphql-gen`. Verify compilation with `go build ./...` immediately after.
+
+**Warning signs:** `go build ./...` errors about missing resolver methods or unknown types.
+
+### Pitfall 5: The Perspective Update Service Uses Partial Updates (Nil = No Change)
+
+**What goes wrong:** When editing a perspective, sending a `nil` rating field means "don't change this field" — NOT "clear this field to null". If the UI allows removing a rating, the mutation input must explicitly set the field rather than omit it.
+
+**Why it happens:** The existing `Update()` service in `perspective_service.go` skips nil fields. This is intentional for partial updates but means you cannot zero-out a rating by passing nil.
+
+**How to avoid:** For the phase 4 use case (edit a perspective), pass all current field values in the update input, not just changed ones. The UI should send the current value of every field on every save — this is a "full update" pattern even though the service supports partial.
+
+**Warning signs:** User removes a rating during edit but it persists after save.
+
+### Pitfall 6: `content_type` Is VARCHAR, Not a PostgreSQL Enum
+
+**What goes wrong:** Assuming `content_type = 'claim'` requires an `ALTER TYPE` enum migration.
+
+**Why it happens:** Natural assumption when adding a new "enum value".
+
+**How to avoid:** The `content` table's `content_type` is `varchar NOT NULL`. Adding `claim` as a valid value requires NO migration to the database column — only the Go domain constant and GraphQL `ContentType` enum need updating. The GraphQL enum `ContentType` is a gqlgen construct, not mapped from a DB enum.
+
+**Warning signs:** Unnecessary migration that tries to `ALTER TYPE content_type ADD VALUE 'claim'` (the type doesn't exist as a PostgreSQL ENUM).
+
+### Pitfall 7: `primary_perspective_id` FK Is a Self-Reference
+
+**What goes wrong:** Writing the FK migration referencing `public.perspectives(id)` when the table is `perspectives` itself — this is a valid self-referential FK but requires the table to already exist (it does).
+
+**How to avoid:** The FK must be added in a separate `ALTER TABLE` statement after the column is added (same migration file, but `ADD COLUMN` first, then `ADD CONSTRAINT`). PostgreSQL requires the column to exist before constraining it.
+
+### Pitfall 8: Empty Perspective Validation Must Be Frontend AND Backend
+
+**What goes wrong:** Only validating "at least one field non-empty" on the frontend. A direct API call could create an empty perspective row.
+
+**How to avoid:** Add backend validation in `PerspectiveService.Create()`: if all ratings are nil AND `like` is nil AND `description` is nil AND `customFields` is nil, return `domain.ErrInvalidInput`. Frontend shows a toast (PERSP-08) before submission, backend enforces it as a safety net.
+
+---
 
 ## Code Examples
 
-Verified patterns from official sources and existing codebase:
+Verified patterns from codebase inspection:
 
-### Complete Perspective Form with TanStack Form
-```svelte
-<script lang="ts">
-  import { createForm } from '@tanstack/svelte-form';
-  import { createMutation, createQuery } from '@tanstack/svelte-query';
-  import { toast } from 'svelte-sonner';
-  import { graphqlClient } from '$lib/queries/client';
-  import { CREATE_PERSPECTIVE } from '$lib/queries/perspectives';
-  import { getSelectedUserId } from '$lib/stores/userSelection.svelte';
-  import { Dialog } from '$lib/components/shadcn/dialog';
-  import { Button } from '$lib/components/shadcn/button';
-  import { Progress } from '$lib/components/shadcn/progress';
+### Migration: Additive Column Addition (from migrations/000011)
+```sql
+-- Source: backend/migrations/000011_allow_null_user_email.up.sql (pattern)
+ALTER TABLE public.perspectives
+    ADD COLUMN IF NOT EXISTS primary_perspective_id integer NULL,
+    ADD COLUMN IF NOT EXISTS related_perspective_ids integer[] NULL DEFAULT '{}',
+    ADD COLUMN IF NOT EXISTS custom_fields jsonb NULL;
 
-  let { open = $bindable(false) } = $props();
+ALTER TABLE public.perspectives
+    ADD CONSTRAINT perspectives_primary_perspective_fk
+        FOREIGN KEY (primary_perspective_id)
+        REFERENCES public.perspectives(id)
+        ON DELETE SET NULL;
 
-  const mutation = createMutation(() => ({
-    mutationFn: (input: CreatePerspectiveInput) =>
-      graphqlClient.request(CREATE_PERSPECTIVE, { input }),
-    onSuccess: () => {
-      toast.success('Perspective created successfully');
-      open = false;
-    },
-    onError: (error) => {
-      const message = error.message || '';
-      if (message.includes('userID')) {
-        toast.error('Please select a user before submitting');
-      } else {
-        toast.error('Failed to create perspective. Please try again.');
-      }
-    },
-  }));
-
-  const form = createForm(() => ({
-    defaultValues: {
-      claim: '',
-      quality: null as number | null,
-      agreement: null as number | null,
-      importance: null as number | null,
-      confidence: null as number | null,
-      like: '',
-      review: '',
-      contentID: null as number | null,
-    },
-    onSubmit: async ({ value }) => {
-      // Pre-submission validation
-      const errors: string[] = [];
-      const userID = getSelectedUserId();
-
-      if (!userID) {
-        errors.push('Please select a user');
-      }
-      if (!value.claim?.trim()) {
-        errors.push('Claim is required');
-      }
-      if (value.quality === null) {
-        errors.push('Quality rating is required');
-      }
-      if (value.agreement === null) {
-        errors.push('Agreement rating is required');
-      }
-      if (value.importance === null) {
-        errors.push('Importance rating is required');
-      }
-      if (value.confidence === null) {
-        errors.push('Confidence rating is required');
-      }
-
-      if (errors.length > 0) {
-        errors.forEach(err => toast.error(err));
-        return;
-      }
-
-      // Submit with userID from store
-      await mutation.mutateAsync({
-        ...value,
-        userID: userID!,
-      });
-    },
-  }));
-
-  // Reset form when dialog opens
-  $effect(() => {
-    if (open) {
-      form.reset();
-    }
-  });
-</script>
-
-<Dialog.Root bind:open>
-  <Dialog.Content class="max-w-2xl">
-    <Dialog.Header>
-      <Dialog.Title>Add Perspective</Dialog.Title>
-    </Dialog.Header>
-
-    <form onsubmit={(e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      form.handleSubmit();
-    }} class="space-y-4">
-
-      {/* Form fields would go here */}
-
-      <Dialog.Footer>
-        <Button type="button" variant="outline" onclick={() => open = false}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? 'Creating...' : 'Create Perspective'}
-        </Button>
-      </Dialog.Footer>
-    </form>
-  </Dialog.Content>
-</Dialog.Root>
+CREATE INDEX IF NOT EXISTS perspectives_related_ids_gin
+    ON public.perspectives USING GIN (related_perspective_ids);
 ```
 
-### Reusable Rating Input Component
-```svelte
-<script lang="ts">
-  import { Progress } from '$lib/components/shadcn/progress';
+### GORM Model: Extending PerspectiveModel
+```go
+// Source: backend/internal/adapters/repositories/postgres/gorm_models.go (extend)
+type PerspectiveModel struct {
+    // ... existing fields ...
+    PrimaryPerspectiveID  *int       `gorm:"column:primary_perspective_id"`
+    RelatedPerspectiveIDs Int64Array `gorm:"type:integer[];column:related_perspective_ids"`
+    CustomFields          []byte     `gorm:"type:jsonb;column:custom_fields"`
+}
+```
 
-  let {
-    label,
-    name,
-    value = $bindable(null),
-    field = null,
-    required = false,
-  } = $props<{
-    label: string;
-    name: string;
-    value: number | null;
-    field?: any;
-    required?: boolean;
-  }>();
-
-  const MAX_RATING = 10000;
-
-  function handleInput(event: Event) {
-    const target = event.target as HTMLInputElement;
-    const numValue = parseInt(target.value, 10);
-
-    if (Number.isNaN(numValue) || numValue < 0) {
-      value = 0;
-    } else if (numValue > MAX_RATING) {
-      value = MAX_RATING;
-    } else {
-      value = numValue;
+### Mapper: New Fields Pattern
+```go
+// Source: pattern from backend/internal/adapters/repositories/postgres/gorm_mappers.go
+// In perspectiveModelToDomain():
+p.PrimaryPerspectiveID = m.PrimaryPerspectiveID
+if len(m.RelatedPerspectiveIDs) > 0 {
+    p.RelatedPerspectiveIDs = make([]int, len(m.RelatedPerspectiveIDs))
+    for i, v := range m.RelatedPerspectiveIDs {
+        p.RelatedPerspectiveIDs[i] = int(v)
     }
+}
+p.CustomFields = m.CustomFields
 
-    field?.handleChange(value);
-  }
+// In perspectiveDomainToModel():
+m.PrimaryPerspectiveID = p.PrimaryPerspectiveID
+if len(p.RelatedPerspectiveIDs) > 0 {
+    m.RelatedPerspectiveIDs = make(Int64Array, len(p.RelatedPerspectiveIDs))
+    for i, v := range p.RelatedPerspectiveIDs {
+        m.RelatedPerspectiveIDs[i] = int64(v)
+    }
+}
+m.CustomFields = p.CustomFields
+```
 
-  function handleBlur() {
-    field?.handleBlur();
-  }
+### Frontend: Perspectives Query File (new file)
+```typescript
+// Source: pattern from frontend/src/lib/queries/content.ts
+import { gql } from 'graphql-request';
+
+export interface PerspectiveItem {
+    id: string;
+    userID: string;
+    contentID: string | null;
+    quality: number | null;
+    agreement: number | null;
+    importance: number | null;
+    confidence: number | null;
+    like: string | null;
+    description: string | null;
+    primaryPerspectiveID: string | null;
+    relatedPerspectiveIDs: string[];
+    customFields: Record<string, unknown> | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface PerspectivesResponse {
+    perspectives: {
+        items: PerspectiveItem[];
+        pageInfo: { hasNextPage: boolean; hasPreviousPage: boolean; startCursor: string | null; endCursor: string | null; };
+        totalCount: number;
+    };
+}
+
+export interface CreatePerspectiveInput {
+    userID: number;
+    contentID?: number;
+    quality?: number;
+    agreement?: number;
+    importance?: number;
+    confidence?: number;
+    like?: string;
+    description?: string;
+}
+
+export const LIST_PERSPECTIVES = gql`
+    query ListPerspectives($filter: PerspectiveFilter, $first: Int) {
+        perspectives(filter: $filter, first: $first) {
+            items {
+                id
+                userID
+                contentID
+                quality
+                agreement
+                importance
+                confidence
+                like
+                description
+                createdAt
+                updatedAt
+            }
+            pageInfo { hasNextPage hasPreviousPage startCursor endCursor }
+            totalCount
+        }
+    }
+`;
+
+export const CREATE_PERSPECTIVE = gql`
+    mutation CreatePerspective($input: CreatePerspectiveInput!) {
+        createPerspective(input: $input) {
+            id
+            userID
+            contentID
+            quality
+            agreement
+            importance
+            confidence
+            like
+            description
+            createdAt
+            updatedAt
+        }
+    }
+`;
+
+export const UPDATE_PERSPECTIVE = gql`
+    mutation UpdatePerspective($input: UpdatePerspectiveInput!) {
+        updatePerspective(input: $input) {
+            id
+            quality
+            agreement
+            importance
+            confidence
+            like
+            description
+            updatedAt
+        }
+    }
+`;
+```
+
+### Frontend: Query Keys Extension
+```typescript
+// Source: frontend/src/lib/queries/keys.ts (extend)
+perspectives: {
+    all: () => [...queryKeys.all, 'perspectives'] as const,
+    lists: () => [...queryKeys.perspectives.all(), 'list'] as const,
+    list: (filters: { userID?: number; contentID?: number }) =>
+        [...queryKeys.perspectives.lists(), filters] as const,
+},
+```
+
+### Frontend: Rating Input with Stepper (Svelte 5)
+```svelte
+<!-- Recommended stepper granularity: 0.25 (25 in integer units) -->
+<!-- Source: Svelte 5 runes pattern from codebase -->
+<script lang="ts">
+    let quality = $state<number | null>(null);
+    const STEP = 25; // 0.25 display steps = 25 integer units
+    const MAX = 10000;
+
+    function displayToInt(display: number): number {
+        return Math.round(display * 100);
+    }
+    function intToDisplay(val: number | null): string {
+        return val === null ? '' : (val / 100).toFixed(2);
+    }
 </script>
 
-<div class="space-y-2">
-  <label for={name} class="text-sm font-medium">
-    {label}
-    {#if required}<span class="text-destructive">*</span>{/if}
-  </label>
-
-  <div class="flex items-center gap-4">
-    <input
-      id={name}
-      type="number"
-      min="0"
-      max={MAX_RATING}
-      value={value ?? 0}
-      oninput={handleInput}
-      onblur={handleBlur}
-      class="h-9 w-28 rounded-md border border-input bg-background px-3 text-sm"
-    />
-
-    <div class="flex-1">
-      <Progress value={value ?? 0} max={MAX_RATING} class="h-2" />
-      <p class="text-xs text-muted-foreground mt-1">
-        {value ?? 0} / {MAX_RATING}
-      </p>
-    </div>
-  </div>
-
-  {#if field?.state.meta.errors.length > 0}
-    <span class="text-destructive text-sm">{field.state.meta.errors[0]}</span>
-  {/if}
-</div>
+<input
+    type="number"
+    min="0"
+    max="100"
+    step="0.25"
+    value={intToDisplay(quality)}
+    oninput={(e) => {
+        const v = parseFloat((e.target as HTMLInputElement).value);
+        quality = isNaN(v) ? null : Math.min(MAX, Math.max(0, displayToInt(v)));
+    }}
+/>
 ```
+
+### Backend: Empty Perspective Validation (add to Create service)
+```go
+// Source: pattern from backend/internal/core/services/perspective_service.go
+// Add after existing validations in Create():
+func isEmptyPerspective(input portservices.CreatePerspectiveInput) bool {
+    return input.Quality == nil &&
+        input.Agreement == nil &&
+        input.Importance == nil &&
+        input.Confidence == nil &&
+        input.Like == nil &&
+        input.Description == nil &&
+        len(input.CategorizedRatings) == 0
+}
+
+// In Create():
+if isEmptyPerspective(input) {
+    return nil, fmt.Errorf("%w: at least one field must be provided", domain.ErrInvalidInput)
+}
+```
+
+---
 
 ## State of the Art
 
-| Old Approach | Current Approach | When Changed | Impact |
-|--------------|------------------|--------------|--------|
-| Manual form state with `$state()` | TanStack Form `createForm` | v1.0.0 (2024) | Standardized validation timing, error handling, field composition |
-| Custom progress bar with inline SVG | shadcn-svelte Progress component | shadcn-svelte release | Accessible, animated, themed, less code |
-| Native `<select>` with manual filtering | shadcn-svelte Combobox | shadcn-svelte v2 | Better keyboard nav, popover positioning, focus management |
-| Inline validation errors only | Toast + inline errors | UX research consensus | Immediate feedback (toast) + context (inline) improves UX |
+| Old Approach | Current Approach | Impact for Phase 4 |
+|--------------|------------------|-------------------|
+| `claim` column in perspectives table | Removed in migration 000007 | Claim is now a content_type, not a perspective field |
+| Join tables for references | FK + int[] array on row | No bridge table to create; simpler migration |
+| Separate test mock for each repo method | All mocks implement full interface | Adding new interface methods (e.g., `FindByContentID`) requires updating ALL test mocks |
+| Custom cursor encoding | `gorm-cursor-paginator/v2` | Perspective List() already uses paginator — no change needed |
 
 **Deprecated/outdated:**
-- **Svelte 4 `on:` event syntax**: Use Svelte 5 `onevent={}` syntax (e.g., `onclick={}` not `on:click={}`)
-- **Svelte 4 `<slot />`**: Use Svelte 5 snippets `{@render children()}` and `{#snippet children(field)}`
-- **Form validation on every keystroke**: UX research shows validation on blur is better for semantic errors
+- `claim` field on `perspectives` table: removed in migration 000007. Do NOT reference it. Claims are now `content` rows.
+- `perspectives_unique_user_claims` constraint: removed in migration 000007. No uniqueness constraint exists on perspectives currently.
+
+---
 
 ## Open Questions
 
-Things that couldn't be fully resolved:
+1. **How does the perspectives query attach to ActivityTable without causing two simultaneous paginated fetches?**
+   - What we know: ActivityTable fetches content with cursor pagination. A second perspectives query (all user's perspectives) would be a separate network request.
+   - What's unclear: Should perspectives fetch all at once (no pagination) or match the content page?
+   - Recommendation: Fetch all user perspectives without pagination (remove `first` limit or set high, e.g., 1000) since each user likely has few perspectives. This avoids complex cursor coordination between the two queries. The `perspectives` query is much smaller than content.
 
-1. **Should Video Selector use Select or Combobox?**
-   - What we know: Select is simpler, Combobox adds search functionality
-   - What's unclear: How many videos will users have in typical usage? If > 50, Combobox is better
-   - Recommendation: Start with Select (simpler), migrate to Combobox if users request search (easy swap due to same shadcn-svelte API)
+2. **Claim content storage — `response` JSONB vs new column?**
+   - What we know: The `content` table has a `response jsonb` column used for YouTube API response caching. It could store `{"parentContentId": 123, "claimText": "..."}`.
+   - What's unclear: Whether using `response` JSONB for claim-specific data is semantically correct vs adding a `parent_content_id` FK column.
+   - Recommendation: For Phase 4, use the existing `response` column as JSONB storage `{parentContentId, text}`. This is additive with zero migration risk. Adding a dedicated FK column is a future refinement when the claim model stabilizes.
 
-2. **Should rating inputs include a slider alongside number input?**
-   - What we know: Number input alone may be frustrating for large range (0-10000)
-   - What's unclear: Will users prefer slider for quick approximate values or number input for precision?
-   - Recommendation: Start with number input + progress bar (read-only visualization). Add slider if user testing shows frustration
+3. **Stepper granularity choice (Claude's discretion):**
+   - Recommendation: Use **0.25** step (25 integer units). Rationale: finer than 0.50 (gives 40 steps over 10.00) without the awkwardness of 0.10 (100 steps is too many for click-based adjustment). 0.25 is standard for star rating equivalents.
 
-3. **How should Review field differ from Like field?**
-   - What we know: Requirements say "Review text (design TBD)" — both are freeform text
-   - What's unclear: Should Review be multi-line? Should it have max length? Should it support markdown?
-   - Recommendation: Use `<textarea>` for Review (multi-line), `<input>` for Like (single-line). Defer markdown support to future phase
+4. **ON DELETE behavior for `primary_perspective_id` FK (Claude's discretion):**
+   - Recommendation: **SET NULL**. If the referenced perspective is deleted, the reference becomes null rather than cascade-deleting the entire referencing perspective. This preserves the perspective's own data.
 
-4. **Should validation errors show in toasts, inline, or both?**
-   - What we know: Requirements say "validation error toasts before submission" (PERSP-08), UX research says inline + toast is best
-   - What's unclear: Do we show ALL errors as toasts (overwhelming if 5+ errors) or just first error?
-   - Recommendation: Show first 3 errors as toasts (2s auto-dismiss stagger), show all errors inline — balances feedback without overwhelming
+---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- TanStack Form Svelte docs - [Quick Start](https://tanstack.com/form/v1/docs/framework/svelte/quick-start), [Examples](https://tanstack.com/form/v1/docs/framework/svelte/examples/simple)
-- shadcn-svelte Progress component - [Documentation](https://shadcn-svelte.com/docs/components/progress)
-- UserSelector.svelte (Phase 2) - Established pattern for dropdown + TanStack Query
-- Phase 3 research - Dialog reset pattern, GraphQL error handling
+
+- Codebase: `backend/migrations/000001_create_content.up.sql` — confirmed `content_type` is varchar, not PostgreSQL ENUM
+- Codebase: `backend/migrations/000004_add_perspectives_users.up.sql` — existing perspectives table schema
+- Codebase: `backend/migrations/000007_remove_claim_add_system_user.up.sql` — confirmed `claim` column removed
+- Codebase: `backend/internal/core/domain/perspective.go` — domain model fields
+- Codebase: `backend/internal/core/services/perspective_service.go` — service Create/Update logic, validation patterns
+- Codebase: `backend/internal/adapters/repositories/postgres/gorm_models.go` — GORM PerspectiveModel
+- Codebase: `backend/internal/adapters/repositories/postgres/gorm_mappers.go` — mapper patterns for arrays
+- Codebase: `backend/internal/adapters/repositories/postgres/array_types.go` — Int64Array, StringArray, JSONBArray
+- Codebase: `backend/schema.graphql` — full current schema, confirmed perspectives mutations exist
+- Codebase: `frontend/src/lib/components/FormPopover.svelte` — popover/dialog pattern, mobile breakpoint
+- Codebase: `frontend/src/lib/components/ActivityTable.svelte` — AG Grid column patterns, responsive visibility
+- Codebase: `frontend/src/lib/queries/hooks/useAddVideo.ts` — mutation hook pattern with cache update
+- Codebase: `.claude/docs/ADDING_AG_GRID_COLUMN.md` — confirmed two-place visibility requirement
 
 ### Secondary (MEDIUM confidence)
-- NN/g Form Validation Guidelines - [10 Design Guidelines for Reporting Errors in Forms](https://www.nngroup.com/articles/errors-forms-design-guidelines/)
-- Form validation UX research - [Multiple sources](https://blog.logrocket.com/ux-design/ux-form-validation-inline-after-submission/) agree on blur validation + inline errors
-- TanStack Form pitfalls - [Avoiding TanStack Form Pitfalls](https://matthuggins.com/blog/posts/avoiding-tanstack-form-pitfalls)
+- Backend CLAUDE.md + ARCHITECTURE.md — hexagonal architecture layer rules
+- Frontend CLAUDE.md — Svelte 5 runes-only requirement, AG Grid svelte5 constraint
 
 ### Tertiary (LOW confidence)
-- WebSearch: "Svelte 5 number input slider range" - Community discussion of slider libraries, needs verification with testing
-- TanStack Form schema validation - GitHub issues mention type system gaps, but no official statement on recommended approach
+- None required — all research sourced from codebase directly.
+
+---
 
 ## Metadata
 
 **Confidence breakdown:**
-- Standard stack: HIGH - TanStack Form already installed, shadcn-svelte Progress documented, patterns verified
-- Architecture: HIGH - Patterns adapted from Phase 2 (UserSelector), Phase 3 (dialog), official TanStack docs
-- Pitfalls: MEDIUM - Some pitfalls from blog posts (not official docs), but cross-verified with UX research and GitHub issues
+- Standard stack: HIGH — all libraries already in use, no new dependencies
+- Architecture: HIGH — all patterns verified from existing code
+- Migration approach: HIGH — additive FK + array pattern confirmed viable by existing array usage
+- AG Grid popover interaction: MEDIUM — hover-to-edit requires non-standard workaround; click-to-edit recommended as simpler alternative
+- Claim storage via JSONB response column: MEDIUM — pragmatic for phase 4 but semantically imperfect
 
-**Research date:** 2026-02-07
-**Valid until:** 2026-03-07 (30 days - stable libraries, but TanStack Form is actively developed)
-
-**Critical for planner:**
-- Phase 4 depends on Phase 2's user selection store (USER-03 requires `getSelectedUserId()`)
-- TanStack Form is installed but NOT yet used in codebase — this is the first usage, establishes pattern
-- Progress component needs to be installed via shadcn CLI before use
-- Number input UX (0-10000) is a known challenge — consider slider in future if user testing shows issues
+**Research date:** 2026-02-18
+**Valid until:** 2026-03-20 (stable stack, 30-day window)
