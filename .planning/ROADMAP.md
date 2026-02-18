@@ -19,6 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3.1: Design Token System** - Implement all 27 Figma color variables, Geist + Charter typography, rating colors in code (INSERTED — rescoped)
 - [x] **Phase 3.2: Activity Page Beta Quality** - Rebuild Activity page to beta quality with server-side ops, new columns, popover dialog, data provenance (INSERTED)
 - [x] **Phase 3.3: Repository Rename & Folder Restructure** - OBSOLETE — repo already named `perspectize`, folders already `backend/` + `frontend/` (INSERTED)
+- [ ] **Phase 3.4: Perspectize Branding & Glasses Identity** - Bot personality, logo/avatar design, UI treatment for AI assistant (INSERTED)
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
 - [x] **Phase 5: Testing + Deployment** - Coverage met, deployed on Sevalla, CORS working (wildcard — restriction deferred to Phase 9)
 
@@ -156,6 +157,32 @@ Plans:
 - [x] 03.3-01-PLAN.md — OBSOLETE (repo already named perspectize, Go module path already correct)
 - [x] 03.3-02-PLAN.md — OBSOLETE (folders already backend/ and frontend/)
 - [x] 03.3-03-PLAN.md — OBSOLETE (Sevalla already deployed with current structure)
+
+### Phase 3.4: Perspectize Branding & Glasses Identity (INSERTED)
+**Goal**: Establish the Perspectize brand identity through the "glasses" motif — a `<GlassesIcon>` Svelte component with 3 shapes (sunglasses, round pince-nez, oval pince-nez), preset color palette picker, user preferences storage (JSONB), and glasses shown in user avatars across the app. Includes Jeeves bot personality brief and chat UI treatment guidelines.
+**Depends on**: Phase 3.3
+**Success Criteria** (what must be TRUE):
+  1. `<GlassesIcon>` Svelte component renders 3 shapes (sunglasses, round pince-nez, oval pince-nez) with light/dark mode SVG variants
+  2. Preset color palette picker with 6-8 curated colors (each defines stroke + gradient stops)
+  3. Shape toggle + color swatch picker UI wired to local state
+  4. User preferences JSONB column in database (`{"glasses": {"shape": "oval", "color": "purple"}}`)
+  5. Go API endpoint to persist/retrieve glasses preferences
+  6. Glasses displayed in user avatars across app (next to perspectives, profile)
+  7. "Pick your glasses" onboarding flow for first-run setup
+  8. Jeeves bot personality brief documented (tone, vocabulary, "thoughtful butler" archetype)
+  9. Chat UI treatment guidelines defined (message bubble styles, typing indicator, avatar with glasses)
+  10. Brand guidelines document created in frontend/docs/ for reference
+**Plans**: 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 3.4 to break down)
+
+**Details:**
+The glasses motif is the core brand element — "perspectives" seen through different lenses. Three shapes with purple gradient palettes (light: #9F7AEA/#44337A, dark: #B794F4/#9F7AEA). SVG reference designs in phase directory. Implementation order: component → picker UI → backend storage → avatar integration → onboarding.
+
+**Cleanup:** Delete source file `/Users/jamesjordan/Downloads/perspectize-glasses-reference.md` after execution complete.
+
+**Reference:** `.planning/phases/03.4-jeeves-branding-identity/REFERENCE-glasses.md`
 
 ### Phase 4: Add Perspective Flow
 **Goal**: Users can create perspectives on videos with ratings, Like, and Review text
@@ -569,7 +596,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 7.3 -> 7.4 -> 8 -> 8.1 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 7.3 -> 7.4 -> 8 -> 8.1 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -580,6 +607,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 3.1 Design Token System | 2/2 | Complete | 2026-02-12 |
 | 3.2 Activity Page Beta Quality | 8/8 | Complete | 2026-02-16 |
 | 3.3 Repository Rename & Restructure | 0/3 | Obsolete | 2026-02-15 |
+| 3.4 Perspectize Branding & Glasses Identity | 0/0 | Not started | - |
 | 4. Add Perspective Flow | 0/2 | Not started | - |
 | 5. Testing + Deployment | 2/3 | Complete | 2026-02-15 |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
