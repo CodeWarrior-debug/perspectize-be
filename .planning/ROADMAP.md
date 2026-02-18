@@ -170,8 +170,8 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 04-01-PLAN.md — Mutation definition, shadcn Progress/Textarea, RatingInput and VideoSelector components with tests
-- [ ] 04-02-PLAN.md — AddPerspectiveDialog with TanStack Form, Header wiring, validation, visual checkpoint
+- [ ] 04-01-PLAN.md — Backend schema migration (perspective refs, claim type), domain/GORM/GraphQL extensions, frontend query definitions + mutation hooks + tests
+- [ ] 04-02-PLAN.md — PerspectivePopover UI, RatingInput component, AG Grid Perspectize column with +/silhouette icons, visual checkpoint
 
 ### Phase 5: Testing + Deployment
 **Goal**: Application is tested, deployed, and accessible via public URL with proper CORS
