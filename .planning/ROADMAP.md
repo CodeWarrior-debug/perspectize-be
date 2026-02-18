@@ -167,11 +167,12 @@ Plans:
   3. User can enter Like text and Review text (freeform)
   4. User sees validation error toasts before submission if form is invalid
   5. User sees success toast after perspective is created, attributed to selected user
-**Plans**: 2 plans in 2 waves
+**Plans**: 3 plans in 3 waves
 
 Plans:
 - [ ] 04-01-PLAN.md — Backend schema migration (perspective refs, claim type), domain/GORM/GraphQL extensions, frontend query definitions + mutation hooks + tests
-- [ ] 04-02-PLAN.md — PerspectivePopover UI, RatingInput component, AG Grid Perspectize column with +/silhouette icons, visual checkpoint
+- [ ] 04-02-PLAN.md — PerspectivePopover UI, RatingInput component, AG Grid Perspectize column with +/silhouette icons (hover=edit, click=create), visual checkpoint
+- [ ] 04-03-PLAN.md — Claim creation (createClaim mutation, frontend hook, @reference utils, claim trigger in PerspectivePopover)
 
 ### Phase 5: Testing + Deployment
 **Goal**: Application is tested, deployed, and accessible via public URL with proper CORS
