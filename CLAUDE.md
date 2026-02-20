@@ -195,5 +195,9 @@ See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow
 
 **Cowork session cleanup:** Claude cowork (claude.ai web) sessions leave `_tmp_*` files and conversation transcript `.txt` files in the repo root and `frontend/`. Delete these before committing.
 
+## Merge Conflict Patterns
+
+**pnpm-lock.yaml conflicts:** Accept either side (`git checkout --theirs frontend/pnpm-lock.yaml`), then regenerate: `pnpm install --dir frontend`. Always use `--dir` instead of `cd` to avoid hook/shell side effects that can switch branches mid-operation.
+
 **External references:**
 - [gqlgen](https://gqlgen.com/) | [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/) | [Effective Go](https://go.dev/doc/effective_go) | [PostgreSQL 17](https://www.postgresql.org/docs/17/)
