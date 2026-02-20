@@ -1,4 +1,4 @@
-.PHONY: build run dev test docker-up docker-down clean migrate-up migrate-up-n migrate-down migrate-down-n migrate-create graphql-gen fmt lint test-coverage install-hooks
+.PHONY: build run dev test docker-up docker-down clean migrate-up migrate-up-n migrate-down migrate-down-n migrate-create graphql-gen fmt lint test-coverage test-duplication install-hooks
 
 # Load .env file if it exists
 ifneq (,$(wildcard .env))
@@ -85,6 +85,10 @@ lint:
 install-hooks:
 	git config core.hooksPath .githooks
 	@echo "Git hooks installed (.githooks/pre-commit)"
+
+# Test duplication detection (requires jscpd: npm install -g jscpd)
+test-duplication:
+	jscpd .
 
 # Test with coverage report
 test-coverage:
