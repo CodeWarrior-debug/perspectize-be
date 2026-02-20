@@ -1,12 +1,18 @@
 # Phase 4: Add Perspective Flow - Context
 
 **Gathered:** 2026-02-16
-**Status:** In progress — architecture locked, UI decisions partial, performance discussion pending
+**Updated:** 2026-02-20
+**Status:** Ready for planning (Phase 4A only — 4B depends on category/grouping architecture)
 
 <domain>
 ## Phase Boundary
 
 Users can create perspectives on videos with ratings, Like text, Review text, and validation. **Expanded scope:** Phase 4 also includes the perspective schema redesign (many-to-many references, self-joins, optional fields, JSONB custom fields) to support the full Perspectize vision.
+
+**Phase 4 split (decided 2026-02-20):**
+- **Phase 4A (independent):** Create perspective CRUD — form, ratings, Like/Review text, validation, backend mutation, PerspectivePopover UI, RatingInput component. Maps to plans 04-01 and popover portion of 04-02.
+- **Phase 4B (depends on Phase 13/14):** How perspectives display in AG Grid with grouping — Perspectize column, expandable details, grouped views. Maps to AG Grid portion of 04-02.
+- **Plan 04-03 (claims):** Independent — ties into reference architecture.
 
 </domain>
 
@@ -65,37 +71,67 @@ Users can create perspectives on videos with ratings, Like text, Review text, an
 
 </decisions>
 
+<cross_phase_architecture>
+## Cross-Phase Architecture: Faceted Search & Grouping (decided 2026-02-20)
+
+Phases 4B, 13, 14, and 15 share a unified data retrieval architecture. Decisions documented here apply across all four phases.
+
+### Content Organization Model
+
+**Primary category** (single, hierarchical):
+- One category per content item via `category_id` FK
+- Hierarchical path via PostgreSQL ltree extension
+- Source: Google NL taxonomy (curated 20 of 27 categories) + user-created categories
+- This is what AG Grid groups by (expandable tree rows)
+
+**Labels** (multiple, flat):
+- Many labels per content item
+- Non-hierarchical — flat text for search/filtering, not grouping
+- Case-insensitive comparison for searches
+- Storage: separate labels table OR JSONB array with required `value` field + optional metadata (Claude's discretion)
+- Supports faceted filtering alongside category grouping
+
+### Faceted Search Pattern
+
+The data retrieval flow:
+1. **Search bar** — text query hits backend
+2. **Category facet** — filter by taxonomy node (Sports > NFL)
+3. **Label facets** — filter by labels (Mahomes, 2024 season)
+4. **All combine** — backend returns intersection
+5. **AG Grid displays** — groups by category hierarchy (expandable tree rows)
+6. **Grid filters refine** — client-side further narrowing on returned results
+
+### AG Grid Grouping Architecture
+
+- **Expandable tree rows** — top level shows categories, expand to subcategories, expand to content items
+- **API design:** Backend supports both flat queries (client-side grouping) and grouped/paginated queries (server-side grouping)
+- **Start client-side** — fetch content with category paths, AG Grid groups client-side
+- **Upgrade to server-side** — when data volume warrants, switch to Server-Side Row Model (API already supports it)
+- **Toggle capability** — design API to support both patterns from day one
+
+### Google NL Taxonomy — Research Spike Needed
+
+**BLOCKER:** Before committing to the category architecture, a research spike is needed to understand:
+- Full Google NL taxonomy depth (how many levels? what subcategories exist?)
+- How to traverse layers (see all at one level, drill deeper, go higher)
+- How to map YouTube content to taxonomy nodes
+- Whether the taxonomy hierarchy maps cleanly to ltree paths
+- Cost/API limits for automated classification
+
+**Action:** Insert a spike phase (Phase 13.1 or similar) for taxonomy research before Phase 13 execution.
+
+</cross_phase_architecture>
+
 <specifics>
 ## Specific Ideas
 
 - The "Perspectize glasses" icon is the column header; "+" icon per row is the action trigger
 - Term "perspective-on-perspective" preferred over "reply" or "response"
 - Sarah's scenario: critiquing James's inconsistent ratings across two videos — this is the canonical example of a multi-reference perspective (references 2 perspectives + 0 content, or 2 perspectives + 2 content items)
+- NFL athlete example as canonical grouping use case: Patrick Mahomes video categorized under Sports > NFL > Chiefs, with labels ["Mahomes", "2024 season", "game film"]
+- Faceted search like Amazon product filtering — combine search + category + labels to query backend
 
 </specifics>
-
-<open_questions>
-## Open Questions (Resume Here)
-
-### Performance Concerns
-User wants to discuss performance implications of:
-- Many-to-many join table for references (query complexity, N+1, indexing)
-- JSONB custom fields (indexing, querying, schema-less data)
-- Recursive queries for perspective threads/chains
-- Impact on AG Grid / Activity table rendering with richer data
-
-### UI/UX Still to Discuss
-- What the popover layout looks like (rating arrangement, text field placement)
-- Whether to show existing perspectives on a video before adding yours
-- How perspectives display in the Activity table (new column? expandable row?)
-- Empty states (video with no perspectives yet)
-
-### Schema Migration
-- How to migrate from current `content_id` FK to PerspectiveReference join table
-- Whether to keep backward compatibility or do a clean migration
-- Impact on existing frontend queries and components
-
-</open_questions>
 
 <deferred>
 ## Deferred Ideas
@@ -111,4 +147,4 @@ User wants to discuss performance implications of:
 
 *Phase: 04-add-perspective-flow*
 *Context gathered: 2026-02-16*
-*Status: PARTIAL — resume discussion before planning*
+*Updated: 2026-02-20*
