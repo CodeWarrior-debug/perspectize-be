@@ -6,6 +6,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import Header from '$lib/components/Header.svelte';
 	import { reportWebVitals } from '$lib/vitals';
+	import { pwaInfo } from 'virtual:pwa-info';
 	import '../app.css';
 
 	// CRITICAL: Disable queries on server to prevent post-SSR execution
@@ -21,6 +22,8 @@
 
 	let { children } = $props();
 
+	let webManifestLink = $derived(pwaInfo ? pwaInfo.webManifest.linkTag : '');
+
 	onMount(() => {
 		reportWebVitals();
 	});
@@ -28,6 +31,7 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+	{@html webManifestLink}
 </svelte:head>
 
 <QueryClientProvider client={queryClient}>
