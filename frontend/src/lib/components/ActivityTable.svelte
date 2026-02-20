@@ -18,6 +18,7 @@
 		formatTags,
 		truncateDescription,
 		contentRowId,
+		headerMinWidth,
 	} from '$lib/utils/formatting';
 	import { TagsTooltip } from '$lib/components/TagsTooltip';
 	import { DescriptionTooltip } from '$lib/components/DescriptionTooltip';
@@ -110,14 +111,15 @@
 	});
 
 	// flex = clamp-like: proportional sizing with min/max constraints
-	const columnDefs: ColDef<ContentItem>[] = [
+	// minWidth is auto-derived from headerName unless explicitly set (e.g. Item = 200)
+	const columnDefs: ColDef<ContentItem>[] = ([
 		{
 			colId: 'item',
 			headerName: 'Item',
-			flex: 3.5,
+			flex: 2,
 			minWidth: 200,
-			sortable: true,
-			filter: 'agTextColumnFilter',
+
+			filter: false, // Search handled by page-level search input
 			cellRenderer: itemCellRenderer,
 			tooltipValueGetter: (params) => params.data?.name ?? '',
 			headerTooltip: 'Video title and thumbnail from YouTube API',
@@ -126,9 +128,8 @@
 			colId: 'type',
 			headerName: 'Type',
 			flex: 0.5,
-			minWidth: 60,
-			maxWidth: 90,
-			sortable: true,
+			maxWidth: 100,
+
 			filter: 'agTextColumnFilter',
 			valueGetter: (params) => {
 				const t = params.data?.contentType;
@@ -145,9 +146,8 @@
 			colId: 'duration',
 			headerName: 'Length',
 			flex: 0.7,
-			minWidth: 70,
 			maxWidth: 120,
-			sortable: true,
+
 			filter: 'agNumberColumnFilter',
 			valueGetter: durationValueGetter,
 			comparator: (_valueA, _valueB, nodeA, nodeB) => {
@@ -162,9 +162,8 @@
 			field: 'viewCount',
 			headerName: 'Views',
 			flex: 0.8,
-			minWidth: 70,
 			maxWidth: 130,
-			sortable: true,
+
 			filter: 'agNumberColumnFilter',
 			valueFormatter: (params) => formatCount(params.value),
 			tooltipValueGetter: (params) => formatCountExact(params.data?.viewCount ?? null),
@@ -175,9 +174,8 @@
 			field: 'likeCount',
 			headerName: 'Likes',
 			flex: 0.8,
-			minWidth: 70,
 			maxWidth: 130,
-			sortable: true,
+
 			filter: 'agNumberColumnFilter',
 			valueFormatter: (params) => formatCount(params.value),
 			tooltipValueGetter: (params) => formatCountExact(params.data?.likeCount ?? null),
@@ -188,9 +186,8 @@
 			field: 'publishedAt',
 			headerName: 'Date',
 			flex: 1,
-			minWidth: 100,
 			maxWidth: 150,
-			sortable: true,
+
 			filter: 'agDateColumnFilter',
 			filterValueGetter: (params) => {
 				const val = params.data?.publishedAt;
@@ -204,9 +201,8 @@
 			field: 'channelTitle',
 			headerName: 'Channel',
 			flex: 1.2,
-			minWidth: 100,
 			maxWidth: 200,
-			sortable: true,
+
 			filter: 'agTextColumnFilter',
 			headerTooltip: 'Channel name from YouTube API',
 		},
@@ -215,7 +211,6 @@
 			field: 'tags',
 			headerName: 'Tags',
 			flex: 1.5,
-			minWidth: 120,
 			maxWidth: 250,
 			sortable: false,
 			filter: 'agTextColumnFilter',
@@ -230,7 +225,6 @@
 			field: 'description',
 			headerName: 'Description',
 			flex: 2,
-			minWidth: 150,
 			sortable: false,
 			filter: 'agTextColumnFilter',
 			valueFormatter: (params) => truncateDescription(params.value, 80),
@@ -244,9 +238,8 @@
 			field: 'updatedAt',
 			headerName: 'Updated',
 			flex: 1,
-			minWidth: 100,
 			maxWidth: 150,
-			sortable: true,
+
 			filter: 'agDateColumnFilter',
 			filterValueGetter: (params) => {
 				const val = params.data?.updatedAt;
@@ -262,9 +255,8 @@
 			field: 'createdAt',
 			headerName: 'Date Added',
 			flex: 1,
-			minWidth: 100,
 			maxWidth: 150,
-			sortable: true,
+
 			filter: 'agDateColumnFilter',
 			filterValueGetter: (params) => {
 				const val = params.data?.createdAt;
@@ -274,13 +266,17 @@
 			headerTooltip: 'Date added to Perspectize',
 			hide: true,
 		},
-	];
+	] as ColDef<ContentItem>[]).map((col) => ({
+		...col,
+		minWidth: col.minWidth ?? headerMinWidth(col.headerName ?? '', col.filter !== false),
+	}));
 
 	const gridOptions: GridOptions<ContentItem> = {
 		columnDefs,
 		pagination: false, // Manual pagination
 		defaultColDef: {
 			resizable: true,
+
 			tooltipValueGetter: (params) => {
 				return params.valueFormatted ?? params.value ?? '';
 			},
@@ -403,6 +399,19 @@
 			gridApi.setGridOption('loading', loading);
 		}
 	});
+
+	// Re-evaluate flex column widths when the grid container resizes
+	// (e.g. DevTools panel open/close, sidebar toggle)
+	let gridContainer = $state<HTMLDivElement | null>(null);
+	$effect(() => {
+		if (!gridContainer || !gridApi || !gridReady) return;
+		const api = gridApi;
+		const observer = new ResizeObserver(() => {
+			api.sizeColumnsToFit();
+		});
+		observer.observe(gridContainer);
+		return () => observer.disconnect();
+	});
 </script>
 
 <div class="flex flex-col h-full gap-4">
@@ -421,7 +430,7 @@
 		</div>
 	{:else}
 		<!-- AG Grid -->
-		<div class="flex-1 min-h-0" style="--ag-row-height: 44px; --ag-header-height: 40px;">
+		<div bind:this={gridContainer} class="flex-1 min-h-0" style="--ag-row-height: 44px; --ag-header-height: 40px;">
 			<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
 		</div>
 	{/if}

@@ -317,6 +317,27 @@ Enable conversation threads on content items, allowing users to discuss perspect
 
 ---
 
+## Migration Tests
+
+Add automated tests for SQL migrations to catch syntax errors and verify up/down roundtrips.
+
+**What to test:**
+- **Up/down roundtrip** — Apply all migrations up, then down to zero, then back up. No errors = schema is reversible.
+- **Individual migration syntax** — Each `.up.sql` and `.down.sql` runs without errors against a clean or migrated DB
+- **Data preservation** — For data-transforming migrations (column renames, type changes), seed test data before `up` and verify it survives the roundtrip
+- **Idempotency** — Running `up` twice doesn't break (IF NOT EXISTS patterns)
+
+**Implementation approach:**
+- Go integration test that spins up a test PostgreSQL container (testcontainers-go or Docker Compose)
+- Iterate through `backend/migrations/` files in order
+- Could run in CI as a separate job (slower, needs Docker)
+
+**Priority:** Medium — prevents broken migrations from reaching production. Especially valuable as schema evolves (Phase 11 denormalization, multi-content-type work).
+
+**Source:** Development discussion (2026-02-20)
+
+---
+
 ## Jeeves AI Assistant
 
 An AI-powered assistant integrated into the platform to help users discover, refine, and engage with content and perspectives.
