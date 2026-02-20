@@ -28,7 +28,7 @@
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/svelte": "^5.3.1",
 		"@vitest/coverage-v8": "^4.0.18",
-		"bits-ui": "^2.15.5",
+		"bits-ui": "^2.16.1",
 		"jscpd": "^4.0.8",
 		"jsdom": "^28.1.0",
 		"prettier": "^3.8.1",
