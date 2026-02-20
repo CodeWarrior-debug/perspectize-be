@@ -184,7 +184,7 @@ Plans:
 **Details:**
 The glasses motif is the core brand element — "perspectives" seen through different lenses. Three shapes with purple gradient palettes (light: #9F7AEA/#44337A, dark: #B794F4/#9F7AEA). SVG reference designs in phase directory. Implementation order: component → picker UI → backend storage → avatar integration → onboarding.
 
-**Cleanup:** Delete source file `/Users/jamesjordan/Downloads/perspectize-glasses-reference.md` after execution complete.
+**Cleanup:** Delete the source reference file from Downloads after execution complete.
 
 **Reference:** `.planning/phases/03.4-jeeves-branding-identity/REFERENCE-glasses.md`
 
