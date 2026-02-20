@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 3.2 complete (8/8 plans) — Phase 4 (Add Perspective Flow) is next
+**Current focus:** Phase 3.5 in progress (1/2 plans) — Google NL Taxonomy Research Spike
 
 ## Current Position
 
-Phase: 3.2 of 10 (Activity Page Beta Quality) — COMPLETE
-Plan: 8/8 complete
-Status: Phase complete — All 8 plans delivered (backend YouTube fields, popover dialog, ActivityTable rewrite, integration polish, navy header, filters, mobile responsive, FormPopover/Select)
-Last activity: 2026-02-16 — Completed 03.2-08-PLAN.md (mobile-responsive popovers and styled select)
+Phase: 3.5 (Google NL Taxonomy Research Spike) — In progress
+Plan: 1/2 complete
+Status: In progress — Plan 01 (Postman Collection + Exploration Guide) complete. Plan 02 (Curated Category List + Seed SQL) pending user interactive exploration and findings.
+Last activity: 2026-02-20 — Completed 03.5-01-PLAN.md (Postman collection and exploration guide)
 
-Progress: [████████████████████] 100%
+Progress: [████████████████████] ~95% (34 plans complete)
 
 ## Performance Metrics
 
@@ -353,9 +353,23 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 - `52c904e` fix: remove invalid Claim field from perspective bench test
 - `92a488a` chore: gofmt formatting across backend
 
+### 2026-02-20 — Phase 03.5: Google NL Taxonomy Research Spike — Plan 01
+
+**Branch:** `main`
+
+**Work completed:**
+1. **Postman Collection** — `postman/google-nl-taxonomy-explorer.json` with 11 requests in 9 content-type folders, `{{API_KEY}}` collection variable, V2 model on all requests except Curl 1
+2. **Exploration Guide** — `EXPLORATION-GUIDE.md` with 5 phases (A-E), 20 numbered steps, custom request examples for subcategory deep-dives, and a findings template for capturing curated category decisions
+
+**Commits:**
+- `df61fa9` docs: phase 04 and 03.4 planning artifacts (included EXPLORATION-GUIDE.md in PR)
+- `113bed7` feat(03.5-01): generate Postman collection JSON for Google NL taxonomy exploration
+
+**Duration:** 11 min
+
 ## Session Continuity
 
-Last session: 2026-02-16
-Stopped at: Phase 3.2 complete (8/8 plans), Phase 3.3 obsolete, Phase 5 deployment complete
+Last session: 2026-02-20
+Stopped at: Phase 3.5 Plan 01 complete — Postman collection and exploration guide delivered on main
 Resume file: None
-Next up: Phase 4 (Add Perspective Flow) — core feature, 2 plans
+Next up: Phase 3.5 Plan 02 — User fills in findings template from interactive exploration, then Plan 02 generates curated category list and SQL seed data
