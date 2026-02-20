@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
 	formatDuration,
 	formatDate,
+	formatDateCompact,
 	formatCount,
 	formatCountExact,
 	formatPublishDate,
@@ -14,6 +15,7 @@ import {
 	durationValueGetter,
 	dateValueFormatter,
 	contentRowId,
+	headerMinWidth,
 } from '$lib/utils/formatting';
 
 describe('formatDuration', () => {
@@ -207,6 +209,32 @@ describe('formatCountExact', () => {
 	});
 });
 
+describe('formatDateCompact', () => {
+	it('returns — for null', () => {
+		expect(formatDateCompact(null)).toBe('—');
+	});
+
+	it('returns — for empty string', () => {
+		expect(formatDateCompact('')).toBe('—');
+	});
+
+	it('returns — for invalid date', () => {
+		expect(formatDateCompact('not-a-date')).toBe('—');
+	});
+
+	it("formats date as MMM 'YY", () => {
+		expect(formatDateCompact('2010-07-18T12:00:00Z')).toBe("Jul '10");
+	});
+
+	it('formats recent date correctly', () => {
+		expect(formatDateCompact('2026-02-14T12:00:00Z')).toBe("Feb '26");
+	});
+
+	it('formats date with single-digit year', () => {
+		expect(formatDateCompact('2005-03-15T12:00:00Z')).toBe("Mar '05");
+	});
+});
+
 describe('formatPublishDate', () => {
 	it('returns -- for null', () => {
 		expect(formatPublishDate(null)).toBe('--');
@@ -372,5 +400,56 @@ describe('typeCellRenderer', () => {
 		const hidden = result.querySelector('.sr-only');
 		expect(hidden).toBeTruthy();
 		expect(hidden?.textContent).toBe('YOUTUBE');
+	});
+});
+
+describe('headerMinWidth', () => {
+	it('returns a positive integer', () => {
+		const result = headerMinWidth('Type');
+		expect(result).toBeGreaterThan(0);
+		expect(Number.isInteger(result)).toBe(true);
+	});
+
+	it('longer names produce wider minimums', () => {
+		const short = headerMinWidth('Date');
+		const long = headerMinWidth('Description');
+		expect(long).toBeGreaterThan(short);
+	});
+
+	it('filter icon adds width', () => {
+		const withFilter = headerMinWidth('Item', true);
+		const withoutFilter = headerMinWidth('Item', false);
+		expect(withFilter).toBeGreaterThan(withoutFilter);
+	});
+
+	it('defaults hasFilter to true', () => {
+		const defaultCall = headerMinWidth('Type');
+		const explicitTrue = headerMinWidth('Type', true);
+		expect(defaultCall).toBe(explicitTrue);
+	});
+
+	it('empty name still has space for icons and padding', () => {
+		const result = headerMinWidth('');
+		expect(result).toBeGreaterThan(0);
+	});
+
+	it('produces consistent results for known headers', () => {
+		// These are the actual column headers — verify they produce reasonable widths
+		const headers = ['Type', 'Length', 'Views', 'Likes', 'Date', 'Channel', 'Tags'];
+		for (const name of headers) {
+			const width = headerMinWidth(name);
+			// Must be wide enough for text + icons (at least 60px) and not absurdly large
+			expect(width).toBeGreaterThanOrEqual(60);
+			expect(width).toBeLessThanOrEqual(200);
+		}
+	});
+
+	it('width scales linearly with character count', () => {
+		const w4 = headerMinWidth('AAAA');
+		const w8 = headerMinWidth('AAAAAAAA');
+		// 4 extra chars at ~0.55em * 14px = ~30.8px difference
+		const diff = w8 - w4;
+		expect(diff).toBeGreaterThanOrEqual(28);
+		expect(diff).toBeLessThanOrEqual(34);
 	});
 });
