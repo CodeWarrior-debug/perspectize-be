@@ -209,12 +209,16 @@ describe('formatCountExact', () => {
 });
 
 describe('formatDateCompact', () => {
-	it('returns -- for null', () => {
-		expect(formatDateCompact(null)).toBe('--');
+	it('returns — for null', () => {
+		expect(formatDateCompact(null)).toBe('—');
 	});
 
-	it('returns -- for invalid date', () => {
-		expect(formatDateCompact('not-a-date')).toBe('--');
+	it('returns — for empty string', () => {
+		expect(formatDateCompact('')).toBe('—');
+	});
+
+	it('returns — for invalid date', () => {
+		expect(formatDateCompact('not-a-date')).toBe('—');
 	});
 
 	it("formats date as MMM 'YY", () => {

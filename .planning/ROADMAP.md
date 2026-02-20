@@ -19,6 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3.1: Design Token System** - Implement all 27 Figma color variables, Geist + Charter typography, rating colors in code (INSERTED — rescoped)
 - [x] **Phase 3.2: Activity Page Beta Quality** - Rebuild Activity page to beta quality with server-side ops, new columns, popover dialog, data provenance (INSERTED)
 - [x] **Phase 3.3: Repository Rename & Folder Restructure** - OBSOLETE — repo already named `perspectize`, folders already `backend/` + `frontend/` (INSERTED)
+- [ ] **Phase 3.4: Perspectize Branding & Glasses Identity** - Glasses motif with 3 shapes, 8-color palette picker, JSONB preferences, avatar display, onboarding (INSERTED)
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
 - [x] **Phase 5: Testing + Deployment** - Coverage met, deployed on Sevalla, CORS working (wildcard — restriction deferred to Phase 9)
 
@@ -157,6 +158,35 @@ Plans:
 - [x] 03.3-02-PLAN.md — OBSOLETE (folders already backend/ and frontend/)
 - [x] 03.3-03-PLAN.md — OBSOLETE (Sevalla already deployed with current structure)
 
+### Phase 3.4: Perspectize Branding & Glasses Identity (INSERTED)
+**Goal**: Establish the Perspectize brand identity through the "glasses" motif — a `<GlassesIcon>` Svelte component with 3 shapes (sunglasses, round pince-nez, oval pince-nez), preset color palette picker, user preferences storage (JSONB), and glasses shown in user avatars across the app.
+**Depends on**: Phase 3.3
+**Success Criteria** (what must be TRUE):
+  1. `<GlassesIcon>` Svelte component renders 3 shapes (sunglasses, round pince-nez, oval pince-nez) with 8-color gradient palette
+  2. Preset color palette picker with 8 curated colors (each defines stroke + gradient stops)
+  3. Shape toggle + color swatch picker UI wired to local state with live preview
+  4. User preferences JSONB column in database (`{"glasses": {"shape": "oval", "color": "purple"}}`)
+  5. Go API endpoint to persist/retrieve glasses preferences
+  6. Glasses displayed in user avatars across app (header UserSelector + current user AG Grid rows)
+  7. "Pick your glasses" onboarding flow for first-run setup (skippable)
+  8. ~~Jeeves bot personality brief documented~~ DESCOPED (deferred to future phase)
+  9. ~~Chat UI treatment guidelines defined~~ DESCOPED (deferred to future phase)
+  10. ~~Brand guidelines document created in frontend/docs/~~ DESCOPED (deferred to future phase)
+**Plans**: 4 plans in 3 waves
+
+Plans:
+- [ ] 03.4-01-PLAN.md — Backend: domain types, migration 000012, GORM model/mapper, repository, GraphQL schema/resolver
+- [ ] 03.4-02-PLAN.md — Frontend: GlassesIcon Svelte component with 3 shapes + 8-color palette + types + tests
+- [ ] 03.4-03-PLAN.md — Frontend: GlassesPickerPopover, mutation hook, GQL definition, LIST_USERS preferences field
+- [ ] 03.4-04-PLAN.md — Integration: UserSelector wiring, AG Grid cell renderer, onboarding flow, random defaults, visual checkpoint
+
+**Details:**
+The glasses motif is the core brand element — "perspectives" seen through different lenses. Three shapes with purple gradient palettes (light: #9F7AEA/#44337A, dark: #B794F4/#9F7AEA). SVG reference designs in phase directory. Implementation order: component → picker UI → backend storage → avatar integration → onboarding.
+
+**Cleanup:** Delete source file `/Users/jamesjordan/Downloads/perspectize-glasses-reference.md` after execution complete.
+
+**Reference:** `.planning/phases/03.4-jeeves-branding-identity/REFERENCE-glasses.md`
+
 ### Phase 4: Add Perspective Flow
 **Goal**: Users can create perspectives on videos with ratings, Like, and Review text
 **Depends on**: Phase 3
@@ -167,11 +197,12 @@ Plans:
   3. User can enter Like text and Review text (freeform)
   4. User sees validation error toasts before submission if form is invalid
   5. User sees success toast after perspective is created, attributed to selected user
-**Plans**: 2 plans in 2 waves
+**Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 04-01-PLAN.md — Mutation definition, shadcn Progress/Textarea, RatingInput and VideoSelector components with tests
-- [ ] 04-02-PLAN.md — AddPerspectiveDialog with TanStack Form, Header wiring, validation, visual checkpoint
+- [ ] 04-01-PLAN.md — Backend schema migration (perspective refs, claim type), domain/GORM/GraphQL extensions, frontend query definitions + mutation hooks + tests
+- [ ] 04-02-PLAN.md — PerspectivePopover UI, RatingInput component, AG Grid Perspectize column with +/silhouette icons (hover=edit, click=create), visual checkpoint
+- [ ] 04-03-PLAN.md — Claim creation (createClaim mutation, frontend hook, @reference utils, claim trigger in PerspectivePopover)
 
 ### Phase 5: Testing + Deployment
 **Goal**: Application is tested, deployed, and accessible via public URL with proper CORS
@@ -568,7 +599,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 7.3 -> 7.4 -> 8 -> 8.1 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 7.3 -> 7.4 -> 8 -> 8.1 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -579,7 +610,8 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 3.1 Design Token System | 2/2 | Complete | 2026-02-12 |
 | 3.2 Activity Page Beta Quality | 8/8 | Complete | 2026-02-16 |
 | 3.3 Repository Rename & Restructure | 0/3 | Obsolete | 2026-02-15 |
-| 4. Add Perspective Flow | 0/2 | Not started | - |
+| 3.4 Perspectize Branding & Glasses Identity | 0/4 | Not started | - |
+| 4. Add Perspective Flow | 0/3 | Not started | - |
 | 5. Testing + Deployment | 2/3 | Complete | 2026-02-15 |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
 | 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |

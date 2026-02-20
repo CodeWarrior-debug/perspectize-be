@@ -71,11 +71,11 @@ export function formatCountExact(count: number | null): string {
  * Format date in compact form: "MMM 'YY" (e.g., "Jul '10") for tight columns.
  */
 export function formatDateCompact(isoString: string | null): string {
-	if (!isoString) return '--';
+	if (!isoString) return '—';
 	const date = new Date(isoString);
-	if (isNaN(date.getTime())) return '--';
-	const month = date.toLocaleDateString('en-US', { month: 'short' });
-	const year = String(date.getFullYear()).slice(2);
+	if (isNaN(date.getTime())) return '—';
+	const month = date.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+	const year = String(date.getUTCFullYear()).slice(2);
 	return `${month} '${year}`;
 }
 

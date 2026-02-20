@@ -2,7 +2,7 @@
 	import AgGridSvelte5Component from 'ag-grid-svelte5';
 	import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
 	import { themeQuartz } from '@ag-grid-community/theming';
-	import type { GridApi, GridOptions, SortChangedEvent, FilterChangedEvent, ColDef } from '@ag-grid-community/core';
+	import type { GridApi, GridOptions, SortChangedEvent, ColDef } from '@ag-grid-community/core';
 	import { createQuery, keepPreviousData } from '@tanstack/svelte-query';
 	import { graphqlClient } from '$lib/queries/client';
 	import { LIST_CONTENT, type ContentItem, type ContentResponse } from '$lib/queries/content';
@@ -138,7 +138,7 @@
 			flex: 3.5,
 			minWidth: 200,
 			sortable: true,
-			filter: 'agTextColumnFilter',
+			filter: false, // Search handled by page-level search input
 			cellRenderer: itemCellRenderer,
 			tooltipValueGetter: (params) => params.data?.name ?? '',
 			headerTooltip: 'Video title and thumbnail from YouTube API',
@@ -338,7 +338,7 @@
 			currentPage = 0;
 			cursors = [null];
 		},
-		onFilterChanged: (event: FilterChangedEvent) => {
+		onFilterChanged: () => {
 			// AG Grid column filters work client-side only
 			// Server-side search is handled via the searchText prop
 		},
