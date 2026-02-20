@@ -7,7 +7,7 @@
 	<div class="h-full px-4 md:px-6 lg:px-8 max-w-screen-xl mx-auto flex items-center justify-between gap-2 md:gap-4">
 		<a
 			href="/"
-			class="font-bold text-base sm:text-lg md:text-xl text-primary-foreground hover:text-primary-foreground/80 transition-colors min-w-0 truncate"
+			class="font-bold text-base sm:text-lg md:text-xl text-primary-foreground hover:text-primary-foreground/80 active:opacity-75 transition-colors min-w-0 truncate"
 		>
 			Perspectize
 		</a>
