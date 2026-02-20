@@ -130,3 +130,7 @@ Full setup and examples: [docs/AG_GRID.md](docs/AG_GRID.md)
 | Resize     | `mcp__chrome-devtools__resize_page`           | Responsive (375/768/1024px) |
 | Console    | `mcp__chrome-devtools__list_console_messages` | JS errors                   |
 | Interact   | `mcp__chrome-devtools__click`                 | Buttons, navigation         |
+
+## Testing Gotchas
+
+**Date formatting timezone:** `formatDate`/`formatDateCompact` use `toLocaleDateString` (local timezone). In tests, use midday UTC times (`T12:00:00Z`) not midnight (`T00:00:00Z`) to avoid dates shifting to previous day in US timezones.

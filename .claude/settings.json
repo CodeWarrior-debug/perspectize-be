@@ -26,6 +26,7 @@
       "Bash(tr:*)",
       "Bash(wc:*)",
       "Bash(yes:*)",
+      "Bash(cd:*)",
       "Bash(rm -f:*)",
       "Bash(rm -rf .svelte-kit:*)",
       "Bash(rm -rf build:*)",

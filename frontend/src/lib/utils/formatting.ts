@@ -68,6 +68,18 @@ export function formatCountExact(count: number | null): string {
 }
 
 /**
+ * Format date in compact form: "MMM 'YY" (e.g., "Jul '10") for tight columns.
+ */
+export function formatDateCompact(isoString: string | null): string {
+	if (!isoString) return '—';
+	const date = new Date(isoString);
+	if (isNaN(date.getTime())) return '—';
+	const month = date.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+	const year = String(date.getUTCFullYear()).slice(2);
+	return `${month} '${year}`;
+}
+
+/**
  * Format YouTube publish date (ISO string).
  */
 export function formatPublishDate(isoString: string | null): string {
@@ -111,6 +123,22 @@ export function extractVideoIdFromUrl(url: string | null): string | null {
 	} catch {
 		return null;
 	}
+}
+
+/**
+ * Compute minimum AG Grid column width (px) so header text + icons never truncate.
+ * AG Grid only accepts px — we derive from the grid's font metrics.
+ */
+const GRID_FONT_SIZE = 14; // matches AG Grid theme fontSize
+export function headerMinWidth(name: string, hasFilter = true): number {
+	const charWidthEm = 0.55; // approx em per char at font-weight 600
+	const paddingEm = 1.5; // left + right cell padding
+	const sortIconEm = 1.2; // sort indicator
+	const filterIconEm = hasFilter ? 1.5 : 0;
+	const separatorEm = 0.5; // column border/handle
+	const totalEm =
+		name.length * charWidthEm + paddingEm + sortIconEm + filterIconEm + separatorEm;
+	return Math.ceil(totalEm * GRID_FONT_SIZE);
 }
 
 /**

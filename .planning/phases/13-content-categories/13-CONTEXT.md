@@ -1,213 +1,97 @@
 # Phase 13: Content Categories — Context
 
-## Phase Goal
+**Gathered:** 2026-02-16
+**Updated:** 2026-02-20
+**Status:** Blocked — awaiting taxonomy research spike (see cross-phase architecture in 04-CONTEXT.md)
 
-Enable content categorization using Google NL taxonomy. Add Claude-powered auto-suggestion.
+<domain>
+## Phase Boundary
 
-## Problem Statement
+Enable content categorization using Google NL taxonomy with hierarchical structure, plus flat labels for search. Part of the unified faceted search architecture shared with Phases 4B, 14, and 15.
 
-From FEATURE_BACKLOG.md:
+</domain>
 
-"Categorize content using Google's Cloud NL Content Taxonomy — 27 top-level categories designed for digital content classification."
+<decisions>
+## Implementation Decisions
 
-Currently content has no categorization beyond `content_type` (which is just 'youtube_video'). Users cannot browse or filter by topic.
+### Category Model (decided 2026-02-20)
 
-## Research Summary
+**Primary category (hierarchical):**
+- Single `category_id` FK on content table
+- Google NL taxonomy (curated 20 of 27 categories) as foundation
+- User-created categories also supported (same table, same hierarchy)
+- Hierarchical via PostgreSQL ltree extension
+- This is what drives AG Grid expandable tree grouping
 
-See `.planning/v1.1-research/CONTENT-CATEGORIZATION.md` for full research.
+**Labels (flat, many-per-content):**
+- Non-hierarchical text tags for search/filtering
+- Case-insensitive comparison
+- Storage: separate labels table OR JSONB array with required `value` + optional metadata fields (Claude's discretion)
+- Used in faceted search, not for grid grouping
 
-**Taxonomy decision:** Google NL taxonomy (20 of 27 categories)
-- Arts & Entertainment, Autos & Vehicles, Beauty & Fitness, Books & Literature
-- Business & Industrial, Computers & Electronics, Finance, Food & Drink
-- Games, Health, Hobbies & Leisure, Home & Garden
-- Jobs & Education, Law & Government, News, People & Society
-- Pets & Animals, Science, Sports, Travel & Transportation
+### Auto-categorization
 
-**Dropped for v1:** Adult, Internet & Telecom, Online Communities, Real Estate, Reference, Sensitive Subjects, Shopping
+- Claude Haiku for classification (5x cheaper than Google Cloud NL API)
+- $0.031/month for 100 videos
+- Suggestion-based, not mandatory
 
-**Auto-categorization:** Claude Haiku (5x cheaper than Google Cloud NL)
-- Cost: $0.031/month for 100 videos vs $0.14/month for Google Cloud NL
-- Accuracy: Comparable for classification tasks
-- Flexibility: Custom taxonomy, no API quota limits
+### Storage
 
-**Storage decision:** Lookup table with ltree (not enum)
-- Supports hierarchical categories (future)
-- Allows user-defined categories (future)
-- Easier to add/modify categories
+- Categories lookup table with ltree paths
+- GIN index for label search (whether TEXT[], JSONB, or join table)
 
-## Database Changes
+### Claude's Discretion
 
-```sql
--- Categories lookup table
-CREATE TABLE categories (
-    id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE,
-    slug TEXT NOT NULL UNIQUE,
-    path LTREE NOT NULL,  -- For future hierarchy
-    description TEXT,
-    icon TEXT,            -- Emoji or icon class
-    display_order INT NOT NULL DEFAULT 0,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+- Label storage format (separate table vs JSONB array) — pick what works best with GORM + AG Grid
+- Optional fields on labels beyond required `value`
+- Category seed data selection from Google NL taxonomy
 
--- Seed initial categories
-INSERT INTO categories (name, slug, path, icon, display_order) VALUES
-('Arts & Entertainment', 'arts-entertainment', 'arts_entertainment', '🎭', 1),
-('Autos & Vehicles', 'autos-vehicles', 'autos_vehicles', '🚗', 2),
-('Beauty & Fitness', 'beauty-fitness', 'beauty_fitness', '💄', 3),
--- ... etc
+</decisions>
 
--- Add category to content
-ALTER TABLE content ADD COLUMN category_id INT REFERENCES categories(id);
-CREATE INDEX idx_content_category_id ON content (category_id);
-```
+<open_questions>
+## Open Questions — Research Spike Needed
 
-## GraphQL Schema Changes
+Before execution, a research spike must answer:
+1. **Taxonomy depth:** How many levels does Google NL taxonomy have? (currently only using top-level 20/27)
+2. **Traversal:** How to see all categories at one level, drill deeper, go higher
+3. **Subcategory mapping:** What subcategories exist under top categories like Sports, Arts, etc.?
+4. **ltree fit:** Does the taxonomy hierarchy map cleanly to ltree paths?
+5. **YouTube mapping:** Can YouTube video metadata (tags, channel, description) reliably map to taxonomy nodes?
+6. **Custom categories:** How do user-created categories coexist with Google taxonomy in the hierarchy?
 
-```graphql
-type Category {
-  id: IntID!
-  name: String!
-  slug: String!
-  icon: String
-  contentCount: Int!
-}
+</open_questions>
 
-type Content {
-  # ... existing fields
-  category: Category
-}
+<cross_phase>
+## Cross-Phase Architecture Reference
 
-input CreateContentFromYouTubeInput {
-  url: String!
-  categoryId: IntID  # Optional, can auto-suggest
-}
+See `04-CONTEXT.md > Cross-Phase Architecture: Faceted Search & Grouping` for the unified architecture decisions covering Phases 4B, 13, 14, and 15.
 
-input UpdateContentInput {
-  id: IntID!
-  categoryId: IntID
-}
+Key decisions:
+- Faceted search pattern (search + category + labels → backend intersection → AG Grid grouping)
+- AG Grid expandable tree rows grouped by category hierarchy
+- API designed for both client-side and server-side grouping from day one
+- Start client-side, upgrade to server-side when data volume warrants
 
-type CategorySuggestion {
-  category: Category!
-  confidence: Float!  # 0-1
-  reasoning: String
-}
+</cross_phase>
 
-type Query {
-  categories: [Category!]!
-  suggestCategory(contentId: IntID!): CategorySuggestion!
-}
-```
+<specifics>
+## Specific Ideas
 
-## Claude Integration Pattern
+- NFL athlete canonical example: Mahomes video → category "Sports > NFL > Chiefs", labels ["Mahomes", "2024 season", "game film"]
+- Faceted search UX like Amazon product filtering
+- Both curated (Google NL) and user-created categories in same hierarchy
 
-```go
-// Category suggestion service
-type CategorySuggestionService struct {
-    client *anthropic.Client
-    repo   ports.CategoryRepository
-}
+</specifics>
 
-func (s *CategorySuggestionService) SuggestCategory(ctx context.Context, content *domain.Content) (*CategorySuggestion, error) {
-    categories, _ := s.repo.ListAll(ctx)
+<deferred>
+## Deferred Ideas
 
-    prompt := fmt.Sprintf(`Categorize this YouTube video into one of these categories:
-%s
+- None new — existing deferred items from previous context still apply
 
-Video title: %s
-Video description: %s
-
-Respond with JSON: {"category_slug": "...", "confidence": 0.0-1.0, "reasoning": "..."}`,
-        formatCategories(categories),
-        content.Name,
-        content.Description,
-    )
-
-    resp, err := s.client.Messages.Create(ctx, anthropic.MessageCreateParams{
-        Model:     anthropic.ModelClaudeHaiku,
-        MaxTokens: 200,
-        Messages: []anthropic.Message{{
-            Role:    "user",
-            Content: prompt,
-        }},
-    })
-
-    // Parse JSON response
-    // ...
-}
-```
-
-## Frontend Components
-
-```svelte
-<!-- CategoryPicker.svelte -->
-<script lang="ts">
-    import { createQuery } from '@tanstack/svelte-query';
-    import { Select } from '$lib/shadcn';
-
-    let { value = $bindable(), onSuggest } = $props<{
-        value?: number;
-        onSuggest?: () => void;
-    }>();
-
-    const categories = createQuery(() => ({
-        queryKey: queryKeys.categories.list(),
-        queryFn: () => graphqlClient.request(LIST_CATEGORIES),
-    }));
-</script>
-
-<Select bind:value>
-    <SelectTrigger>
-        <SelectValue placeholder="Select category" />
-    </SelectTrigger>
-    <SelectContent>
-        {#each categories.data?.categories ?? [] as category}
-            <SelectItem value={category.id}>
-                <span class="mr-2">{category.icon}</span>
-                {category.name}
-            </SelectItem>
-        {/each}
-    </SelectContent>
-</Select>
-
-{#if onSuggest}
-    <Button variant="outline" size="sm" on:click={onSuggest}>
-        ✨ Suggest
-    </Button>
-{/if}
-```
-
-## Requirements Covered
-
-- CAT-01 through CAT-08 (all category requirements)
-
-## Success Metrics
-
-| Metric | Current | Target |
-|--------|---------|--------|
-| Content with category | 0% | 100% (new) |
-| Category count | 0 | 20 |
-| Auto-suggestion accuracy | N/A | > 80% |
-| Filter by category | No | Yes |
-
-## Dependencies
-
-- Phase 12 (auth for user-specific categories later)
-- Claude API key (Anthropic account required)
-
-## Risks
-
-- **Claude API costs:** Monitor usage, set budget alerts
-- **Category accuracy:** Users may disagree with suggestions
-- **Schema migration:** Content backfill needs default or NULL handling
-
-## Open Questions
-
-1. Should uncategorized content be allowed, or require category selection?
-2. Should category suggestion be automatic on add, or user-triggered?
-3. Should we track category suggestion accuracy for improvement?
+</deferred>
 
 ---
 
+*Phase: 13-content-categories*
 *Context gathered: 2026-02-16*
+*Updated: 2026-02-20*
