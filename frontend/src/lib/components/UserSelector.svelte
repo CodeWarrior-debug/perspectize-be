@@ -55,7 +55,9 @@
 		</div>
 	{:else if usersQuery.data}
 		<Select bind:value={selectedValue} onValueChange={handleValueChange} type="single">
-			<SelectTrigger class="w-48 bg-primary-foreground/10 text-primary-foreground border-primary-foreground/30">
+			<SelectTrigger
+				class="w-28 sm:w-36 md:w-48 bg-primary-foreground/10 text-primary-foreground border-primary-foreground/30"
+			>
 				{selectedUsername()}
 			</SelectTrigger>
 			<SelectContent>
