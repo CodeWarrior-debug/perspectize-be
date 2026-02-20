@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
 	formatDuration,
 	formatDate,
+	formatDateCompact,
 	formatCount,
 	formatCountExact,
 	formatPublishDate,
@@ -204,6 +205,28 @@ describe('formatCountExact', () => {
 
 	it('formats millions with commas', () => {
 		expect(formatCountExact(1000000)).toBe('1,000,000');
+	});
+});
+
+describe('formatDateCompact', () => {
+	it('returns -- for null', () => {
+		expect(formatDateCompact(null)).toBe('--');
+	});
+
+	it('returns -- for invalid date', () => {
+		expect(formatDateCompact('not-a-date')).toBe('--');
+	});
+
+	it("formats date as MMM 'YY", () => {
+		expect(formatDateCompact('2010-07-18T12:00:00Z')).toBe("Jul '10");
+	});
+
+	it('formats recent date correctly', () => {
+		expect(formatDateCompact('2026-02-14T12:00:00Z')).toBe("Feb '26");
+	});
+
+	it('formats date with single-digit year', () => {
+		expect(formatDateCompact('2005-03-15T12:00:00Z')).toBe("Mar '05");
 	});
 });
 

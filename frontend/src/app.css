@@ -148,6 +148,16 @@
 	overflow-y: auto !important;
 }
 
+/* AG Grid body cell font — Charter for content text, Geist stays on headers */
+.ag-cell {
+	font-family: 'Charter', 'Georgia', 'Times New Roman', serif;
+}
+
+/* Keep Geist on type column (icon-only, no text to style) */
+.ag-cell[col-id='type'] {
+	font-family: 'Geist', system-ui, sans-serif;
+}
+
 /* Mobile-specific utilities */
 @media (max-width: 767px) {
 	.thumbnail-mobile-hide {

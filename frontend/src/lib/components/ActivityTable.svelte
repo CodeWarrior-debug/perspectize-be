@@ -15,12 +15,18 @@
 		formatCount,
 		formatCountExact,
 		formatPublishDate,
+		formatDateCompact,
 		formatTags,
 		truncateDescription,
 		contentRowId,
 	} from '$lib/utils/formatting';
 	import { TagsTooltip } from '$lib/components/TagsTooltip';
 	import { DescriptionTooltip } from '$lib/components/DescriptionTooltip';
+	import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
+	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
+
+	// Props — searchText is lifted to the page level
+	let { searchText = '' }: { searchText?: string } = $props();
 
 	// GraphQL ContentSortBy to AG Grid colId mapping
 	const SORT_FIELD_MAP: Record<string, string> = {
@@ -44,9 +50,23 @@
 	let sortBy = $state<string>('UPDATED_AT');
 	let sortOrder = $state<'ASC' | 'DESC'>('DESC');
 	let filterText = $state<string>('');
-	let debounceTimer: ReturnType<typeof setTimeout>;
+	let searchDebounceTimer: ReturnType<typeof setTimeout>;
 	// Responsive tier: 'xs' (<445px), 'sm' (445-639px), 'md' (640-899px), 'lg' (900px+)
 	let responsiveTier = $state<'xs' | 'sm' | 'md' | 'lg'>('lg');
+
+	// Sync external search prop to internal filter (debounced)
+	$effect(() => {
+		const text = searchText;
+		clearTimeout(searchDebounceTimer);
+		searchDebounceTimer = setTimeout(() => {
+			if (text !== filterText) {
+				filterText = text;
+				currentPage = 0;
+				cursors = [null];
+			}
+		}, 300);
+		return () => clearTimeout(searchDebounceTimer);
+	});
 
 	// TanStack Query for data fetching
 	let currentCursor = $derived(cursors[currentPage]);
@@ -85,6 +105,7 @@
 	// Derived values from query
 	const rowData = $derived(contentQuery.data?.content.items ?? []);
 	const totalCount = $derived(contentQuery.data?.content.totalCount ?? 0);
+	const totalPages = $derived(Math.ceil(totalCount / pageSize) || 1);
 	const loading = $derived(contentQuery.isLoading || contentQuery.isPlaceholderData);
 	const error = $derived(contentQuery.error);
 
@@ -126,7 +147,7 @@
 			colId: 'type',
 			headerName: 'Type',
 			flex: 0.5,
-			minWidth: 60,
+			minWidth: 70,
 			maxWidth: 90,
 			sortable: true,
 			filter: 'agTextColumnFilter',
@@ -188,7 +209,7 @@
 			field: 'publishedAt',
 			headerName: 'Date',
 			flex: 1,
-			minWidth: 100,
+			minWidth: 90,
 			maxWidth: 150,
 			sortable: true,
 			filter: 'agDateColumnFilter',
@@ -196,7 +217,11 @@
 				const val = params.data?.publishedAt;
 				return val ? new Date(val) : null;
 			},
-			valueFormatter: (params) => formatPublishDate(params.value),
+			valueFormatter: (params) => {
+				// Use compact format at md tier to prevent truncation
+				if (responsiveTier === 'md') return formatDateCompact(params.value);
+				return formatPublishDate(params.value);
+			},
 			headerTooltip: 'Publish date from YouTube API',
 		},
 		{
@@ -314,26 +339,14 @@
 			cursors = [null];
 		},
 		onFilterChanged: (event: FilterChangedEvent) => {
-			// Debounce filter changes
-			clearTimeout(debounceTimer);
-			debounceTimer = setTimeout(() => {
-				const filterModel = event.api.getFilterModel();
-				// Only send Item column filter to server search
-				const itemFilter = (filterModel as Record<string, any>)['item']?.filter ?? '';
-				if (itemFilter !== filterText) {
-					filterText = itemFilter;
-					// Reset to first page (query auto-refetches via key change)
-					currentPage = 0;
-					cursors = [null];
-				}
-				// Other column filters (Type, Length, etc.) work client-side via AG Grid
-			}, 500);
+			// AG Grid column filters work client-side only
+			// Server-side search is handled via the searchText prop
 		},
 		overlayNoRowsTemplate: '<div class="py-12 text-center text-muted-foreground">No items</div>',
 	};
 
 	function handleNextPage() {
-		if (currentPage < Math.ceil(totalCount / pageSize) - 1) {
+		if (currentPage < totalPages - 1) {
 			currentPage += 1;
 		}
 	}
@@ -374,18 +387,18 @@
 	});
 
 	// Responsive column visibility — progressive reveal by tier
-	// xs (<445px):  Item, Type
-	// sm (445-639): Item, Type, Channel
-	// md (640-899): Item, Type, Channel, Duration, Date
-	// lg (900+):    Item, Type, Channel, Duration, Date, Views, Likes, Tags
+	// xs (<445px):  Item only (maximize title space)
+	// sm (445-639): Item, Type
+	// md (640-899): Item, Type, Duration, Date, Channel
+	// lg (900+):    Item, Type, Duration, Date, Views, Likes, Channel, Tags
 	$effect(() => {
 		if (!gridApi || !gridReady) return;
 		const api = gridApi;
 		const tier = responsiveTier;
 		requestAnimationFrame(() => {
-			const alwaysVisible = ['item', 'type'];
-			const smCols = ['channel'];
-			const mdCols = ['duration', 'publishDate'];
+			const alwaysVisible = ['item'];
+			const smCols = ['type'];
+			const mdCols = ['duration', 'publishDate', 'channel'];
 			const lgCols = ['views', 'likes', 'tags'];
 			const alwaysHidden = ['description', 'updatedAt', 'createdAt'];
 
@@ -405,7 +418,7 @@
 	});
 </script>
 
-<div class="flex flex-col h-full gap-4">
+<div class="flex flex-col h-full">
 	<!-- Error State -->
 	{#if contentQuery.isError}
 		<div class="flex-1 min-h-0 flex items-center justify-center">
@@ -427,13 +440,11 @@
 	{/if}
 
 	<!-- Manual Pagination Controls -->
-	<div
-		class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0 px-2 md:px-4 py-2 border-t border-border text-xs md:text-sm"
-	>
+	<div class="flex items-center justify-between px-3 md:px-4 py-2 border-t border-border text-xs md:text-sm">
 		<div class="flex items-center gap-2 md:gap-4">
-			<div class="text-muted-foreground">
+			<span class="text-muted-foreground whitespace-nowrap">
 				{totalCount} total
-			</div>
+			</span>
 			<div class="hidden md:flex items-center gap-2">
 				<label for="pageSize" class="text-muted-foreground">Page size:</label>
 				<select
@@ -449,23 +460,25 @@
 			</div>
 		</div>
 
-		<div class="flex items-center gap-2">
+		<div class="flex items-center gap-1 md:gap-2">
 			<button
 				onclick={handlePrevPage}
 				disabled={currentPage === 0}
-				class="px-3 py-1 text-sm border border-input rounded-md bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+				aria-label="Previous page"
+				class="inline-flex items-center justify-center min-w-[36px] min-h-[36px] rounded-md border border-input bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
 			>
-				<span class="hidden sm:inline">Previous</span><span class="sm:hidden">&lt;</span>
+				<ChevronLeftIcon class="size-4" />
 			</button>
-			<span class="text-muted-foreground">
-				Page {currentPage + 1} of {Math.ceil(totalCount / pageSize) || 1}
+			<span class="text-muted-foreground whitespace-nowrap px-1">
+				Page {currentPage + 1} of {totalPages}
 			</span>
 			<button
 				onclick={handleNextPage}
-				disabled={currentPage >= Math.ceil(totalCount / pageSize) - 1}
-				class="px-3 py-1 text-sm border border-input rounded-md bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+				disabled={currentPage >= totalPages - 1}
+				aria-label="Next page"
+				class="inline-flex items-center justify-center min-w-[36px] min-h-[36px] rounded-md border border-input bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
 			>
-				<span class="hidden sm:inline">Next</span><span class="sm:hidden">&gt;</span>
+				<ChevronRightIcon class="size-4" />
 			</button>
 		</div>
 	</div>

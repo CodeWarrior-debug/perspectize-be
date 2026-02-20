@@ -67,7 +67,7 @@
 {#if isMobile}
 	<Button variant={triggerVariant} size={triggerSize} onclick={() => (open = true)}>
 		{@render triggerIcon()}
-		<span class="hidden sm:inline">{triggerLabel}</span>
+		<span class="hidden md:inline">{triggerLabel}</span>
 	</Button>
 	<Dialog bind:open>
 		<DialogContent class="sm:max-w-md">
@@ -90,7 +90,7 @@
 	<Popover bind:open>
 		<PopoverTrigger class={buttonVariants({ variant: triggerVariant, size: triggerSize })}>
 			{@render triggerIcon()}
-			<span class="hidden sm:inline">{triggerLabel}</span>
+			<span class="hidden md:inline">{triggerLabel}</span>
 		</PopoverTrigger>
 		<PopoverContent {align} sideOffset={8}>
 			<form onsubmit={handleSubmit}>
