@@ -189,12 +189,13 @@ The glasses motif is the core brand element — "perspectives" seen through diff
 **Reference:** `.planning/phases/03.4-jeeves-branding-identity/REFERENCE-glasses.md`
 
 ### Phase 3.5: Google NL Taxonomy Research Spike (INSERTED)
-**Goal**: Research Google NL Content Taxonomy depth, traversal, subcategories, ltree mapping, and YouTube content classification to unblock Phase 13 (Content Categories) and Phase 4B (AG Grid grouping)
+**Goal**: Produce implementation-ready taxonomy artifacts -- Postman collection for interactive API exploration, curated category list with ltree paths, SQL seed data, and YouTube category mapping -- to unblock Phase 13 (Content Categories) and Phase 4B (AG Grid grouping)
 **Depends on**: Phase 3.4
-**Plans**: 0 plans
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 3.5 to break down)
+- [ ] 03.5-01-PLAN.md — Postman collection JSON (11 requests) + step-by-step exploration guide
+- [ ] 03.5-02-PLAN.md — Curated category list, ltree seed SQL, YouTube mapping document, user review checkpoint
 
 **Details:**
 Research spike to answer blocking questions before committing to categorization architecture:
@@ -631,7 +632,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 
 | 3.2 Activity Page Beta Quality | 8/8 | Complete | 2026-02-16 |
 | 3.3 Repository Rename & Restructure | 0/3 | Obsolete | 2026-02-15 |
 | 3.4 Perspectize Branding & Glasses Identity | 0/4 | Not started | - |
-| 3.5 Google NL Taxonomy Research Spike | 0/0 | Not started | - |
+| 3.5 Google NL Taxonomy Research Spike | 0/2 | Not started | - |
 | 4. Add Perspective Flow | 0/3 | Not started | - |
 | 5. Testing + Deployment | 2/3 | Complete | 2026-02-15 |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
