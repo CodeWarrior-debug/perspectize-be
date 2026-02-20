@@ -191,6 +191,7 @@ Recent decisions affecting current work:
 - Phase 08 (User Integration Flow) inserted — Frontend create user flow with shared FormPopover, optional email in schema.
 - Phase 16 added: Mobile App Strategy — Research native mobile approaches (Capacitor, Tauri, PWA) for SvelteKit SPA. Depends on Phase 12 (auth).
 - Phase 3.4 inserted after Phase 3.3: Perspectize Branding & Glasses Identity (URGENT) — Establish bot personality, logo/avatar, chat UI treatment, and brand guidelines before functional AI features are built.
+- Phase 3.5 inserted after Phase 3.4: Google NL Taxonomy Research Spike (URGENT) — Deep-dive on Google taxonomy depth, traversal, subcategories, ltree mapping, YouTube classification. Unblocks Phase 13 (Content Categories) and Phase 4B (AG Grid grouping). See 04-CONTEXT.md cross-phase architecture and 13-context.md open questions.
 
 ### Project-Level Plan Requirements
 

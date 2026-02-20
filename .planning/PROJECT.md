@@ -92,6 +92,7 @@ Users can easily submit their perspective on a YouTube video and browse others' 
 - **Design System**: Must use shadcn-svelte with custom theme matching Radix 3.0 Figma tokens — avoid rework when design system evolves
 - **Mobile-First**: Responsive design starting from mobile layouts, scaling up to desktop — need clear breakpoint strategy
 - **Deployment**: SvelteKit with static adapter (no SSR) to enable cheap/free static hosting
+- **Tests Required**: Every plan that adds or modifies backend/frontend logic MUST include unit test tasks. Backend: Go table-driven tests with testify. Frontend: Vitest + Testing Library. Plans without test tasks are incomplete — the planner must include them or explicitly justify why tests are not applicable (e.g., pure config, styling-only changes)
 
 ## Current Milestone: v1.0 Frontend MVP
 
