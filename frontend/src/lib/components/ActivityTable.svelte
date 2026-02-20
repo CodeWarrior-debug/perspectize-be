@@ -2,7 +2,7 @@
 	import AgGridSvelte5Component from 'ag-grid-svelte5';
 	import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
 	import { themeQuartz } from '@ag-grid-community/theming';
-	import type { GridApi, GridOptions, SortChangedEvent, ColDef } from '@ag-grid-community/core';
+	import type { GridApi, GridOptions, SortChangedEvent, FilterChangedEvent, ColDef } from '@ag-grid-community/core';
 	import { createQuery, keepPreviousData } from '@tanstack/svelte-query';
 	import { graphqlClient } from '$lib/queries/client';
 	import { LIST_CONTENT, type ContentItem, type ContentResponse } from '$lib/queries/content';
@@ -15,18 +15,13 @@
 		formatCount,
 		formatCountExact,
 		formatPublishDate,
-		formatDateCompact,
 		formatTags,
 		truncateDescription,
 		contentRowId,
+		headerMinWidth,
 	} from '$lib/utils/formatting';
 	import { TagsTooltip } from '$lib/components/TagsTooltip';
 	import { DescriptionTooltip } from '$lib/components/DescriptionTooltip';
-	import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
-	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
-
-	// Props — searchText is lifted to the page level
-	let { searchText = '' }: { searchText?: string } = $props();
 
 	// GraphQL ContentSortBy to AG Grid colId mapping
 	const SORT_FIELD_MAP: Record<string, string> = {
@@ -50,23 +45,9 @@
 	let sortBy = $state<string>('UPDATED_AT');
 	let sortOrder = $state<'ASC' | 'DESC'>('DESC');
 	let filterText = $state<string>('');
-	let searchDebounceTimer: ReturnType<typeof setTimeout>;
+	let debounceTimer: ReturnType<typeof setTimeout>;
 	// Responsive tier: 'xs' (<445px), 'sm' (445-639px), 'md' (640-899px), 'lg' (900px+)
 	let responsiveTier = $state<'xs' | 'sm' | 'md' | 'lg'>('lg');
-
-	// Sync external search prop to internal filter (debounced)
-	$effect(() => {
-		const text = searchText;
-		clearTimeout(searchDebounceTimer);
-		searchDebounceTimer = setTimeout(() => {
-			if (text !== filterText) {
-				filterText = text;
-				currentPage = 0;
-				cursors = [null];
-			}
-		}, 300);
-		return () => clearTimeout(searchDebounceTimer);
-	});
 
 	// TanStack Query for data fetching
 	let currentCursor = $derived(cursors[currentPage]);
@@ -105,7 +86,6 @@
 	// Derived values from query
 	const rowData = $derived(contentQuery.data?.content.items ?? []);
 	const totalCount = $derived(contentQuery.data?.content.totalCount ?? 0);
-	const totalPages = $derived(Math.ceil(totalCount / pageSize) || 1);
 	const loading = $derived(contentQuery.isLoading || contentQuery.isPlaceholderData);
 	const error = $derived(contentQuery.error);
 
@@ -131,13 +111,14 @@
 	});
 
 	// flex = clamp-like: proportional sizing with min/max constraints
-	const columnDefs: ColDef<ContentItem>[] = [
+	// minWidth is auto-derived from headerName unless explicitly set (e.g. Item = 200)
+	const columnDefs: ColDef<ContentItem>[] = ([
 		{
 			colId: 'item',
 			headerName: 'Item',
-			flex: 3.5,
+			flex: 2,
 			minWidth: 200,
-			sortable: true,
+
 			filter: false, // Search handled by page-level search input
 			cellRenderer: itemCellRenderer,
 			tooltipValueGetter: (params) => params.data?.name ?? '',
@@ -147,9 +128,8 @@
 			colId: 'type',
 			headerName: 'Type',
 			flex: 0.5,
-			minWidth: 70,
-			maxWidth: 90,
-			sortable: true,
+			maxWidth: 100,
+
 			filter: 'agTextColumnFilter',
 			valueGetter: (params) => {
 				const t = params.data?.contentType;
@@ -166,9 +146,8 @@
 			colId: 'duration',
 			headerName: 'Length',
 			flex: 0.7,
-			minWidth: 70,
 			maxWidth: 120,
-			sortable: true,
+
 			filter: 'agNumberColumnFilter',
 			valueGetter: durationValueGetter,
 			comparator: (_valueA, _valueB, nodeA, nodeB) => {
@@ -183,9 +162,8 @@
 			field: 'viewCount',
 			headerName: 'Views',
 			flex: 0.8,
-			minWidth: 70,
 			maxWidth: 130,
-			sortable: true,
+
 			filter: 'agNumberColumnFilter',
 			valueFormatter: (params) => formatCount(params.value),
 			tooltipValueGetter: (params) => formatCountExact(params.data?.viewCount ?? null),
@@ -196,9 +174,8 @@
 			field: 'likeCount',
 			headerName: 'Likes',
 			flex: 0.8,
-			minWidth: 70,
 			maxWidth: 130,
-			sortable: true,
+
 			filter: 'agNumberColumnFilter',
 			valueFormatter: (params) => formatCount(params.value),
 			tooltipValueGetter: (params) => formatCountExact(params.data?.likeCount ?? null),
@@ -209,19 +186,14 @@
 			field: 'publishedAt',
 			headerName: 'Date',
 			flex: 1,
-			minWidth: 90,
 			maxWidth: 150,
-			sortable: true,
+
 			filter: 'agDateColumnFilter',
 			filterValueGetter: (params) => {
 				const val = params.data?.publishedAt;
 				return val ? new Date(val) : null;
 			},
-			valueFormatter: (params) => {
-				// Use compact format at md tier to prevent truncation
-				if (responsiveTier === 'md') return formatDateCompact(params.value);
-				return formatPublishDate(params.value);
-			},
+			valueFormatter: (params) => formatPublishDate(params.value),
 			headerTooltip: 'Publish date from YouTube API',
 		},
 		{
@@ -229,9 +201,8 @@
 			field: 'channelTitle',
 			headerName: 'Channel',
 			flex: 1.2,
-			minWidth: 100,
 			maxWidth: 200,
-			sortable: true,
+
 			filter: 'agTextColumnFilter',
 			headerTooltip: 'Channel name from YouTube API',
 		},
@@ -240,7 +211,6 @@
 			field: 'tags',
 			headerName: 'Tags',
 			flex: 1.5,
-			minWidth: 120,
 			maxWidth: 250,
 			sortable: false,
 			filter: 'agTextColumnFilter',
@@ -255,7 +225,6 @@
 			field: 'description',
 			headerName: 'Description',
 			flex: 2,
-			minWidth: 150,
 			sortable: false,
 			filter: 'agTextColumnFilter',
 			valueFormatter: (params) => truncateDescription(params.value, 80),
@@ -269,9 +238,8 @@
 			field: 'updatedAt',
 			headerName: 'Updated',
 			flex: 1,
-			minWidth: 100,
 			maxWidth: 150,
-			sortable: true,
+
 			filter: 'agDateColumnFilter',
 			filterValueGetter: (params) => {
 				const val = params.data?.updatedAt;
@@ -287,9 +255,8 @@
 			field: 'createdAt',
 			headerName: 'Date Added',
 			flex: 1,
-			minWidth: 100,
 			maxWidth: 150,
-			sortable: true,
+
 			filter: 'agDateColumnFilter',
 			filterValueGetter: (params) => {
 				const val = params.data?.createdAt;
@@ -299,13 +266,17 @@
 			headerTooltip: 'Date added to Perspectize',
 			hide: true,
 		},
-	];
+	] as ColDef<ContentItem>[]).map((col) => ({
+		...col,
+		minWidth: col.minWidth ?? headerMinWidth(col.headerName ?? '', col.filter !== false),
+	}));
 
 	const gridOptions: GridOptions<ContentItem> = {
 		columnDefs,
 		pagination: false, // Manual pagination
 		defaultColDef: {
 			resizable: true,
+
 			tooltipValueGetter: (params) => {
 				return params.valueFormatted ?? params.value ?? '';
 			},
@@ -338,15 +309,27 @@
 			currentPage = 0;
 			cursors = [null];
 		},
-		onFilterChanged: () => {
-			// AG Grid column filters work client-side only
-			// Server-side search is handled via the searchText prop
+		onFilterChanged: (event: FilterChangedEvent) => {
+			// Debounce filter changes
+			clearTimeout(debounceTimer);
+			debounceTimer = setTimeout(() => {
+				const filterModel = event.api.getFilterModel();
+				// Only send Item column filter to server search
+				const itemFilter = (filterModel as Record<string, any>)['item']?.filter ?? '';
+				if (itemFilter !== filterText) {
+					filterText = itemFilter;
+					// Reset to first page (query auto-refetches via key change)
+					currentPage = 0;
+					cursors = [null];
+				}
+				// Other column filters (Type, Length, etc.) work client-side via AG Grid
+			}, 500);
 		},
 		overlayNoRowsTemplate: '<div class="py-12 text-center text-muted-foreground">No items</div>',
 	};
 
 	function handleNextPage() {
-		if (currentPage < totalPages - 1) {
+		if (currentPage < Math.ceil(totalCount / pageSize) - 1) {
 			currentPage += 1;
 		}
 	}
@@ -387,18 +370,18 @@
 	});
 
 	// Responsive column visibility — progressive reveal by tier
-	// xs (<445px):  Item only (maximize title space)
-	// sm (445-639): Item, Type
-	// md (640-899): Item, Type, Duration, Date, Channel
-	// lg (900+):    Item, Type, Duration, Date, Views, Likes, Channel, Tags
+	// xs (<445px):  Item, Type
+	// sm (445-639): Item, Type, Channel
+	// md (640-899): Item, Type, Channel, Duration, Date
+	// lg (900+):    Item, Type, Channel, Duration, Date, Views, Likes, Tags
 	$effect(() => {
 		if (!gridApi || !gridReady) return;
 		const api = gridApi;
 		const tier = responsiveTier;
 		requestAnimationFrame(() => {
-			const alwaysVisible = ['item'];
-			const smCols = ['type'];
-			const mdCols = ['duration', 'publishDate', 'channel'];
+			const alwaysVisible = ['item', 'type'];
+			const smCols = ['channel'];
+			const mdCols = ['duration', 'publishDate'];
 			const lgCols = ['views', 'likes', 'tags'];
 			const alwaysHidden = ['description', 'updatedAt', 'createdAt'];
 
@@ -416,9 +399,22 @@
 			gridApi.setGridOption('loading', loading);
 		}
 	});
+
+	// Re-evaluate flex column widths when the grid container resizes
+	// (e.g. DevTools panel open/close, sidebar toggle)
+	let gridContainer = $state<HTMLDivElement | null>(null);
+	$effect(() => {
+		if (!gridContainer || !gridApi || !gridReady) return;
+		const api = gridApi;
+		const observer = new ResizeObserver(() => {
+			api.sizeColumnsToFit();
+		});
+		observer.observe(gridContainer);
+		return () => observer.disconnect();
+	});
 </script>
 
-<div class="flex flex-col h-full">
+<div class="flex flex-col h-full gap-4">
 	<!-- Error State -->
 	{#if contentQuery.isError}
 		<div class="flex-1 min-h-0 flex items-center justify-center">
@@ -434,17 +430,19 @@
 		</div>
 	{:else}
 		<!-- AG Grid -->
-		<div class="flex-1 min-h-0" style="--ag-row-height: 44px; --ag-header-height: 40px;">
+		<div bind:this={gridContainer} class="flex-1 min-h-0" style="--ag-row-height: 44px; --ag-header-height: 40px;">
 			<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
 		</div>
 	{/if}
 
 	<!-- Manual Pagination Controls -->
-	<div class="flex items-center justify-between px-3 md:px-4 py-2 border-t border-border text-xs md:text-sm">
+	<div
+		class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0 px-2 md:px-4 py-2 border-t border-border text-xs md:text-sm"
+	>
 		<div class="flex items-center gap-2 md:gap-4">
-			<span class="text-muted-foreground whitespace-nowrap">
+			<div class="text-muted-foreground">
 				{totalCount} total
-			</span>
+			</div>
 			<div class="hidden md:flex items-center gap-2">
 				<label for="pageSize" class="text-muted-foreground">Page size:</label>
 				<select
@@ -460,25 +458,23 @@
 			</div>
 		</div>
 
-		<div class="flex items-center gap-1 md:gap-2">
+		<div class="flex items-center gap-2">
 			<button
 				onclick={handlePrevPage}
 				disabled={currentPage === 0}
-				aria-label="Previous page"
-				class="inline-flex items-center justify-center min-w-[36px] min-h-[36px] rounded-md border border-input bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+				class="px-3 py-1 text-sm border border-input rounded-md bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
 			>
-				<ChevronLeftIcon class="size-4" />
+				<span class="hidden sm:inline">Previous</span><span class="sm:hidden">&lt;</span>
 			</button>
-			<span class="text-muted-foreground whitespace-nowrap px-1">
-				Page {currentPage + 1} of {totalPages}
+			<span class="text-muted-foreground">
+				Page {currentPage + 1} of {Math.ceil(totalCount / pageSize) || 1}
 			</span>
 			<button
 				onclick={handleNextPage}
-				disabled={currentPage >= totalPages - 1}
-				aria-label="Next page"
-				class="inline-flex items-center justify-center min-w-[36px] min-h-[36px] rounded-md border border-input bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+				disabled={currentPage >= Math.ceil(totalCount / pageSize) - 1}
+				class="px-3 py-1 text-sm border border-input rounded-md bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
 			>
-				<ChevronRightIcon class="size-4" />
+				<span class="hidden sm:inline">Next</span><span class="sm:hidden">&gt;</span>
 			</button>
 		</div>
 	</div>
