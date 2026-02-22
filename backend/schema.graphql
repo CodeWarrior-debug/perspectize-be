@@ -70,6 +70,11 @@ type PaginatedPerspectives {
   totalCount: Int
 }
 
+type CreateContentResult {
+  content: Content!
+  alreadyExisted: Boolean!
+}
+
 type Content {
   id: ID!
   name: String!
@@ -196,7 +201,7 @@ input PerspectiveFilter {
 }
 
 type Mutation {
-  createContentFromYouTube(input: CreateContentFromYouTubeInput!): Content!
+  createContentFromYouTube(input: CreateContentFromYouTubeInput!): CreateContentResult!
 
   # User mutations
   createUser(input: CreateUserInput!): User!
