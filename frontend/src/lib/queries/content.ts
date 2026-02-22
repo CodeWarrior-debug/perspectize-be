@@ -31,7 +31,10 @@ export interface ContentResponse {
 }
 
 export interface CreateContentResponse {
-	createContentFromYouTube: ContentItem;
+	createContentFromYouTube: {
+		content: ContentItem;
+		alreadyExisted: boolean;
+	};
 }
 
 export const LIST_CONTENT = gql`
@@ -100,20 +103,23 @@ export const GET_CONTENT = gql`
 export const CREATE_CONTENT_FROM_YOUTUBE = gql`
 	mutation CreateContentFromYouTube($input: CreateContentFromYouTubeInput!) {
 		createContentFromYouTube(input: $input) {
-			id
-			name
-			url
-			contentType
-			length
-			lengthUnits
-			viewCount
-			likeCount
-			channelTitle
-			publishedAt
-			tags
-			description
-			createdAt
-			updatedAt
+			content {
+				id
+				name
+				url
+				contentType
+				length
+				lengthUnits
+				viewCount
+				likeCount
+				channelTitle
+				publishedAt
+				tags
+				description
+				createdAt
+				updatedAt
+			}
+			alreadyExisted
 		}
 	}
 `;

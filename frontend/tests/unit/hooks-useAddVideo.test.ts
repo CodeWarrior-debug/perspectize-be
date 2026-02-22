@@ -6,6 +6,7 @@ const {
 	mockSetQueriesData,
 	mockToastSuccess,
 	mockToastError,
+	mockToastWarning,
 	mockGetSelectedUserId,
 } = vi.hoisted(() => ({
 	mockMutate: vi.fn(),
@@ -13,6 +14,7 @@ const {
 	mockSetQueriesData: vi.fn(),
 	mockToastSuccess: vi.fn(),
 	mockToastError: vi.fn(),
+	mockToastWarning: vi.fn(),
 	mockGetSelectedUserId: vi.fn((): number | null => 1),
 }));
 
@@ -36,6 +38,7 @@ vi.mock('svelte-sonner', () => ({
 	toast: {
 		success: mockToastSuccess,
 		error: mockToastError,
+		warning: mockToastWarning,
 	},
 }));
 
@@ -72,7 +75,9 @@ describe('useAddVideo hook', () => {
 				expect(result.content.totalCount).toBe(2);
 			});
 
-			capturedMutationOptions.onSuccess({ createContentFromYouTube: newItem });
+			capturedMutationOptions.onSuccess({
+				createContentFromYouTube: { content: newItem, alreadyExisted: false },
+			});
 			expect(mockSetQueriesData).toHaveBeenCalled();
 		});
 
@@ -83,7 +88,7 @@ describe('useAddVideo hook', () => {
 			});
 
 			capturedMutationOptions.onSuccess({
-				createContentFromYouTube: { name: 'Video' },
+				createContentFromYouTube: { content: { name: 'Video' }, alreadyExisted: false },
 			});
 			expect(mockSetQueriesData).toHaveBeenCalled();
 		});
@@ -101,8 +106,35 @@ describe('useAddVideo hook', () => {
 			});
 
 			capturedMutationOptions.onSuccess({
-				createContentFromYouTube: { name: 'Video' },
+				createContentFromYouTube: { content: { name: 'Video' }, alreadyExisted: false },
 			});
+		});
+
+		it('shows success toast with video name for new videos', () => {
+			mockSetQueriesData.mockImplementation(() => {});
+			capturedMutationOptions.onSuccess({
+				createContentFromYouTube: { content: { name: 'Amazing Video', id: '1' }, alreadyExisted: false },
+			});
+			expect(mockToastSuccess).toHaveBeenCalledWith('Added: Amazing Video');
+			expect(mockToastWarning).not.toHaveBeenCalled();
+		});
+
+		it('shows warning toast for duplicate videos (VIDEO-05)', () => {
+			capturedMutationOptions.onSuccess({
+				createContentFromYouTube: { content: { name: 'Existing Video', id: '1' }, alreadyExisted: true },
+			});
+			expect(mockToastWarning).toHaveBeenCalledWith('This video has already been added');
+			expect(mockToastSuccess).not.toHaveBeenCalled();
+		});
+
+		it('does not insert duplicate into cache', () => {
+			capturedMutationOptions.onSuccess({
+				createContentFromYouTube: { content: { name: 'Existing Video', id: '1' }, alreadyExisted: true },
+			});
+			// setQueriesData should NOT be called for duplicates (no cache insert)
+			expect(mockSetQueriesData).not.toHaveBeenCalled();
+			// But invalidateQueries should still be called for eventual consistency
+			expect(mockInvalidateQueries).toHaveBeenCalled();
 		});
 	});
 
