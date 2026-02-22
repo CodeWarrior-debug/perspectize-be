@@ -117,6 +117,26 @@ func TestExtractVideoID_LiveWithParams(t *testing.T) {
 	assert.Equal(t, "dQw4w9WgXcQ", id)
 }
 
+// --- NormalizeYouTubeURL Tests ---
+
+func TestNormalizeYouTubeURL(t *testing.T) {
+	tests := []struct {
+		name     string
+		videoID  string
+		expected string
+	}{
+		{"standard 11-char ID", "dQw4w9WgXcQ", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+		{"ID with hyphens and underscores", "a1B-c2D_e3F", "https://www.youtube.com/watch?v=a1B-c2D_e3F"},
+		{"short ID", "abc", "https://www.youtube.com/watch?v=abc"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := youtube.NormalizeYouTubeURL(tt.videoID)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
 // --- ParseISO8601Duration Tests ---
 
 func TestParseISO8601Duration_HoursMinutesSeconds(t *testing.T) {
