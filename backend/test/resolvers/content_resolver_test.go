@@ -21,10 +21,11 @@ import (
 
 // mockContentRepository implements repositories.ContentRepository for testing
 type mockContentRepository struct {
-	createFn   func(ctx context.Context, content *domain.Content) (*domain.Content, error)
-	getByIDFn  func(ctx context.Context, id int) (*domain.Content, error)
-	getByURLFn func(ctx context.Context, url string) (*domain.Content, error)
-	listFn     func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
+	createFn           func(ctx context.Context, content *domain.Content) (*domain.Content, error)
+	getByIDFn          func(ctx context.Context, id int) (*domain.Content, error)
+	getByURLFn         func(ctx context.Context, url string) (*domain.Content, error)
+	getOrCreateByURLFn func(ctx context.Context, content *domain.Content) (*domain.Content, bool, error)
+	listFn             func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
 }
 
 func (m *mockContentRepository) Create(ctx context.Context, content *domain.Content) (*domain.Content, error) {
@@ -46,6 +47,13 @@ func (m *mockContentRepository) GetByURL(ctx context.Context, url string) (*doma
 		return m.getByURLFn(ctx, url)
 	}
 	return nil, domain.ErrNotFound
+}
+
+func (m *mockContentRepository) GetOrCreateByURL(ctx context.Context, content *domain.Content) (*domain.Content, bool, error) {
+	if m.getOrCreateByURLFn != nil {
+		return m.getOrCreateByURLFn(ctx, content)
+	}
+	return content, false, nil
 }
 
 func (m *mockContentRepository) List(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
@@ -347,9 +355,9 @@ func TestCreateContentFromYouTube_Success(t *testing.T) {
 		getByURLFn: func(ctx context.Context, url string) (*domain.Content, error) {
 			return nil, domain.ErrNotFound
 		},
-		createFn: func(ctx context.Context, content *domain.Content) (*domain.Content, error) {
+		getOrCreateByURLFn: func(ctx context.Context, content *domain.Content) (*domain.Content, bool, error) {
 			content.ID = 42
-			return content, nil
+			return content, false, nil
 		},
 	}
 
@@ -382,13 +390,16 @@ func TestCreateContentFromYouTube_Success(t *testing.T) {
 }
 
 func TestCreateContentFromYouTube_AlreadyExists(t *testing.T) {
-	existingURL := "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+	canonicalURL := "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+	existing := &domain.Content{ID: 1, URL: &canonicalURL}
 	repo := &mockContentRepository{
 		getByURLFn: func(ctx context.Context, url string) (*domain.Content, error) {
-			return &domain.Content{ID: 1, URL: &existingURL}, nil
+			// The canonical URL is found — service returns existing content + ErrAlreadyExists
+			return existing, nil
 		},
 	}
 
+	// extractVideoIDFn default returns "dQw4w9WgXcQ" (see mockYouTubeClient default)
 	server := setupTestServer(repo, &mockYouTubeClient{})
 	defer server.Close()
 
