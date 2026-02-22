@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 3.5 in progress (1/2 plans) — Google NL Taxonomy Research Spike
+**Current focus:** Phase 17 complete (2/2 plans) — YouTube URL Normalization and Duplicate Upsert
 
 ## Current Position
 
-Phase: 3.5 (Google NL Taxonomy Research Spike) — In progress
-Plan: 1/2 complete
-Status: In progress — Plan 01 (Postman Collection + Exploration Guide) complete. Plan 02 (Curated Category List + Seed SQL) pending user interactive exploration and findings.
-Last activity: 2026-02-20 — Completed 03.5-01-PLAN.md (Postman collection and exploration guide)
+Phase: 17 (YouTube URL Normalization and Duplicate Upsert) — Complete
+Plan: 2/2 complete
+Status: Complete — Phase 17 both plans done. Plan 01 (URL normalization + idempotent upsert) and Plan 02 (CreateContentResult schema + frontend duplicate warning VIDEO-05) complete.
+Last activity: 2026-02-22 — Completed 17-02-PLAN.md (CreateContentResult type and frontend duplicate warning)
 
 Progress: [████████████████████] ~95% (34 plans complete)
 
@@ -45,6 +45,7 @@ Progress: [████████████████████] ~95% (3
 
 *Updated after each plan completion*
 | Phase 17-youtube-url-normalization-and-duplicate-upsert P01 | 8 | 2 tasks | 11 files |
+| Phase 17 P02 | 15 | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -182,6 +183,7 @@ Recent decisions affecting current work:
 - [Phase 17-youtube-url-normalization-and-duplicate-upsert]: NormalizeYouTubeURL is a pure function (not YouTubeClient method) to keep the port interface clean
 - [Phase 17-youtube-url-normalization-and-duplicate-upsert]: GetOrCreateByURL uses clause.OnConflict{DoNothing: true} on url column for atomic TOCTOU-safe upsert
 - [Phase 17-youtube-url-normalization-and-duplicate-upsert]: CreateFromYouTube returns (content, ErrAlreadyExists) on duplicate — callers get both content AND can distinguish new vs existing
+- [Phase 17-02]: createContentFromYouTube returns CreateContentResult wrapper with alreadyExisted boolean for caller-side duplicate detection, enabling toast.warning UX without GraphQL errors
 
 ### Roadmap Evolution
 

@@ -34,7 +34,7 @@
 - [ ] **VIDEO-02**: Backend auto-fetches video metadata (title, description, thumbnail, duration)
 - [ ] **VIDEO-03**: User sees success toast notification (top-right, auto-dismiss 2s) after creation
 - [ ] **VIDEO-04**: User sees error toast notification (top-right, auto-dismiss 2s) if URL is invalid or fetch fails
-- [ ] **VIDEO-05**: User is warned via toast if video already exists in the system (duplicate detection)
+- [x] **VIDEO-05**: User is warned via toast if video already exists in the system (duplicate detection)
 
 ### Add Perspective (PERSP)
 
@@ -160,7 +160,7 @@
 | VIDEO-02 | Phase 3 | Pending |
 | VIDEO-03 | Phase 3 | Pending |
 | VIDEO-04 | Phase 3 | Pending |
-| VIDEO-05 | Phase 3 | Pending |
+| VIDEO-05 | Phase 3 | Complete |
 | PERSP-01 | Phase 4 | Pending |
 | PERSP-02 | Phase 4 | Pending |
 | PERSP-03 | Phase 4 | Pending |
