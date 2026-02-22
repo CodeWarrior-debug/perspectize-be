@@ -44,6 +44,7 @@ Progress: [████████████████████] ~95% (3
 - Trend: Good — Slight increase for complex UI components (shadcn Select, responsive FormPopover)
 
 *Updated after each plan completion*
+| Phase 17-youtube-url-normalization-and-duplicate-upsert P01 | 8 | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -178,6 +179,9 @@ Recent decisions affecting current work:
 - [03.2-08]: shadcn Select component wraps bits-ui Select primitives with styled dropdown
 - [03.2-08]: Function coverage threshold at 75% (vs 80%) due to bits-ui interaction handlers not testable in JSDOM
 - [03.2-08]: tests/helpers excluded from coverage (test utilities, not source code)
+- [Phase 17-youtube-url-normalization-and-duplicate-upsert]: NormalizeYouTubeURL is a pure function (not YouTubeClient method) to keep the port interface clean
+- [Phase 17-youtube-url-normalization-and-duplicate-upsert]: GetOrCreateByURL uses clause.OnConflict{DoNothing: true} on url column for atomic TOCTOU-safe upsert
+- [Phase 17-youtube-url-normalization-and-duplicate-upsert]: CreateFromYouTube returns (content, ErrAlreadyExists) on duplicate — callers get both content AND can distinguish new vs existing
 
 ### Roadmap Evolution
 

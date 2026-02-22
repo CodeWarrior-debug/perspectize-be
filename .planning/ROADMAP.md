@@ -601,7 +601,7 @@ Plans:
   6. Frontend shows success toast when new video is added
   7. Data migration backfills existing raw URLs to canonical form
   8. All backend and frontend tests pass
-**Plans:** 2 plans in 2 waves
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 17-01-PLAN.md — Backend: NormalizeYouTubeURL, GetOrCreateByURL with ON CONFLICT, idempotent CreateFromYouTube, data migration, tests (TDD)
@@ -671,4 +671,4 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 
 | 14. AG Grid Power Features | 0/3 | Not started | - |
 | 15. Discover Page | 0/3 | Not started | - |
 | 16. Mobile App Strategy | 0/0 | Not started | - |
-| 17. YouTube URL Normalization & Upsert | 0/2 | Not started | - |
+| 17. YouTube URL Normalization & Upsert | 1/2 | In Progress|  |
