@@ -49,7 +49,7 @@ func (m *mockContentRepository) GetByURL(ctx context.Context, url string) (*doma
 	return nil, domain.ErrNotFound
 }
 
-func (m *mockContentRepository) GetOrCreateByURL(ctx context.Context, content *domain.Content) (*domain.Content, bool, error) {
+func (m *mockContentRepository) GetOrCreateByURL(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error) {
 	if m.getOrCreateByURLFn != nil {
 		return m.getOrCreateByURLFn(ctx, content)
 	}

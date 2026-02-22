@@ -66,15 +66,22 @@ func (r *GormContentRepository) GetByURL(ctx context.Context, url string) (*doma
 }
 
 // GetOrCreateByURL atomically inserts content or returns existing content matching the URL.
-// Uses INSERT ON CONFLICT (url) DO NOTHING for atomic deduplication (no TOCTOU race).
+// When refreshOnConflict is true, updates response and updated_at on conflict (refreshes metadata).
+// When refreshOnConflict is false, does nothing on conflict (preserves original data).
 // Returns (content, alreadyExisted, error).
-func (r *GormContentRepository) GetOrCreateByURL(ctx context.Context, content *domain.Content) (*domain.Content, bool, error) {
+func (r *GormContentRepository) GetOrCreateByURL(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error) {
 	model := contentDomainToModel(content)
 
-	result := r.db.WithContext(ctx).Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "url"}},
-		DoNothing: true,
-	}).Create(model)
+	conflictClause := clause.OnConflict{
+		Columns: []clause.Column{{Name: "url"}},
+	}
+	if refreshOnConflict {
+		conflictClause.DoUpdates = clause.AssignmentColumns([]string{"response", "updated_at"})
+	} else {
+		conflictClause.DoNothing = true
+	}
+
+	result := r.db.WithContext(ctx).Clauses(conflictClause).Create(model)
 
 	if result.Error != nil {
 		return nil, false, fmt.Errorf("failed to upsert content: %w", result.Error)

@@ -66,7 +66,8 @@ func (s *ContentService) CreateFromYouTube(ctx context.Context, url string, user
 	}
 
 	// 6. Atomic upsert — handles concurrent race condition
-	created, alreadyExisted, err := s.repo.GetOrCreateByURL(ctx, content)
+	// refreshOnConflict=true: update response/updated_at if URL already exists (refreshes metadata)
+	created, alreadyExisted, err := s.repo.GetOrCreateByURL(ctx, content, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save content: %w", err)
 	}

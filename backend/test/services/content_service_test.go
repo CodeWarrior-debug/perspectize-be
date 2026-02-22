@@ -19,7 +19,7 @@ type mockContentRepository struct {
 	createFn           func(ctx context.Context, content *domain.Content) (*domain.Content, error)
 	getByIDFn          func(ctx context.Context, id int) (*domain.Content, error)
 	getByURLFn         func(ctx context.Context, url string) (*domain.Content, error)
-	getOrCreateByURLFn func(ctx context.Context, content *domain.Content) (*domain.Content, bool, error)
+	getOrCreateByURLFn func(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error)
 	listFn             func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
 }
 
@@ -44,9 +44,9 @@ func (m *mockContentRepository) GetByURL(ctx context.Context, url string) (*doma
 	return nil, domain.ErrNotFound
 }
 
-func (m *mockContentRepository) GetOrCreateByURL(ctx context.Context, content *domain.Content) (*domain.Content, bool, error) {
+func (m *mockContentRepository) GetOrCreateByURL(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error) {
 	if m.getOrCreateByURLFn != nil {
-		return m.getOrCreateByURLFn(ctx, content)
+		return m.getOrCreateByURLFn(ctx, content, refreshOnConflict)
 	}
 	return content, false, nil
 }
@@ -178,7 +178,7 @@ func TestCreateFromYouTube_Success(t *testing.T) {
 			assert.Equal(t, canonicalURL, url)
 			return nil, domain.ErrNotFound
 		},
-		getOrCreateByURLFn: func(ctx context.Context, content *domain.Content) (*domain.Content, bool, error) {
+		getOrCreateByURLFn: func(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error) {
 			content.ID = 1
 			return content, false, nil
 		},
@@ -254,7 +254,7 @@ func TestCreateFromYouTube_NormalizesURLVariants(t *testing.T) {
 			capturedURL = url
 			return nil, domain.ErrNotFound
 		},
-		getOrCreateByURLFn: func(ctx context.Context, content *domain.Content) (*domain.Content, bool, error) {
+		getOrCreateByURLFn: func(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error) {
 			content.ID = 1
 			return content, false, nil
 		},
@@ -335,7 +335,7 @@ func TestCreateFromYouTube_RepositoryCreateError(t *testing.T) {
 		getByURLFn: func(ctx context.Context, url string) (*domain.Content, error) {
 			return nil, domain.ErrNotFound
 		},
-		getOrCreateByURLFn: func(ctx context.Context, content *domain.Content) (*domain.Content, bool, error) {
+		getOrCreateByURLFn: func(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error) {
 			return nil, false, fmt.Errorf("database write error")
 		},
 	}

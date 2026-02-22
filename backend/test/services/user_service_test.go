@@ -88,7 +88,7 @@ func (m *mockContentRepoForUser) GetByID(ctx context.Context, id int) (*domain.C
 func (m *mockContentRepoForUser) GetByURL(ctx context.Context, url string) (*domain.Content, error) {
 	return nil, domain.ErrNotFound
 }
-func (m *mockContentRepoForUser) GetOrCreateByURL(ctx context.Context, content *domain.Content) (*domain.Content, bool, error) {
+func (m *mockContentRepoForUser) GetOrCreateByURL(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error) {
 	return content, false, nil
 }
 func (m *mockContentRepoForUser) List(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
