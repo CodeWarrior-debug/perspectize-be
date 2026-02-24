@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/youtube"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/repositories"
 	portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
@@ -24,34 +25,39 @@ func NewContentService(repo repositories.ContentRepository, yt portservices.YouT
 	}
 }
 
-// CreateFromYouTube creates content from a YouTube URL, attributed to the given user
+// CreateFromYouTube creates content from a YouTube URL, attributed to the given user.
+// If the URL (after normalization) already exists, returns the existing content
+// along with ErrAlreadyExists so callers can distinguish new vs existing.
 func (s *ContentService) CreateFromYouTube(ctx context.Context, url string, userID int) (*domain.Content, error) {
-	// Check if content already exists for this URL
-	existing, err := s.repo.GetByURL(ctx, url)
-	if err == nil && existing != nil {
-		return nil, fmt.Errorf("%w: content with URL %s already exists", domain.ErrAlreadyExists, url)
-	}
-	if err != nil && !errors.Is(err, domain.ErrNotFound) {
-		return nil, fmt.Errorf("failed to check existing content: %w", err)
-	}
-
-	// Extract video ID from URL
+	// 1. Extract video ID first (validates URL format)
 	videoID, err := s.youtubeClient.ExtractVideoID(url)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", domain.ErrInvalidURL, err)
 	}
 
-	// Fetch metadata from YouTube API
+	// 2. Normalize to canonical URL — this is the key for deduplication
+	canonicalURL := youtube.NormalizeYouTubeURL(videoID)
+
+	// 3. Check if already exists (avoids unnecessary YouTube API call)
+	existing, err := s.repo.GetByURL(ctx, canonicalURL)
+	if err == nil && existing != nil {
+		return existing, domain.ErrAlreadyExists
+	}
+	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+		return nil, fmt.Errorf("failed to check existing content: %w", err)
+	}
+
+	// 4. Fetch metadata from YouTube API (only for new videos)
 	metadata, err := s.youtubeClient.GetVideoMetadata(ctx, videoID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch YouTube metadata: %w", err)
 	}
 
-	// Create domain content
+	// 5. Build content with canonical URL
 	lengthUnits := "seconds"
 	content := &domain.Content{
 		Name:          metadata.Title,
-		URL:           &url,
+		URL:           &canonicalURL,
 		ContentType:   domain.ContentTypeYouTube,
 		AddedByUserID: userID,
 		Length:        &metadata.Duration,
@@ -59,10 +65,15 @@ func (s *ContentService) CreateFromYouTube(ctx context.Context, url string, user
 		Response:      metadata.Response,
 	}
 
-	// Save to repository
-	created, err := s.repo.Create(ctx, content)
+	// 6. Atomic upsert — handles concurrent race condition
+	// refreshOnConflict=true: update response/updated_at if URL already exists (refreshes metadata)
+	created, alreadyExisted, err := s.repo.GetOrCreateByURL(ctx, content, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save content: %w", err)
+	}
+
+	if alreadyExisted {
+		return created, domain.ErrAlreadyExists
 	}
 
 	return created, nil

@@ -97,7 +97,7 @@ describe('AddVideoPopover mutation setup', () => {
 
 	it('mutationFn calls graphqlClient.request with correct args', async () => {
 		const { graphqlClient } = await import('$lib/queries/client');
-		(graphqlClient.request as any).mockResolvedValue({ createContentFromYouTube: { name: 'Test' } });
+		(graphqlClient.request as any).mockResolvedValue({ createContentFromYouTube: { content: { name: 'Test' }, alreadyExisted: false } });
 		await mocks.capturedMutationOptions.mutationFn('https://youtube.com/watch?v=abc123');
 		expect(graphqlClient.request).toHaveBeenCalledWith(expect.anything(), {
 			input: { url: 'https://youtube.com/watch?v=abc123', userId: 1 },

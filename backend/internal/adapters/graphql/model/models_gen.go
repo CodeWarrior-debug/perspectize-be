@@ -49,6 +49,11 @@ type CreateContentFromYouTubeInput struct {
 	UserID int    `json:"userId"`
 }
 
+type CreateContentResult struct {
+	Content        *Content `json:"content"`
+	AlreadyExisted bool     `json:"alreadyExisted"`
+}
+
 type CreatePerspectiveInput struct {
 	UserID             int                       `json:"userID"`
 	ContentID          *int                      `json:"contentID,omitempty"`

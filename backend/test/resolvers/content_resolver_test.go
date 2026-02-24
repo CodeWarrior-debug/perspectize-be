@@ -21,10 +21,11 @@ import (
 
 // mockContentRepository implements repositories.ContentRepository for testing
 type mockContentRepository struct {
-	createFn   func(ctx context.Context, content *domain.Content) (*domain.Content, error)
-	getByIDFn  func(ctx context.Context, id int) (*domain.Content, error)
-	getByURLFn func(ctx context.Context, url string) (*domain.Content, error)
-	listFn     func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
+	createFn           func(ctx context.Context, content *domain.Content) (*domain.Content, error)
+	getByIDFn          func(ctx context.Context, id int) (*domain.Content, error)
+	getByURLFn         func(ctx context.Context, url string) (*domain.Content, error)
+	getOrCreateByURLFn func(ctx context.Context, content *domain.Content) (*domain.Content, bool, error)
+	listFn             func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
 }
 
 func (m *mockContentRepository) Create(ctx context.Context, content *domain.Content) (*domain.Content, error) {
@@ -46,6 +47,13 @@ func (m *mockContentRepository) GetByURL(ctx context.Context, url string) (*doma
 		return m.getByURLFn(ctx, url)
 	}
 	return nil, domain.ErrNotFound
+}
+
+func (m *mockContentRepository) GetOrCreateByURL(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error) {
+	if m.getOrCreateByURLFn != nil {
+		return m.getOrCreateByURLFn(ctx, content)
+	}
+	return content, false, nil
 }
 
 func (m *mockContentRepository) List(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
@@ -347,9 +355,9 @@ func TestCreateContentFromYouTube_Success(t *testing.T) {
 		getByURLFn: func(ctx context.Context, url string) (*domain.Content, error) {
 			return nil, domain.ErrNotFound
 		},
-		createFn: func(ctx context.Context, content *domain.Content) (*domain.Content, error) {
+		getOrCreateByURLFn: func(ctx context.Context, content *domain.Content) (*domain.Content, bool, error) {
 			content.ID = 42
-			return content, nil
+			return content, false, nil
 		},
 	}
 
@@ -362,40 +370,61 @@ func TestCreateContentFromYouTube_Success(t *testing.T) {
 	server := setupTestServer(repo, ytClient)
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", userId: 1 }) { id name contentType } }`)
+	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", userId: 1 }) { content { id name contentType } alreadyExisted } }`)
 
 	assert.Empty(t, result.Errors)
 
 	var data struct {
 		CreateContentFromYouTube struct {
-			ID          string `json:"id"`
-			Name        string `json:"name"`
-			ContentType string `json:"contentType"`
+			Content struct {
+				ID          string `json:"id"`
+				Name        string `json:"name"`
+				ContentType string `json:"contentType"`
+			} `json:"content"`
+			AlreadyExisted bool `json:"alreadyExisted"`
 		} `json:"createContentFromYouTube"`
 	}
 	err := json.Unmarshal(result.Data, &data)
 	require.NoError(t, err)
 
-	assert.Equal(t, "42", data.CreateContentFromYouTube.ID)
-	assert.Equal(t, "Amazing Video", data.CreateContentFromYouTube.Name)
-	assert.Equal(t, "YOUTUBE", data.CreateContentFromYouTube.ContentType)
+	assert.Equal(t, "42", data.CreateContentFromYouTube.Content.ID)
+	assert.Equal(t, "Amazing Video", data.CreateContentFromYouTube.Content.Name)
+	assert.Equal(t, "YOUTUBE", data.CreateContentFromYouTube.Content.ContentType)
+	assert.False(t, data.CreateContentFromYouTube.AlreadyExisted)
 }
 
 func TestCreateContentFromYouTube_AlreadyExists(t *testing.T) {
-	existingURL := "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+	canonicalURL := "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+	existing := &domain.Content{ID: 1, Name: "Existing Video", URL: &canonicalURL, ContentType: domain.ContentTypeYouTube}
 	repo := &mockContentRepository{
 		getByURLFn: func(ctx context.Context, url string) (*domain.Content, error) {
-			return &domain.Content{ID: 1, URL: &existingURL}, nil
+			// The canonical URL is found — service returns existing content + ErrAlreadyExists
+			return existing, nil
 		},
 	}
 
+	// extractVideoIDFn default returns "dQw4w9WgXcQ" (see mockYouTubeClient default)
 	server := setupTestServer(repo, &mockYouTubeClient{})
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", userId: 1 }) { id } }`)
+	// Duplicate submission returns success (not an error) with alreadyExisted=true (VIDEO-05)
+	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", userId: 1 }) { content { id } alreadyExisted } }`)
 
-	require.NotEmpty(t, result.Errors)
-	assert.Contains(t, result.Errors[0].Message, "content already exists")
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		CreateContentFromYouTube struct {
+			Content struct {
+				ID string `json:"id"`
+			} `json:"content"`
+			AlreadyExisted bool `json:"alreadyExisted"`
+		} `json:"createContentFromYouTube"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+
+	assert.Equal(t, "1", data.CreateContentFromYouTube.Content.ID)
+	assert.True(t, data.CreateContentFromYouTube.AlreadyExisted)
 }
 
 func TestCreateContentFromYouTube_InvalidURL(t *testing.T) {
@@ -414,7 +443,7 @@ func TestCreateContentFromYouTube_InvalidURL(t *testing.T) {
 	server := setupTestServer(repo, ytClient)
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "not-a-youtube-url", userId: 1 }) { id } }`)
+	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "not-a-youtube-url", userId: 1 }) { content { id } alreadyExisted } }`)
 
 	require.NotEmpty(t, result.Errors)
 	assert.Contains(t, result.Errors[0].Message, "invalid YouTube URL")

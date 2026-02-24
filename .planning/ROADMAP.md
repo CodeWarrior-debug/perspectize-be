@@ -587,6 +587,26 @@ Plans:
 - [ ] T-06: No `IntID` scalar tests → **10-04**
 - [ ] L-*: Low priority cleanup (see Bug Backlog L-01 through L-22) → **DEFERRED** (low priority)
 
+### Phase 17: YouTube URL normalization and duplicate upsert
+
+**Goal:** Normalize all YouTube URL variants to canonical form (`https://www.youtube.com/watch?v=<videoID>`), implement idempotent upsert (return existing content instead of error on duplicate), and expose `alreadyExisted` signal to frontend for VIDEO-05 duplicate warning toast
+**Depends on:** Phase 7.1 (GORM ORM in place)
+**Requirements:** VIDEO-05, M-03
+**Success Criteria** (what must be TRUE):
+  1. All YouTube URL variants normalize to `https://www.youtube.com/watch?v=<videoID>` before storage
+  2. `CreateFromYouTube` returns existing content on duplicate URL (not an error) — M-03 resolved
+  3. Repository uses `INSERT ON CONFLICT DO NOTHING` for atomic deduplication (no TOCTOU race)
+  4. `createContentFromYouTube` GraphQL mutation returns `CreateContentResult { content, alreadyExisted }`
+  5. Frontend shows warning toast when video already exists (VIDEO-05)
+  6. Frontend shows success toast when new video is added
+  7. Data migration backfills existing raw URLs to canonical form
+  8. All backend and frontend tests pass
+**Plans:** 2/2 plans complete
+
+Plans:
+- [ ] 17-01-PLAN.md — Backend: NormalizeYouTubeURL, GetOrCreateByURL with ON CONFLICT, idempotent CreateFromYouTube, data migration, tests (TDD)
+- [ ] 17-02-PLAN.md — GraphQL: CreateContentResult wrapper type, resolver update, frontend mutation/hook update for alreadyExisted signal
+
 ---
 
 ## v1.1 Feature Phases (11-16)
@@ -620,7 +640,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 -> 3.5 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 7.3 -> 7.4 -> 8 -> 8.1 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 -> 3.5 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 7.3 -> 7.4 -> 8 -> 8.1 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16 -> 17
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -651,3 +671,4 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 
 | 14. AG Grid Power Features | 0/3 | Not started | - |
 | 15. Discover Page | 0/3 | Not started | - |
 | 16. Mobile App Strategy | 0/0 | Not started | - |
+| 17. YouTube URL Normalization & Upsert | 2/2 | Complete    | 2026-02-22 |

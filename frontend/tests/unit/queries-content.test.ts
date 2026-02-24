@@ -49,20 +49,23 @@ describe('GraphQL query definitions', () => {
 		it('exports CreateContentResponse interface', () => {
 			const response: CreateContentResponse = {
 				createContentFromYouTube: {
-					id: '1',
-					name: 'Test',
-					url: 'https://youtube.com/watch?v=test',
-					contentType: 'VIDEO',
-					length: 100,
-					lengthUnits: 'SECONDS',
-					viewCount: 1000,
-					likeCount: 100,
-					channelTitle: 'Test Channel',
-					publishedAt: '2024-01-01',
-					tags: ['test'],
-					description: 'Test description',
-					createdAt: '2024-01-01',
-					updatedAt: '2024-01-01',
+					content: {
+						id: '1',
+						name: 'Test',
+						url: 'https://youtube.com/watch?v=test',
+						contentType: 'VIDEO',
+						length: 100,
+						lengthUnits: 'SECONDS',
+						viewCount: 1000,
+						likeCount: 100,
+						channelTitle: 'Test Channel',
+						publishedAt: '2024-01-01',
+						tags: ['test'],
+						description: 'Test description',
+						createdAt: '2024-01-01',
+						updatedAt: '2024-01-01',
+					},
+					alreadyExisted: false,
 				},
 			};
 			expect(response).toBeDefined();
@@ -191,6 +194,14 @@ describe('GraphQL query definitions', () => {
 		it('requests timestamp fields', () => {
 			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('createdAt');
 			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('updatedAt');
+		});
+
+		it('requests alreadyExisted field from CreateContentResult wrapper', () => {
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('alreadyExisted');
+		});
+
+		it('wraps content fields inside content block', () => {
+			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('content {');
 		});
 	});
 });

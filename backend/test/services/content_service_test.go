@@ -16,10 +16,11 @@ import (
 
 // mockContentRepository implements repositories.ContentRepository for testing
 type mockContentRepository struct {
-	createFn   func(ctx context.Context, content *domain.Content) (*domain.Content, error)
-	getByIDFn  func(ctx context.Context, id int) (*domain.Content, error)
-	getByURLFn func(ctx context.Context, url string) (*domain.Content, error)
-	listFn     func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
+	createFn           func(ctx context.Context, content *domain.Content) (*domain.Content, error)
+	getByIDFn          func(ctx context.Context, id int) (*domain.Content, error)
+	getByURLFn         func(ctx context.Context, url string) (*domain.Content, error)
+	getOrCreateByURLFn func(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error)
+	listFn             func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
 }
 
 func (m *mockContentRepository) Create(ctx context.Context, content *domain.Content) (*domain.Content, error) {
@@ -41,6 +42,13 @@ func (m *mockContentRepository) GetByURL(ctx context.Context, url string) (*doma
 		return m.getByURLFn(ctx, url)
 	}
 	return nil, domain.ErrNotFound
+}
+
+func (m *mockContentRepository) GetOrCreateByURL(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error) {
+	if m.getOrCreateByURLFn != nil {
+		return m.getOrCreateByURLFn(ctx, content, refreshOnConflict)
+	}
+	return content, false, nil
 }
 
 func (m *mockContentRepository) List(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
@@ -155,7 +163,7 @@ func TestGetByID_RepositoryError(t *testing.T) {
 // --- CreateFromYouTube Tests ---
 
 func TestCreateFromYouTube_Success(t *testing.T) {
-	videoURL := "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+	canonicalURL := "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 	metadata := &portservices.VideoMetadata{
 		Title:       "Test Video Title",
 		Description: "A great video",
@@ -166,11 +174,13 @@ func TestCreateFromYouTube_Success(t *testing.T) {
 
 	repo := &mockContentRepository{
 		getByURLFn: func(ctx context.Context, url string) (*domain.Content, error) {
-			return nil, domain.ErrNotFound // URL does not exist yet
+			// Called with canonical URL — not found yet
+			assert.Equal(t, canonicalURL, url)
+			return nil, domain.ErrNotFound
 		},
-		createFn: func(ctx context.Context, content *domain.Content) (*domain.Content, error) {
+		getOrCreateByURLFn: func(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error) {
 			content.ID = 1
-			return content, nil
+			return content, false, nil
 		},
 	}
 
@@ -186,13 +196,14 @@ func TestCreateFromYouTube_Success(t *testing.T) {
 
 	svc := services.NewContentService(repo, ytClient)
 
-	result, err := svc.CreateFromYouTube(context.Background(), videoURL, 42)
+	result, err := svc.CreateFromYouTube(context.Background(), "https://youtu.be/dQw4w9WgXcQ", 42)
 
 	require.NoError(t, err)
 	assert.Equal(t, 1, result.ID)
 	assert.Equal(t, "Test Video Title", result.Name)
 	assert.Equal(t, domain.ContentTypeYouTube, result.ContentType)
-	assert.Equal(t, &videoURL, result.URL)
+	// URL stored is the canonical form, not the input URL
+	assert.Equal(t, &canonicalURL, result.URL)
 	assert.Equal(t, 42, result.AddedByUserID)
 	require.NotNil(t, result.Length)
 	assert.Equal(t, 300, *result.Length)
@@ -200,43 +211,86 @@ func TestCreateFromYouTube_Success(t *testing.T) {
 	assert.Equal(t, "seconds", *result.LengthUnits)
 }
 
-func TestCreateFromYouTube_AlreadyExists(t *testing.T) {
-	existingURL := "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+func TestCreateFromYouTube_ReturnExistingOnDuplicate(t *testing.T) {
+	canonicalURL := "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 	existing := &domain.Content{
 		ID:   1,
 		Name: "Existing Video",
-		URL:  &existingURL,
+		URL:  &canonicalURL,
 	}
 
 	repo := &mockContentRepository{
 		getByURLFn: func(ctx context.Context, url string) (*domain.Content, error) {
-			return existing, nil // URL already exists
+			// Called with canonical URL — content already exists
+			assert.Equal(t, canonicalURL, url)
+			return existing, nil
 		},
 	}
 
-	svc := services.NewContentService(repo, &mockYouTubeClient{})
+	ytClient := &mockYouTubeClient{
+		extractVideoIDFn: func(url string) (string, error) {
+			return "dQw4w9WgXcQ", nil
+		},
+	}
 
-	result, err := svc.CreateFromYouTube(context.Background(), existingURL, 1)
+	svc := services.NewContentService(repo, ytClient)
 
-	assert.Nil(t, result)
+	result, err := svc.CreateFromYouTube(context.Background(), canonicalURL, 1)
+
+	// Returns content (not nil) AND ErrAlreadyExists
+	require.NotNil(t, result)
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, domain.ErrAlreadyExists))
+	assert.Equal(t, "Existing Video", result.Name)
+	assert.Equal(t, 1, result.ID)
+}
+
+func TestCreateFromYouTube_NormalizesURLVariants(t *testing.T) {
+	canonicalURL := "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+	var capturedURL string
+
+	repo := &mockContentRepository{
+		getByURLFn: func(ctx context.Context, url string) (*domain.Content, error) {
+			capturedURL = url
+			return nil, domain.ErrNotFound
+		},
+		getOrCreateByURLFn: func(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error) {
+			content.ID = 1
+			return content, false, nil
+		},
+	}
+
+	ytClient := &mockYouTubeClient{
+		extractVideoIDFn: func(url string) (string, error) {
+			return "dQw4w9WgXcQ", nil
+		},
+		getVideoMetadataFn: func(ctx context.Context, videoID string) (*portservices.VideoMetadata, error) {
+			return &portservices.VideoMetadata{
+				Title:    "Video",
+				Duration: 60,
+				Response: json.RawMessage(`{}`),
+			}, nil
+		},
+	}
+
+	svc := services.NewContentService(repo, ytClient)
+
+	// Submit a youtu.be variant with ?si= param — should resolve to canonical
+	_, err := svc.CreateFromYouTube(context.Background(), "https://youtu.be/dQw4w9WgXcQ?si=abc", 1)
+
+	require.NoError(t, err)
+	// GetByURL must be called with the canonical URL, not the raw input
+	assert.Equal(t, canonicalURL, capturedURL)
 }
 
 func TestCreateFromYouTube_InvalidURL(t *testing.T) {
-	repo := &mockContentRepository{
-		getByURLFn: func(ctx context.Context, url string) (*domain.Content, error) {
-			return nil, domain.ErrNotFound
-		},
-	}
-
 	ytClient := &mockYouTubeClient{
 		extractVideoIDFn: func(url string) (string, error) {
 			return "", fmt.Errorf("could not extract video ID")
 		},
 	}
 
-	svc := services.NewContentService(repo, ytClient)
+	svc := services.NewContentService(&mockContentRepository{}, ytClient)
 
 	result, err := svc.CreateFromYouTube(context.Background(), "not-a-valid-url", 1)
 
@@ -281,8 +335,8 @@ func TestCreateFromYouTube_RepositoryCreateError(t *testing.T) {
 		getByURLFn: func(ctx context.Context, url string) (*domain.Content, error) {
 			return nil, domain.ErrNotFound
 		},
-		createFn: func(ctx context.Context, content *domain.Content) (*domain.Content, error) {
-			return nil, fmt.Errorf("database write error")
+		getOrCreateByURLFn: func(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error) {
+			return nil, false, fmt.Errorf("database write error")
 		},
 	}
 
@@ -311,7 +365,13 @@ func TestCreateFromYouTube_GetByURLUnexpectedError(t *testing.T) {
 		},
 	}
 
-	svc := services.NewContentService(repo, &mockYouTubeClient{})
+	ytClient := &mockYouTubeClient{
+		extractVideoIDFn: func(url string) (string, error) {
+			return "abc123", nil
+		},
+	}
+
+	svc := services.NewContentService(repo, ytClient)
 
 	result, err := svc.CreateFromYouTube(context.Background(), "https://youtube.com/watch?v=abc123", 1)
 

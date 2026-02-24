@@ -74,6 +74,11 @@ type ComplexityRoot struct {
 		ViewCount     func(childComplexity int) int
 	}
 
+	CreateContentResult struct {
+		AlreadyExisted func(childComplexity int) int
+		Content        func(childComplexity int) int
+	}
+
 	Mutation struct {
 		CreateContentFromYouTube func(childComplexity int, input model.CreateContentFromYouTubeInput) int
 		CreatePerspective        func(childComplexity int, input model.CreatePerspectiveInput) int
@@ -136,16 +141,18 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
+		Active    func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
 		Email     func(childComplexity int) int
 		ID        func(childComplexity int) int
+		Role      func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
 		Username  func(childComplexity int) int
 	}
 }
 
 type MutationResolver interface {
-	CreateContentFromYouTube(ctx context.Context, input model.CreateContentFromYouTubeInput) (*model.Content, error)
+	CreateContentFromYouTube(ctx context.Context, input model.CreateContentFromYouTubeInput) (*model.CreateContentResult, error)
 	CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error)
 	UpdateUser(ctx context.Context, input model.UpdateUserInput) (*model.User, error)
 	DeleteUser(ctx context.Context, id string) (bool, error)
@@ -303,6 +310,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Content.ViewCount(childComplexity), true
+
+	case "CreateContentResult.alreadyExisted":
+		if e.complexity.CreateContentResult.AlreadyExisted == nil {
+			break
+		}
+
+		return e.complexity.CreateContentResult.AlreadyExisted(childComplexity), true
+	case "CreateContentResult.content":
+		if e.complexity.CreateContentResult.Content == nil {
+			break
+		}
+
+		return e.complexity.CreateContentResult.Content(childComplexity), true
 
 	case "Mutation.createContentFromYouTube":
 		if e.complexity.Mutation.CreateContentFromYouTube == nil {
@@ -633,6 +653,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.Users(childComplexity), true
 
+	case "User.active":
+		if e.complexity.User.Active == nil {
+			break
+		}
+
+		return e.complexity.User.Active(childComplexity), true
 	case "User.createdAt":
 		if e.complexity.User.CreatedAt == nil {
 			break
@@ -651,6 +677,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.User.ID(childComplexity), true
+	case "User.role":
+		if e.complexity.User.Role == nil {
+			break
+		}
+
+		return e.complexity.User.Role(childComplexity), true
 	case "User.updatedAt":
 		if e.complexity.User.UpdatedAt == nil {
 			break
@@ -849,6 +881,11 @@ type PaginatedPerspectives {
   totalCount: Int
 }
 
+type CreateContentResult {
+  content: Content!
+  alreadyExisted: Boolean!
+}
+
 type Content {
   id: ID!
   name: String!
@@ -975,7 +1012,7 @@ input PerspectiveFilter {
 }
 
 type Mutation {
-  createContentFromYouTube(input: CreateContentFromYouTubeInput!): Content!
+  createContentFromYouTube(input: CreateContentFromYouTubeInput!): CreateContentResult!
 
   # User mutations
   createUser(input: CreateUserInput!): User!
@@ -1902,15 +1939,14 @@ func (ec *executionContext) fieldContext_Content_updatedAt(_ context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createContentFromYouTube(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreateContentResult_content(ctx context.Context, field graphql.CollectedField, obj *model.CreateContentResult) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Mutation_createContentFromYouTube,
+		ec.fieldContext_CreateContentResult_content,
 		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateContentFromYouTube(ctx, fc.Args["input"].(model.CreateContentFromYouTubeInput))
+			return obj.Content, nil
 		},
 		nil,
 		ec.marshalNContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent,
@@ -1919,12 +1955,12 @@ func (ec *executionContext) _Mutation_createContentFromYouTube(ctx context.Conte
 	)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createContentFromYouTube(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateContentResult_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Mutation",
+		Object:     "CreateContentResult",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -1965,6 +2001,71 @@ func (ec *executionContext) fieldContext_Mutation_createContentFromYouTube(ctx c
 				return ec.fieldContext_Content_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Content", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CreateContentResult_alreadyExisted(ctx context.Context, field graphql.CollectedField, obj *model.CreateContentResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CreateContentResult_alreadyExisted,
+		func(ctx context.Context) (any, error) {
+			return obj.AlreadyExisted, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CreateContentResult_alreadyExisted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateContentResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createContentFromYouTube(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createContentFromYouTube,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().CreateContentFromYouTube(ctx, fc.Args["input"].(model.CreateContentFromYouTubeInput))
+		},
+		nil,
+		ec.marshalNCreateContentResult2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateContentResult,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createContentFromYouTube(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "content":
+				return ec.fieldContext_CreateContentResult_content(ctx, field)
+			case "alreadyExisted":
+				return ec.fieldContext_CreateContentResult_alreadyExisted(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateContentResult", field.Name)
 		},
 	}
 	defer func() {
@@ -6113,6 +6214,50 @@ func (ec *executionContext) _Content(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
+var createContentResultImplementors = []string{"CreateContentResult"}
+
+func (ec *executionContext) _CreateContentResult(ctx context.Context, sel ast.SelectionSet, obj *model.CreateContentResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createContentResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateContentResult")
+		case "content":
+			out.Values[i] = ec._CreateContentResult_content(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "alreadyExisted":
+			out.Values[i] = ec._CreateContentResult_alreadyExisted(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -7058,10 +7203,6 @@ func (ec *executionContext) unmarshalNCategorizedRatingInput2ᚖgithubᚗcomᚋC
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNContent2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx context.Context, sel ast.SelectionSet, v model.Content) graphql.Marshaler {
-	return ec._Content(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNContent2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Content) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -7119,6 +7260,20 @@ func (ec *executionContext) marshalNContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebu
 func (ec *executionContext) unmarshalNCreateContentFromYouTubeInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateContentFromYouTubeInput(ctx context.Context, v any) (model.CreateContentFromYouTubeInput, error) {
 	res, err := ec.unmarshalInputCreateContentFromYouTubeInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateContentResult2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateContentResult(ctx context.Context, sel ast.SelectionSet, v model.CreateContentResult) graphql.Marshaler {
+	return ec._CreateContentResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateContentResult2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateContentResult(ctx context.Context, sel ast.SelectionSet, v *model.CreateContentResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateContentResult(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreatePerspectiveInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreatePerspectiveInput(ctx context.Context, v any) (model.CreatePerspectiveInput, error) {
@@ -7292,23 +7447,6 @@ func (ec *executionContext) marshalNPrivacy2githubᚗcomᚋCodeWarriorᚑdebug�
 	return res
 }
 
-func (ec *executionContext) unmarshalNUserRole2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐUserRole(ctx context.Context, v any) (domain.UserRole, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := domain.UserRole(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNUserRole2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐUserRole(ctx context.Context, sel ast.SelectionSet, v domain.UserRole) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7391,6 +7529,23 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebug�
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUserRole2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐUserRole(ctx context.Context, v any) (domain.UserRole, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.UserRole(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUserRole2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐUserRole(ctx context.Context, sel ast.SelectionSet, v domain.UserRole) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {

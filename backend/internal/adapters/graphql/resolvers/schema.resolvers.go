@@ -19,12 +19,18 @@ import (
 )
 
 // CreateContentFromYouTube is the resolver for the createContentFromYouTube field.
-func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input model.CreateContentFromYouTubeInput) (*model.Content, error) {
+func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input model.CreateContentFromYouTubeInput) (*model.CreateContentResult, error) {
 	content, err := r.ContentService.CreateFromYouTube(ctx, input.URL, input.UserID)
+
+	// Handle idempotent duplicate: service returns (content, ErrAlreadyExists)
+	if errors.Is(err, domain.ErrAlreadyExists) && content != nil {
+		return &model.CreateContentResult{
+			Content:        domainToModel(content),
+			AlreadyExisted: true,
+		}, nil
+	}
+
 	if err != nil {
-		if errors.Is(err, domain.ErrAlreadyExists) {
-			return nil, fmt.Errorf("content already exists for this URL")
-		}
 		if errors.Is(err, domain.ErrInvalidURL) {
 			return nil, fmt.Errorf("invalid YouTube URL")
 		}
@@ -36,7 +42,10 @@ func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input m
 		return nil, fmt.Errorf("failed to create content: %s", err.Error())
 	}
 
-	return domainToModel(content), nil
+	return &model.CreateContentResult{
+		Content:        domainToModel(content),
+		AlreadyExisted: false,
+	}, nil
 }
 
 // CreateUser is the resolver for the createUser field.

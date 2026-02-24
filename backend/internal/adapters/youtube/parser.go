@@ -7,6 +7,13 @@ import (
 	"strings"
 )
 
+// NormalizeYouTubeURL returns the canonical watch URL for a YouTube video ID.
+// This is the canonical form stored in the database for deduplication.
+// Example: "dQw4w9WgXcQ" -> "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+func NormalizeYouTubeURL(videoID string) string {
+	return "https://www.youtube.com/watch?v=" + videoID
+}
+
 // ExtractVideoID extracts the video ID from various YouTube URL formats.
 // Supported: /watch?v=, youtu.be/, /embed/, /v/, /e/, /shorts/, /live/,
 // youtube-nocookie.com, music.youtube.com, m.youtube.com
