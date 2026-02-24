@@ -22,6 +22,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3.4: Perspectize Branding & Glasses Identity** - Glasses motif with 3 shapes, 8-color palette picker, JSONB preferences, avatar display, onboarding (INSERTED)
 - [ ] **Phase 3.5: Google NL Taxonomy Research Spike** - Deep-dive on Google taxonomy depth, traversal, subcategories, ltree mapping, YouTube classification (INSERTED)
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
+- [ ] **Phase 4.1: GraphQL Dataloaders for N+1 Query Prevention** - Batch loading for Perspective→User, Perspective→Content, Content→User nested fields (INSERTED)
 - [x] **Phase 5: Testing + Deployment** - Coverage met, deployed on Sevalla, CORS working (wildcard — restriction deferred to Phase 9)
 
 ## Phase Details
@@ -224,6 +225,27 @@ Plans:
 - [ ] 04-01-PLAN.md — Backend schema migration (perspective refs, claim type), domain/GORM/GraphQL extensions, frontend query definitions + mutation hooks + tests
 - [ ] 04-02-PLAN.md — PerspectivePopover UI, RatingInput component, AG Grid Perspectize column with +/silhouette icons (hover=edit, click=create), visual checkpoint
 - [ ] 04-03-PLAN.md — Claim creation (createClaim mutation, frontend hook, @reference utils, claim trigger in PerspectivePopover)
+
+### Phase 04.1: GraphQL Dataloaders for N+1 Query Prevention (INSERTED)
+
+**Goal:** Implement dataloader batching for 3 N+1-vulnerable nested GraphQL relationships so that queries like `perspectives { items { user { ... } content { ... } } }` execute 3 SQL queries (batch) instead of 1+N+N (individual)
+**Depends on:** Phase 4 (nested fields become queryable after perspective flow exists)
+**Source:** Dataloader analysis (2026-02-24) — 3 relationships, 0 batch methods, 0 field resolvers
+**Success Criteria** (what must be TRUE):
+  1. `vikstrous/dataloadgen` library added as dependency (type-safe generics, gqlgen-native)
+  2. Batch repository methods exist: `UserRepository.GetByIDs()`, `ContentRepository.GetByIDs()` with `WHERE id IN (?)` queries
+  3. Custom field resolvers for `Perspective.user`, `Perspective.content`, `Content.addedBy` (gqlgen `resolver: true` in gqlgen.yml)
+  4. Per-request dataloader middleware injects loaders into context (HTTP middleware, not global cache)
+  5. Field resolvers call dataloaders (not direct DB queries) — batching verified via slow query log
+  6. Nested fields return populated data (not nil) when requested in GraphQL queries
+  7. All existing backend tests pass
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 04.1 to break down)
+
+**Details:**
+Analysis found zero dataloader infrastructure: no batch libraries in go.mod, no `GetByIDs()` methods, no custom field resolvers. The 3 generated field resolvers (`_Perspective_user`, `_Perspective_content`, `_Content_addedBy`) return `obj.Field` which is always nil because `helpers.go` converters never populate nested pointers. Architecture: dataloaders live in `internal/adapters/graphql/dataloaders/` (adapter layer), call service/repository batch methods, never leak into domain. Related to Phase 8.1 M-08 (missing nested field resolvers).
 
 ### Phase 5: Testing + Deployment
 **Goal**: Application is tested, deployed, and accessible via public URL with proper CORS
@@ -640,7 +662,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 -> 3.5 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 7.3 -> 7.4 -> 8 -> 8.1 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16 -> 17
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 -> 3.5 -> 4 -> 4.1 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 7.3 -> 7.4 -> 8 -> 8.1 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16 -> 17
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -654,6 +676,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 
 | 3.4 Perspectize Branding & Glasses Identity | 0/4 | Not started | - |
 | 3.5 Google NL Taxonomy Research Spike | 0/2 | Not started | - |
 | 4. Add Perspective Flow | 0/3 | Not started | - |
+| 4.1 GraphQL Dataloaders for N+1 Prevention | 0/0 | Not started | - |
 | 5. Testing + Deployment | 2/3 | Complete | 2026-02-15 |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
 | 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |
