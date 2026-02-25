@@ -22,9 +22,9 @@
 		"mobile:build": "vite build && cap sync"
 	},
 	"devDependencies": {
-		"@capacitor/android": "^7.5.0",
+		"@capacitor/android": "^8.1.0",
 		"@capacitor/cli": "^7.5.0",
-		"@capacitor/ios": "^7.5.0",
+		"@capacitor/ios": "^8.1.0",
 		"@internationalized/date": "^3.11.0",
 		"@lucide/svelte": "^0.575.0",
 		"@sveltejs/adapter-auto": "^7.0.1",
@@ -53,7 +53,7 @@
 		"@ag-grid-community/client-side-row-model": "32.3.9",
 		"@ag-grid-community/core": "32.3.9",
 		"@ag-grid-community/theming": "32.3.9",
-		"@capacitor/core": "^7.5.0",
+		"@capacitor/core": "^8.1.0",
 		"@capacitor/haptics": "^7.0.3",
 		"@tanstack/svelte-form": "^1.28.3",
 		"@tanstack/svelte-query": "^6.0.18",
