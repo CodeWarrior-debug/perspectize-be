@@ -11,6 +11,7 @@
 		itemCellRenderer,
 		typeCellRenderer,
 		durationValueGetter,
+		durationFilterValueGetter,
 		dateValueFormatter,
 		formatCount,
 		formatCountExact,
@@ -152,6 +153,7 @@
 
 			filter: 'agNumberColumnFilter',
 			valueGetter: durationValueGetter,
+			filterValueGetter: durationFilterValueGetter,
 			comparator: (_valueA, _valueB, nodeA, nodeB) => {
 				const a = nodeA?.data?.length ?? 0;
 				const b = nodeB?.data?.length ?? 0;

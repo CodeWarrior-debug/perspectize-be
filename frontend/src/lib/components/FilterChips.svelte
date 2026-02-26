@@ -2,6 +2,7 @@
 	import XIcon from '@lucide/svelte/icons/x';
 	import ListXIcon from '@lucide/svelte/icons/list-x';
 	import type { GridApi } from '@ag-grid-community/core';
+	import { formatDurationSeconds } from '$lib/utils/formatting';
 
 	interface FilterChip {
 		colId: string;
@@ -55,7 +56,12 @@
 		return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 	}
 
-	function formatSingleCondition(filter: any): string {
+	function formatNumberValue(value: number, colId?: string): string {
+		if (colId === 'duration') return formatDurationSeconds(value);
+		return String(value);
+	}
+
+	function formatSingleCondition(filter: any, colId?: string): string {
 		const ft = filter.filterType;
 
 		if (ft === 'text') {
@@ -68,9 +74,10 @@
 		if (ft === 'number') {
 			if (filter.type === 'blank') return 'is blank';
 			if (filter.type === 'notBlank') return 'is not blank';
-			if (filter.type === 'inRange') return `${filter.filter} \u2013 ${filter.filterTo}`;
+			if (filter.type === 'inRange')
+				return `${formatNumberValue(filter.filter, colId)} \u2013 ${formatNumberValue(filter.filterTo, colId)}`;
 			const op = NUMBER_OPERATORS[filter.type] ?? filter.type;
-			return `${op} ${filter.filter}`;
+			return `${op} ${formatNumberValue(filter.filter, colId)}`;
 		}
 
 		if (ft === 'date') {
@@ -89,25 +96,25 @@
 		return String(filter.filter ?? '');
 	}
 
-	function formatFilterValue(filter: any): string {
+	function formatFilterValue(filter: any, colId?: string): string {
 		if (filter.operator && filter.conditions) {
-			const parts = filter.conditions.map(formatSingleCondition);
+			const parts = filter.conditions.map((c: any) => formatSingleCondition(c, colId));
 			return parts.join(` ${filter.operator.toLowerCase()} `);
 		}
 		if (filter.operator && filter.condition1) {
 			const parts = [filter.condition1, filter.condition2]
 				.filter(Boolean)
-				.map(formatSingleCondition);
+				.map((c: any) => formatSingleCondition(c, colId));
 			return parts.join(` ${filter.operator.toLowerCase()} `);
 		}
-		return formatSingleCondition(filter);
+		return formatSingleCondition(filter, colId);
 	}
 
 	const chips: FilterChip[] = $derived(
 		Object.entries(filterModel).map(([colId, filter]) => ({
 			colId,
 			label: COLUMN_LABELS[colId] ?? colId,
-			value: formatFilterValue(filter),
+			value: formatFilterValue(filter, colId),
 		})),
 	);
 

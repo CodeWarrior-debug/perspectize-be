@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
 	formatDuration,
+	formatDurationSeconds,
 	formatDate,
 	formatDateCompact,
 	formatCount,
@@ -13,6 +14,7 @@ import {
 	typeCellRenderer,
 	nameCellRenderer,
 	durationValueGetter,
+	durationFilterValueGetter,
 	dateValueFormatter,
 	contentRowId,
 	headerMinWidth,
@@ -89,6 +91,50 @@ describe('durationValueGetter', () => {
 
 	it('returns formatted duration for non-seconds', () => {
 		expect(durationValueGetter({ data: { length: 10, lengthUnits: 'minutes' } })).toBe('10 minutes');
+	});
+});
+
+describe('durationFilterValueGetter', () => {
+	it('returns null when data is missing', () => {
+		expect(durationFilterValueGetter({ data: undefined })).toBeNull();
+	});
+
+	it('returns raw seconds for valid data', () => {
+		expect(durationFilterValueGetter({ data: { length: 137 } })).toBe(137);
+	});
+
+	it('returns null for null length', () => {
+		expect(durationFilterValueGetter({ data: { length: null } })).toBeNull();
+	});
+
+	it('returns zero for zero length', () => {
+		expect(durationFilterValueGetter({ data: { length: 0 } })).toBe(0);
+	});
+});
+
+describe('formatDurationSeconds', () => {
+	it('formats seconds as m:ss', () => {
+		expect(formatDurationSeconds(137)).toBe('2:17');
+	});
+
+	it('formats zero seconds', () => {
+		expect(formatDurationSeconds(0)).toBe('0:00');
+	});
+
+	it('formats exact minutes', () => {
+		expect(formatDurationSeconds(300)).toBe('5:00');
+	});
+
+	it('pads single-digit seconds', () => {
+		expect(formatDurationSeconds(65)).toBe('1:05');
+	});
+
+	it('formats large durations', () => {
+		expect(formatDurationSeconds(3661)).toBe('61:01');
+	});
+
+	it('formats sub-minute durations', () => {
+		expect(formatDurationSeconds(45)).toBe('0:45');
 	});
 });
 
