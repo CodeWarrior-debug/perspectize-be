@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
 	formatDuration,
 	formatDurationSeconds,
+	parseDurationInput,
 	formatDate,
 	formatDateCompact,
 	formatCount,
@@ -135,6 +136,56 @@ describe('formatDurationSeconds', () => {
 
 	it('formats sub-minute durations', () => {
 		expect(formatDurationSeconds(45)).toBe('0:45');
+	});
+});
+
+describe('parseDurationInput', () => {
+	it('returns null for null', () => {
+		expect(parseDurationInput(null)).toBeNull();
+	});
+
+	it('returns null for empty string', () => {
+		expect(parseDurationInput('')).toBeNull();
+	});
+
+	it('returns null for whitespace-only', () => {
+		expect(parseDurationInput('   ')).toBeNull();
+	});
+
+	it('parses m:ss format to seconds', () => {
+		expect(parseDurationInput('5:00')).toBe(300);
+	});
+
+	it('parses m:ss with non-zero seconds', () => {
+		expect(parseDurationInput('2:17')).toBe(137);
+	});
+
+	it('parses 0:45 as 45 seconds', () => {
+		expect(parseDurationInput('0:45')).toBe(45);
+	});
+
+	it('parses large minute values', () => {
+		expect(parseDurationInput('61:01')).toBe(3661);
+	});
+
+	it('parses plain number as seconds', () => {
+		expect(parseDurationInput('300')).toBe(300);
+	});
+
+	it('parses plain decimal number', () => {
+		expect(parseDurationInput('45.5')).toBe(45.5);
+	});
+
+	it('returns null for non-numeric input', () => {
+		expect(parseDurationInput('abc')).toBeNull();
+	});
+
+	it('returns null for malformed m:ss', () => {
+		expect(parseDurationInput(':30')).toBeNull();
+	});
+
+	it('trims whitespace before parsing', () => {
+		expect(parseDurationInput(' 5:00 ')).toBe(300);
 	});
 });
 

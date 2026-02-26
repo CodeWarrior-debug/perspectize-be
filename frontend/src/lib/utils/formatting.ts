@@ -52,6 +52,24 @@ export function formatDurationSeconds(seconds: number): string {
 }
 
 /**
+ * Parse duration filter input. Accepts "m:ss" or plain seconds.
+ * Returns total seconds, or null if unparseable.
+ */
+export function parseDurationInput(text: string | null): number | null {
+	if (text == null || text.trim() === '') return null;
+	const trimmed = text.trim();
+	if (trimmed.includes(':')) {
+		const [minStr, secStr] = trimmed.split(':');
+		const mins = parseInt(minStr, 10);
+		const secs = parseInt(secStr, 10);
+		if (isNaN(mins) || isNaN(secs)) return null;
+		return mins * 60 + secs;
+	}
+	const n = parseFloat(trimmed);
+	return isNaN(n) ? null : n;
+}
+
+/**
  * AG Grid value formatter for date columns.
  */
 export function dateValueFormatter(params: { value?: string }): string {
