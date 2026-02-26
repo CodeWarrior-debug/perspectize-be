@@ -22,6 +22,7 @@
 	} from '$lib/utils/formatting';
 	import { TagsTooltip } from '$lib/components/TagsTooltip';
 	import { DescriptionTooltip } from '$lib/components/DescriptionTooltip';
+	import FilterChips from '$lib/components/FilterChips.svelte';
 
 	// GraphQL ContentSortBy to AG Grid colId mapping
 	const SORT_FIELD_MAP: Record<string, string> = {
@@ -46,6 +47,7 @@
 	let sortOrder = $state<'ASC' | 'DESC'>('DESC');
 	let filterText = $state<string>('');
 	let debounceTimer: ReturnType<typeof setTimeout>;
+	let activeFilterModel = $state<Record<string, any>>({});
 	// Responsive tier: 'xs' (<445px), 'sm' (445-639px), 'md' (640-899px), 'lg' (900px+)
 	let responsiveTier = $state<'xs' | 'sm' | 'md' | 'lg'>('lg');
 
@@ -310,7 +312,10 @@
 			cursors = [null];
 		},
 		onFilterChanged: (event: FilterChangedEvent) => {
-			// Debounce filter changes
+			// Immediate: update chip display
+			activeFilterModel = event.api.getFilterModel();
+
+			// Debounce filter changes for server-side search
 			clearTimeout(debounceTimer);
 			debounceTimer = setTimeout(() => {
 				const filterModel = event.api.getFilterModel();
@@ -429,6 +434,9 @@
 			</div>
 		</div>
 	{:else}
+		<!-- Active Filter Chips -->
+		<FilterChips {gridApi} filterModel={activeFilterModel} />
+
 		<!-- AG Grid -->
 		<div bind:this={gridContainer} class="flex-1 min-h-0" style="--ag-row-height: 44px; --ag-header-height: 40px;">
 			<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
