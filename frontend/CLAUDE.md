@@ -117,8 +117,14 @@ Full setup and examples: [docs/AG_GRID.md](docs/AG_GRID.md)
 
 ## Figma Design Workflow
 
-- **[docs/FIGMA.md](docs/FIGMA.md)** — Figma file reference (file key, pages, variables, code↔Figma mapping)
+- **[docs/FIGMA.md](docs/FIGMA.md)** — Figma file reference (file keys, pages, variables, code↔Figma mapping)
 - **[docs/FIGMA_VERIFICATION.md](docs/FIGMA_VERIFICATION.md)** — Verification guide for Figma Make outputs
+- **[Code to Figma Canvas](../.claude/docs/CODE_TO_FIGMA_CANVAS.md)** — Capture running app into Figma to keep designs in sync
+
+**Code-to-Figma capture gotchas:**
+- CSP in `app.html` blocks `mcp.figma.com` — temporarily add to `script-src` and `connect-src`, revert after capture
+- AG Grid canvas-rendered cells (thumbnails) don't serialize into Figma captures
+- SPA hash navigation may not re-trigger auto-capture — reload or click "Send to Figma" manually
 
 ## Self-Verification (Chrome DevTools MCP)
 
