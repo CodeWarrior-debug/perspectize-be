@@ -48,6 +48,7 @@
 	let debounceTimer: ReturnType<typeof setTimeout>;
 	// Responsive tier: 'xs' (<445px), 'sm' (445-639px), 'md' (640-899px), 'lg' (900px+)
 	let responsiveTier = $state<'xs' | 'sm' | 'md' | 'lg'>('lg');
+	const isMobile = $derived(responsiveTier === 'xs' || responsiveTier === 'sm');
 
 	// TanStack Query for data fetching
 	let currentCursor = $derived(cursors[currentPage]);
@@ -112,161 +113,163 @@
 
 	// flex = clamp-like: proportional sizing with min/max constraints
 	// minWidth is auto-derived from headerName unless explicitly set (e.g. Item = 200)
-	const columnDefs: ColDef<ContentItem>[] = ([
-		{
-			colId: 'item',
-			headerName: 'Item',
-			flex: 2,
-			minWidth: 200,
+	const columnDefs: ColDef<ContentItem>[] = (
+		[
+			{
+				colId: 'item',
+				headerName: 'Item',
+				flex: 2,
+				minWidth: 200,
 
-			filter: false, // Search handled by page-level search input
-			cellRenderer: itemCellRenderer,
-			tooltipValueGetter: (params) => params.data?.name ?? '',
-			headerTooltip: 'Video title and thumbnail from YouTube API',
-		},
-		{
-			colId: 'type',
-			headerName: 'Type',
-			flex: 0.5,
-			maxWidth: 100,
-
-			filter: 'agTextColumnFilter',
-			valueGetter: (params) => {
-				const t = params.data?.contentType;
-				if (!t) return '';
-				return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+				filter: false, // Search handled by page-level search input
+				cellRenderer: itemCellRenderer,
+				tooltipValueGetter: (params) => params.data?.name ?? '',
+				headerTooltip: 'Video title and thumbnail from YouTube API',
 			},
-			filterValueGetter: (params) => {
-				return params.data?.contentType?.toLowerCase() ?? '';
+			{
+				colId: 'type',
+				headerName: 'Type',
+				flex: 0.5,
+				maxWidth: 100,
+
+				filter: 'agTextColumnFilter',
+				valueGetter: (params) => {
+					const t = params.data?.contentType;
+					if (!t) return '';
+					return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+				},
+				filterValueGetter: (params) => {
+					return params.data?.contentType?.toLowerCase() ?? '';
+				},
+				cellRenderer: typeCellRenderer,
+				headerTooltip: 'Content type',
 			},
-			cellRenderer: typeCellRenderer,
-			headerTooltip: 'Content type',
-		},
-		{
-			colId: 'duration',
-			headerName: 'Length',
-			flex: 0.7,
-			maxWidth: 120,
+			{
+				colId: 'duration',
+				headerName: 'Length',
+				flex: 0.7,
+				maxWidth: 120,
 
-			filter: 'agNumberColumnFilter',
-			valueGetter: durationValueGetter,
-			comparator: (_valueA, _valueB, nodeA, nodeB) => {
-				const a = nodeA?.data?.length ?? 0;
-				const b = nodeB?.data?.length ?? 0;
-				return a - b;
+				filter: 'agNumberColumnFilter',
+				valueGetter: durationValueGetter,
+				comparator: (_valueA, _valueB, nodeA, nodeB) => {
+					const a = nodeA?.data?.length ?? 0;
+					const b = nodeB?.data?.length ?? 0;
+					return a - b;
+				},
+				headerTooltip: 'Video duration from YouTube API',
 			},
-			headerTooltip: 'Video duration from YouTube API',
-		},
-		{
-			colId: 'views',
-			field: 'viewCount',
-			headerName: 'Views',
-			flex: 0.8,
-			maxWidth: 130,
+			{
+				colId: 'views',
+				field: 'viewCount',
+				headerName: 'Views',
+				flex: 0.8,
+				maxWidth: 130,
 
-			filter: 'agNumberColumnFilter',
-			valueFormatter: (params) => formatCount(params.value),
-			tooltipValueGetter: (params) => formatCountExact(params.data?.viewCount ?? null),
-			headerTooltip: 'View count from YouTube API',
-		},
-		{
-			colId: 'likes',
-			field: 'likeCount',
-			headerName: 'Likes',
-			flex: 0.8,
-			maxWidth: 130,
-
-			filter: 'agNumberColumnFilter',
-			valueFormatter: (params) => formatCount(params.value),
-			tooltipValueGetter: (params) => formatCountExact(params.data?.likeCount ?? null),
-			headerTooltip: 'Like count from YouTube API',
-		},
-		{
-			colId: 'publishDate',
-			field: 'publishedAt',
-			headerName: 'Date',
-			flex: 1,
-			maxWidth: 150,
-
-			filter: 'agDateColumnFilter',
-			filterValueGetter: (params) => {
-				const val = params.data?.publishedAt;
-				return val ? new Date(val) : null;
+				filter: 'agNumberColumnFilter',
+				valueFormatter: (params) => formatCount(params.value),
+				tooltipValueGetter: (params) => formatCountExact(params.data?.viewCount ?? null),
+				headerTooltip: 'View count from YouTube API',
 			},
-			valueFormatter: (params) => formatPublishDate(params.value),
-			headerTooltip: 'Publish date from YouTube API',
-		},
-		{
-			colId: 'channel',
-			field: 'channelTitle',
-			headerName: 'Channel',
-			flex: 1.2,
-			maxWidth: 200,
+			{
+				colId: 'likes',
+				field: 'likeCount',
+				headerName: 'Likes',
+				flex: 0.8,
+				maxWidth: 130,
 
-			filter: 'agTextColumnFilter',
-			headerTooltip: 'Channel name from YouTube API',
-		},
-		{
-			colId: 'tags',
-			field: 'tags',
-			headerName: 'Tags',
-			flex: 1.5,
-			maxWidth: 250,
-			sortable: false,
-			filter: 'agTextColumnFilter',
-			filterValueGetter: (params) => formatTags(params.data?.tags ?? null),
-			valueFormatter: (params) => formatTags(params.value),
-			tooltipComponent: TagsTooltip,
-			tooltipField: 'tags',
-			headerTooltip: 'Tags from YouTube API',
-		},
-		{
-			colId: 'description',
-			field: 'description',
-			headerName: 'Description',
-			flex: 2,
-			sortable: false,
-			filter: 'agTextColumnFilter',
-			valueFormatter: (params) => truncateDescription(params.value, 80),
-			tooltipComponent: DescriptionTooltip,
-			tooltipField: 'description',
-			headerTooltip: 'Video description from YouTube API',
-			hide: true,
-		},
-		{
-			colId: 'updatedAt',
-			field: 'updatedAt',
-			headerName: 'Updated',
-			flex: 1,
-			maxWidth: 150,
-
-			filter: 'agDateColumnFilter',
-			filterValueGetter: (params) => {
-				const val = params.data?.updatedAt;
-				return val ? new Date(val) : null;
+				filter: 'agNumberColumnFilter',
+				valueFormatter: (params) => formatCount(params.value),
+				tooltipValueGetter: (params) => formatCountExact(params.data?.likeCount ?? null),
+				headerTooltip: 'Like count from YouTube API',
 			},
-			valueFormatter: dateValueFormatter,
-			headerTooltip: 'Last updated in Perspectize',
-			hide: true,
-		},
+			{
+				colId: 'publishDate',
+				field: 'publishedAt',
+				headerName: 'Date',
+				flex: 1,
+				maxWidth: 150,
 
-		{
-			colId: 'createdAt',
-			field: 'createdAt',
-			headerName: 'Date Added',
-			flex: 1,
-			maxWidth: 150,
-
-			filter: 'agDateColumnFilter',
-			filterValueGetter: (params) => {
-				const val = params.data?.createdAt;
-				return val ? new Date(val) : null;
+				filter: 'agDateColumnFilter',
+				filterValueGetter: (params) => {
+					const val = params.data?.publishedAt;
+					return val ? new Date(val) : null;
+				},
+				valueFormatter: (params) => formatPublishDate(params.value),
+				headerTooltip: 'Publish date from YouTube API',
 			},
-			valueFormatter: dateValueFormatter,
-			headerTooltip: 'Date added to Perspectize',
-			hide: true,
-		},
-	] as ColDef<ContentItem>[]).map((col) => ({
+			{
+				colId: 'channel',
+				field: 'channelTitle',
+				headerName: 'Channel',
+				flex: 1.2,
+				maxWidth: 200,
+
+				filter: 'agTextColumnFilter',
+				headerTooltip: 'Channel name from YouTube API',
+			},
+			{
+				colId: 'tags',
+				field: 'tags',
+				headerName: 'Tags',
+				flex: 1.5,
+				maxWidth: 250,
+				sortable: false,
+				filter: 'agTextColumnFilter',
+				filterValueGetter: (params) => formatTags(params.data?.tags ?? null),
+				valueFormatter: (params) => formatTags(params.value),
+				tooltipComponent: TagsTooltip,
+				tooltipField: 'tags',
+				headerTooltip: 'Tags from YouTube API',
+			},
+			{
+				colId: 'description',
+				field: 'description',
+				headerName: 'Description',
+				flex: 2,
+				sortable: false,
+				filter: 'agTextColumnFilter',
+				valueFormatter: (params) => truncateDescription(params.value, 80),
+				tooltipComponent: DescriptionTooltip,
+				tooltipField: 'description',
+				headerTooltip: 'Video description from YouTube API',
+				hide: true,
+			},
+			{
+				colId: 'updatedAt',
+				field: 'updatedAt',
+				headerName: 'Updated',
+				flex: 1,
+				maxWidth: 150,
+
+				filter: 'agDateColumnFilter',
+				filterValueGetter: (params) => {
+					const val = params.data?.updatedAt;
+					return val ? new Date(val) : null;
+				},
+				valueFormatter: dateValueFormatter,
+				headerTooltip: 'Last updated in Perspectize',
+				hide: true,
+			},
+
+			{
+				colId: 'createdAt',
+				field: 'createdAt',
+				headerName: 'Date Added',
+				flex: 1,
+				maxWidth: 150,
+
+				filter: 'agDateColumnFilter',
+				filterValueGetter: (params) => {
+					const val = params.data?.createdAt;
+					return val ? new Date(val) : null;
+				},
+				valueFormatter: dateValueFormatter,
+				headerTooltip: 'Date added to Perspectize',
+				hide: true,
+			},
+		] as ColDef<ContentItem>[]
+	).map((col) => ({
 		...col,
 		minWidth: col.minWidth ?? headerMinWidth(col.headerName ?? '', col.filter !== false),
 	}));
@@ -393,6 +396,12 @@
 		});
 	});
 
+	// Switch to autoHeight on mobile — eliminates empty gap below last row
+	$effect(() => {
+		if (!gridApi || !gridReady) return;
+		gridApi.setGridOption('domLayout', isMobile ? 'autoHeight' : 'normal');
+	});
+
 	// Update loading state reactively
 	$effect(() => {
 		if (gridApi) {
@@ -430,14 +439,18 @@
 		</div>
 	{:else}
 		<!-- AG Grid -->
-		<div bind:this={gridContainer} class="flex-1 min-h-0" style="--ag-row-height: 44px; --ag-header-height: 40px;">
+		<div
+			bind:this={gridContainer}
+			class="{isMobile ? 'overflow-y-auto' : 'flex-1'} min-h-0"
+			style="--ag-row-height: 44px; --ag-header-height: 40px;"
+		>
 			<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
 		</div>
 	{/if}
 
 	<!-- Manual Pagination Controls -->
 	<div
-		class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0 px-2 md:px-4 py-2 border-t border-border text-xs md:text-sm"
+		class="shrink-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0 px-2 md:px-4 py-2 border-t border-border text-xs md:text-sm"
 	>
 		<div class="flex items-center gap-2 md:gap-4">
 			<div class="text-muted-foreground">
