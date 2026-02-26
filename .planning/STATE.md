@@ -199,6 +199,7 @@ Recent decisions affecting current work:
 - Phase 3.4 inserted after Phase 3.3: Perspectize Branding & Glasses Identity (URGENT) — Glasses motif with 3 shapes, 8-color palette picker, JSONB preferences, avatar display, and onboarding flow.
 - Phase 3.5 inserted after Phase 3.4: Google NL Taxonomy Research Spike (URGENT) — Deep-dive on Google taxonomy depth, traversal, subcategories, ltree mapping, YouTube classification. Unblocks Phase 13 (Content Categories) and Phase 4B (AG Grid grouping). See 04-CONTEXT.md cross-phase architecture and 13-context.md open questions.
 - Phase 17 added: YouTube URL normalization and duplicate upsert — Normalize all YouTube URL variants to canonical form, implement upsert (return existing content instead of error on duplicate), add database unique constraint on external_id. Related to Phase 6 M-03 and Phase 8.1 H-06/H-07.
+- Phase 18 added: Chip-based filtering UI for content display — Filter chips for content display filtering in the frontend.
 
 ### Project-Level Plan Requirements
 
