@@ -607,6 +607,26 @@ Plans:
 - [ ] 17-01-PLAN.md — Backend: NormalizeYouTubeURL, GetOrCreateByURL with ON CONFLICT, idempotent CreateFromYouTube, data migration, tests (TDD)
 - [ ] 17-02-PLAN.md — GraphQL: CreateContentResult wrapper type, resolver update, frontend mutation/hook update for alreadyExisted signal
 
+### Phase 18: Server-Side Pagination & Filtering with Data Mode Toggle
+
+**Goal:** Add a data mode toggle to ActivityTable that switches between "All Items" (server-side sort/filter/search across full dataset) and "Loaded X Items" (client-side sort/filter/search on currently loaded page). Expand backend filtering and sorting capabilities to support full server-side operation. Reflect query state in URL for shareable views.
+**Depends on:** Phase 17
+**Success Criteria** (what must be TRUE):
+  1. Data mode toggle visible in pagination area with "All Items" / "Loaded X Items" labels
+  2. In "All Items" mode, sorting any column triggers server-side sort
+  3. In "All Items" mode, filtering any column triggers server-side filter via expanded ContentFilter
+  4. In "Loaded Items" mode, sort/filter/search works client-side only
+  5. URL reflects current query state (mode, sort, filters, page, search)
+  6. Sharing a URL with params restores the exact view (mode, sort, filters, search; page resets to 1)
+  7. Default mode is "Loaded Items" with no URL params
+  8. Hover tooltip on "Loaded X Items" explains the mode
+**Plans:** 3 plans in 2 waves
+
+Plans:
+- [ ] 18-01-PLAN.md — Backend expanded filtering & sorting (ContentFilter + ContentSortBy expansion, GORM JSONB WHERE clauses, sort rules)
+- [ ] 18-02-PLAN.md — URL state management & grid state utilities (gridUrlState.ts with parse/serialize, filter model ↔ URL converters, unit tests)
+- [ ] 18-03-PLAN.md — Data mode toggle UI & grid integration (DataModeToggle component, URL-driven ActivityTable refactor, page search wiring)
+
 ---
 
 ## v1.1 Feature Phases (11-16)

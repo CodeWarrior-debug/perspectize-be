@@ -199,6 +199,7 @@ Recent decisions affecting current work:
 - Phase 3.4 inserted after Phase 3.3: Perspectize Branding & Glasses Identity (URGENT) — Glasses motif with 3 shapes, 8-color palette picker, JSONB preferences, avatar display, and onboarding flow.
 - Phase 3.5 inserted after Phase 3.4: Google NL Taxonomy Research Spike (URGENT) — Deep-dive on Google taxonomy depth, traversal, subcategories, ltree mapping, YouTube classification. Unblocks Phase 13 (Content Categories) and Phase 4B (AG Grid grouping). See 04-CONTEXT.md cross-phase architecture and 13-context.md open questions.
 - Phase 17 added: YouTube URL normalization and duplicate upsert — Normalize all YouTube URL variants to canonical form, implement upsert (return existing content instead of error on duplicate), add database unique constraint on external_id. Related to Phase 6 M-03 and Phase 8.1 H-06/H-07.
+- Phase 18 added: Server-Side Pagination & Filtering with Data Mode Toggle — Add data mode toggle to ActivityTable switching between "All Items" (server-side sort/filter/search across full dataset) and "Loaded Items" (client-side sort/filter/search on currently loaded page). Expand backend filtering and sorting capabilities.
 
 ### Project-Level Plan Requirements
 
