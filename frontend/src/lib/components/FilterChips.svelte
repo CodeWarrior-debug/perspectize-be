@@ -57,8 +57,13 @@
 	}
 
 	function formatNumberValue(value: number, colId?: string): string {
-		if (colId === 'duration') return formatDurationSeconds(value);
-		return String(value);
+		switch (colId) {
+			case 'duration':
+				// YouTube videos store length in seconds — display as m:ss
+				return formatDurationSeconds(value);
+			default:
+				return String(value);
+		}
 	}
 
 	function formatSingleCondition(filter: any, colId?: string): string {
