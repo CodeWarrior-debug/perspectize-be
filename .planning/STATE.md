@@ -1,16 +1,3 @@
----
-gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: Feature Phases
-status: unknown
-last_updated: "2026-02-27T06:57:00.000Z"
-progress:
-  total_phases: 31
-  completed_phases: 13
-  total_plans: 94
-  completed_plans: 42
----
-
 # Project State
 
 ## Project Reference
@@ -18,16 +5,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 04 (Add Perspective Flow) — Plan 03 complete (all 3 waves done)
+**Current focus:** Phase 17 complete (2/2 plans) — YouTube URL Normalization and Duplicate Upsert
 
 ## Current Position
 
-Phase: 04 (Add Perspective Flow) — Plan 03 complete
-Plan: 3/3 complete (Wave 1 + Wave 2 + Wave 3 done)
-Status: Complete — Phase 04 Plan 03 (Claim Creation Flow) done. createClaim mutation, CreateClaim service, useCreateClaim hook, @reference utilities, PerspectivePopover claim section wired.
-Last activity: 2026-02-27 — Completed 04-03-PLAN.md (claim creation flow)
+Phase: 17 (YouTube URL Normalization and Duplicate Upsert) — Complete
+Plan: 2/2 complete
+Status: Complete — Phase 17 both plans done. Plan 01 (URL normalization + idempotent upsert) and Plan 02 (CreateContentResult schema + frontend duplicate warning VIDEO-05) complete.
+Last activity: 2026-02-22 — Completed 17-02-PLAN.md (CreateContentResult type and frontend duplicate warning)
 
-Progress: [████████████████████] ~95% (42 plans complete)
+Progress: [████████████████████] ~95% (34 plans complete)
 
 ## Performance Metrics
 
@@ -59,8 +46,6 @@ Progress: [████████████████████] ~95% (4
 *Updated after each plan completion*
 | Phase 17-youtube-url-normalization-and-duplicate-upsert P01 | 8 | 2 tasks | 11 files |
 | Phase 17 P02 | 15 | 2 tasks | 12 files |
-| Phase 04-add-perspective-flow P01 | 8 | 2 tasks | 21 files |
-| Phase 04-add-perspective-flow P02 | 6 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -199,16 +184,6 @@ Recent decisions affecting current work:
 - [Phase 17-youtube-url-normalization-and-duplicate-upsert]: GetOrCreateByURL uses clause.OnConflict{DoNothing: true} on url column for atomic TOCTOU-safe upsert
 - [Phase 17-youtube-url-normalization-and-duplicate-upsert]: CreateFromYouTube returns (content, ErrAlreadyExists) on duplicate — callers get both content AND can distinguish new vs existing
 - [Phase 17-02]: createContentFromYouTube returns CreateContentResult wrapper with alreadyExisted boolean for caller-side duplicate detection, enabling toast.warning UX without GraphQL errors
-- [Phase 04-add-perspective-flow]: Migration numbered 000013 (not 000012) — 000012 already taken by Phase 17 backfill migration
-- [Phase 04-add-perspective-flow]: useCreatePerspective invalidates content.lists() in addition to perspectives.lists() — perspective status affects content rows in ActivityTable
-- [04-02]: Rating storage uses display * 1000 mapping (0.000-10.000 display, 0-10000 storage, 3 decimal places)
-- [04-02]: PerspectivePopover uses centered Dialog for all viewports (not Popover/Dialog split) — per Figma Make design
-- [04-02]: Perspectize column trigger is click-based for both create and edit modes (not hover)
-- [04-02]: Like field is THUMBS_UP/THUMBS_DOWN toggle (not text input) in Phase 4 form
-- [04-03]: CreateClaim validates parentContentID exists via repo.GetByID before creating (prevents orphan claims)
-- [04-03]: Claim name field = raw claim text; JSONB response stores {parentContentId, text} for display-time @reference resolution
-- [04-03]: isClaimPending tracked separately from isPending so perspective submit button is unaffected during claim creation
-- [04-03]: Claim creation fires independently (separate mutation from perspective submission) per decision J
 
 ### Roadmap Evolution
 
@@ -224,7 +199,7 @@ Recent decisions affecting current work:
 - Phase 3.4 inserted after Phase 3.3: Perspectize Branding & Glasses Identity (URGENT) — Glasses motif with 3 shapes, 8-color palette picker, JSONB preferences, avatar display, and onboarding flow.
 - Phase 3.5 inserted after Phase 3.4: Google NL Taxonomy Research Spike (URGENT) — Deep-dive on Google taxonomy depth, traversal, subcategories, ltree mapping, YouTube classification. Unblocks Phase 13 (Content Categories) and Phase 4B (AG Grid grouping). See 04-CONTEXT.md cross-phase architecture and 13-context.md open questions.
 - Phase 17 added: YouTube URL normalization and duplicate upsert — Normalize all YouTube URL variants to canonical form, implement upsert (return existing content instead of error on duplicate), add database unique constraint on external_id. Related to Phase 6 M-03 and Phase 8.1 H-06/H-07.
-- Phase 18 added: Chip-based filtering UI for content display — Filter chips for content display filtering in the frontend.
+- Phase 18 added: Server-Side Pagination & Filtering with Data Mode Toggle — Add data mode toggle to ActivityTable switching between "All Items" (server-side sort/filter/search across full dataset) and "Loaded Items" (client-side sort/filter/search on currently loaded page). Expand backend filtering and sorting capabilities.
 
 ### Project-Level Plan Requirements
 
@@ -402,7 +377,7 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 
 ## Session Continuity
 
-Last session: 2026-02-27
-Stopped at: Phase 04 Plan 03 complete — Claim Creation Flow delivered on gsd/phase-04-add-perspective-flow
+Last session: 2026-02-20
+Stopped at: Phase 3.5 Plan 01 complete — Postman collection and exploration guide delivered on main
 Resume file: None
-Next up: Phase 04 complete. Ready for next phase.
+Next up: Phase 3.5 Plan 02 — User fills in findings template from interactive exploration, then Plan 02 generates curated category list and SQL seed data

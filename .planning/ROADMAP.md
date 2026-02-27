@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3.3: Repository Rename & Folder Restructure** - OBSOLETE — repo already named `perspectize`, folders already `backend/` + `frontend/` (INSERTED)
 - [ ] **Phase 3.4: Perspectize Branding & Glasses Identity** - Glasses motif with 3 shapes, 8-color palette picker, JSONB preferences, avatar display, onboarding (INSERTED)
 - [ ] **Phase 3.5: Google NL Taxonomy Research Spike** - Deep-dive on Google taxonomy depth, traversal, subcategories, ltree mapping, YouTube classification (INSERTED)
-- [x] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
+- [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
 - [x] **Phase 5: Testing + Deployment** - Coverage met, deployed on Sevalla, CORS working (wildcard — restriction deferred to Phase 9)
 
 ## Phase Details
@@ -194,7 +194,7 @@ The glasses motif is the core brand element — "perspectives" seen through diff
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [x] 03.5-01-PLAN.md — Postman collection JSON (11 requests) + step-by-step exploration guide
+- [ ] 03.5-01-PLAN.md — Postman collection JSON (11 requests) + step-by-step exploration guide
 - [ ] 03.5-02-PLAN.md — Curated category list, ltree seed SQL, YouTube mapping document, user review checkpoint
 
 **Details:**
@@ -221,9 +221,9 @@ Cross-phase impact: Unblocks Phase 13 (Content Categories), Phase 14 (AG Grid Po
 **Plans**: 3 plans in 3 waves
 
 Plans:
-- [x] 04-01-PLAN.md — Backend schema migration (perspective refs, claim type), domain/GORM/GraphQL extensions, frontend query definitions + mutation hooks + tests
-- [x] 04-02-PLAN.md — PerspectivePopover UI, RatingInput component, AG Grid Perspectize column with +/silhouette icons (hover=edit, click=create), visual checkpoint
-- [x] 04-03-PLAN.md — Claim creation (createClaim mutation, frontend hook, @reference utils, claim trigger in PerspectivePopover)
+- [ ] 04-01-PLAN.md — Backend schema migration (perspective refs, claim type), domain/GORM/GraphQL extensions, frontend query definitions + mutation hooks + tests
+- [ ] 04-02-PLAN.md — PerspectivePopover UI, RatingInput component, AG Grid Perspectize column with +/silhouette icons (hover=edit, click=create), visual checkpoint
+- [ ] 04-03-PLAN.md — Claim creation (createClaim mutation, frontend hook, @reference utils, claim trigger in PerspectivePopover)
 
 ### Phase 5: Testing + Deployment
 **Goal**: Application is tested, deployed, and accessible via public URL with proper CORS
@@ -601,20 +601,31 @@ Plans:
   6. Frontend shows success toast when new video is added
   7. Data migration backfills existing raw URLs to canonical form
   8. All backend and frontend tests pass
-**Plans:** 3/3 plans complete
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 17-01-PLAN.md — Backend: NormalizeYouTubeURL, GetOrCreateByURL with ON CONFLICT, idempotent CreateFromYouTube, data migration, tests (TDD)
 - [ ] 17-02-PLAN.md — GraphQL: CreateContentResult wrapper type, resolver update, frontend mutation/hook update for alreadyExisted signal
 
-### Phase 18: Chip-based filtering UI for content display
+### Phase 18: Server-Side Pagination & Filtering with Data Mode Toggle
 
-**Goal:** [To be planned]
+**Goal:** Add a data mode toggle to ActivityTable that switches between "All Items" (server-side sort/filter/search across full dataset) and "Loaded X Items" (client-side sort/filter/search on currently loaded page). Expand backend filtering and sorting capabilities to support full server-side operation. Reflect query state in URL for shareable views.
 **Depends on:** Phase 17
-**Plans:** 0 plans
+**Success Criteria** (what must be TRUE):
+  1. Data mode toggle visible in pagination area with "All Items" / "Loaded X Items" labels
+  2. In "All Items" mode, sorting any column triggers server-side sort
+  3. In "All Items" mode, filtering any column triggers server-side filter via expanded ContentFilter
+  4. In "Loaded Items" mode, sort/filter/search works client-side only
+  5. URL reflects current query state (mode, sort, filters, page, search)
+  6. Sharing a URL with params restores the exact view (mode, sort, filters, search; page resets to 1)
+  7. Default mode is "Loaded Items" with no URL params
+  8. Hover tooltip on "Loaded X Items" explains the mode
+**Plans:** 3 plans in 2 waves
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 18 to break down)
+- [ ] 18-01-PLAN.md — Backend expanded filtering & sorting (ContentFilter + ContentSortBy expansion, GORM JSONB WHERE clauses, sort rules)
+- [ ] 18-02-PLAN.md — URL state management & grid state utilities (gridUrlState.ts with parse/serialize, filter model ↔ URL converters, unit tests)
+- [ ] 18-03-PLAN.md — Data mode toggle UI & grid integration (DataModeToggle component, URL-driven ActivityTable refactor, page search wiring)
 
 ---
 
@@ -662,7 +673,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 
 | 3.3 Repository Rename & Restructure | 0/3 | Obsolete | 2026-02-15 |
 | 3.4 Perspectize Branding & Glasses Identity | 0/4 | Not started | - |
 | 3.5 Google NL Taxonomy Research Spike | 0/2 | Not started | - |
-| 4. Add Perspective Flow | 2/3 | Complete    | 2026-02-27 |
+| 4. Add Perspective Flow | 0/3 | Not started | - |
 | 5. Testing + Deployment | 2/3 | Complete | 2026-02-15 |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
 | 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |
