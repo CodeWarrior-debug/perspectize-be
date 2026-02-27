@@ -230,14 +230,22 @@ const GLASSES_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="
 </svg>`;
 
 /**
- * Perspectize column header renderer — returns glasses icon element.
+ * Perspectize column header component class for AG Grid.
+ * AG Grid headerComponent requires a class with init() and getGui() methods.
  */
-export function perspectiveHeaderRenderer(): HTMLElement {
-	const container = document.createElement('div');
-	container.className = 'flex items-center justify-center w-full h-full';
-	container.innerHTML = GLASSES_SVG;
-	container.title = 'Perspectize — add or edit your perspective';
-	return container;
+export class PerspectiveHeaderRenderer {
+	private eGui!: HTMLElement;
+
+	init(): void {
+		this.eGui = document.createElement('div');
+		this.eGui.className = 'flex items-center justify-center w-full h-full';
+		this.eGui.innerHTML = GLASSES_SVG;
+		this.eGui.title = 'Perspectize — add or edit your perspective';
+	}
+
+	getGui(): HTMLElement {
+		return this.eGui;
+	}
 }
 
 /**

@@ -17,7 +17,7 @@
 		itemCellRenderer,
 		typeCellRenderer,
 		perspectiveCellRenderer,
-		perspectiveHeaderRenderer,
+		PerspectiveHeaderRenderer,
 		durationValueGetter,
 		dateValueFormatter,
 		formatCount,
@@ -159,7 +159,7 @@
 		{
 			colId: 'perspectize',
 			headerName: '',
-			headerComponent: perspectiveHeaderRenderer,
+			headerComponent: PerspectiveHeaderRenderer,
 			headerTooltip: 'Perspectize — add or edit your perspective',
 			flex: 0,
 			width: 50,
