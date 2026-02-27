@@ -2,15 +2,26 @@
 	import AgGridSvelte5Component from 'ag-grid-svelte5';
 	import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
 	import { themeQuartz } from '@ag-grid-community/theming';
-	import type { GridApi, GridOptions, SortChangedEvent, FilterChangedEvent, ColDef } from '@ag-grid-community/core';
+	import type { GridApi, GridOptions, SortChangedEvent, FilterChangedEvent, ColDef, CellClickedEvent } from '@ag-grid-community/core';
 	import { createQuery, keepPreviousData } from '@tanstack/svelte-query';
 	import { graphqlClient } from '$lib/queries/client';
 	import { LIST_CONTENT, type ContentItem, type ContentResponse } from '$lib/queries/content';
+	import {
+		LIST_PERSPECTIVES_BY_USER,
+		type ListPerspectivesByUserResponse,
+		type PerspectiveItem,
+	} from '$lib/queries/perspectives';
 	import { queryKeys } from '$lib/queries/keys';
+	import { getSelectedUserId } from '$lib/stores/userSelection.svelte';
 	import {
 		itemCellRenderer,
 		typeCellRenderer,
+		perspectiveCellRenderer,
+		PerspectiveHeaderRenderer,
 		durationValueGetter,
+		durationFilterValueGetter,
+		parseDurationInput,
+		formatDurationSeconds,
 		dateValueFormatter,
 		formatCount,
 		formatCountExact,
@@ -22,6 +33,14 @@
 	} from '$lib/utils/formatting';
 	import { TagsTooltip } from '$lib/components/TagsTooltip';
 	import { DescriptionTooltip } from '$lib/components/DescriptionTooltip';
+	import FilterChips from '$lib/components/FilterChips.svelte';
+	import PerspectivePopover from '$lib/components/PerspectivePopover.svelte';
+
+	// Popover state for Perspectize column
+	let popoverOpen = $state(false);
+	let popoverContentId = $state<number | null>(null);
+	let popoverContentName = $state('');
+	let popoverExistingPerspective = $state<PerspectiveItem | null>(null);
 
 	// GraphQL ContentSortBy to AG Grid colId mapping
 	const SORT_FIELD_MAP: Record<string, string> = {
@@ -46,8 +65,35 @@
 	let sortOrder = $state<'ASC' | 'DESC'>('DESC');
 	let filterText = $state<string>('');
 	let debounceTimer: ReturnType<typeof setTimeout>;
+	let activeFilterModel = $state<Record<string, any>>({});
 	// Responsive tier: 'xs' (<445px), 'sm' (445-639px), 'md' (640-899px), 'lg' (900px+)
 	let responsiveTier = $state<'xs' | 'sm' | 'md' | 'lg'>('lg');
+
+	// Selected user for perspectives query
+	const selectedUserId = $derived(getSelectedUserId());
+
+	// TanStack Query for user's perspectives — used to determine +/glasses icon per row
+	const perspectivesQuery = createQuery(() => ({
+		queryKey: queryKeys.perspectives.listByUser(selectedUserId ?? 0),
+		queryFn: () =>
+			graphqlClient.request<ListPerspectivesByUserResponse>(LIST_PERSPECTIVES_BY_USER, {
+				userID: selectedUserId,
+			}),
+		enabled: selectedUserId !== null,
+		staleTime: 60 * 1000,
+	}));
+
+	// O(1) lookup map: contentID → PerspectiveItem
+	const perspectivesByContentId = $derived(
+		(() => {
+			const map = new Map<string, PerspectiveItem>();
+			const items = perspectivesQuery.data?.perspectives?.items ?? [];
+			for (const p of items) {
+				if (p.contentID) map.set(p.contentID, p);
+			}
+			return map;
+		})(),
+	);
 
 	// TanStack Query for data fetching
 	let currentCursor = $derived(cursors[currentPage]);
@@ -114,6 +160,21 @@
 	// minWidth is auto-derived from headerName unless explicitly set (e.g. Item = 200)
 	const columnDefs: ColDef<ContentItem>[] = ([
 		{
+			colId: 'perspectize',
+			headerName: '',
+			headerComponent: PerspectiveHeaderRenderer,
+			headerTooltip: 'Perspectize — add or edit your perspective',
+			flex: 0,
+			width: 50,
+			minWidth: 50,
+			maxWidth: 50,
+			sortable: false,
+			filter: false,
+			resizable: false,
+			cellRenderer: perspectiveCellRenderer,
+			cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 },
+		},
+		{
 			colId: 'item',
 			headerName: 'Item',
 			flex: 2,
@@ -149,7 +210,14 @@
 			maxWidth: 120,
 
 			filter: 'agNumberColumnFilter',
+			filterParams: {
+				allowedCharPattern: '\\d\\:',
+				numberParser: parseDurationInput,
+				numberFormatter: (value: number | null) =>
+					value == null ? null : formatDurationSeconds(value),
+			},
 			valueGetter: durationValueGetter,
+			filterValueGetter: durationFilterValueGetter,
 			comparator: (_valueA, _valueB, nodeA, nodeB) => {
 				const a = nodeA?.data?.length ?? 0;
 				const b = nodeB?.data?.length ?? 0;
@@ -286,6 +354,19 @@
 		getRowId: contentRowId,
 		domLayout: 'normal',
 		suppressCellFocus: true,
+		context: { perspectivesByContentId: new Map() },
+		onCellClicked: (event: CellClickedEvent<ContentItem>) => {
+			if (event.colDef.colId !== 'perspectize') return;
+			if (!event.data) return;
+
+			const contentId = parseInt(String(event.data.id), 10);
+			const existing = perspectivesByContentId.get(String(event.data.id)) ?? null;
+
+			popoverContentId = contentId;
+			popoverContentName = event.data.name;
+			popoverExistingPerspective = existing;
+			popoverOpen = true;
+		},
 		onGridReady: (params) => {
 			gridApi = params.api;
 			gridReady = true;
@@ -310,7 +391,10 @@
 			cursors = [null];
 		},
 		onFilterChanged: (event: FilterChangedEvent) => {
-			// Debounce filter changes
+			// Immediate: update chip display
+			activeFilterModel = event.api.getFilterModel();
+
+			// Debounce filter changes for server-side search
 			clearTimeout(debounceTimer);
 			debounceTimer = setTimeout(() => {
 				const filterModel = event.api.getFilterModel();
@@ -369,17 +453,25 @@
 		};
 	});
 
+	// Update AG Grid context reactively so perspectiveCellRenderer can access the map
+	$effect(() => {
+		if (gridApi) {
+			gridApi.setGridOption('context', { perspectivesByContentId });
+			gridApi.refreshCells({ columns: ['perspectize'], force: true });
+		}
+	});
+
 	// Responsive column visibility — progressive reveal by tier
-	// xs (<445px):  Item, Type
-	// sm (445-639): Item, Type, Channel
-	// md (640-899): Item, Type, Channel, Duration, Date
-	// lg (900+):    Item, Type, Channel, Duration, Date, Views, Likes, Tags
+	// xs (<445px):  Perspectize, Item, Type
+	// sm (445-639): Perspectize, Item, Type, Channel
+	// md (640-899): Perspectize, Item, Type, Channel, Duration, Date
+	// lg (900+):    Perspectize, Item, Type, Channel, Duration, Date, Views, Likes, Tags
 	$effect(() => {
 		if (!gridApi || !gridReady) return;
 		const api = gridApi;
 		const tier = responsiveTier;
 		requestAnimationFrame(() => {
-			const alwaysVisible = ['item', 'type'];
+			const alwaysVisible = ['item', 'type', 'perspectize'];
 			const smCols = ['channel'];
 			const mdCols = ['duration', 'publishDate'];
 			const lgCols = ['views', 'likes', 'tags'];
@@ -429,6 +521,9 @@
 			</div>
 		</div>
 	{:else}
+		<!-- Active Filter Chips -->
+		<FilterChips {gridApi} filterModel={activeFilterModel} />
+
 		<!-- AG Grid -->
 		<div bind:this={gridContainer} class="flex-1 min-h-0" style="--ag-row-height: 44px; --ag-header-height: 40px;">
 			<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
@@ -479,3 +574,17 @@
 		</div>
 	</div>
 </div>
+
+<!-- Perspective create/edit modal — rendered outside the grid for correct portal behavior -->
+{#if popoverOpen && popoverContentId !== null}
+	<PerspectivePopover
+		contentId={popoverContentId}
+		contentName={popoverContentName}
+		existingPerspective={popoverExistingPerspective}
+		userId={selectedUserId ?? 0}
+		bind:open={popoverOpen}
+		onClose={() => {
+			popoverOpen = false;
+		}}
+	/>
+{/if}

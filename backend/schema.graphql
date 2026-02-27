@@ -60,6 +60,10 @@ type Perspective {
   parts: [Int!]
   labels: [String!]
   categorizedRatings: [CategorizedRating!]
+  primaryPerspectiveID: ID
+  relatedPerspectiveIDs: [Int!]
+  customFields: JSON
+  review: String
   createdAt: String!
   updatedAt: String!
 }
@@ -127,6 +131,7 @@ enum SortOrder {
 
 enum ContentType {
   YOUTUBE
+  CLAIM
 }
 
 # Inputs
@@ -175,6 +180,10 @@ input CreatePerspectiveInput {
   parts: [Int!]
   labels: [String!]
   categorizedRatings: [CategorizedRatingInput!]
+  primaryPerspectiveID: IntID
+  relatedPerspectiveIDs: [Int!]
+  customFields: JSON
+  review: String
 }
 
 input UpdatePerspectiveInput {
@@ -192,12 +201,22 @@ input UpdatePerspectiveInput {
   parts: [Int!]
   labels: [String!]
   categorizedRatings: [CategorizedRatingInput!]
+  primaryPerspectiveID: IntID
+  relatedPerspectiveIDs: [Int!]
+  customFields: JSON
+  review: String
 }
 
 input PerspectiveFilter {
   userID: IntID
   contentID: IntID
   privacy: Privacy
+}
+
+input CreateClaimInput {
+  text: String!            # The claim text (may contain @this/@here tokens)
+  userID: IntID!           # Who created the claim
+  parentContentID: IntID!  # The content item this claim is about
 }
 
 type Mutation {
@@ -212,6 +231,9 @@ type Mutation {
   createPerspective(input: CreatePerspectiveInput!): Perspective!
   updatePerspective(input: UpdatePerspectiveInput!): Perspective!
   deletePerspective(id: ID!): Boolean!
+
+  # Claim mutations
+  createClaim(input: CreateClaimInput!): Content!
 }
 
 type Query {
