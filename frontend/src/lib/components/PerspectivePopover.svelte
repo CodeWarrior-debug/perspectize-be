@@ -14,6 +14,7 @@
 	import RatingInput from '$lib/components/RatingInput.svelte';
 	import { useCreatePerspective } from '$lib/queries/hooks/useCreatePerspective';
 	import { useUpdatePerspective } from '$lib/queries/hooks/useUpdatePerspective';
+	import { useCreateClaim } from '$lib/queries/hooks/useCreateClaim';
 	import type { PerspectiveItem } from '$lib/queries/perspectives';
 
 	/**
@@ -60,8 +61,9 @@
 	}
 	let likeValue = $state<LikeValue>(null);
 
-	// "+ Add More..." expansion
+	// "+ Add More..." expansion for claim creation
 	let showMore = $state(false);
+	let claimText = $state('');
 
 	// Reset state when existingPerspective changes (e.g., when switching rows)
 	$effect(() => {
@@ -72,12 +74,15 @@
 		const l = existingPerspective?.like;
 		likeValue = l === 'THUMBS_UP' ? 'THUMBS_UP' : l === 'THUMBS_DOWN' ? 'THUMBS_DOWN' : null;
 		showMore = false;
+		claimText = '';
 	});
 
 	const createMutation = useCreatePerspective();
 	const updateMutation = useUpdatePerspective();
+	const createClaimMutation = useCreateClaim();
 
 	const isPending = $derived(createMutation.isPending || updateMutation.isPending);
+	const isClaimPending = $derived(createClaimMutation.isPending);
 
 	function toggleLike(val: 'THUMBS_UP' | 'THUMBS_DOWN') {
 		likeValue = likeValue === val ? null : val;
@@ -129,6 +134,28 @@
 				},
 			);
 		}
+	}
+
+	function handleCreateClaim() {
+		const trimmed = claimText.trim();
+		if (!trimmed) {
+			toast.error('Please enter claim text');
+			return;
+		}
+
+		createClaimMutation.mutate(
+			{
+				text: trimmed,
+				userID: userId,
+				parentContentID: contentId,
+			},
+			{
+				onSuccess: () => {
+					// Clear the claim textarea; popover stays open so user can continue their perspective
+					claimText = '';
+				},
+			},
+		);
 	}
 
 	function handleCancel() {
@@ -236,15 +263,29 @@
 			</div>
 
 			{#if showMore}
-				<div class="space-y-2 animate-in fade-in-0 slide-in-from-top-2">
-					<label for="claim-text" class="text-sm font-semibold text-foreground">Claim</label>
+				<div class="rounded-lg border border-border bg-muted/30 p-4 space-y-3 animate-in fade-in-0 slide-in-from-top-2">
+					<label for="claim-text" class="text-sm font-semibold text-foreground">Add a Claim</label>
 					<textarea
 						id="claim-text"
-						placeholder="e.g., @it explains quantum computing in under 10 minutes"
+						bind:value={claimText}
+						placeholder="e.g., @this ran 22.3 mph in the 1987 game"
 						rows={2}
-						class="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+						disabled={isClaimPending}
+						class="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
 					></textarea>
-					<p class="text-xs text-muted-foreground">@it references the content title</p>
+					<p class="text-xs text-muted-foreground">
+						Use <code class="font-mono bg-muted px-1 rounded">@this</code> to reference the current content
+					</p>
+					<Button
+						type="button"
+						variant="outline"
+						size="sm"
+						onclick={handleCreateClaim}
+						disabled={isClaimPending || !claimText.trim()}
+						class="w-full"
+					>
+						{isClaimPending ? 'Creating...' : 'Create Claim'}
+					</Button>
 				</div>
 			{/if}
 
