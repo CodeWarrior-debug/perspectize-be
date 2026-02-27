@@ -44,6 +44,12 @@ type ContentFilter struct {
 	Search           *string             `json:"search,omitempty"`
 }
 
+type CreateClaimInput struct {
+	Text            string `json:"text"`
+	UserID          int    `json:"userID"`
+	ParentContentID int    `json:"parentContentID"`
+}
+
 type CreateContentFromYouTubeInput struct {
 	URL    string `json:"url"`
 	UserID int    `json:"userId"`

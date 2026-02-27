@@ -267,6 +267,31 @@ func (r *mutationResolver) DeletePerspective(ctx context.Context, id string) (bo
 	return true, nil
 }
 
+// CreateClaim is the resolver for the createClaim field.
+func (r *mutationResolver) CreateClaim(ctx context.Context, input model.CreateClaimInput) (*model.Content, error) {
+	content, err := r.ContentService.CreateClaim(ctx, portservices.CreateClaimInput{
+		Text:            input.Text,
+		UserID:          input.UserID,
+		ParentContentID: input.ParentContentID,
+	})
+	if err != nil {
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("parent content not found")
+		}
+		slog.Error("creating claim failed",
+			"error", err,
+			"userID", input.UserID,
+			"parentContentID", input.ParentContentID,
+		)
+		return nil, fmt.Errorf("failed to create claim")
+	}
+
+	return domainToModel(content), nil
+}
+
 // ContentByID is the resolver for the contentByID field.
 func (r *queryResolver) ContentByID(ctx context.Context, id string) (*model.Content, error) {
 	intID, err := strconv.Atoi(id)

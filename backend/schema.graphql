@@ -213,6 +213,12 @@ input PerspectiveFilter {
   privacy: Privacy
 }
 
+input CreateClaimInput {
+  text: String!            # The claim text (may contain @this/@here tokens)
+  userID: IntID!           # Who created the claim
+  parentContentID: IntID!  # The content item this claim is about
+}
+
 type Mutation {
   createContentFromYouTube(input: CreateContentFromYouTubeInput!): CreateContentResult!
 
@@ -225,6 +231,9 @@ type Mutation {
   createPerspective(input: CreatePerspectiveInput!): Perspective!
   updatePerspective(input: UpdatePerspectiveInput!): Perspective!
   deletePerspective(id: ID!): Boolean!
+
+  # Claim mutations
+  createClaim(input: CreateClaimInput!): Content!
 }
 
 type Query {
