@@ -194,7 +194,7 @@ The glasses motif is the core brand element — "perspectives" seen through diff
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 03.5-01-PLAN.md — Postman collection JSON (11 requests) + step-by-step exploration guide
+- [x] 03.5-01-PLAN.md — Postman collection JSON (11 requests) + step-by-step exploration guide
 - [ ] 03.5-02-PLAN.md — Curated category list, ltree seed SQL, YouTube mapping document, user review checkpoint
 
 **Details:**
