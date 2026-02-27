@@ -1,3 +1,16 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: Feature Phases
+status: unknown
+last_updated: "2026-02-27T05:51:57.284Z"
+progress:
+  total_phases: 31
+  completed_phases: 13
+  total_plans: 94
+  completed_plans: 41
+---
+
 # Project State
 
 ## Project Reference
@@ -46,6 +59,7 @@ Progress: [████████████████████] ~95% (3
 *Updated after each plan completion*
 | Phase 17-youtube-url-normalization-and-duplicate-upsert P01 | 8 | 2 tasks | 11 files |
 | Phase 17 P02 | 15 | 2 tasks | 12 files |
+| Phase 04-add-perspective-flow P01 | 8 | 2 tasks | 21 files |
 
 ## Accumulated Context
 
@@ -184,6 +198,8 @@ Recent decisions affecting current work:
 - [Phase 17-youtube-url-normalization-and-duplicate-upsert]: GetOrCreateByURL uses clause.OnConflict{DoNothing: true} on url column for atomic TOCTOU-safe upsert
 - [Phase 17-youtube-url-normalization-and-duplicate-upsert]: CreateFromYouTube returns (content, ErrAlreadyExists) on duplicate — callers get both content AND can distinguish new vs existing
 - [Phase 17-02]: createContentFromYouTube returns CreateContentResult wrapper with alreadyExisted boolean for caller-side duplicate detection, enabling toast.warning UX without GraphQL errors
+- [Phase 04-add-perspective-flow]: Migration numbered 000013 (not 000012) — 000012 already taken by Phase 17 backfill migration
+- [Phase 04-add-perspective-flow]: useCreatePerspective invalidates content.lists() in addition to perspectives.lists() — perspective status affects content rows in ActivityTable
 
 ### Roadmap Evolution
 
