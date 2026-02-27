@@ -1,9 +1,9 @@
 module github.com/CodeWarrior-debug/perspectize/backend
 
-go 1.25
+go 1.24.0
 
 require (
-	github.com/99designs/gqlgen v0.17.87
+	github.com/99designs/gqlgen v0.17.86
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/joho/godotenv v1.5.1
@@ -17,10 +17,10 @@ require (
 require (
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/agnivade/levenshtein v1.2.1 // indirect
-	github.com/air-verse/air v1.64.5 // indirect
-	github.com/andybalholm/brotli v1.2.0 // indirect
+	github.com/air-verse/air v1.61.7 // indirect
 	github.com/bep/godartsass/v2 v2.5.0 // indirect
 	github.com/bep/golibsass v1.2.0 // indirect
+	github.com/creack/pty v1.1.23 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
