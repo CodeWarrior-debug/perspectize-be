@@ -7,6 +7,7 @@ package resolvers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -126,21 +127,32 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, err
 // CreatePerspective is the resolver for the createPerspective field.
 func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.CreatePerspectiveInput) (*model.Perspective, error) {
 	serviceInput := portservices.CreatePerspectiveInput{
-		UserID:      input.UserID,
-		Quality:     input.Quality,
-		Agreement:   input.Agreement,
-		Importance:  input.Importance,
-		Confidence:  input.Confidence,
-		Like:        input.Like,
-		Privacy:     input.Privacy,
-		Description: input.Description,
-		Category:    input.Category,
-		Parts:       input.Parts,
-		Labels:      input.Labels,
+		UserID:                input.UserID,
+		Quality:               input.Quality,
+		Agreement:             input.Agreement,
+		Importance:            input.Importance,
+		Confidence:            input.Confidence,
+		Like:                  input.Like,
+		Privacy:               input.Privacy,
+		Description:           input.Description,
+		Category:              input.Category,
+		Parts:                 input.Parts,
+		Labels:                input.Labels,
+		PrimaryPerspectiveID:  input.PrimaryPerspectiveID,
+		RelatedPerspectiveIDs: input.RelatedPerspectiveIDs,
+		Review:                input.Review,
 	}
 
 	if input.ContentID != nil {
 		serviceInput.ContentID = input.ContentID
+	}
+
+	// Convert customFields map to JSON
+	if input.CustomFields != nil {
+		data, err := json.Marshal(input.CustomFields)
+		if err == nil {
+			serviceInput.CustomFields = data
+		}
 	}
 
 	// Convert categorized ratings
@@ -175,22 +187,33 @@ func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.Cr
 // UpdatePerspective is the resolver for the updatePerspective field.
 func (r *mutationResolver) UpdatePerspective(ctx context.Context, input model.UpdatePerspectiveInput) (*model.Perspective, error) {
 	serviceInput := portservices.UpdatePerspectiveInput{
-		ID:           input.ID,
-		Quality:      input.Quality,
-		Agreement:    input.Agreement,
-		Importance:   input.Importance,
-		Confidence:   input.Confidence,
-		Like:         input.Like,
-		Privacy:      input.Privacy,
-		Description:  input.Description,
-		Category:     input.Category,
-		ReviewStatus: input.ReviewStatus,
-		Parts:        input.Parts,
-		Labels:       input.Labels,
+		ID:                    input.ID,
+		Quality:               input.Quality,
+		Agreement:             input.Agreement,
+		Importance:            input.Importance,
+		Confidence:            input.Confidence,
+		Like:                  input.Like,
+		Privacy:               input.Privacy,
+		Description:           input.Description,
+		Category:              input.Category,
+		ReviewStatus:          input.ReviewStatus,
+		Parts:                 input.Parts,
+		Labels:                input.Labels,
+		PrimaryPerspectiveID:  input.PrimaryPerspectiveID,
+		RelatedPerspectiveIDs: input.RelatedPerspectiveIDs,
+		Review:                input.Review,
 	}
 
 	if input.ContentID != nil {
 		serviceInput.ContentID = input.ContentID
+	}
+
+	// Convert customFields map to JSON
+	if input.CustomFields != nil {
+		data, err := json.Marshal(input.CustomFields)
+		if err == nil {
+			serviceInput.CustomFields = data
+		}
 	}
 
 	// Convert categorized ratings

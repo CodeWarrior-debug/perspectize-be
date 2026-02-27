@@ -55,19 +55,23 @@ type CreateContentResult struct {
 }
 
 type CreatePerspectiveInput struct {
-	UserID             int                       `json:"userID"`
-	ContentID          *int                      `json:"contentID,omitempty"`
-	Quality            *int                      `json:"quality,omitempty"`
-	Agreement          *int                      `json:"agreement,omitempty"`
-	Importance         *int                      `json:"importance,omitempty"`
-	Confidence         *int                      `json:"confidence,omitempty"`
-	Like               *string                   `json:"like,omitempty"`
-	Privacy            *domain.Privacy           `json:"privacy,omitempty"`
-	Description        *string                   `json:"description,omitempty"`
-	Category           *string                   `json:"category,omitempty"`
-	Parts              []int                     `json:"parts,omitempty"`
-	Labels             []string                  `json:"labels,omitempty"`
-	CategorizedRatings []*CategorizedRatingInput `json:"categorizedRatings,omitempty"`
+	UserID                int                       `json:"userID"`
+	ContentID             *int                      `json:"contentID,omitempty"`
+	Quality               *int                      `json:"quality,omitempty"`
+	Agreement             *int                      `json:"agreement,omitempty"`
+	Importance            *int                      `json:"importance,omitempty"`
+	Confidence            *int                      `json:"confidence,omitempty"`
+	Like                  *string                   `json:"like,omitempty"`
+	Privacy               *domain.Privacy           `json:"privacy,omitempty"`
+	Description           *string                   `json:"description,omitempty"`
+	Category              *string                   `json:"category,omitempty"`
+	Parts                 []int                     `json:"parts,omitempty"`
+	Labels                []string                  `json:"labels,omitempty"`
+	CategorizedRatings    []*CategorizedRatingInput `json:"categorizedRatings,omitempty"`
+	PrimaryPerspectiveID  *int                      `json:"primaryPerspectiveID,omitempty"`
+	RelatedPerspectiveIDs []int                     `json:"relatedPerspectiveIDs,omitempty"`
+	CustomFields          map[string]any            `json:"customFields,omitempty"`
+	Review                *string                   `json:"review,omitempty"`
 }
 
 type CreateUserInput struct {
@@ -98,25 +102,29 @@ type PaginatedPerspectives struct {
 }
 
 type Perspective struct {
-	ID                 string               `json:"id"`
-	UserID             string               `json:"userID"`
-	User               *User                `json:"user,omitempty"`
-	ContentID          *string              `json:"contentID,omitempty"`
-	Content            *Content             `json:"content,omitempty"`
-	Quality            *int                 `json:"quality,omitempty"`
-	Agreement          *int                 `json:"agreement,omitempty"`
-	Importance         *int                 `json:"importance,omitempty"`
-	Confidence         *int                 `json:"confidence,omitempty"`
-	Like               *string              `json:"like,omitempty"`
-	Privacy            domain.Privacy       `json:"privacy"`
-	Description        *string              `json:"description,omitempty"`
-	Category           *string              `json:"category,omitempty"`
-	ReviewStatus       *domain.ReviewStatus `json:"reviewStatus,omitempty"`
-	Parts              []int                `json:"parts,omitempty"`
-	Labels             []string             `json:"labels,omitempty"`
-	CategorizedRatings []*CategorizedRating `json:"categorizedRatings,omitempty"`
-	CreatedAt          string               `json:"createdAt"`
-	UpdatedAt          string               `json:"updatedAt"`
+	ID                    string               `json:"id"`
+	UserID                string               `json:"userID"`
+	User                  *User                `json:"user,omitempty"`
+	ContentID             *string              `json:"contentID,omitempty"`
+	Content               *Content             `json:"content,omitempty"`
+	Quality               *int                 `json:"quality,omitempty"`
+	Agreement             *int                 `json:"agreement,omitempty"`
+	Importance            *int                 `json:"importance,omitempty"`
+	Confidence            *int                 `json:"confidence,omitempty"`
+	Like                  *string              `json:"like,omitempty"`
+	Privacy               domain.Privacy       `json:"privacy"`
+	Description           *string              `json:"description,omitempty"`
+	Category              *string              `json:"category,omitempty"`
+	ReviewStatus          *domain.ReviewStatus `json:"reviewStatus,omitempty"`
+	Parts                 []int                `json:"parts,omitempty"`
+	Labels                []string             `json:"labels,omitempty"`
+	CategorizedRatings    []*CategorizedRating `json:"categorizedRatings,omitempty"`
+	PrimaryPerspectiveID  *string              `json:"primaryPerspectiveID,omitempty"`
+	RelatedPerspectiveIDs []int                `json:"relatedPerspectiveIDs,omitempty"`
+	CustomFields          map[string]any       `json:"customFields,omitempty"`
+	Review                *string              `json:"review,omitempty"`
+	CreatedAt             string               `json:"createdAt"`
+	UpdatedAt             string               `json:"updatedAt"`
 }
 
 type PerspectiveFilter struct {
@@ -129,20 +137,24 @@ type Query struct {
 }
 
 type UpdatePerspectiveInput struct {
-	ID                 int                       `json:"id"`
-	ContentID          *int                      `json:"contentID,omitempty"`
-	Quality            *int                      `json:"quality,omitempty"`
-	Agreement          *int                      `json:"agreement,omitempty"`
-	Importance         *int                      `json:"importance,omitempty"`
-	Confidence         *int                      `json:"confidence,omitempty"`
-	Like               *string                   `json:"like,omitempty"`
-	Privacy            *domain.Privacy           `json:"privacy,omitempty"`
-	Description        *string                   `json:"description,omitempty"`
-	Category           *string                   `json:"category,omitempty"`
-	ReviewStatus       *domain.ReviewStatus      `json:"reviewStatus,omitempty"`
-	Parts              []int                     `json:"parts,omitempty"`
-	Labels             []string                  `json:"labels,omitempty"`
-	CategorizedRatings []*CategorizedRatingInput `json:"categorizedRatings,omitempty"`
+	ID                    int                       `json:"id"`
+	ContentID             *int                      `json:"contentID,omitempty"`
+	Quality               *int                      `json:"quality,omitempty"`
+	Agreement             *int                      `json:"agreement,omitempty"`
+	Importance            *int                      `json:"importance,omitempty"`
+	Confidence            *int                      `json:"confidence,omitempty"`
+	Like                  *string                   `json:"like,omitempty"`
+	Privacy               *domain.Privacy           `json:"privacy,omitempty"`
+	Description           *string                   `json:"description,omitempty"`
+	Category              *string                   `json:"category,omitempty"`
+	ReviewStatus          *domain.ReviewStatus      `json:"reviewStatus,omitempty"`
+	Parts                 []int                     `json:"parts,omitempty"`
+	Labels                []string                  `json:"labels,omitempty"`
+	CategorizedRatings    []*CategorizedRatingInput `json:"categorizedRatings,omitempty"`
+	PrimaryPerspectiveID  *int                      `json:"primaryPerspectiveID,omitempty"`
+	RelatedPerspectiveIDs []int                     `json:"relatedPerspectiveIDs,omitempty"`
+	CustomFields          map[string]any            `json:"customFields,omitempty"`
+	Review                *string                   `json:"review,omitempty"`
 }
 
 type UpdateUserInput struct {

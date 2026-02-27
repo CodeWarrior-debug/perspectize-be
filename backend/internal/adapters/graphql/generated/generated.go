@@ -109,25 +109,29 @@ type ComplexityRoot struct {
 	}
 
 	Perspective struct {
-		Agreement          func(childComplexity int) int
-		CategorizedRatings func(childComplexity int) int
-		Category           func(childComplexity int) int
-		Confidence         func(childComplexity int) int
-		Content            func(childComplexity int) int
-		ContentID          func(childComplexity int) int
-		CreatedAt          func(childComplexity int) int
-		Description        func(childComplexity int) int
-		ID                 func(childComplexity int) int
-		Importance         func(childComplexity int) int
-		Labels             func(childComplexity int) int
-		Like               func(childComplexity int) int
-		Parts              func(childComplexity int) int
-		Privacy            func(childComplexity int) int
-		Quality            func(childComplexity int) int
-		ReviewStatus       func(childComplexity int) int
-		UpdatedAt          func(childComplexity int) int
-		User               func(childComplexity int) int
-		UserID             func(childComplexity int) int
+		Agreement             func(childComplexity int) int
+		CategorizedRatings    func(childComplexity int) int
+		Category              func(childComplexity int) int
+		Confidence            func(childComplexity int) int
+		Content               func(childComplexity int) int
+		ContentID             func(childComplexity int) int
+		CreatedAt             func(childComplexity int) int
+		CustomFields          func(childComplexity int) int
+		Description           func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		Importance            func(childComplexity int) int
+		Labels                func(childComplexity int) int
+		Like                  func(childComplexity int) int
+		Parts                 func(childComplexity int) int
+		PrimaryPerspectiveID  func(childComplexity int) int
+		Privacy               func(childComplexity int) int
+		Quality               func(childComplexity int) int
+		RelatedPerspectiveIDs func(childComplexity int) int
+		Review                func(childComplexity int) int
+		ReviewStatus          func(childComplexity int) int
+		UpdatedAt             func(childComplexity int) int
+		User                  func(childComplexity int) int
+		UserID                func(childComplexity int) int
 	}
 
 	Query struct {
@@ -507,6 +511,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Perspective.CreatedAt(childComplexity), true
+	case "Perspective.customFields":
+		if e.complexity.Perspective.CustomFields == nil {
+			break
+		}
+
+		return e.complexity.Perspective.CustomFields(childComplexity), true
 	case "Perspective.description":
 		if e.complexity.Perspective.Description == nil {
 			break
@@ -543,6 +553,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Perspective.Parts(childComplexity), true
+	case "Perspective.primaryPerspectiveID":
+		if e.complexity.Perspective.PrimaryPerspectiveID == nil {
+			break
+		}
+
+		return e.complexity.Perspective.PrimaryPerspectiveID(childComplexity), true
 	case "Perspective.privacy":
 		if e.complexity.Perspective.Privacy == nil {
 			break
@@ -555,6 +571,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Perspective.Quality(childComplexity), true
+	case "Perspective.relatedPerspectiveIDs":
+		if e.complexity.Perspective.RelatedPerspectiveIDs == nil {
+			break
+		}
+
+		return e.complexity.Perspective.RelatedPerspectiveIDs(childComplexity), true
+	case "Perspective.review":
+		if e.complexity.Perspective.Review == nil {
+			break
+		}
+
+		return e.complexity.Perspective.Review(childComplexity), true
 	case "Perspective.reviewStatus":
 		if e.complexity.Perspective.ReviewStatus == nil {
 			break
@@ -871,6 +899,10 @@ type Perspective {
   parts: [Int!]
   labels: [String!]
   categorizedRatings: [CategorizedRating!]
+  primaryPerspectiveID: ID
+  relatedPerspectiveIDs: [Int!]
+  customFields: JSON
+  review: String
   createdAt: String!
   updatedAt: String!
 }
@@ -938,6 +970,7 @@ enum SortOrder {
 
 enum ContentType {
   YOUTUBE
+  CLAIM
 }
 
 # Inputs
@@ -986,6 +1019,10 @@ input CreatePerspectiveInput {
   parts: [Int!]
   labels: [String!]
   categorizedRatings: [CategorizedRatingInput!]
+  primaryPerspectiveID: IntID
+  relatedPerspectiveIDs: [Int!]
+  customFields: JSON
+  review: String
 }
 
 input UpdatePerspectiveInput {
@@ -1003,6 +1040,10 @@ input UpdatePerspectiveInput {
   parts: [Int!]
   labels: [String!]
   categorizedRatings: [CategorizedRatingInput!]
+  primaryPerspectiveID: IntID
+  relatedPerspectiveIDs: [Int!]
+  customFields: JSON
+  review: String
 }
 
 input PerspectiveFilter {
@@ -2296,6 +2337,14 @@ func (ec *executionContext) fieldContext_Mutation_createPerspective(ctx context.
 				return ec.fieldContext_Perspective_labels(ctx, field)
 			case "categorizedRatings":
 				return ec.fieldContext_Perspective_categorizedRatings(ctx, field)
+			case "primaryPerspectiveID":
+				return ec.fieldContext_Perspective_primaryPerspectiveID(ctx, field)
+			case "relatedPerspectiveIDs":
+				return ec.fieldContext_Perspective_relatedPerspectiveIDs(ctx, field)
+			case "customFields":
+				return ec.fieldContext_Perspective_customFields(ctx, field)
+			case "review":
+				return ec.fieldContext_Perspective_review(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Perspective_createdAt(ctx, field)
 			case "updatedAt":
@@ -2377,6 +2426,14 @@ func (ec *executionContext) fieldContext_Mutation_updatePerspective(ctx context.
 				return ec.fieldContext_Perspective_labels(ctx, field)
 			case "categorizedRatings":
 				return ec.fieldContext_Perspective_categorizedRatings(ctx, field)
+			case "primaryPerspectiveID":
+				return ec.fieldContext_Perspective_primaryPerspectiveID(ctx, field)
+			case "relatedPerspectiveIDs":
+				return ec.fieldContext_Perspective_relatedPerspectiveIDs(ctx, field)
+			case "customFields":
+				return ec.fieldContext_Perspective_customFields(ctx, field)
+			case "review":
+				return ec.fieldContext_Perspective_review(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Perspective_createdAt(ctx, field)
 			case "updatedAt":
@@ -2749,6 +2806,14 @@ func (ec *executionContext) fieldContext_PaginatedPerspectives_items(_ context.C
 				return ec.fieldContext_Perspective_labels(ctx, field)
 			case "categorizedRatings":
 				return ec.fieldContext_Perspective_categorizedRatings(ctx, field)
+			case "primaryPerspectiveID":
+				return ec.fieldContext_Perspective_primaryPerspectiveID(ctx, field)
+			case "relatedPerspectiveIDs":
+				return ec.fieldContext_Perspective_relatedPerspectiveIDs(ctx, field)
+			case "customFields":
+				return ec.fieldContext_Perspective_customFields(ctx, field)
+			case "review":
+				return ec.fieldContext_Perspective_review(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Perspective_createdAt(ctx, field)
 			case "updatedAt":
@@ -3381,6 +3446,122 @@ func (ec *executionContext) fieldContext_Perspective_categorizedRatings(_ contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Perspective_primaryPerspectiveID(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_primaryPerspectiveID,
+		func(ctx context.Context) (any, error) {
+			return obj.PrimaryPerspectiveID, nil
+		},
+		nil,
+		ec.marshalOID2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_primaryPerspectiveID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_relatedPerspectiveIDs(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_relatedPerspectiveIDs,
+		func(ctx context.Context) (any, error) {
+			return obj.RelatedPerspectiveIDs, nil
+		},
+		nil,
+		ec.marshalOInt2ᚕintᚄ,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_relatedPerspectiveIDs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_customFields(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_customFields,
+		func(ctx context.Context) (any, error) {
+			return obj.CustomFields, nil
+		},
+		nil,
+		ec.marshalOJSON2map,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_customFields(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type JSON does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_review(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_review,
+		func(ctx context.Context) (any, error) {
+			return obj.Review, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_review(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Perspective_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3785,6 +3966,14 @@ func (ec *executionContext) fieldContext_Query_perspectiveByID(ctx context.Conte
 				return ec.fieldContext_Perspective_labels(ctx, field)
 			case "categorizedRatings":
 				return ec.fieldContext_Perspective_categorizedRatings(ctx, field)
+			case "primaryPerspectiveID":
+				return ec.fieldContext_Perspective_primaryPerspectiveID(ctx, field)
+			case "relatedPerspectiveIDs":
+				return ec.fieldContext_Perspective_relatedPerspectiveIDs(ctx, field)
+			case "customFields":
+				return ec.fieldContext_Perspective_customFields(ctx, field)
+			case "review":
+				return ec.fieldContext_Perspective_review(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Perspective_createdAt(ctx, field)
 			case "updatedAt":
@@ -5736,7 +5925,7 @@ func (ec *executionContext) unmarshalInputCreatePerspectiveInput(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"userID", "contentID", "quality", "agreement", "importance", "confidence", "like", "privacy", "description", "category", "parts", "labels", "categorizedRatings"}
+	fieldsInOrder := [...]string{"userID", "contentID", "quality", "agreement", "importance", "confidence", "like", "privacy", "description", "category", "parts", "labels", "categorizedRatings", "primaryPerspectiveID", "relatedPerspectiveIDs", "customFields", "review"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5834,6 +6023,34 @@ func (ec *executionContext) unmarshalInputCreatePerspectiveInput(ctx context.Con
 				return it, err
 			}
 			it.CategorizedRatings = data
+		case "primaryPerspectiveID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("primaryPerspectiveID"))
+			data, err := ec.unmarshalOIntID2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PrimaryPerspectiveID = data
+		case "relatedPerspectiveIDs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("relatedPerspectiveIDs"))
+			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RelatedPerspectiveIDs = data
+		case "customFields":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customFields"))
+			data, err := ec.unmarshalOJSON2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomFields = data
+		case "review":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("review"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Review = data
 		}
 	}
 
@@ -5922,7 +6139,7 @@ func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "contentID", "quality", "agreement", "importance", "confidence", "like", "privacy", "description", "category", "reviewStatus", "parts", "labels", "categorizedRatings"}
+	fieldsInOrder := [...]string{"id", "contentID", "quality", "agreement", "importance", "confidence", "like", "privacy", "description", "category", "reviewStatus", "parts", "labels", "categorizedRatings", "primaryPerspectiveID", "relatedPerspectiveIDs", "customFields", "review"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -6027,6 +6244,34 @@ func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Con
 				return it, err
 			}
 			it.CategorizedRatings = data
+		case "primaryPerspectiveID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("primaryPerspectiveID"))
+			data, err := ec.unmarshalOIntID2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PrimaryPerspectiveID = data
+		case "relatedPerspectiveIDs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("relatedPerspectiveIDs"))
+			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RelatedPerspectiveIDs = data
+		case "customFields":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customFields"))
+			data, err := ec.unmarshalOJSON2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomFields = data
+		case "review":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("review"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Review = data
 		}
 	}
 
@@ -6543,6 +6788,14 @@ func (ec *executionContext) _Perspective(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = ec._Perspective_labels(ctx, field, obj)
 		case "categorizedRatings":
 			out.Values[i] = ec._Perspective_categorizedRatings(ctx, field, obj)
+		case "primaryPerspectiveID":
+			out.Values[i] = ec._Perspective_primaryPerspectiveID(ctx, field, obj)
+		case "relatedPerspectiveIDs":
+			out.Values[i] = ec._Perspective_relatedPerspectiveIDs(ctx, field, obj)
+		case "customFields":
+			out.Values[i] = ec._Perspective_customFields(ctx, field, obj)
+		case "review":
+			out.Values[i] = ec._Perspective_review(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._Perspective_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

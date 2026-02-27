@@ -10,6 +10,7 @@ type ContentType string
 
 const (
 	ContentTypeYouTube ContentType = "YOUTUBE"
+	ContentTypeClaim   ContentType = "CLAIM"
 )
 
 // Content represents a media item that users create perspectives on
