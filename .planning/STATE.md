@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Feature Phases
 status: unknown
-last_updated: "2026-02-27T05:51:57.284Z"
+last_updated: "2026-02-27T06:57:00.000Z"
 progress:
   total_phases: 31
   completed_phases: 13
   total_plans: 94
-  completed_plans: 41
+  completed_plans: 42
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 04 (Add Perspective Flow) — Plan 02 complete
+**Current focus:** Phase 04 (Add Perspective Flow) — Plan 03 complete (all 3 waves done)
 
 ## Current Position
 
-Phase: 04 (Add Perspective Flow) — Plan 02 complete
-Plan: 2/2 complete (Wave 1 + Wave 2 done)
-Status: Complete — Phase 04 Plan 02 (Perspective Form UI + AG Grid Perspectize Column) done. PerspectivePopover Dialog, RatingInput stepper, perspectiveCellRenderer, onCellClicked integration.
-Last activity: 2026-02-27 — Completed 04-02-PLAN.md (core perspective create/edit UI flow)
+Phase: 04 (Add Perspective Flow) — Plan 03 complete
+Plan: 3/3 complete (Wave 1 + Wave 2 + Wave 3 done)
+Status: Complete — Phase 04 Plan 03 (Claim Creation Flow) done. createClaim mutation, CreateClaim service, useCreateClaim hook, @reference utilities, PerspectivePopover claim section wired.
+Last activity: 2026-02-27 — Completed 04-03-PLAN.md (claim creation flow)
 
-Progress: [████████████████████] ~95% (34 plans complete)
+Progress: [████████████████████] ~95% (42 plans complete)
 
 ## Performance Metrics
 
@@ -205,6 +205,10 @@ Recent decisions affecting current work:
 - [04-02]: PerspectivePopover uses centered Dialog for all viewports (not Popover/Dialog split) — per Figma Make design
 - [04-02]: Perspectize column trigger is click-based for both create and edit modes (not hover)
 - [04-02]: Like field is THUMBS_UP/THUMBS_DOWN toggle (not text input) in Phase 4 form
+- [04-03]: CreateClaim validates parentContentID exists via repo.GetByID before creating (prevents orphan claims)
+- [04-03]: Claim name field = raw claim text; JSONB response stores {parentContentId, text} for display-time @reference resolution
+- [04-03]: isClaimPending tracked separately from isPending so perspective submit button is unaffected during claim creation
+- [04-03]: Claim creation fires independently (separate mutation from perspective submission) per decision J
 
 ### Roadmap Evolution
 
@@ -399,6 +403,6 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Phase 04 Plan 02 complete — Perspective Form UI + AG Grid Perspectize Column delivered on gsd/phase-04-add-perspective-flow
+Stopped at: Phase 04 Plan 03 complete — Claim Creation Flow delivered on gsd/phase-04-add-perspective-flow
 Resume file: None
-Next up: Phase 04 Plan 03 (Wave 3 — Claim creation form expansion via "+ Add More..." button)
+Next up: Phase 04 complete. Ready for next phase.
