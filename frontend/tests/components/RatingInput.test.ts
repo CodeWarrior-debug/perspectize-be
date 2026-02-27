@@ -191,7 +191,7 @@ describe('RatingInput component', () => {
 			const input = screen.getByRole('spinbutton') as HTMLInputElement;
 			expect(input.min).toBe('0');
 			expect(input.max).toBe('10');
-			expect(input.step).toBe('0.25');
+			expect(input.step).toBe('any');
 		});
 
 		it('input displays value with 3 decimal places', () => {
