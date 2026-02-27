@@ -601,7 +601,7 @@ Plans:
   6. Frontend shows success toast when new video is added
   7. Data migration backfills existing raw URLs to canonical form
   8. All backend and frontend tests pass
-**Plans:** 2/2 plans complete
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 17-01-PLAN.md — Backend: NormalizeYouTubeURL, GetOrCreateByURL with ON CONFLICT, idempotent CreateFromYouTube, data migration, tests (TDD)
@@ -662,7 +662,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 
 | 3.3 Repository Rename & Restructure | 0/3 | Obsolete | 2026-02-15 |
 | 3.4 Perspectize Branding & Glasses Identity | 0/4 | Not started | - |
 | 3.5 Google NL Taxonomy Research Spike | 0/2 | Not started | - |
-| 4. Add Perspective Flow | 0/3 | Not started | - |
+| 4. Add Perspective Flow | 2/3 | In Progress|  |
 | 5. Testing + Deployment | 2/3 | Complete | 2026-02-15 |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
 | 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |

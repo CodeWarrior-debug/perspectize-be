@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 17 complete (2/2 plans) — YouTube URL Normalization and Duplicate Upsert
+**Current focus:** Phase 04 (Add Perspective Flow) — Plan 02 complete
 
 ## Current Position
 
-Phase: 17 (YouTube URL Normalization and Duplicate Upsert) — Complete
-Plan: 2/2 complete
-Status: Complete — Phase 17 both plans done. Plan 01 (URL normalization + idempotent upsert) and Plan 02 (CreateContentResult schema + frontend duplicate warning VIDEO-05) complete.
-Last activity: 2026-02-22 — Completed 17-02-PLAN.md (CreateContentResult type and frontend duplicate warning)
+Phase: 04 (Add Perspective Flow) — Plan 02 complete
+Plan: 2/2 complete (Wave 1 + Wave 2 done)
+Status: Complete — Phase 04 Plan 02 (Perspective Form UI + AG Grid Perspectize Column) done. PerspectivePopover Dialog, RatingInput stepper, perspectiveCellRenderer, onCellClicked integration.
+Last activity: 2026-02-27 — Completed 04-02-PLAN.md (core perspective create/edit UI flow)
 
 Progress: [████████████████████] ~95% (34 plans complete)
 
@@ -60,6 +60,7 @@ Progress: [████████████████████] ~95% (3
 | Phase 17-youtube-url-normalization-and-duplicate-upsert P01 | 8 | 2 tasks | 11 files |
 | Phase 17 P02 | 15 | 2 tasks | 12 files |
 | Phase 04-add-perspective-flow P01 | 8 | 2 tasks | 21 files |
+| Phase 04-add-perspective-flow P02 | 6 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -200,6 +201,10 @@ Recent decisions affecting current work:
 - [Phase 17-02]: createContentFromYouTube returns CreateContentResult wrapper with alreadyExisted boolean for caller-side duplicate detection, enabling toast.warning UX without GraphQL errors
 - [Phase 04-add-perspective-flow]: Migration numbered 000013 (not 000012) — 000012 already taken by Phase 17 backfill migration
 - [Phase 04-add-perspective-flow]: useCreatePerspective invalidates content.lists() in addition to perspectives.lists() — perspective status affects content rows in ActivityTable
+- [04-02]: Rating storage uses display * 1000 mapping (0.000-10.000 display, 0-10000 storage, 3 decimal places)
+- [04-02]: PerspectivePopover uses centered Dialog for all viewports (not Popover/Dialog split) — per Figma Make design
+- [04-02]: Perspectize column trigger is click-based for both create and edit modes (not hover)
+- [04-02]: Like field is THUMBS_UP/THUMBS_DOWN toggle (not text input) in Phase 4 form
 
 ### Roadmap Evolution
 
@@ -393,7 +398,7 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 
 ## Session Continuity
 
-Last session: 2026-02-20
-Stopped at: Phase 3.5 Plan 01 complete — Postman collection and exploration guide delivered on main
+Last session: 2026-02-27
+Stopped at: Phase 04 Plan 02 complete — Perspective Form UI + AG Grid Perspectize Column delivered on gsd/phase-04-add-perspective-flow
 Resume file: None
-Next up: Phase 3.5 Plan 02 — User fills in findings template from interactive exploration, then Plan 02 generates curated category list and SQL seed data
+Next up: Phase 04 Plan 03 (Wave 3 — Claim creation form expansion via "+ Add More..." button)
