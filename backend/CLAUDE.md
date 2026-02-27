@@ -74,6 +74,8 @@ Two sources (precedence order): **env vars** > `config/config.json`.
 Required: `DATABASE_URL`. Optional: `YOUTUBE_API_KEY`, `DATABASE_PASSWORD`.
 See `.env.example`. Production note: Sevalla may require `?sslmode=disable`.
 
+**Database is remote (Sevalla)** — `DATABASE_URL` in `.env` points to `us-east1-001.proxy.sevalla.app`. No `make docker-up` needed for development. Migrations run against the remote DB.
+
 ## GraphQL
 
 Schema-first in `schema.graphql`. After changes: `make graphql-gen` → implement resolvers in `internal/adapters/graphql/resolvers/` → wire to services.
