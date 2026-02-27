@@ -16,6 +16,8 @@ process.stdin.on('end', () => {
     const model = data.model?.display_name || 'Claude';
     const dir = data.workspace?.current_dir || process.cwd();
     const session = data.session_id || '';
+    // session_name is set via /rename; fall back to a short session_id prefix
+    const sessionLabel = data.session_name || (session ? session.slice(0, 8) : '');
     const remaining = data.context_window?.remaining_percentage;
 
     // Context window display (shows USED percentage scaled to 80% limit)
@@ -97,10 +99,11 @@ process.stdin.on('end', () => {
 
     // Output
     const dirname = path.basename(dir);
+    const sessionPart = sessionLabel ? ` \x1b[36m[${sessionLabel}]\x1b[0m` : '';
     if (task) {
-      process.stdout.write(`${gsdUpdate}\x1b[2m${model}\x1b[0m │ \x1b[1m${task}\x1b[0m │ \x1b[2m${dirname}\x1b[0m${ctx}`);
+      process.stdout.write(`${gsdUpdate}\x1b[2m${model}\x1b[0m │ \x1b[1m${task}\x1b[0m │ \x1b[2m${dirname}\x1b[0m${sessionPart}${ctx}`);
     } else {
-      process.stdout.write(`${gsdUpdate}\x1b[2m${model}\x1b[0m │ \x1b[2m${dirname}\x1b[0m${ctx}`);
+      process.stdout.write(`${gsdUpdate}\x1b[2m${model}\x1b[0m │ \x1b[2m${dirname}\x1b[0m${sessionPart}${ctx}`);
     }
   } catch (e) {
     // Silent fail - don't break statusline on parse errors

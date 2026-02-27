@@ -2,7 +2,7 @@
 	import { toast } from 'svelte-sonner';
 	import ThumbsUpIcon from '@lucide/svelte/icons/thumbs-up';
 	import ThumbsDownIcon from '@lucide/svelte/icons/thumbs-down';
-	import PlusIcon from '@lucide/svelte/icons/plus';
+	/* import PlusIcon from '@lucide/svelte/icons/plus'; */
 	import InfoIcon from '@lucide/svelte/icons/info';
 	import {
 		Dialog,
@@ -14,7 +14,7 @@
 	import RatingInput from '$lib/components/RatingInput.svelte';
 	import { useCreatePerspective } from '$lib/queries/hooks/useCreatePerspective';
 	import { useUpdatePerspective } from '$lib/queries/hooks/useUpdatePerspective';
-	import { useCreateClaim } from '$lib/queries/hooks/useCreateClaim';
+	/* import { useCreateClaim } from '$lib/queries/hooks/useCreateClaim'; */
 	import type { PerspectiveItem } from '$lib/queries/perspectives';
 
 	/**
@@ -61,9 +61,9 @@
 	}
 	let likeValue = $state<LikeValue>(null);
 
-	// "+ Add More..." expansion for claim creation
-	let showMore = $state(false);
-	let claimText = $state('');
+	/* "+ Add More..." expansion for claim creation — TODO: Re-enable in a future phase */
+	/* let showMore = $state(false); */
+	/* let claimText = $state(''); */
 
 	// Reset state when existingPerspective changes (e.g., when switching rows)
 	$effect(() => {
@@ -73,16 +73,16 @@
 		confidence = existingPerspective?.confidence ?? null;
 		const l = existingPerspective?.like;
 		likeValue = l === 'THUMBS_UP' ? 'THUMBS_UP' : l === 'THUMBS_DOWN' ? 'THUMBS_DOWN' : null;
-		showMore = false;
-		claimText = '';
+		/* showMore = false; */
+		/* claimText = ''; */
 	});
 
 	const createMutation = useCreatePerspective();
 	const updateMutation = useUpdatePerspective();
-	const createClaimMutation = useCreateClaim();
+	/* const createClaimMutation = useCreateClaim(); */
 
 	const isPending = $derived(createMutation.isPending || updateMutation.isPending);
-	const isClaimPending = $derived(createClaimMutation.isPending);
+	/* const isClaimPending = $derived(createClaimMutation.isPending); */
 
 	function toggleLike(val: 'THUMBS_UP' | 'THUMBS_DOWN') {
 		likeValue = likeValue === val ? null : val;
@@ -136,7 +136,7 @@
 		}
 	}
 
-	function handleCreateClaim() {
+	/* function handleCreateClaim() {
 		const trimmed = claimText.trim();
 		if (!trimmed) {
 			toast.error('Please enter claim text');
@@ -156,7 +156,7 @@
 				},
 			},
 		);
-	}
+	} */
 
 	function handleCancel() {
 		onClose();
@@ -169,9 +169,12 @@
 		if (!isOpen) onClose();
 	}}
 >
-	<DialogContent class="sm:max-w-sm w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto p-0">
+	<DialogContent
+		class="sm:max-w-sm w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto overflow-x-hidden p-0"
+		overlayClass="bg-transparent"
+	>
 		<!-- Header -->
-		<div class="px-8 py-6 border-b border-border">
+		<div class="px-6 py-4 border-b border-border">
 			<DialogHeader>
 				<div class="flex items-center justify-center gap-2 mb-2">
 					<DialogTitle class="text-xl font-semibold text-center">
@@ -186,21 +189,21 @@
 							<InfoIcon class="size-4" />
 						</button>
 						<div
-							class="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-2 rounded-lg shadow-xl text-xs whitespace-nowrap z-50 bg-foreground text-background opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"
+							class="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-2 rounded-lg shadow-xl text-xs w-56 text-center z-[100] bg-foreground text-background opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"
 						>
-							Rate, review, and share your take on this content
+							Add as much or as little as you like
 							<div class="absolute left-1/2 -translate-x-1/2 -top-1 w-2 h-2 rotate-45 bg-foreground"></div>
 						</div>
 					</div>
 				</div>
-				<p class="text-sm text-muted-foreground text-center truncate max-w-full">
+				<p class="text-sm text-muted-foreground text-center text-wrap line-clamp-2 max-w-full">
 					{contentName}
 				</p>
 			</DialogHeader>
 		</div>
 
 		<!-- Form -->
-		<form onsubmit={handleSubmit} class="px-8 py-6 space-y-6">
+		<form onsubmit={handleSubmit} class="px-6 py-4 space-y-4">
 			<!-- Ratings 2x2 grid -->
 			<div class="px-2">
 				<div class="grid grid-cols-2 gap-4">
@@ -214,13 +217,13 @@
 			<div class="border-t border-border"></div>
 
 			<!-- Like — thumbs up/down toggle -->
-			<div class="flex flex-col items-center gap-3">
+			<div class="flex flex-col items-center gap-2">
 				<span class="text-xs font-medium text-muted-foreground">Like</span>
-				<div class="flex items-center justify-center gap-6">
+				<div class="flex items-center justify-center gap-4">
 					<button
 						type="button"
 						onclick={() => toggleLike('THUMBS_UP')}
-						class="p-4 rounded-xl transition-all border-2"
+						class="p-3 rounded-lg transition-all border-2"
 						class:bg-green-500={likeValue === 'THUMBS_UP'}
 						class:text-white={likeValue === 'THUMBS_UP'}
 						class:border-green-500={likeValue === 'THUMBS_UP'}
@@ -235,7 +238,7 @@
 					<button
 						type="button"
 						onclick={() => toggleLike('THUMBS_DOWN')}
-						class="p-4 rounded-xl transition-all border-2"
+						class="p-3 rounded-lg transition-all border-2"
 						class:bg-red-500={likeValue === 'THUMBS_DOWN'}
 						class:text-white={likeValue === 'THUMBS_DOWN'}
 						class:border-red-500={likeValue === 'THUMBS_DOWN'}
@@ -250,8 +253,8 @@
 				</div>
 			</div>
 
-			<!-- "+ Add More..." expansion (claim creation — Wave 3 placeholder) -->
-			<div class="flex justify-center pt-1">
+			<!-- TODO: Re-enable Add More / Claim creation in a future phase -->
+			<!-- <div class="flex justify-center pt-1">
 				<button
 					type="button"
 					onclick={() => (showMore = !showMore)}
@@ -287,21 +290,21 @@
 						{isClaimPending ? 'Creating...' : 'Create Claim'}
 					</Button>
 				</div>
-			{/if}
+			{/if} -->
 
 			<!-- Action buttons -->
-			<div class="flex items-center justify-center gap-4 pt-2">
+			<div class="flex items-center justify-center gap-3 pt-1">
 				<Button
 					type="button"
 					variant="outline"
-					size="lg"
+					size="default"
 					onclick={handleCancel}
 					disabled={isPending}
-					class="px-8"
+					class="px-6"
 				>
 					Cancel
 				</Button>
-				<Button type="submit" size="lg" disabled={isPending} class="px-8">
+				<Button type="submit" size="default" disabled={isPending} class="px-6">
 					{#if isPending}
 						{isEditMode ? 'Saving...' : 'Adding...'}
 					{:else}

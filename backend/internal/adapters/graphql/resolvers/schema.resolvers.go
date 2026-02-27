@@ -64,7 +64,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 			return nil, fmt.Errorf("invalid input: %w", err)
 		}
 		slog.Error("creating user failed", "error", err)
-		return nil, fmt.Errorf("failed to create user")
+		return nil, fmt.Errorf("failed to create user: %v", err)
 	}
 
 	return userDomainToModel(user), nil
@@ -93,7 +93,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUse
 			return nil, fmt.Errorf("cannot modify system user")
 		}
 		slog.Error("updating user failed", "error", err)
-		return nil, fmt.Errorf("failed to update user")
+		return nil, fmt.Errorf("failed to update user: %v", err)
 	}
 
 	return userDomainToModel(user), nil
@@ -178,7 +178,7 @@ func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.Cr
 			return nil, fmt.Errorf("user not found: %w", err)
 		}
 		slog.Error("creating perspective failed", "error", err)
-		return nil, fmt.Errorf("failed to create perspective")
+		return nil, fmt.Errorf("failed to create perspective: %v", err)
 	}
 
 	return perspectiveDomainToModel(perspective), nil
@@ -239,7 +239,7 @@ func (r *mutationResolver) UpdatePerspective(ctx context.Context, input model.Up
 			return nil, fmt.Errorf("invalid input: %w", err)
 		}
 		slog.Error("updating perspective failed", "error", err)
-		return nil, fmt.Errorf("failed to update perspective")
+		return nil, fmt.Errorf("failed to update perspective: %v", err)
 	}
 
 	return perspectiveDomainToModel(perspective), nil
@@ -286,7 +286,7 @@ func (r *mutationResolver) CreateClaim(ctx context.Context, input model.CreateCl
 			"userID", input.UserID,
 			"parentContentID", input.ParentContentID,
 		)
-		return nil, fmt.Errorf("failed to create claim")
+		return nil, fmt.Errorf("failed to create claim: %v", err)
 	}
 
 	return domainToModel(content), nil

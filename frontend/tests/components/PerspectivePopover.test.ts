@@ -6,7 +6,6 @@ import { tick } from 'svelte';
 const mocks = vi.hoisted(() => ({
 	mockCreateMutate: vi.fn(),
 	mockUpdateMutate: vi.fn(),
-	mockCreateClaimMutate: vi.fn(),
 	mockOnClose: vi.fn(),
 }));
 
@@ -20,13 +19,6 @@ vi.mock('$lib/queries/hooks/useCreatePerspective', () => ({
 vi.mock('$lib/queries/hooks/useUpdatePerspective', () => ({
 	useUpdatePerspective: vi.fn(() => ({
 		mutate: mocks.mockUpdateMutate,
-		isPending: false,
-	})),
-}));
-
-vi.mock('$lib/queries/hooks/useCreateClaim', () => ({
-	useCreateClaim: vi.fn(() => ({
-		mutate: mocks.mockCreateClaimMutate,
 		isPending: false,
 	})),
 }));
@@ -105,7 +97,7 @@ describe('PerspectivePopover component', () => {
 			expect(screen.getByText('Another Content')).toBeInTheDocument();
 		});
 
-		it('truncates long content names', async () => {
+		it('handles long content names', async () => {
 			renderPopover({ contentName: 'A very long content name that might overflow' });
 			await tick();
 			const nameElement = screen.getByText('A very long content name that might overflow');
@@ -186,30 +178,9 @@ describe('PerspectivePopover component', () => {
 		});
 	});
 
-	describe('add more button', () => {
-		it('renders "Add More..." button', async () => {
-			renderPopover();
-			await tick();
-			expect(screen.getByText('Add More...')).toBeInTheDocument();
-		});
-
-		it('button has plus icon', async () => {
-			renderPopover();
-			await tick();
-			const btn = screen.getByText('Add More...');
-			expect(btn.querySelector('svg')).toBeInTheDocument();
-		});
-
-		it('clicking expands claim textarea', async () => {
-			renderPopover();
-			await tick();
-			const addMoreBtn = screen.getByText('Add More...');
-			expect(screen.queryByPlaceholderText(/e.g., @this/)).not.toBeInTheDocument();
-			await fireEvent.click(addMoreBtn);
-			await tick();
-			expect(screen.getByPlaceholderText(/e.g., @this/)).toBeInTheDocument();
-		});
-	});
+	// TODO: Re-enable Add More / Claim creation tests in a future phase
+	// describe('add more button', () => { ... });
+	// describe('claim textarea', () => { ... });
 
 	describe('action buttons', () => {
 		it('renders Cancel button', async () => {
@@ -255,41 +226,6 @@ describe('PerspectivePopover component', () => {
 			renderPopover();
 			await tick();
 			expect(screen.getByLabelText('About perspectives')).toBeInTheDocument();
-		});
-	});
-
-	describe('claim textarea', () => {
-		it('shows claim textarea when Add More is expanded', async () => {
-			renderPopover();
-			await tick();
-			const addMoreBtn = screen.getByText('Add More...');
-			await fireEvent.click(addMoreBtn);
-			await tick();
-			expect(screen.getByLabelText('Add a Claim')).toBeInTheDocument();
-		});
-
-		it('shows "Add a Claim" label in expanded section', async () => {
-			renderPopover();
-			await tick();
-			await fireEvent.click(screen.getByText('Add More...'));
-			await tick();
-			expect(screen.getByText('Add a Claim')).toBeInTheDocument();
-		});
-
-		it('shows @this reference hint', async () => {
-			renderPopover();
-			await tick();
-			await fireEvent.click(screen.getByText('Add More...'));
-			await tick();
-			expect(screen.getByText('@this')).toBeInTheDocument();
-		});
-
-		it('has Create Claim button in expanded section', async () => {
-			renderPopover();
-			await tick();
-			await fireEvent.click(screen.getByText('Add More...'));
-			await tick();
-			expect(screen.getByRole('button', { name: /Create Claim/ })).toBeInTheDocument();
 		});
 	});
 

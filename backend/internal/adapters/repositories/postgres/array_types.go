@@ -18,13 +18,16 @@ func (a *StringArray) Scan(src interface{}) error {
 		return nil
 	}
 
-	// PostgreSQL returns arrays as []byte in text format: {val1,"val with comma",val3}
-	bytes, ok := src.([]byte)
-	if !ok {
-		return fmt.Errorf("StringArray.Scan: expected []byte, got %T", src)
+	// PostgreSQL returns arrays as []byte or string depending on driver/connection
+	var str string
+	switch v := src.(type) {
+	case []byte:
+		str = string(v)
+	case string:
+		str = v
+	default:
+		return fmt.Errorf("StringArray.Scan: expected []byte or string, got %T", src)
 	}
-
-	str := string(bytes)
 
 	// Handle empty array
 	if str == "{}" {
@@ -142,13 +145,16 @@ func (a *Int64Array) Scan(src interface{}) error {
 		return nil
 	}
 
-	// PostgreSQL returns arrays as []byte in text format: {1,2,3}
-	bytes, ok := src.([]byte)
-	if !ok {
-		return fmt.Errorf("Int64Array.Scan: expected []byte, got %T", src)
+	// PostgreSQL returns arrays as []byte or string depending on driver/connection
+	var str string
+	switch v := src.(type) {
+	case []byte:
+		str = string(v)
+	case string:
+		str = v
+	default:
+		return fmt.Errorf("Int64Array.Scan: expected []byte or string, got %T", src)
 	}
-
-	str := string(bytes)
 
 	// Handle empty array
 	if str == "{}" {

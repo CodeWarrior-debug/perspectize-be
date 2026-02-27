@@ -40,6 +40,7 @@
 	// Hold-to-repeat state
 	let intervalId: ReturnType<typeof setInterval> | null = null;
 	let timeoutId: ReturnType<typeof setTimeout> | null = null;
+	let isTouching = false;
 
 	function setDisplay(newDisplay: number) {
 		const clamped = Math.max(RATING_MIN, Math.min(RATING_MAX, newDisplay));
@@ -57,14 +58,18 @@
 		setDisplay(displayValue - RATING_STEP);
 	}
 
-	function startIncrement() {
+	function startIncrement(e: MouseEvent | TouchEvent) {
+		if (e.type === 'mousedown' && isTouching) return;
+		if (e.type === 'touchstart') isTouching = true;
 		increment();
 		timeoutId = setTimeout(() => {
 			intervalId = setInterval(increment, 75);
 		}, 300);
 	}
 
-	function startDecrement() {
+	function startDecrement(e: MouseEvent | TouchEvent) {
+		if (e.type === 'mousedown' && isTouching) return;
+		if (e.type === 'touchstart') isTouching = true;
 		decrement();
 		timeoutId = setTimeout(() => {
 			intervalId = setInterval(decrement, 75);
@@ -80,6 +85,7 @@
 			clearInterval(intervalId);
 			intervalId = null;
 		}
+		setTimeout(() => { isTouching = false; }, 400);
 	}
 
 	function handleInputChange(e: Event) {
@@ -115,14 +121,18 @@
 
 	// Progress bar color based on value
 	const barColor = $derived(() => {
-		if (!hasInteracted) return 'var(--color-muted-foreground)';
+		if (!hasInteracted) return 'color-mix(in srgb, var(--color-muted-foreground) 35%, transparent)';
 		if (displayValue > 7) return 'var(--color-rating-positive)';
 		if (displayValue >= 3) return 'var(--color-rating-neutral)';
 		return 'var(--color-rating-negative)';
 	});
 
 	// Number display color
-	const numberColor = $derived(hasInteracted ? 'var(--color-primary)' : 'var(--color-muted-foreground)');
+	const numberColor = $derived(
+		hasInteracted
+			? 'var(--color-primary)'
+			: 'color-mix(in srgb, var(--color-muted-foreground) 35%, transparent)',
+	);
 </script>
 
 <div class="flex flex-col items-center space-y-1.5">
@@ -154,11 +164,11 @@
 			type="number"
 			min={RATING_MIN}
 			max={RATING_MAX}
-			step={RATING_STEP}
+			step="any"
 			value={hasInteracted ? displayValue.toFixed(3) : RATING_DEFAULT_DISPLAY.toFixed(3)}
 			onchange={handleInputChange}
 			onfocus={handleFocus}
-			class="text-center bg-transparent border-none outline-none font-mono text-sm font-medium"
+			class="text-center bg-transparent border-none outline-none font-mono text-sm font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 			style="width: 60px; color: {numberColor};"
 			aria-label="{label} rating"
 		/>

@@ -270,7 +270,7 @@ export function perspectiveCellRenderer(params: {
 		const span = document.createElement('span');
 		span.textContent = '+';
 		span.className = 'text-xl font-bold leading-none';
-		span.style.color = '#1a365d';
+		span.style.color = 'color-mix(in srgb, var(--color-muted-foreground) 40%, transparent)';
 		container.appendChild(span);
 		container.title = 'Add a perspective';
 	}
