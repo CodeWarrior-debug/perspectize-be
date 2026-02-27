@@ -95,9 +95,9 @@ describe('useCreatePerspective hook', () => {
 			);
 		});
 
-		it('invalidates content lists cache', () => {
+		it('does not invalidate content lists cache (content unchanged by perspective)', () => {
 			capturedMutationOptions.onSuccess();
-			expect(mockInvalidateQueries).toHaveBeenCalledWith(
+			expect(mockInvalidateQueries).not.toHaveBeenCalledWith(
 				expect.objectContaining({ queryKey: expect.arrayContaining(['content', 'list']) })
 			);
 		});

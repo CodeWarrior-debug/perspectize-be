@@ -25,7 +25,6 @@ export function useCreatePerspective() {
 		onSuccess: () => {
 			toast.success('Perspective added');
 			queryClient.invalidateQueries({ queryKey: queryKeys.perspectives.lists() });
-			queryClient.invalidateQueries({ queryKey: queryKeys.content.lists() });
 		},
 		onError: (err: Error) => {
 			const message = err.message.toLowerCase();

@@ -55,19 +55,17 @@ const PERSPECTIVE_FIELDS = gql`
 `;
 
 export const CREATE_PERSPECTIVE = gql`
-	${PERSPECTIVE_FIELDS}
 	mutation CreatePerspective($input: CreatePerspectiveInput!) {
 		createPerspective(input: $input) {
-			...PerspectiveFields
+			id
 		}
 	}
 `;
 
 export const UPDATE_PERSPECTIVE = gql`
-	${PERSPECTIVE_FIELDS}
 	mutation UpdatePerspective($input: UpdatePerspectiveInput!) {
 		updatePerspective(input: $input) {
-			...PerspectiveFields
+			id
 		}
 	}
 `;

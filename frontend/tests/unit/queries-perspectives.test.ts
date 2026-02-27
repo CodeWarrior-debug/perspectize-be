@@ -136,19 +136,11 @@ describe('Perspective GraphQL query definitions', () => {
 			expect(CREATE_PERSPECTIVE).toContain('createPerspective(input: $input)');
 		});
 
-		it('requests essential perspective fields', () => {
+		it('requests only id in mutation response (full data comes from list refetch)', () => {
 			expect(CREATE_PERSPECTIVE).toContain('id');
-			expect(CREATE_PERSPECTIVE).toContain('userID');
-			expect(CREATE_PERSPECTIVE).toContain('quality');
-			expect(CREATE_PERSPECTIVE).toContain('createdAt');
-			expect(CREATE_PERSPECTIVE).toContain('updatedAt');
-		});
-
-		it('requests new reference fields', () => {
-			expect(CREATE_PERSPECTIVE).toContain('primaryPerspectiveID');
-			expect(CREATE_PERSPECTIVE).toContain('relatedPerspectiveIDs');
-			expect(CREATE_PERSPECTIVE).toContain('customFields');
-			expect(CREATE_PERSPECTIVE).toContain('review');
+			// Mutation response is minimal — ListPerspectivesByUser refetch provides full data
+			expect(CREATE_PERSPECTIVE).not.toContain('userID');
+			expect(CREATE_PERSPECTIVE).not.toContain('primaryPerspectiveID');
 		});
 	});
 
