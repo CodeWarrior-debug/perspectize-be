@@ -26,6 +26,12 @@ const CRITICAL_THRESHOLD = 25; // remaining_percentage <= 25%
 const STALE_SECONDS = 60;      // ignore metrics older than 60s
 const DEBOUNCE_CALLS = 5;      // min tool uses between warnings
 
+// Always emit valid JSON to avoid "hook error" noise in Claude Code UI
+function exitOk() {
+  process.stdout.write('{}');
+  process.exit(0);
+}
+
 let input = '';
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', chunk => input += chunk);
@@ -35,7 +41,7 @@ process.stdin.on('end', () => {
     const sessionId = data.session_id;
 
     if (!sessionId) {
-      process.exit(0);
+      exitOk();
     }
 
     const tmpDir = os.tmpdir();
@@ -43,7 +49,7 @@ process.stdin.on('end', () => {
 
     // If no metrics file, this is a subagent or fresh session -- exit silently
     if (!fs.existsSync(metricsPath)) {
-      process.exit(0);
+      exitOk();
     }
 
     const metrics = JSON.parse(fs.readFileSync(metricsPath, 'utf8'));
@@ -51,7 +57,7 @@ process.stdin.on('end', () => {
 
     // Ignore stale metrics
     if (metrics.timestamp && (now - metrics.timestamp) > STALE_SECONDS) {
-      process.exit(0);
+      exitOk();
     }
 
     const remaining = metrics.remaining_percentage;
@@ -59,7 +65,7 @@ process.stdin.on('end', () => {
 
     // No warning needed
     if (remaining > WARNING_THRESHOLD) {
-      process.exit(0);
+      exitOk();
     }
 
     // Debounce: check if we warned recently
@@ -87,7 +93,7 @@ process.stdin.on('end', () => {
     if (!firstWarn && warnData.callsSinceWarn < DEBOUNCE_CALLS && !severityEscalated) {
       // Update counter and exit without warning
       fs.writeFileSync(warnPath, JSON.stringify(warnData));
-      process.exit(0);
+      exitOk();
     }
 
     // Reset debounce counter
@@ -117,6 +123,6 @@ process.stdin.on('end', () => {
     process.stdout.write(JSON.stringify(output));
   } catch (e) {
     // Silent fail -- never block tool execution
-    process.exit(0);
+    exitOk();
   }
 });

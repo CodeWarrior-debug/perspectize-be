@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3.3: Repository Rename & Folder Restructure** - OBSOLETE — repo already named `perspectize`, folders already `backend/` + `frontend/` (INSERTED)
 - [ ] **Phase 3.4: Perspectize Branding & Glasses Identity** - Glasses motif with 3 shapes, 8-color palette picker, JSONB preferences, avatar display, onboarding (INSERTED)
 - [ ] **Phase 3.5: Google NL Taxonomy Research Spike** - Deep-dive on Google taxonomy depth, traversal, subcategories, ltree mapping, YouTube classification (INSERTED)
-- [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
+- [x] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
 - [x] **Phase 5: Testing + Deployment** - Coverage met, deployed on Sevalla, CORS working (wildcard — restriction deferred to Phase 9)
 
 ## Phase Details
@@ -221,9 +221,9 @@ Cross-phase impact: Unblocks Phase 13 (Content Categories), Phase 14 (AG Grid Po
 **Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 04-01-PLAN.md — Backend schema migration (perspective refs, claim type), domain/GORM/GraphQL extensions, frontend query definitions + mutation hooks + tests
-- [ ] 04-02-PLAN.md — PerspectivePopover UI, RatingInput component, AG Grid Perspectize column with +/silhouette icons (hover=edit, click=create), visual checkpoint
-- [ ] 04-03-PLAN.md — Claim creation (createClaim mutation, frontend hook, @reference utils, claim trigger in PerspectivePopover)
+- [x] 04-01-PLAN.md — Backend schema migration (perspective refs, claim type), domain/GORM/GraphQL extensions, frontend query definitions + mutation hooks + tests
+- [x] 04-02-PLAN.md — PerspectivePopover UI, RatingInput component, AG Grid Perspectize column with +/silhouette icons (hover=edit, click=create), visual checkpoint
+- [x] 04-03-PLAN.md — Claim creation (createClaim mutation, frontend hook, @reference utils, claim trigger in PerspectivePopover)
 
 ### Phase 5: Testing + Deployment
 **Goal**: Application is tested, deployed, and accessible via public URL with proper CORS
@@ -601,7 +601,7 @@ Plans:
   6. Frontend shows success toast when new video is added
   7. Data migration backfills existing raw URLs to canonical form
   8. All backend and frontend tests pass
-**Plans:** 2/2 plans complete
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 17-01-PLAN.md — Backend: NormalizeYouTubeURL, GetOrCreateByURL with ON CONFLICT, idempotent CreateFromYouTube, data migration, tests (TDD)
@@ -662,7 +662,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 
 | 3.3 Repository Rename & Restructure | 0/3 | Obsolete | 2026-02-15 |
 | 3.4 Perspectize Branding & Glasses Identity | 0/4 | Not started | - |
 | 3.5 Google NL Taxonomy Research Spike | 0/2 | Not started | - |
-| 4. Add Perspective Flow | 0/3 | Not started | - |
+| 4. Add Perspective Flow | 2/3 | Complete    | 2026-02-27 |
 | 5. Testing + Deployment | 2/3 | Complete | 2026-02-15 |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
 | 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |

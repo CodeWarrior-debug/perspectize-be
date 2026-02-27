@@ -128,14 +128,17 @@ Full setup and examples: [docs/AG_GRID.md](docs/AG_GRID.md)
 
 ## Self-Verification (Chrome DevTools MCP)
 
-| Step       | Tool                                          | Purpose                     |
-| ---------- | --------------------------------------------- | --------------------------- |
-| Navigate   | `mcp__chrome-devtools__navigate_page`         | Load frontend URL           |
-| Screenshot | `mcp__chrome-devtools__take_screenshot`       | Visual verification         |
-| Snapshot   | `mcp__chrome-devtools__take_snapshot`         | DOM structure               |
-| Resize     | `mcp__chrome-devtools__resize_page`           | Responsive (375/768/1024px) |
-| Console    | `mcp__chrome-devtools__list_console_messages` | JS errors                   |
-| Interact   | `mcp__chrome-devtools__click`                 | Buttons, navigation         |
+| Step       | Tool                                          | Purpose                        |
+| ---------- | --------------------------------------------- | ------------------------------ |
+| Navigate   | `mcp__chrome-devtools__navigate_page`         | Load frontend URL              |
+| Screenshot | `mcp__chrome-devtools__take_screenshot`       | Visual verification            |
+| Snapshot   | `mcp__chrome-devtools__take_snapshot`         | DOM structure                  |
+| Resize     | `mcp__chrome-devtools__resize_page`           | Desktop breakpoints (768+)     |
+| Emulate    | `mcp__chrome-devtools__emulate`               | Mobile/tablet device emulation |
+| Console    | `mcp__chrome-devtools__list_console_messages` | JS errors                      |
+| Interact   | `mcp__chrome-devtools__click`                 | Buttons, navigation            |
+
+**Mobile screenshots:** Use `emulate` (NOT `resize_page`) for mobile/tablet. AG Grid and CSS media queries only respond to viewport changes when `isMobile: true` is set. `resize_page` alone doesn't trigger responsive column hiding. Example: `emulate({ viewport: { width: 375, height: 812, deviceScaleFactor: 3, isMobile: true, hasTouch: true } })`. Reset with `emulate({ viewport: null, userAgent: null })` after. Use `resize_page` for desktop breakpoint comparisons (768px+).
 
 ## Testing Gotchas
 

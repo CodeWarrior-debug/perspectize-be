@@ -213,6 +213,72 @@ export function typeCellRenderer(params: { data?: { contentType: string } }): HT
 }
 
 /**
+ * Perspectize glasses SVG path data (inline SVG for AG Grid cell renderer).
+ * Simple glasses silhouette using currentColor.
+ */
+const GLASSES_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <!-- Left lens -->
+  <circle cx="7.5" cy="13.5" r="3.5"/>
+  <!-- Right lens -->
+  <circle cx="16.5" cy="13.5" r="3.5"/>
+  <!-- Bridge -->
+  <line x1="11" y1="13.5" x2="13" y2="13.5"/>
+  <!-- Left arm -->
+  <line x1="4" y1="13.5" x2="2" y2="11"/>
+  <!-- Right arm -->
+  <line x1="20" y1="13.5" x2="22" y2="11"/>
+</svg>`;
+
+/**
+ * Perspectize column header component class for AG Grid.
+ * AG Grid headerComponent requires a class with init() and getGui() methods.
+ */
+export class PerspectiveHeaderRenderer {
+	private eGui!: HTMLElement;
+
+	init(): void {
+		this.eGui = document.createElement('div');
+		this.eGui.className = 'flex items-center justify-center w-full h-full';
+		this.eGui.innerHTML = GLASSES_SVG;
+		this.eGui.title = 'Perspectize — add or edit your perspective';
+	}
+
+	getGui(): HTMLElement {
+		return this.eGui;
+	}
+}
+
+/**
+ * AG Grid cell renderer for the Perspectize column.
+ * Shows "+" if user has no perspective on this row, or glasses icon if they do.
+ * Reads perspectivesByContentId from AG Grid context.
+ */
+export function perspectiveCellRenderer(params: {
+	data?: { id: string };
+	context?: { perspectivesByContentId?: Map<string, unknown> };
+}): HTMLElement {
+	const container = document.createElement('div');
+	container.className = 'h-full w-full flex items-center justify-center cursor-pointer';
+
+	const hasPerspective = params.context?.perspectivesByContentId?.has(params.data?.id ?? '');
+
+	if (hasPerspective) {
+		container.innerHTML = GLASSES_SVG;
+		container.title = 'Edit your perspective';
+		container.style.color = '#1a365d';
+	} else {
+		const span = document.createElement('span');
+		span.textContent = '+';
+		span.className = 'text-xl font-bold leading-none';
+		span.style.color = 'color-mix(in srgb, var(--color-muted-foreground) 40%, transparent)';
+		container.appendChild(span);
+		container.title = 'Add a perspective';
+	}
+
+	return container;
+}
+
+/**
  * AG Grid cell renderer for content name column.
  * Returns an anchor if URL exists, otherwise a span.
  */
