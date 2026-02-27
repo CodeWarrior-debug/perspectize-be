@@ -35,6 +35,41 @@ export function durationValueGetter(params: { data?: { length: number | null; le
 }
 
 /**
+ * AG Grid filter value getter for duration column.
+ * Returns raw seconds so agNumberColumnFilter compares numerically.
+ */
+export function durationFilterValueGetter(params: { data?: { length: number | null } }): number | null {
+	return params.data?.length ?? null;
+}
+
+/**
+ * Format seconds as m:ss display string (for filter chip display).
+ */
+export function formatDurationSeconds(seconds: number): string {
+	const m = Math.floor(seconds / 60);
+	const s = seconds % 60;
+	return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Parse duration filter input. Accepts "m:ss" or plain seconds.
+ * Returns total seconds, or null if unparseable.
+ */
+export function parseDurationInput(text: string | null): number | null {
+	if (text == null || text.trim() === '') return null;
+	const trimmed = text.trim();
+	if (trimmed.includes(':')) {
+		const [minStr, secStr] = trimmed.split(':');
+		const mins = parseInt(minStr, 10);
+		const secs = parseInt(secStr, 10);
+		if (isNaN(mins) || isNaN(secs)) return null;
+		return mins * 60 + secs;
+	}
+	const n = parseFloat(trimmed);
+	return isNaN(n) ? null : n;
+}
+
+/**
  * AG Grid value formatter for date columns.
  */
 export function dateValueFormatter(params: { value?: string }): string {

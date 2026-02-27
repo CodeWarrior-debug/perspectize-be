@@ -18,6 +18,8 @@ Monorepo with two stacks:
 
 ⚠️ **DO NOT use MCP qmd tools** — use Bash commands only. MCP is not available in all contexts.
 
+⚠️ **Cloud sessions (claude.ai/code web):** qmd is NOT available. Skip qmd entirely and use Read/Glob/Grep directly.
+
 **Allowed commands (pre-approved):**
 - `qmd search *` — keyword search
 - `qmd vsearch *` — semantic search

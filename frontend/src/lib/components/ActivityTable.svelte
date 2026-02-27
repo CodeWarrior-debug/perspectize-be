@@ -19,6 +19,9 @@
 		perspectiveCellRenderer,
 		PerspectiveHeaderRenderer,
 		durationValueGetter,
+		durationFilterValueGetter,
+		parseDurationInput,
+		formatDurationSeconds,
 		dateValueFormatter,
 		formatCount,
 		formatCountExact,
@@ -207,7 +210,14 @@
 			maxWidth: 120,
 
 			filter: 'agNumberColumnFilter',
+			filterParams: {
+				allowedCharPattern: '\\d\\:',
+				numberParser: parseDurationInput,
+				numberFormatter: (value: number | null) =>
+					value == null ? null : formatDurationSeconds(value),
+			},
 			valueGetter: durationValueGetter,
+			filterValueGetter: durationFilterValueGetter,
 			comparator: (_valueA, _valueB, nodeA, nodeB) => {
 				const a = nodeA?.data?.length ?? 0;
 				const b = nodeB?.data?.length ?? 0;
