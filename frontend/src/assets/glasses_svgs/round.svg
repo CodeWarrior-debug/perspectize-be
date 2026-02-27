@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 28">
+  <defs>
+    <linearGradient id="round-fill" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0%" stop-color="var(--glasses-fill-start, #9F7AEA)" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="var(--glasses-fill-end, #44337A)" stop-opacity="0.85"/>
+    </linearGradient>
+  </defs>
+  <circle cx="14" cy="14" r="11" fill="url(#round-fill)" stroke="currentColor" stroke-width="1.5"/>
+  <circle cx="42" cy="14" r="11" fill="url(#round-fill)" stroke="currentColor" stroke-width="1.5"/>
+  <path d="M25 11 Q28 6 31 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

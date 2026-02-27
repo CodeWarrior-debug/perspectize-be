@@ -201,6 +201,7 @@ Recent decisions affecting current work:
 - Phase 17 added: YouTube URL normalization and duplicate upsert — Normalize all YouTube URL variants to canonical form, implement upsert (return existing content instead of error on duplicate), add database unique constraint on external_id. Related to Phase 6 M-03 and Phase 8.1 H-06/H-07.
 - Phase 18 added: Server-Side Pagination & Filtering with Data Mode Toggle — Add data mode toggle to ActivityTable switching between "All Items" (server-side sort/filter/search across full dataset) and "Loaded Items" (client-side sort/filter/search on currently loaded page). Expand backend filtering and sorting capabilities.
 - Phase 4.1 inserted after Phase 4: GraphQL Dataloaders for N+1 Query Prevention (URGENT) — Implement dataloadgen-based batching for 3 N+1-vulnerable nested relationships (Perspective→User, Perspective→Content, Content→User). Add batch repository methods (GetByIDs), field resolvers, per-request middleware. Related to Phase 8.1 M-08.
+- Phase 18.1 inserted after Phase 18: Mobile Activity Page Redesign (URGENT) — Redesign mobile activity page with 3-column layout (Item, Summary info-grid, Perspective glasses icon). Rethink mobile data display away from hidden AG Grid columns toward summary-based approach.
 
 ### Project-Level Plan Requirements
 

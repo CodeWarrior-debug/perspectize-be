@@ -662,6 +662,15 @@ Phases 11-15 planned from FEATURE_BACKLOG.md. Phase 16 added for mobile app rese
 - [ ] **Phase 15: Discover Page** - Content discovery and recommendation interface
 - [ ] **Phase 16: Mobile App Strategy** - Research native mobile approaches for SvelteKit SPA
 
+### Phase 18.1: Mobile Activity Page Redesign (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Depends on:** Phase 18
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 18.1 to break down)
+
 ### Phase 16: Mobile App Strategy
 **Goal**: Research and evaluate native mobile app approaches (Capacitor, Tauri, PWA) for wrapping the existing SvelteKit SPA. Produce a recommendation with proof-of-concept.
 **Depends on**: Phase 12 (auth must exist before shipping a mobile app)

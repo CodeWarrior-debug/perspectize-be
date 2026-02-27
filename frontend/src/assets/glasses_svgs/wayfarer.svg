@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70 28">
+  <defs>
+    <linearGradient id="wayfarer-fill" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0%" stop-color="var(--glasses-fill-start, #9F7AEA)" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="var(--glasses-fill-end, #44337A)" stop-opacity="0.9"/>
+    </linearGradient>
+  </defs>
+  <path d="M10 8 L30 7 Q34 7 34 10.5 L33 17 Q32 21 28 21 L14 21 Q10 21 9 17 L8 10.5 Q8 8 10 8 Z" fill="url(#wayfarer-fill)" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+  <path d="M38 8 L58 7 Q62 7 62 10.5 L61 17 Q60 21 56 21 L42 21 Q38 21 37 17 L36 10.5 Q36 8 38 8 Z" fill="url(#wayfarer-fill)" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+  <path d="M34 10 Q36 8 36 10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+  <line x1="8" y1="9.5" x2="3" y2="7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+  <line x1="62" y1="9.5" x2="67" y2="7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+</svg>
