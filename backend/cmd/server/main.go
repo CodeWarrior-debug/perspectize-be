@@ -26,11 +26,29 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
 func main() {
 	// Configure structured JSON logging for Sevalla log viewer
 	logger.Setup()
+
+	// Initialize OTel tracing when OTEL_EXPORTER_OTLP_ENDPOINT is set.
+	// The OTLP HTTP exporter reads OTEL_EXPORTER_OTLP_ENDPOINT,
+	// OTEL_EXPORTER_OTLP_HEADERS, and OTEL_SERVICE_NAME automatically.
+	if os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") != "" {
+		shutdown, err := initTracer(context.Background())
+		if err != nil {
+			slog.Warn("failed to initialize OpenTelemetry", "error", err)
+		} else {
+			defer shutdown(context.Background())
+			slog.Info("OpenTelemetry tracing enabled")
+		}
+	}
 
 	// Load .env file
 	if err := godotenv.Load(); err != nil {
@@ -190,4 +208,23 @@ func main() {
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Failed to start server: %v", err)
 	}
+}
+
+// initTracer sets up an OTel TracerProvider with an OTLP HTTP exporter.
+// Returns a shutdown function that flushes pending spans on exit.
+func initTracer(ctx context.Context) (func(context.Context) error, error) {
+	exporter, err := otlptracehttp.New(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("creating OTLP exporter: %w", err)
+	}
+
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceNameKey.String("perspectize-backend"),
+		)),
+	)
+	otel.SetTracerProvider(tp)
+	return tp.Shutdown, nil
 }
