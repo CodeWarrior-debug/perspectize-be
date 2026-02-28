@@ -81,6 +81,23 @@ func (s *ContentService) GetByID(ctx context.Context, id int) (*domain.Content, 
 	return content, nil
 }
 
+// UpdateAttribution changes the user attribution of a content record
+func (s *ContentService) UpdateAttribution(ctx context.Context, contentID, newUserID int) (*domain.Content, error) {
+	if contentID <= 0 {
+		return nil, fmt.Errorf("%w: content id must be a positive integer", domain.ErrInvalidInput)
+	}
+	if newUserID <= 0 {
+		return nil, fmt.Errorf("%w: user id must be a positive integer", domain.ErrInvalidInput)
+	}
+
+	updated, err := s.repo.UpdateAttribution(ctx, contentID, newUserID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update content attribution: %w", err)
+	}
+
+	return updated, nil
+}
+
 // ListContent retrieves a paginated list of content
 func (s *ContentService) ListContent(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
 	if params.First != nil {

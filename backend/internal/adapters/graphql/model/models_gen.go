@@ -123,6 +123,11 @@ type PerspectiveFilter struct {
 type Query struct {
 }
 
+type UpdateContentAttributionInput struct {
+	ContentID int `json:"contentId"`
+	UserID    int `json:"userId"`
+}
+
 type UpdatePerspectiveInput struct {
 	ID                 int                       `json:"id"`
 	ContentID          *int                      `json:"contentID,omitempty"`

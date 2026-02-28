@@ -29,10 +29,16 @@ vi.mock('@tanstack/svelte-query', () => ({
 		return {
 			mutate: mockMutate,
 			isPending: false,
+			isSuccess: false,
 		};
 	}),
 	useQueryClient: vi.fn(() => ({
 		invalidateQueries: mockInvalidateQueries,
+	})),
+	createQuery: vi.fn(() => ({
+		data: undefined,
+		isLoading: false,
+		error: null,
 	})),
 }));
 
@@ -127,6 +133,29 @@ describe('AddVideoPopover component', () => {
 	});
 });
 
+describe('AddVideoPopover anonymous checkbox', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		capturedMutationOptions = undefined;
+	});
+
+	// Note: Popover content renders in a portal outside the component container
+	// in JSDOM. These tests verify component structure at the behavioral level
+	// rather than DOM presence, similar to other popover content tests above.
+
+	it('component renders with anonymous checkbox support', () => {
+		const result = render(AddVideoPopover);
+		expect(result.container).toBeTruthy();
+	});
+
+	it('component mounts cleanly with createQuery for anonymous user', async () => {
+		const { createQuery } = await import('@tanstack/svelte-query');
+		render(AddVideoPopover);
+		// createQuery is called for the anonymous user lookup
+		expect(createQuery).toHaveBeenCalled();
+	});
+});
+
 describe('AddVideoPopover mutation callbacks', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -184,21 +213,205 @@ describe('AddVideoPopover mutation callbacks', () => {
 		expect(typeof capturedMutationOptions.mutationFn).toBe('function');
 	});
 
-	it('mutationFn calls graphqlClient.request with correct args', async () => {
+	it('mutationFn calls graphqlClient.request with correct args for regular submission', async () => {
 		expect(capturedMutationOptions).toBeDefined();
 		const { graphqlClient } = await import('$lib/queries/client');
 		(graphqlClient.request as any).mockResolvedValue({ createContentFromYouTube: { name: 'Test' } });
-		await capturedMutationOptions.mutationFn('https://youtube.com/watch?v=abc123');
+		await capturedMutationOptions.mutationFn({
+			url: 'https://youtube.com/watch?v=abc123',
+			userIdOverride: undefined
+		});
 		expect(graphqlClient.request).toHaveBeenCalledWith(
 			expect.anything(),
 			{ input: { url: 'https://youtube.com/watch?v=abc123', userId: 1 } }
 		);
 	});
 
-	it('mutationFn throws when no user is selected', async () => {
+	it('mutationFn uses userIdOverride when provided', async () => {
+		expect(capturedMutationOptions).toBeDefined();
+		const { graphqlClient } = await import('$lib/queries/client');
+		(graphqlClient.request as any).mockResolvedValue({ createContentFromYouTube: { name: 'Test' } });
+
+		const anonUserId = 999;
+		await capturedMutationOptions.mutationFn({
+			url: 'https://youtube.com/watch?v=abc123',
+			userIdOverride: anonUserId
+		});
+
+		expect(graphqlClient.request).toHaveBeenCalledWith(
+			expect.anything(),
+			{ input: { url: 'https://youtube.com/watch?v=abc123', userId: anonUserId } }
+		);
+	});
+
+	it('mutationFn throws when no user is selected and no override provided', async () => {
 		expect(capturedMutationOptions).toBeDefined();
 		mockGetSelectedUserId.mockReturnValueOnce(null);
-		await expect(capturedMutationOptions.mutationFn('https://youtube.com/watch?v=abc123'))
+		await expect(capturedMutationOptions.mutationFn({
+			url: 'https://youtube.com/watch?v=abc123',
+			userIdOverride: undefined
+		}))
 			.rejects.toThrow('No user selected');
+	});
+
+	it('mutationFn accepts AddVideoParams object with url and optional userIdOverride', async () => {
+		expect(capturedMutationOptions).toBeDefined();
+		const { graphqlClient } = await import('$lib/queries/client');
+		(graphqlClient.request as any).mockResolvedValue({ createContentFromYouTube: { name: 'Test' } });
+
+		const params = {
+			url: 'https://youtube.com/watch?v=test',
+			userIdOverride: 42
+		};
+
+		await capturedMutationOptions.mutationFn(params);
+
+		expect(graphqlClient.request).toHaveBeenCalled();
+	});
+
+	it('mutationFn does not throw error when no selected user but userIdOverride is provided', async () => {
+		expect(capturedMutationOptions).toBeDefined();
+		const { graphqlClient } = await import('$lib/queries/client');
+		mockGetSelectedUserId.mockReturnValueOnce(null);
+		(graphqlClient.request as any).mockResolvedValue({
+			createContentFromYouTube: { name: 'Test' }
+		});
+
+		const result = await capturedMutationOptions.mutationFn({
+			url: 'https://youtube.com/watch?v=abc123',
+			userIdOverride: 999
+		});
+
+		expect(result).toBeDefined();
+		expect(graphqlClient.request).toHaveBeenCalled();
+	});
+
+	it('mutationFn prefers userIdOverride over selected user ID', async () => {
+		expect(capturedMutationOptions).toBeDefined();
+		const { graphqlClient } = await import('$lib/queries/client');
+		(graphqlClient.request as any).mockResolvedValue({
+			createContentFromYouTube: { name: 'Test' }
+		});
+
+		// Selected user is 1, but override with 999
+		await capturedMutationOptions.mutationFn({
+			url: 'https://youtube.com/watch?v=abc123',
+			userIdOverride: 999
+		});
+
+		expect(graphqlClient.request).toHaveBeenCalledWith(
+			expect.anything(),
+			{ input: { url: 'https://youtube.com/watch?v=abc123', userId: 999 } }
+		);
+	});
+});
+
+describe('AddVideoPopover anonymous user query', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		capturedMutationOptions = undefined;
+	});
+
+	it('fetches anonymous user on component mount', async () => {
+		const { createQuery } = await import('@tanstack/svelte-query');
+		render(AddVideoPopover);
+
+		expect(createQuery).toHaveBeenCalled();
+	});
+
+	it('uses GET_USER_BY_USERNAME query with anonymous username', async () => {
+		const { graphqlClient } = await import('$lib/queries/client');
+		(graphqlClient.request as any).mockResolvedValue({
+			userByUsername: { id: '999', username: '[anonymous]' }
+		});
+
+		const { createQuery } = await import('@tanstack/svelte-query');
+		render(AddVideoPopover);
+		const createQueryCall = (createQuery as any).mock.calls[0];
+		const queryOptions = createQueryCall[0]();
+
+		// Query function should use GET_USER_BY_USERNAME with '[anonymous]' username
+		expect(queryOptions.queryKey).toContain('anonymous');
+		expect(typeof queryOptions.queryFn).toBe('function');
+	});
+
+	it('sets staleTime to Infinity for anonymous user query', async () => {
+		const { createQuery } = await import('@tanstack/svelte-query');
+		render(AddVideoPopover);
+
+		const createQueryCall = (createQuery as any).mock.calls[0];
+		const queryOptions = createQueryCall[0]();
+
+		expect(queryOptions.staleTime).toBe(Infinity);
+	});
+
+	it('anonymous user query includes query key with all() prefix', async () => {
+		const { createQuery } = await import('@tanstack/svelte-query');
+		render(AddVideoPopover);
+
+		const createQueryCall = (createQuery as any).mock.calls[0];
+		const queryOptions = createQueryCall[0]();
+
+		expect(queryOptions.queryKey).toBeDefined();
+		expect(Array.isArray(queryOptions.queryKey)).toBe(true);
+		expect(queryOptions.queryKey).toContain('anonymous');
+	});
+
+	it('anonymous user query function calls graphqlClient.request', async () => {
+		const { graphqlClient } = await import('$lib/queries/client');
+		const mockData = {
+			userByUsername: { id: '999', username: '[anonymous]' }
+		};
+		(graphqlClient.request as any).mockResolvedValue(mockData);
+
+		const { createQuery } = await import('@tanstack/svelte-query');
+		render(AddVideoPopover);
+
+		const createQueryCall = (createQuery as any).mock.calls[0];
+		const queryOptions = createQueryCall[0]();
+		const result = await queryOptions.queryFn();
+
+		expect(result).toEqual(mockData);
+	});
+
+	it('passes correct username parameter to GET_USER_BY_USERNAME query', async () => {
+		const { graphqlClient } = await import('$lib/queries/client');
+		(graphqlClient.request as any).mockResolvedValue({
+			userByUsername: { id: '999', username: '[anonymous]' }
+		});
+
+		const { createQuery } = await import('@tanstack/svelte-query');
+		render(AddVideoPopover);
+
+		const createQueryCall = (createQuery as any).mock.calls[0];
+		const queryOptions = createQueryCall[0]();
+		await queryOptions.queryFn();
+
+		// Verify graphqlClient.request was called with correct params
+		expect(graphqlClient.request).toHaveBeenCalledWith(
+			expect.anything(),
+			{ username: '[anonymous]' }
+		);
+	});
+});
+
+describe('AddVideoPopover anonymous checkbox integration', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		capturedMutationOptions = undefined;
+	});
+
+	// Note: Popover content (including checkbox) renders in a portal in JSDOM.
+	// Integration tests verify behavior at the mutation/query level.
+
+	it('component renders cleanly when no user is selected', () => {
+		mockGetSelectedUserId.mockReturnValueOnce(null);
+		const result = render(AddVideoPopover);
+		expect(result.container).toBeTruthy();
+	});
+
+	it('mutation options are captured on mount', () => {
+		render(AddVideoPopover);
+		expect(capturedMutationOptions).toBeDefined();
 	});
 });

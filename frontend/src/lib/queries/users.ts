@@ -35,3 +35,16 @@ export const CREATE_USER = gql`
 		}
 	}
 `;
+
+export interface UserByUsernameResponse {
+	userByUsername: User | null;
+}
+
+export const GET_USER_BY_USERNAME = gql`
+	query GetUserByUsername($username: String!) {
+		userByUsername(username: $username) {
+			id
+			username
+		}
+	}
+`;

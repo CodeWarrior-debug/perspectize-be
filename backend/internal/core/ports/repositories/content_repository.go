@@ -13,4 +13,5 @@ type ContentRepository interface {
 	GetByURL(ctx context.Context, url string) (*domain.Content, error)
 	List(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
 	ReassignByUser(ctx context.Context, fromUserID, toUserID int) error
+	UpdateAttribution(ctx context.Context, contentID, newUserID int) (*domain.Content, error)
 }

@@ -5,12 +5,17 @@ import { CREATE_CONTENT_FROM_YOUTUBE, type CreateContentResponse } from '../cont
 import { queryKeys } from '../keys';
 import { getSelectedUserId } from '$lib/stores/userSelection.svelte';
 
+interface AddVideoParams {
+	url: string;
+	userIdOverride?: number;
+}
+
 export function useAddVideo() {
 	const queryClient = useQueryClient();
 
 	return createMutation(() => ({
-		mutationFn: async (url: string) => {
-			const userId = getSelectedUserId();
+		mutationFn: async ({ url, userIdOverride }: AddVideoParams) => {
+			const userId = userIdOverride ?? getSelectedUserId();
 			if (userId === null) {
 				throw new Error('No user selected');
 			}

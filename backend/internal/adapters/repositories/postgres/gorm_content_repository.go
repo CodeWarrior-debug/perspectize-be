@@ -151,3 +151,19 @@ func (r *GormContentRepository) ReassignByUser(ctx context.Context, fromUserID, 
 		Where("added_by_user_id = ?", fromUserID).
 		Update("added_by_user_id", toUserID).Error
 }
+
+// UpdateAttribution changes the added_by_user_id for a single content record
+func (r *GormContentRepository) UpdateAttribution(ctx context.Context, contentID, newUserID int) (*domain.Content, error) {
+	result := r.db.WithContext(ctx).
+		Model(&ContentModel{}).
+		Where("id = ?", contentID).
+		Update("added_by_user_id", newUserID)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to update content attribution: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return nil, domain.ErrNotFound
+	}
+
+	return r.GetByID(ctx, contentID)
+}

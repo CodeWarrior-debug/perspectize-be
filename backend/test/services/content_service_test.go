@@ -16,10 +16,11 @@ import (
 
 // mockContentRepository implements repositories.ContentRepository for testing
 type mockContentRepository struct {
-	createFn   func(ctx context.Context, content *domain.Content) (*domain.Content, error)
-	getByIDFn  func(ctx context.Context, id int) (*domain.Content, error)
-	getByURLFn func(ctx context.Context, url string) (*domain.Content, error)
-	listFn     func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
+	createFn               func(ctx context.Context, content *domain.Content) (*domain.Content, error)
+	getByIDFn              func(ctx context.Context, id int) (*domain.Content, error)
+	getByURLFn             func(ctx context.Context, url string) (*domain.Content, error)
+	listFn                 func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
+	updateAttributionFn    func(ctx context.Context, contentID, newUserID int) (*domain.Content, error)
 }
 
 func (m *mockContentRepository) Create(ctx context.Context, content *domain.Content) (*domain.Content, error) {
@@ -52,6 +53,13 @@ func (m *mockContentRepository) List(ctx context.Context, params domain.ContentL
 
 func (m *mockContentRepository) ReassignByUser(ctx context.Context, fromUserID, toUserID int) error {
 	return nil
+}
+
+func (m *mockContentRepository) UpdateAttribution(ctx context.Context, contentID, newUserID int) (*domain.Content, error) {
+	if m.updateAttributionFn != nil {
+		return m.updateAttributionFn(ctx, contentID, newUserID)
+	}
+	return nil, domain.ErrNotFound
 }
 
 // mockYouTubeClient implements services.YouTubeClient for testing
@@ -318,6 +326,125 @@ func TestCreateFromYouTube_GetByURLUnexpectedError(t *testing.T) {
 	assert.Nil(t, result)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to check existing content")
+}
+
+// --- UpdateAttribution Tests ---
+
+func TestUpdateAttribution_Success(t *testing.T) {
+	url := "https://youtube.com/watch?v=abc123"
+	expected := &domain.Content{
+		ID:            1,
+		Name:          "Test Video",
+		URL:           &url,
+		ContentType:   domain.ContentTypeYouTube,
+		AddedByUserID: 42, // new user ID
+	}
+
+	repo := &mockContentRepository{
+		updateAttributionFn: func(ctx context.Context, contentID, newUserID int) (*domain.Content, error) {
+			assert.Equal(t, 1, contentID)
+			assert.Equal(t, 42, newUserID)
+			return expected, nil
+		},
+	}
+
+	svc := services.NewContentService(repo, &mockYouTubeClient{})
+	result, err := svc.UpdateAttribution(context.Background(), 1, 42)
+
+	require.NoError(t, err)
+	assert.Equal(t, expected, result)
+	assert.Equal(t, 42, result.AddedByUserID)
+}
+
+func TestUpdateAttribution_ContentIDZero(t *testing.T) {
+	repo := &mockContentRepository{}
+	svc := services.NewContentService(repo, &mockYouTubeClient{})
+
+	result, err := svc.UpdateAttribution(context.Background(), 0, 42)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
+	assert.Contains(t, err.Error(), "content id must be a positive integer")
+}
+
+func TestUpdateAttribution_ContentIDNegative(t *testing.T) {
+	repo := &mockContentRepository{}
+	svc := services.NewContentService(repo, &mockYouTubeClient{})
+
+	result, err := svc.UpdateAttribution(context.Background(), -5, 42)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
+	assert.Contains(t, err.Error(), "content id must be a positive integer")
+}
+
+func TestUpdateAttribution_NewUserIDZero(t *testing.T) {
+	repo := &mockContentRepository{}
+	svc := services.NewContentService(repo, &mockYouTubeClient{})
+
+	result, err := svc.UpdateAttribution(context.Background(), 1, 0)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
+	assert.Contains(t, err.Error(), "user id must be a positive integer")
+}
+
+func TestUpdateAttribution_NewUserIDNegative(t *testing.T) {
+	repo := &mockContentRepository{}
+	svc := services.NewContentService(repo, &mockYouTubeClient{})
+
+	result, err := svc.UpdateAttribution(context.Background(), 1, -10)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
+	assert.Contains(t, err.Error(), "user id must be a positive integer")
+}
+
+func TestUpdateAttribution_ContentNotFound(t *testing.T) {
+	repo := &mockContentRepository{
+		updateAttributionFn: func(ctx context.Context, contentID, newUserID int) (*domain.Content, error) {
+			return nil, domain.ErrNotFound
+		},
+	}
+
+	svc := services.NewContentService(repo, &mockYouTubeClient{})
+	result, err := svc.UpdateAttribution(context.Background(), 999, 42)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrNotFound))
+}
+
+func TestUpdateAttribution_RepositoryError(t *testing.T) {
+	repo := &mockContentRepository{
+		updateAttributionFn: func(ctx context.Context, contentID, newUserID int) (*domain.Content, error) {
+			return nil, fmt.Errorf("database connection failed")
+		},
+	}
+
+	svc := services.NewContentService(repo, &mockYouTubeClient{})
+	result, err := svc.UpdateAttribution(context.Background(), 1, 42)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to update content attribution")
+}
+
+func TestUpdateAttribution_BothIDsInvalid(t *testing.T) {
+	repo := &mockContentRepository{}
+	svc := services.NewContentService(repo, &mockYouTubeClient{})
+
+	result, err := svc.UpdateAttribution(context.Background(), 0, 0)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
+	// Error should be for contentID since it's checked first
+	assert.Contains(t, err.Error(), "content id must be a positive integer")
 }
 
 // --- NewContentService Tests ---

@@ -2,10 +2,12 @@ import { describe, it, expect } from 'vitest';
 import {
 	LIST_USERS,
 	CREATE_USER,
+	GET_USER_BY_USERNAME,
 	type User,
 	type UsersResponse,
 	type CreateUserInput,
-	type CreateUserResponse
+	type CreateUserResponse,
+	type UserByUsernameResponse
 } from '$lib/queries/users';
 
 describe('User Queries', () => {
@@ -35,6 +37,21 @@ describe('User Queries', () => {
 				createUser: { id: '1', username: 'newuser' }
 			};
 			expect(response).toBeDefined();
+		});
+
+		it('exports UserByUsernameResponse interface', () => {
+			const response: UserByUsernameResponse = {
+				userByUsername: { id: '999', username: '[anonymous]' }
+			};
+			expect(response).toBeDefined();
+		});
+
+		it('UserByUsernameResponse allows null for userByUsername (user not found)', () => {
+			const response: UserByUsernameResponse = {
+				userByUsername: null
+			};
+			expect(response).toBeDefined();
+			expect(response.userByUsername).toBeNull();
 		});
 	});
 
@@ -80,6 +97,45 @@ describe('User Queries', () => {
 
 		it('does not request email in the response', () => {
 			expect(CREATE_USER).not.toContain('email');
+		});
+	});
+
+	describe('GET_USER_BY_USERNAME', () => {
+		it('is exported as a string', () => {
+			expect(typeof GET_USER_BY_USERNAME).toBe('string');
+		});
+
+		it('contains the GetUserByUsername operation name', () => {
+			expect(GET_USER_BY_USERNAME).toContain('GetUserByUsername');
+		});
+
+		it('is a query operation', () => {
+			expect(GET_USER_BY_USERNAME).toContain('query');
+		});
+
+		it('takes a username parameter', () => {
+			expect(GET_USER_BY_USERNAME).toContain('$username: String!');
+		});
+
+		it('calls userByUsername query', () => {
+			expect(GET_USER_BY_USERNAME).toContain('userByUsername(username: $username)');
+		});
+
+		it('requests id and username fields in response', () => {
+			expect(GET_USER_BY_USERNAME).toContain('id');
+			expect(GET_USER_BY_USERNAME).toContain('username');
+		});
+
+		it('does not request email or timestamps in response', () => {
+			expect(GET_USER_BY_USERNAME).not.toContain('email');
+			expect(GET_USER_BY_USERNAME).not.toContain('createdAt');
+			expect(GET_USER_BY_USERNAME).not.toContain('updatedAt');
+		});
+
+		it('supports anonymous username parameter', () => {
+			// This test verifies the query structure, not the actual operation
+			// The query is designed to support any string username, including [anonymous]
+			expect(GET_USER_BY_USERNAME).toContain('userByUsername');
 		});
 	});
 });

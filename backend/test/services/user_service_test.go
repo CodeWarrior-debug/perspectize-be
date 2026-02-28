@@ -97,6 +97,9 @@ func (m *mockContentRepoForUser) ReassignByUser(ctx context.Context, fromUserID,
 	}
 	return nil
 }
+func (m *mockContentRepoForUser) UpdateAttribution(ctx context.Context, contentID, newUserID int) (*domain.Content, error) {
+	return nil, domain.ErrNotFound
+}
 
 // mockPerspectiveRepoForUser implements repositories.PerspectiveRepository for user tests
 type mockPerspectiveRepoForUser struct {

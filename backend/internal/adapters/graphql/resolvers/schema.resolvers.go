@@ -39,6 +39,27 @@ func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input m
 	return domainToModel(content), nil
 }
 
+// UpdateContentAttribution is the resolver for the updateContentAttribution field.
+func (r *mutationResolver) UpdateContentAttribution(ctx context.Context, input model.UpdateContentAttributionInput) (*model.Content, error) {
+	content, err := r.ContentService.UpdateAttribution(ctx, input.ContentID, input.UserID)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("content not found")
+		}
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		slog.Error("updating content attribution failed",
+			"error", err,
+			"contentID", input.ContentID,
+			"userID", input.UserID,
+		)
+		return nil, fmt.Errorf("failed to update content attribution")
+	}
+
+	return domainToModel(content), nil
+}
+
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error) {
 	email := ""

@@ -10,6 +10,10 @@ const DeletedUserUsername = "[deleted]"
 // created before user tracking was added. Seeded by migration 000007.
 const SystemUserUsername = "[system]"
 
+// AnonymousUserUsername is the sentinel user for content added without
+// attribution (genuinely unattributed or privacy-motivated). Seeded by migration 000011.
+const AnonymousUserUsername = "[anonymous]"
+
 // UserRole represents the role of a user in the system.
 type UserRole string
 
@@ -30,7 +34,7 @@ type User struct {
 	UpdatedAt time.Time
 }
 
-// IsSentinel returns true if this is a system sentinel user ([deleted] or [system]).
+// IsSentinel returns true if this is a system sentinel user ([deleted], [system], or [anonymous]).
 func (u *User) IsSentinel() bool {
 	return u.Role == UserRoleSentinel
 }

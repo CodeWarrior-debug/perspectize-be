@@ -124,3 +124,21 @@ export const CREATE_CONTENT_FROM_YOUTUBE = gql`
 		}
 	}
 `;
+
+export interface UpdateContentAttributionResponse {
+	updateContentAttribution: {
+		id: string;
+		name: string;
+		addedByUserID: string;
+	};
+}
+
+export const UPDATE_CONTENT_ATTRIBUTION = gql`
+	mutation UpdateContentAttribution($input: UpdateContentAttributionInput!) {
+		updateContentAttribution(input: $input) {
+			id
+			name
+			addedByUserID
+		}
+	}
+`;

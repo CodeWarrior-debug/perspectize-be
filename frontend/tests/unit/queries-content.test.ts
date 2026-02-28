@@ -3,9 +3,11 @@ import {
 	LIST_CONTENT,
 	GET_CONTENT,
 	CREATE_CONTENT_FROM_YOUTUBE,
+	UPDATE_CONTENT_ATTRIBUTION,
 	type ContentItem,
 	type ContentResponse,
 	type CreateContentResponse,
+	type UpdateContentAttributionResponse,
 } from '$lib/queries/content';
 
 describe('GraphQL query definitions', () => {
@@ -62,6 +64,29 @@ describe('GraphQL query definitions', () => {
 				},
 			};
 			expect(response).toBeDefined();
+		});
+
+		it('exports UpdateContentAttributionResponse interface', () => {
+			const response: UpdateContentAttributionResponse = {
+				updateContentAttribution: {
+					id: '1',
+					name: 'Test Video',
+					addedByUserID: '999'
+				}
+			};
+			expect(response).toBeDefined();
+		});
+
+		it('UpdateContentAttributionResponse has correct structure for anonymous updates', () => {
+			const response: UpdateContentAttributionResponse = {
+				updateContentAttribution: {
+					id: '123',
+					name: 'Some Video',
+					addedByUserID: '999' // anonymous user ID
+				}
+			};
+			expect(response.updateContentAttribution.id).toBe('123');
+			expect(response.updateContentAttribution.addedByUserID).toBe('999');
 		});
 	});
 
@@ -183,6 +208,53 @@ describe('GraphQL query definitions', () => {
 
 		it('requests createdAt timestamp', () => {
 			expect(CREATE_CONTENT_FROM_YOUTUBE).toContain('createdAt');
+		});
+	});
+
+	describe('UPDATE_CONTENT_ATTRIBUTION', () => {
+		it('is defined and is a string', () => {
+			expect(UPDATE_CONTENT_ATTRIBUTION).toBeDefined();
+			expect(typeof UPDATE_CONTENT_ATTRIBUTION).toBe('string');
+		});
+
+		it('contains the UpdateContentAttribution operation name', () => {
+			expect(UPDATE_CONTENT_ATTRIBUTION).toContain('UpdateContentAttribution');
+		});
+
+		it('is a mutation operation', () => {
+			expect(UPDATE_CONTENT_ATTRIBUTION).toContain('mutation');
+		});
+
+		it('takes UpdateContentAttributionInput input type', () => {
+			expect(UPDATE_CONTENT_ATTRIBUTION).toContain('$input: UpdateContentAttributionInput!');
+		});
+
+		it('calls updateContentAttribution mutation', () => {
+			expect(UPDATE_CONTENT_ATTRIBUTION).toContain('updateContentAttribution(input: $input)');
+		});
+
+		it('requests id field in response', () => {
+			expect(UPDATE_CONTENT_ATTRIBUTION).toContain('id');
+		});
+
+		it('requests name field in response', () => {
+			expect(UPDATE_CONTENT_ATTRIBUTION).toContain('name');
+		});
+
+		it('requests addedByUserID field in response', () => {
+			expect(UPDATE_CONTENT_ATTRIBUTION).toContain('addedByUserID');
+		});
+
+		it('does not request timestamps in response', () => {
+			expect(UPDATE_CONTENT_ATTRIBUTION).not.toContain('createdAt');
+			expect(UPDATE_CONTENT_ATTRIBUTION).not.toContain('updatedAt');
+		});
+
+		it('supports updating content to anonymous user attribution', () => {
+			// The mutation is designed to support updating attribution to any user ID,
+			// including the anonymous sentinel user ID
+			expect(UPDATE_CONTENT_ATTRIBUTION).toContain('updateContentAttribution');
+			expect(UPDATE_CONTENT_ATTRIBUTION).toContain('addedByUserID');
 		});
 	});
 });

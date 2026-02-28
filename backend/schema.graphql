@@ -195,8 +195,14 @@ input PerspectiveFilter {
   privacy: Privacy
 }
 
+input UpdateContentAttributionInput {
+  contentId: IntID!
+  userId: IntID!
+}
+
 type Mutation {
   createContentFromYouTube(input: CreateContentFromYouTubeInput!): Content!
+  updateContentAttribution(input: UpdateContentAttributionInput!): Content!
 
   # User mutations
   createUser(input: CreateUserInput!): User!

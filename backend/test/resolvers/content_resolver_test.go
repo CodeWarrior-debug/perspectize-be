@@ -59,6 +59,10 @@ func (m *mockContentRepository) ReassignByUser(ctx context.Context, fromUserID, 
 	return nil
 }
 
+func (m *mockContentRepository) UpdateAttribution(ctx context.Context, contentID, newUserID int) (*domain.Content, error) {
+	return &domain.Content{ID: contentID, AddedByUserID: newUserID}, nil
+}
+
 // mockYouTubeClient implements services.YouTubeClient for testing
 type mockYouTubeClient struct {
 	getVideoMetadataFn func(ctx context.Context, videoID string) (*portservices.VideoMetadata, error)

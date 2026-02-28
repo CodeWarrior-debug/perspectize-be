@@ -80,6 +80,7 @@ type ComplexityRoot struct {
 		CreateUser               func(childComplexity int, input model.CreateUserInput) int
 		DeletePerspective        func(childComplexity int, id string) int
 		DeleteUser               func(childComplexity int, id string) int
+		UpdateContentAttribution func(childComplexity int, input model.UpdateContentAttributionInput) int
 		UpdatePerspective        func(childComplexity int, input model.UpdatePerspectiveInput) int
 		UpdateUser               func(childComplexity int, input model.UpdateUserInput) int
 	}
@@ -136,9 +137,11 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
+		Active    func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
 		Email     func(childComplexity int) int
 		ID        func(childComplexity int) int
+		Role      func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
 		Username  func(childComplexity int) int
 	}
@@ -146,6 +149,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateContentFromYouTube(ctx context.Context, input model.CreateContentFromYouTubeInput) (*model.Content, error)
+	UpdateContentAttribution(ctx context.Context, input model.UpdateContentAttributionInput) (*model.Content, error)
 	CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error)
 	UpdateUser(ctx context.Context, input model.UpdateUserInput) (*model.User, error)
 	DeleteUser(ctx context.Context, id string) (bool, error)
@@ -359,6 +363,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteUser(childComplexity, args["id"].(string)), true
+	case "Mutation.updateContentAttribution":
+		if e.complexity.Mutation.UpdateContentAttribution == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateContentAttribution_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateContentAttribution(childComplexity, args["input"].(model.UpdateContentAttributionInput)), true
 	case "Mutation.updatePerspective":
 		if e.complexity.Mutation.UpdatePerspective == nil {
 			break
@@ -633,6 +648,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.Users(childComplexity), true
 
+	case "User.active":
+		if e.complexity.User.Active == nil {
+			break
+		}
+
+		return e.complexity.User.Active(childComplexity), true
 	case "User.createdAt":
 		if e.complexity.User.CreatedAt == nil {
 			break
@@ -651,6 +672,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.User.ID(childComplexity), true
+	case "User.role":
+		if e.complexity.User.Role == nil {
+			break
+		}
+
+		return e.complexity.User.Role(childComplexity), true
 	case "User.updatedAt":
 		if e.complexity.User.UpdatedAt == nil {
 			break
@@ -678,6 +705,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreatePerspectiveInput,
 		ec.unmarshalInputCreateUserInput,
 		ec.unmarshalInputPerspectiveFilter,
+		ec.unmarshalInputUpdateContentAttributionInput,
 		ec.unmarshalInputUpdatePerspectiveInput,
 		ec.unmarshalInputUpdateUserInput,
 	)
@@ -974,8 +1002,14 @@ input PerspectiveFilter {
   privacy: Privacy
 }
 
+input UpdateContentAttributionInput {
+  contentId: IntID!
+  userId: IntID!
+}
+
 type Mutation {
   createContentFromYouTube(input: CreateContentFromYouTubeInput!): Content!
+  updateContentAttribution(input: UpdateContentAttributionInput!): Content!
 
   # User mutations
   createUser(input: CreateUserInput!): User!
@@ -1082,6 +1116,17 @@ func (ec *executionContext) field_Mutation_deleteUser_args(ctx context.Context, 
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateContentAttribution_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateContentAttributionInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUpdateContentAttributionInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -1975,6 +2020,85 @@ func (ec *executionContext) fieldContext_Mutation_createContentFromYouTube(ctx c
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createContentFromYouTube_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateContentAttribution(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateContentAttribution,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateContentAttribution(ctx, fc.Args["input"].(model.UpdateContentAttributionInput))
+		},
+		nil,
+		ec.marshalNContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateContentAttribution(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Content_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Content_name(ctx, field)
+			case "url":
+				return ec.fieldContext_Content_url(ctx, field)
+			case "contentType":
+				return ec.fieldContext_Content_contentType(ctx, field)
+			case "addedByUserID":
+				return ec.fieldContext_Content_addedByUserID(ctx, field)
+			case "addedBy":
+				return ec.fieldContext_Content_addedBy(ctx, field)
+			case "length":
+				return ec.fieldContext_Content_length(ctx, field)
+			case "lengthUnits":
+				return ec.fieldContext_Content_lengthUnits(ctx, field)
+			case "viewCount":
+				return ec.fieldContext_Content_viewCount(ctx, field)
+			case "likeCount":
+				return ec.fieldContext_Content_likeCount(ctx, field)
+			case "commentCount":
+				return ec.fieldContext_Content_commentCount(ctx, field)
+			case "channelTitle":
+				return ec.fieldContext_Content_channelTitle(ctx, field)
+			case "publishedAt":
+				return ec.fieldContext_Content_publishedAt(ctx, field)
+			case "tags":
+				return ec.fieldContext_Content_tags(ctx, field)
+			case "description":
+				return ec.fieldContext_Content_description(ctx, field)
+			case "response":
+				return ec.fieldContext_Content_response(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Content_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Content_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Content", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateContentAttribution_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -5814,6 +5938,40 @@ func (ec *executionContext) unmarshalInputPerspectiveFilter(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateContentAttributionInput(ctx context.Context, obj any) (model.UpdateContentAttributionInput, error) {
+	var it model.UpdateContentAttributionInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"contentId", "userId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "contentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contentId"))
+			data, err := ec.unmarshalNIntID2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ContentID = data
+		case "userId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+			data, err := ec.unmarshalNIntID2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UserID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Context, obj any) (model.UpdatePerspectiveInput, error) {
 	var it model.UpdatePerspectiveInput
 	asMap := map[string]any{}
@@ -6135,6 +6293,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "createContentFromYouTube":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createContentFromYouTube(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateContentAttribution":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateContentAttribution(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -7292,23 +7457,6 @@ func (ec *executionContext) marshalNPrivacy2githubᚗcomᚋCodeWarriorᚑdebug�
 	return res
 }
 
-func (ec *executionContext) unmarshalNUserRole2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐUserRole(ctx context.Context, v any) (domain.UserRole, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := domain.UserRole(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNUserRole2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐUserRole(ctx context.Context, sel ast.SelectionSet, v domain.UserRole) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7323,6 +7471,11 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNUpdateContentAttributionInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUpdateContentAttributionInput(ctx context.Context, v any) (model.UpdateContentAttributionInput, error) {
+	res, err := ec.unmarshalInputUpdateContentAttributionInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNUpdatePerspectiveInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUpdatePerspectiveInput(ctx context.Context, v any) (model.UpdatePerspectiveInput, error) {
@@ -7391,6 +7544,23 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebug�
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUserRole2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐUserRole(ctx context.Context, v any) (domain.UserRole, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.UserRole(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUserRole2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐUserRole(ctx context.Context, sel ast.SelectionSet, v domain.UserRole) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {

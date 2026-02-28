@@ -169,7 +169,7 @@ describe('AddVideoDialog mutation callbacks', () => {
 		expect(capturedMutationOptions).toBeDefined();
 		const { graphqlClient } = await import('$lib/queries/client');
 		(graphqlClient.request as any).mockResolvedValue({ createContentFromYouTube: { name: 'Test' } });
-		await capturedMutationOptions.mutationFn('https://youtube.com/watch?v=abc123');
+		await capturedMutationOptions.mutationFn({ url: 'https://youtube.com/watch?v=abc123' });
 		expect(graphqlClient.request).toHaveBeenCalledWith(
 			expect.anything(),
 			{ input: { url: 'https://youtube.com/watch?v=abc123', userId: 1 } }
@@ -179,7 +179,7 @@ describe('AddVideoDialog mutation callbacks', () => {
 	it('mutationFn throws when no user is selected', async () => {
 		expect(capturedMutationOptions).toBeDefined();
 		mockGetSelectedUserId.mockReturnValueOnce(null);
-		await expect(capturedMutationOptions.mutationFn('https://youtube.com/watch?v=abc123'))
+		await expect(capturedMutationOptions.mutationFn({ url: 'https://youtube.com/watch?v=abc123' }))
 			.rejects.toThrow('No user selected');
 	});
 });

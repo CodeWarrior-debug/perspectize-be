@@ -16,4 +16,7 @@ type ContentService interface {
 
 	// ListContent retrieves a paginated list of content
 	ListContent(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
+
+	// UpdateAttribution changes the user attribution of a content record
+	UpdateAttribution(ctx context.Context, contentID, newUserID int) (*domain.Content, error)
 }
