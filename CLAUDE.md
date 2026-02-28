@@ -18,6 +18,8 @@ Monorepo with two stacks:
 
 ⚠️ **DO NOT use MCP qmd tools** — use Bash commands only. MCP is not available in all contexts.
 
+⚠️ **Cloud sessions (claude.ai/code web):** qmd is NOT available. Skip qmd entirely and use Read/Glob/Grep directly.
+
 **Allowed commands (pre-approved):**
 - `qmd search *` — keyword search
 - `qmd vsearch *` — semantic search
@@ -141,6 +143,10 @@ Include: GSD Plan Reference (`.planning/phases/{phase}/{plan}-PLAN.md`), accepta
 defer db.Close()
 ```
 
+**No chained bash commands:** Do not use `&&` to chain shell commands. Run each command as a separate Bash tool call. Chained commands don't match permission allow-list patterns and block on approval prompts. This applies to all agents and subagents.
+
+**Migration numbering:** Always check existing migration files before creating new ones. Plan-specified numbers may be stale — use `ls backend/migrations/ | tail -5` to find the next available number.
+
 **Commit messages:** Conventional commit format (`feat`, `fix`, `refactor`, `chore`, `docs`, `test`). One logical change per commit. GSD planning work (PLAN.md, CONTEXT.md, RESEARCH.md, ROADMAP.md) uses the `docs` tag — e.g., `docs(11,13): create execution plans`.
 
 ## GSD Workflow
@@ -163,6 +169,8 @@ Planning and execution artifacts in `.planning/`: `PROJECT.md`, `ROADMAP.md`, `S
 
 Run the relevant subset (e.g., backend-only changes skip step 3). Report results explicitly — don't just say "tests pass", show the output summary.
 
+**GSD verification is not self-verification.** The GSD verifier checks must_haves against codebase structure. It does NOT run builds or tests. Always run the full checklist (build, backend tests, frontend tests) before creating a PR, even after GSD verification passes.
+
 See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow.
 
 ## Resources
@@ -182,6 +190,7 @@ See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow
 **How-to guides:**
 - [Adding an AG Grid Column](.claude/docs/ADDING_AG_GRID_COLUMN.md) — Decision checklist for adding columns to the ActivityTable
 - [Adding a Content Type](.claude/docs/ADDING_CONTENT_TYPE.md) — End-to-end guide for new content types (backend + frontend)
+- [Code to Figma Canvas](.claude/docs/CODE_TO_FIGMA_CANVAS.md) — Capture running app into Figma to keep designs in sync
 
 **Planning & backlog:**
 - [Feature Backlog](FEATURE_BACKLOG.md) — Future ideas and enhancements not tied to any milestone. Capture ideas here during development; evaluate when planning new work.

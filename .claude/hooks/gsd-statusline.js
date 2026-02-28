@@ -16,6 +16,8 @@ process.stdin.on('end', () => {
     const model = data.model?.display_name || 'Claude';
     const dir = data.workspace?.current_dir || process.cwd();
     const session = data.session_id || '';
+    // session_name is set via /rename; fall back to a short session_id prefix
+    const sessionLabel = data.session_name || (session ? session.slice(0, 8) : '');
     const remaining = data.context_window?.remaining_percentage;
 
     // Context window display (shows USED percentage scaled to 80% limit)
@@ -26,6 +28,23 @@ process.stdin.on('end', () => {
       const rawUsed = Math.max(0, Math.min(100, 100 - rem));
       // Scale: 80% real usage = 100% displayed
       const used = Math.min(100, Math.round((rawUsed / 80) * 100));
+
+      // Write context metrics to bridge file for the context-monitor PostToolUse hook.
+      // The monitor reads this file to inject agent-facing warnings when context is low.
+      if (session) {
+        try {
+          const bridgePath = path.join(os.tmpdir(), `claude-ctx-${session}.json`);
+          const bridgeData = JSON.stringify({
+            session_id: session,
+            remaining_percentage: remaining,
+            used_pct: used,
+            timestamp: Math.floor(Date.now() / 1000)
+          });
+          fs.writeFileSync(bridgePath, bridgeData);
+        } catch (e) {
+          // Silent fail -- bridge is best-effort, don't break statusline
+        }
+      }
 
       // Build progress bar (10 segments)
       const filled = Math.floor(used / 10);
@@ -80,10 +99,11 @@ process.stdin.on('end', () => {
 
     // Output
     const dirname = path.basename(dir);
+    const sessionPart = sessionLabel ? ` \x1b[36m[${sessionLabel}]\x1b[0m` : '';
     if (task) {
-      process.stdout.write(`${gsdUpdate}\x1b[2m${model}\x1b[0m │ \x1b[1m${task}\x1b[0m │ \x1b[2m${dirname}\x1b[0m${ctx}`);
+      process.stdout.write(`${gsdUpdate}\x1b[2m${model}\x1b[0m │ \x1b[1m${task}\x1b[0m │ \x1b[2m${dirname}\x1b[0m${sessionPart}${ctx}`);
     } else {
-      process.stdout.write(`${gsdUpdate}\x1b[2m${model}\x1b[0m │ \x1b[2m${dirname}\x1b[0m${ctx}`);
+      process.stdout.write(`${gsdUpdate}\x1b[2m${model}\x1b[0m │ \x1b[2m${dirname}\x1b[0m${sessionPart}${ctx}`);
     }
   } catch (e) {
     // Silent fail - don't break statusline on parse errors

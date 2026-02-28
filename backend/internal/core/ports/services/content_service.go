@@ -6,6 +6,13 @@ import (
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 )
 
+// CreateClaimInput holds the input for creating a claim content entry
+type CreateClaimInput struct {
+	Text            string
+	UserID          int
+	ParentContentID int
+}
+
 // ContentService defines the contract for content business logic
 type ContentService interface {
 	// CreateFromYouTube creates content from a YouTube URL, attributed to the given user
@@ -16,4 +23,7 @@ type ContentService interface {
 
 	// ListContent retrieves a paginated list of content
 	ListContent(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
+
+	// CreateClaim creates a new claim content entry associated with a parent content item
+	CreateClaim(ctx context.Context, input CreateClaimInput) (*domain.Content, error)
 }

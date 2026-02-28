@@ -143,6 +143,23 @@ func perspectiveModelToDomain(m *PerspectiveModel) *domain.Perspective {
 		}
 	}
 
+	// PrimaryPerspectiveID: direct copy
+	p.PrimaryPerspectiveID = m.PrimaryPerspectiveID
+
+	// RelatedPerspectiveIDs: convert int64 to int (same pattern as Parts)
+	if len(m.RelatedPerspectiveIDs) > 0 {
+		p.RelatedPerspectiveIDs = make([]int, len(m.RelatedPerspectiveIDs))
+		for i, v := range m.RelatedPerspectiveIDs {
+			p.RelatedPerspectiveIDs[i] = int(v)
+		}
+	}
+
+	// CustomFields: direct copy
+	p.CustomFields = m.CustomFields
+
+	// Review: direct copy
+	p.Review = m.Review
+
 	return p
 }
 
@@ -200,6 +217,23 @@ func perspectiveDomainToModel(p *domain.Perspective) *PerspectiveModel {
 			m.CategorizedRatings[i] = string(data)
 		}
 	}
+
+	// PrimaryPerspectiveID: direct copy
+	m.PrimaryPerspectiveID = p.PrimaryPerspectiveID
+
+	// RelatedPerspectiveIDs: convert int to int64 (same pattern as Parts)
+	if len(p.RelatedPerspectiveIDs) > 0 {
+		m.RelatedPerspectiveIDs = make(Int64Array, len(p.RelatedPerspectiveIDs))
+		for i, v := range p.RelatedPerspectiveIDs {
+			m.RelatedPerspectiveIDs[i] = int64(v)
+		}
+	}
+
+	// CustomFields: direct copy
+	m.CustomFields = p.CustomFields
+
+	// Review: direct copy
+	m.Review = p.Review
 
 	return m
 }

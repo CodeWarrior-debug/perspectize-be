@@ -355,3 +355,28 @@ An AI-powered assistant integrated into the platform to help users discover, ref
 - Start with one focused capability (e.g., perspective refinement) rather than trying to do everything
 
 **Source:** Feature discussion (2026-02-16)
+
+---
+
+## Perspectize Column Sorting & Filtering
+
+The Perspectize column in the ActivityTable currently shows a glasses icon for adding/viewing perspectives but doesn't support AG Grid sorting or filtering. Users should be able to sort and filter content by perspective status.
+
+**Sorting options:**
+- Has perspective vs. no perspective (binary)
+- Number of perspectives per content item
+- Most recently perspectized
+
+**Filtering options:**
+- Show only items with perspectives
+- Show only items without perspectives (to find content needing review)
+- Filter by perspective count range
+
+**Implementation considerations:**
+- May require a computed/derived field (perspective count or boolean) exposed in the GraphQL content query
+- Backend needs to support sorting/filtering on perspective-related fields (JOIN or denormalized count column)
+- AG Grid column definition needs `sortable: true` and appropriate filter type
+
+**Priority:** Medium — improves discoverability of un-perspectized content.
+
+**Source:** User feedback (2026-02-27)

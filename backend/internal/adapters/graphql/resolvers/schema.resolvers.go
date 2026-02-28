@@ -7,6 +7,7 @@ package resolvers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -63,7 +64,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 			return nil, fmt.Errorf("invalid input: %w", err)
 		}
 		slog.Error("creating user failed", "error", err)
-		return nil, fmt.Errorf("failed to create user")
+		return nil, fmt.Errorf("failed to create user: %v", err)
 	}
 
 	return userDomainToModel(user), nil
@@ -92,7 +93,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUse
 			return nil, fmt.Errorf("cannot modify system user")
 		}
 		slog.Error("updating user failed", "error", err)
-		return nil, fmt.Errorf("failed to update user")
+		return nil, fmt.Errorf("failed to update user: %v", err)
 	}
 
 	return userDomainToModel(user), nil
@@ -126,21 +127,32 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, err
 // CreatePerspective is the resolver for the createPerspective field.
 func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.CreatePerspectiveInput) (*model.Perspective, error) {
 	serviceInput := portservices.CreatePerspectiveInput{
-		UserID:      input.UserID,
-		Quality:     input.Quality,
-		Agreement:   input.Agreement,
-		Importance:  input.Importance,
-		Confidence:  input.Confidence,
-		Like:        input.Like,
-		Privacy:     input.Privacy,
-		Description: input.Description,
-		Category:    input.Category,
-		Parts:       input.Parts,
-		Labels:      input.Labels,
+		UserID:                input.UserID,
+		Quality:               input.Quality,
+		Agreement:             input.Agreement,
+		Importance:            input.Importance,
+		Confidence:            input.Confidence,
+		Like:                  input.Like,
+		Privacy:               input.Privacy,
+		Description:           input.Description,
+		Category:              input.Category,
+		Parts:                 input.Parts,
+		Labels:                input.Labels,
+		PrimaryPerspectiveID:  input.PrimaryPerspectiveID,
+		RelatedPerspectiveIDs: input.RelatedPerspectiveIDs,
+		Review:                input.Review,
 	}
 
 	if input.ContentID != nil {
 		serviceInput.ContentID = input.ContentID
+	}
+
+	// Convert customFields map to JSON
+	if input.CustomFields != nil {
+		data, err := json.Marshal(input.CustomFields)
+		if err == nil {
+			serviceInput.CustomFields = data
+		}
 	}
 
 	// Convert categorized ratings
@@ -166,7 +178,7 @@ func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.Cr
 			return nil, fmt.Errorf("user not found: %w", err)
 		}
 		slog.Error("creating perspective failed", "error", err)
-		return nil, fmt.Errorf("failed to create perspective")
+		return nil, fmt.Errorf("failed to create perspective: %v", err)
 	}
 
 	return perspectiveDomainToModel(perspective), nil
@@ -175,22 +187,33 @@ func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.Cr
 // UpdatePerspective is the resolver for the updatePerspective field.
 func (r *mutationResolver) UpdatePerspective(ctx context.Context, input model.UpdatePerspectiveInput) (*model.Perspective, error) {
 	serviceInput := portservices.UpdatePerspectiveInput{
-		ID:           input.ID,
-		Quality:      input.Quality,
-		Agreement:    input.Agreement,
-		Importance:   input.Importance,
-		Confidence:   input.Confidence,
-		Like:         input.Like,
-		Privacy:      input.Privacy,
-		Description:  input.Description,
-		Category:     input.Category,
-		ReviewStatus: input.ReviewStatus,
-		Parts:        input.Parts,
-		Labels:       input.Labels,
+		ID:                    input.ID,
+		Quality:               input.Quality,
+		Agreement:             input.Agreement,
+		Importance:            input.Importance,
+		Confidence:            input.Confidence,
+		Like:                  input.Like,
+		Privacy:               input.Privacy,
+		Description:           input.Description,
+		Category:              input.Category,
+		ReviewStatus:          input.ReviewStatus,
+		Parts:                 input.Parts,
+		Labels:                input.Labels,
+		PrimaryPerspectiveID:  input.PrimaryPerspectiveID,
+		RelatedPerspectiveIDs: input.RelatedPerspectiveIDs,
+		Review:                input.Review,
 	}
 
 	if input.ContentID != nil {
 		serviceInput.ContentID = input.ContentID
+	}
+
+	// Convert customFields map to JSON
+	if input.CustomFields != nil {
+		data, err := json.Marshal(input.CustomFields)
+		if err == nil {
+			serviceInput.CustomFields = data
+		}
 	}
 
 	// Convert categorized ratings
@@ -216,7 +239,7 @@ func (r *mutationResolver) UpdatePerspective(ctx context.Context, input model.Up
 			return nil, fmt.Errorf("invalid input: %w", err)
 		}
 		slog.Error("updating perspective failed", "error", err)
-		return nil, fmt.Errorf("failed to update perspective")
+		return nil, fmt.Errorf("failed to update perspective: %v", err)
 	}
 
 	return perspectiveDomainToModel(perspective), nil
@@ -242,6 +265,31 @@ func (r *mutationResolver) DeletePerspective(ctx context.Context, id string) (bo
 	}
 
 	return true, nil
+}
+
+// CreateClaim is the resolver for the createClaim field.
+func (r *mutationResolver) CreateClaim(ctx context.Context, input model.CreateClaimInput) (*model.Content, error) {
+	content, err := r.ContentService.CreateClaim(ctx, portservices.CreateClaimInput{
+		Text:            input.Text,
+		UserID:          input.UserID,
+		ParentContentID: input.ParentContentID,
+	})
+	if err != nil {
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("parent content not found")
+		}
+		slog.Error("creating claim failed",
+			"error", err,
+			"userID", input.UserID,
+			"parentContentID", input.ParentContentID,
+		)
+		return nil, fmt.Errorf("failed to create claim: %v", err)
+	}
+
+	return domainToModel(content), nil
 }
 
 // ContentByID is the resolver for the contentByID field.

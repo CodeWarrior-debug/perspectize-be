@@ -142,5 +142,21 @@ func perspectiveDomainToModel(p *domain.Perspective) *model.Perspective {
 		}
 	}
 
+	// Convert new perspective reference fields
+	if p.PrimaryPerspectiveID != nil {
+		ppID := strconv.Itoa(*p.PrimaryPerspectiveID)
+		m.PrimaryPerspectiveID = &ppID
+	}
+	if len(p.RelatedPerspectiveIDs) > 0 {
+		m.RelatedPerspectiveIDs = p.RelatedPerspectiveIDs
+	}
+	if len(p.CustomFields) > 0 {
+		var customMap map[string]any
+		if err := json.Unmarshal(p.CustomFields, &customMap); err == nil {
+			m.CustomFields = customMap
+		}
+	}
+	m.Review = p.Review
+
 	return m
 }
