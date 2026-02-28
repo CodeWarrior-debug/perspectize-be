@@ -950,6 +950,101 @@ func TestPaginatedContentQuery_WithMinMaxLengthFilter(t *testing.T) {
 	assert.Len(t, data.Content.Items, 1)
 }
 
+// --- SetPrimaryCategory Mutation Tests ---
+
+func TestSetPrimaryCategory_Success(t *testing.T) {
+	catID := 42
+	repo := &mockContentRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.Content, error) {
+			return &domain.Content{
+				ID:                id,
+				Name:              "Test Video",
+				ContentType:       domain.ContentTypeYouTube,
+				PrimaryCategoryID: &catID,
+			}, nil
+		},
+	}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `mutation { setPrimaryCategory(input: { contentId: 1, qid: "Q12345", label: "Science", description: "Natural science", entityType: "item" }) { id name } }`)
+
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		SetPrimaryCategory struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+		} `json:"setPrimaryCategory"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+
+	assert.Equal(t, "1", data.SetPrimaryCategory.ID)
+	assert.Equal(t, "Test Video", data.SetPrimaryCategory.Name)
+}
+
+func TestSetPrimaryCategory_ContentNotFound(t *testing.T) {
+	repo := &mockContentRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.Content, error) {
+			return nil, domain.ErrNotFound
+		},
+	}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `mutation { setPrimaryCategory(input: { contentId: 999, qid: "Q12345", label: "Science" }) { id } }`)
+
+	require.NotEmpty(t, result.Errors)
+	assert.Contains(t, result.Errors[0].Message, "content not found")
+}
+
+// --- WikidataSearch Query Tests ---
+
+func TestWikidataSearch_Success(t *testing.T) {
+	server := setupTestServer(&mockContentRepository{}, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `{ wikidataSearch(query: "science", language: "en", limit: 5) { qid label description entityType } }`)
+
+	// With mock returning empty results, should succeed with empty array
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		WikidataSearch []struct {
+			Qid         string  `json:"qid"`
+			Label       string  `json:"label"`
+			Description *string `json:"description"`
+			EntityType  *string `json:"entityType"`
+		} `json:"wikidataSearch"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+	assert.NotNil(t, data.WikidataSearch)
+}
+
+func TestWikidataSearch_DefaultParams(t *testing.T) {
+	// Query with only required param (query), optional language and limit omitted
+	server := setupTestServer(&mockContentRepository{}, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `{ wikidataSearch(query: "test") { qid label } }`)
+
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		WikidataSearch []struct {
+			Qid   string `json:"qid"`
+			Label string `json:"label"`
+		} `json:"wikidataSearch"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+	assert.NotNil(t, data.WikidataSearch)
+}
+
 // --- NewResolver Tests ---
 
 func TestNewResolver(t *testing.T) {
