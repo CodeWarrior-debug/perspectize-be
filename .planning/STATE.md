@@ -1,3 +1,16 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: Feature Phases
+status: unknown
+last_updated: "2026-02-28T15:56:58.075Z"
+progress:
+  total_phases: 34
+  completed_phases: 14
+  total_plans: 101
+  completed_plans: 44
+---
+
 # Project State
 
 ## Project Reference
@@ -5,16 +18,16 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 17 complete (2/2 plans) — YouTube URL Normalization and Duplicate Upsert
+**Current focus:** Phase 03.5.1 in progress (1/4 plans) — Wikidata Integration and Universal Content Types
 
 ## Current Position
 
-Phase: 17 (YouTube URL Normalization and Duplicate Upsert) — Complete
-Plan: 2/2 complete
-Status: Complete — Phase 17 both plans done. Plan 01 (URL normalization + idempotent upsert) and Plan 02 (CreateContentResult schema + frontend duplicate warning VIDEO-05) complete.
-Last activity: 2026-02-22 — Completed 17-02-PLAN.md (CreateContentResult type and frontend duplicate warning)
+Phase: 03.5.1 (Wikidata Integration and Universal Content Types) — In Progress
+Plan: 1/4 complete
+Status: In Progress — Plan 01 (foundation layer: domain model, ports, Wikidata client, migration) complete. Plan 02 next (CategoryService + GORM repository).
+Last activity: 2026-02-28 — Completed 03.5.1-01-PLAN.md (Category domain model, port interfaces, Wikidata HTTP client, migration 000014)
 
-Progress: [████████████████████] ~95% (34 plans complete)
+Progress: [████████████████████] ~95% (35 plans complete)
 
 ## Performance Metrics
 
@@ -46,6 +59,7 @@ Progress: [████████████████████] ~95% (3
 *Updated after each plan completion*
 | Phase 17-youtube-url-normalization-and-duplicate-upsert P01 | 8 | 2 tasks | 11 files |
 | Phase 17 P02 | 15 | 2 tasks | 12 files |
+| Phase 03.5.1 P01 | 4 | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -184,6 +198,9 @@ Recent decisions affecting current work:
 - [Phase 17-youtube-url-normalization-and-duplicate-upsert]: GetOrCreateByURL uses clause.OnConflict{DoNothing: true} on url column for atomic TOCTOU-safe upsert
 - [Phase 17-youtube-url-normalization-and-duplicate-upsert]: CreateFromYouTube returns (content, ErrAlreadyExists) on duplicate — callers get both content AND can distinguish new vs existing
 - [Phase 17-02]: createContentFromYouTube returns CreateContentResult wrapper with alreadyExisted boolean for caller-side duplicate detection, enabling toast.warning UX without GraphQL errors
+- [Phase 03.5.1]: Wikidata client uses flat label/description fields from wbsearchentities (not display object)
+- [Phase 03.5.1]: Simple for-loop retry with exponential backoff (1s, 2s) for 429/5xx errors, no external library
+- [Phase 03.5.1]: Custom APIError type for retryable HTTP status code check (429, 5xx)
 
 ### Roadmap Evolution
 
@@ -378,9 +395,27 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 
 **Duration:** 11 min
 
+### 2026-02-28 — Phase 03.5.1: Wikidata Integration — Plan 01
+
+**Branch:** `claude/plan-attribution-phase-8fUmf`
+
+**Work completed:**
+1. **Category domain model** — Category struct (WikidataQID, Label, Description, EntityType) and WikidataSearchResult struct
+2. **Port interfaces** — CategoryRepository (Upsert, GetByID), CategoryService (SetPrimaryCategory, SearchWikidata), WikidataClient (Search)
+3. **Content domain update** — PrimaryCategoryID *int field added to Content struct
+4. **Wikidata HTTP client** — wbsearchentities adapter with User-Agent header, retry logic (429/5xx), 10s timeout
+5. **Unit tests** — 10 table-driven tests with httptest mock server
+6. **Migration 000014** — categories table with wikidata_qid unique index, primary_category_id FK on content
+
+**Commits:**
+- `d4dda54` feat(03.5.1-01): add Category domain model and port interfaces
+- `6313e42` feat(03.5.1-01): add Wikidata HTTP client adapter and categories migration
+
+**Duration:** 4 min
+
 ## Session Continuity
 
-Last session: 2026-02-20
-Stopped at: Phase 3.5 Plan 01 complete — Postman collection and exploration guide delivered on main
+Last session: 2026-02-28
+Stopped at: Completed 03.5.1-01-PLAN.md (foundation layer: domain model, ports, Wikidata client, migration)
 Resume file: None
-Next up: Phase 3.5 Plan 02 — User fills in findings template from interactive exploration, then Plan 02 generates curated category list and SQL seed data
+Next up: Phase 03.5.1 Plan 02 — CategoryService implementation + GORM category repository
