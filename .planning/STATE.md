@@ -47,6 +47,7 @@ Progress: [████████████████████] ~95% (3
 | Phase 17-youtube-url-normalization-and-duplicate-upsert P01 | 8 | 2 tasks | 11 files |
 | Phase 17 P02 | 15 | 2 tasks | 12 files |
 | Phase 18 P01 | 4 | 6 tasks | 8 files |
+| Phase 18 P02 | 5 | 5 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -188,6 +189,10 @@ Recent decisions affecting current work:
 - [Phase 18]: [18-01]: JSONB filter performance O(n) acceptable for <1000 items; Phase 11 will add indexes
 - [Phase 18]: [18-01]: Tag search uses (tags)::text ILIKE for MVP; can upgrade to jsonb_array_elements_text subquery later
 - [Phase 18]: [18-01]: ISO 8601 string comparison valid for publishedAt date filtering (lexicographic order matches chronological)
+- [Phase 18]: ContentFilterInput defined in gridUrlState.ts (not queries/) so Wave 1 plans are independent
+- [Phase 18]: f.* URL param prefix namespaces filter params from grid params (mode, sort, dir, page)
+- [Phase 18]: YYYY-MM date format in URL params for filter ranges (truncated from YYYY-MM-DD)
+- [Phase 18]: serializeGridParams omits defaults for clean bookmark-friendly URLs
 
 ### Roadmap Evolution
 
