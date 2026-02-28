@@ -677,7 +677,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 
 | 3.4 Perspectize Branding & Glasses Identity | 0/4 | Not started | - |
 | 3.5 Google NL Taxonomy Research Spike | 0/2 | Not started | - |
 | 4. Add Perspective Flow | 0/3 | Not started | - |
-| 4.1 GraphQL Dataloaders for N+1 Prevention | 0/0 | Not started | - |
+| 4.1 GraphQL Dataloaders for N+1 Prevention | 0/2 | Planned | - |
 | 5. Testing + Deployment | 2/3 | Complete | 2026-02-15 |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
 | 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |
