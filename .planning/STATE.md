@@ -8,7 +8,7 @@ progress:
   total_phases: 34
   completed_phases: 14
   total_plans: 101
-  completed_plans: 46
+  completed_plans: 47
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 03.5.1 in progress (3/4 plans) — Wikidata Integration and Universal Content Types
+**Current focus:** Phase 03.5.1 complete (4/4 plans) — Wikidata Integration and Universal Content Types
 
 ## Current Position
 
-Phase: 03.5.1 (Wikidata Integration and Universal Content Types) — In Progress
-Plan: 3/4 complete
-Status: In Progress — Plan 03 (frontend query layer: WIKIDATA_SEARCH, SET_PRIMARY_CATEGORY, useSetPrimaryCategory hook, CategoryTypeahead) complete. Plan 04 next.
-Last activity: 2026-02-28 — Completed 03.5.1-03-PLAN.md (frontend query definitions, mutation hook, CategoryTypeahead component)
+Phase: 03.5.1 (Wikidata Integration and Universal Content Types) — Complete
+Plan: 4/4 complete
+Status: Complete — All 4 plans executed. Full category flow: Wikidata client -> backend service/resolvers -> frontend queries/Typeahead -> AG Grid integration.
+Last activity: 2026-02-28 — Completed 03.5.1-04-PLAN.md (AG Grid category column integration with popover and mutation wiring)
 
-Progress: [████████████████████] ~95% (36 plans complete)
+Progress: [████████████████████] ~97% (47 plans complete)
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Progress: [████████████████████] ~95% (3
 | Phase 03.5.1 P01 | 4 | 2 tasks | 9 files |
 | Phase 03.5.1 P02 | 15 | 5 tasks | 20 files |
 | Phase 03.5.1 P03 | 7 | 2 tasks | 7 files |
+| Phase 03.5.1 P04 | 5 | 1 task | 3 files |
 
 ## Accumulated Context
 
@@ -210,6 +211,10 @@ Recent decisions affecting current work:
 - [Phase 03.5.1-03]: 300ms debounce with 2-char minimum prevents excessive Wikidata API calls
 - [Phase 03.5.1-03]: keepPreviousData from TanStack Query prevents flicker during typeahead typing
 - [Phase 03.5.1-03]: 5-minute staleTime caches repeated Wikidata searches
+- [Phase 03.5.1-04]: Category column after Type, before Duration (position 4 in columnDefs)
+- [Phase 03.5.1-04]: Popover uses fixed positioning with backdrop button for outside-click dismissal
+- [Phase 03.5.1-04]: Category not sortable/filterable per CONTEXT.md deferral decision
+- [Phase 03.5.1-04]: Category visible on sm+ tiers (445px+), hidden on xs (mobile)
 
 ### Roadmap Evolution
 
@@ -446,6 +451,6 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 03.5.1-03-PLAN.md (frontend query layer: categories.ts, useSetPrimaryCategory, CategoryTypeahead)
+Stopped at: Completed 03.5.1-04-PLAN.md (AG Grid category column integration, popover, mutation wiring)
 Resume file: None
-Next up: Phase 03.5.1 Plan 04
+Next up: Phase 03.5.1 complete — next phase TBD
