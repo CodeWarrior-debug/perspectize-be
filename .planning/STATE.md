@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Feature Phases
-status: unknown
-last_updated: "2026-02-28T15:56:58.075Z"
+status: in-progress
+last_updated: "2026-02-28T16:20:29.819Z"
 progress:
   total_phases: 34
   completed_phases: 14
   total_plans: 101
-  completed_plans: 44
+  completed_plans: 45
 ---
 
 # Project State
@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 03.5.1 in progress (1/4 plans) — Wikidata Integration and Universal Content Types
+**Current focus:** Phase 03.5.1 in progress (2/4 plans) — Wikidata Integration and Universal Content Types
 
 ## Current Position
 
 Phase: 03.5.1 (Wikidata Integration and Universal Content Types) — In Progress
-Plan: 1/4 complete
-Status: In Progress — Plan 01 (foundation layer: domain model, ports, Wikidata client, migration) complete. Plan 02 next (CategoryService + GORM repository).
-Last activity: 2026-02-28 — Completed 03.5.1-01-PLAN.md (Category domain model, port interfaces, Wikidata HTTP client, migration 000014)
+Plan: 2/4 complete
+Status: In Progress — Plan 02 (service layer: CategoryService, GORM repository, GraphQL schema, resolvers, wiring) complete. Plan 03 next.
+Last activity: 2026-02-28 — Completed 03.5.1-02-PLAN.md (CategoryService, GraphQL resolvers, main.go wiring)
 
 Progress: [████████████████████] ~95% (35 plans complete)
 
@@ -60,6 +60,7 @@ Progress: [████████████████████] ~95% (3
 | Phase 17-youtube-url-normalization-and-duplicate-upsert P01 | 8 | 2 tasks | 11 files |
 | Phase 17 P02 | 15 | 2 tasks | 12 files |
 | Phase 03.5.1 P01 | 4 | 2 tasks | 9 files |
+| Phase 03.5.1 P02 | 15 | 5 tasks | 20 files |
 
 ## Accumulated Context
 
@@ -201,6 +202,9 @@ Recent decisions affecting current work:
 - [Phase 03.5.1]: Wikidata client uses flat label/description fields from wbsearchentities (not display object)
 - [Phase 03.5.1]: Simple for-loop retry with exponential backoff (1s, 2s) for 429/5xx errors, no external library
 - [Phase 03.5.1]: Custom APIError type for retryable HTTP status code check (429, 5xx)
+- [Phase 03.5.1-02]: GORM clause.OnConflict for atomic category upsert by wikidata_qid
+- [Phase 03.5.1-02]: Content.primaryCategory uses gqlgen field resolver (lazy loading) to avoid N+1 on list queries
+- [Phase 03.5.1-02]: CategoryService applies defaults for empty language (en) and zero limit (10) in SearchWikidata
 
 ### Roadmap Evolution
 
@@ -413,9 +417,30 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 
 **Duration:** 4 min
 
+### 2026-02-28 — Phase 03.5.1: Wikidata Integration — Plan 02
+
+**Branch:** `claude/plan-attribution-phase-8fUmf`
+
+**Work completed:**
+1. **GormCategoryRepository** — atomic Upsert (clause.OnConflict on wikidata_qid), GetByID
+2. **CategoryServiceImpl** — SetPrimaryCategory (upsert + FK update), SearchWikidata (proxy with defaults), GetCategoryByID
+3. **GraphQL schema** — Category type, WikidataSearchResult type, setPrimaryCategory mutation, wikidataSearch query, Content.primaryCategory field
+4. **Resolvers** — PrimaryCategory field resolver (lazy), SetPrimaryCategory mutation, WikidataSearch query
+5. **main.go wiring** — WikidataClient, CategoryRepo, CategoryService, resolver updated
+6. **Unit tests** — 13 new tests (10 service + 3 resolver)
+7. **Mock updates** — All ContentRepository mocks updated for new UpdatePrimaryCategoryID method
+
+**Commits:**
+- `ac74d15` feat(03.5.1-02): add GORM CategoryRepository with atomic upsert and GetByID
+- `d70652e` feat(03.5.1-02): add CategoryService, GraphQL schema, resolvers, and main.go wiring
+- `4bf49ec` test(03.5.1-02): add CategoryService unit tests
+- `64829af` test(03.5.1-02): add resolver tests for setPrimaryCategory and wikidataSearch
+
+**Duration:** 15 min
+
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 03.5.1-01-PLAN.md (foundation layer: domain model, ports, Wikidata client, migration)
+Stopped at: Completed 03.5.1-02-PLAN.md (service layer: CategoryService, GraphQL resolvers, main.go wiring)
 Resume file: None
-Next up: Phase 03.5.1 Plan 02 — CategoryService implementation + GORM category repository
+Next up: Phase 03.5.1 Plan 03
