@@ -14,6 +14,7 @@ import {
 	itemCellRenderer,
 	typeCellRenderer,
 	nameCellRenderer,
+	categoryCellRenderer,
 	durationValueGetter,
 	durationFilterValueGetter,
 	dateValueFormatter,
@@ -548,5 +549,91 @@ describe('headerMinWidth', () => {
 		const diff = w8 - w4;
 		expect(diff).toBeGreaterThanOrEqual(28);
 		expect(diff).toBeLessThanOrEqual(34);
+	});
+});
+
+describe('categoryCellRenderer', () => {
+	it('renders span with label text when primaryCategory is present', () => {
+		const result = categoryCellRenderer({
+			data: {
+				primaryCategory: {
+					label: 'Science',
+					description: 'Natural science',
+					wikidataQid: 'Q336',
+				},
+			},
+		});
+
+		expect(result).toBeInstanceOf(HTMLDivElement);
+		const span = result.querySelector('span');
+		expect(span).toBeTruthy();
+		expect(span?.textContent).toBe('Science');
+	});
+
+	it('renders "+" icon when primaryCategory is null', () => {
+		const result = categoryCellRenderer({
+			data: { primaryCategory: null },
+		});
+
+		expect(result).toBeInstanceOf(HTMLDivElement);
+		const span = result.querySelector('span');
+		expect(span).toBeTruthy();
+		expect(span?.textContent).toBe('+');
+		// JSDOM normalizes hex colors to rgb() format
+		expect(span?.style.color).toBe('rgb(163, 163, 163)');
+	});
+
+	it('sets title attribute to description when present', () => {
+		const result = categoryCellRenderer({
+			data: {
+				primaryCategory: {
+					label: 'Physics',
+					description: 'Study of matter and energy',
+					wikidataQid: 'Q413',
+				},
+			},
+		});
+
+		const span = result.querySelector('span');
+		expect(span?.title).toBe('Study of matter and energy');
+	});
+
+	it('sets title attribute to wikidataQid when description is null', () => {
+		const result = categoryCellRenderer({
+			data: {
+				primaryCategory: {
+					label: 'Chemistry',
+					description: null,
+					wikidataQid: 'Q2329',
+				},
+			},
+		});
+
+		const span = result.querySelector('span');
+		expect(span?.title).toBe('Q2329');
+	});
+
+	it('renders "+" when data is undefined', () => {
+		const result = categoryCellRenderer({ data: undefined });
+
+		const span = result.querySelector('span');
+		expect(span?.textContent).toBe('+');
+	});
+
+	it('has cursor pointer style', () => {
+		const result = categoryCellRenderer({
+			data: { primaryCategory: null },
+		});
+
+		expect(result.style.cursor).toBe('pointer');
+	});
+
+	it('has full height and width for cell fill', () => {
+		const result = categoryCellRenderer({
+			data: { primaryCategory: null },
+		});
+
+		expect(result.style.height).toBe('100%');
+		expect(result.style.width).toBe('100%');
 	});
 });
