@@ -22,7 +22,8 @@ type Content struct {
 	AddedByUserID int
 	Length        *int
 	LengthUnits   *string
-	Response      json.RawMessage
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	Response          json.RawMessage
+	PrimaryCategoryID *int
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
 }
