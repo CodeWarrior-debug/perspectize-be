@@ -38,6 +38,8 @@ pnpm run test:run     # Tests once (CI/verification)
 pnpm run test         # Tests in watch mode
 ```
 
+**`pnpm exec` must run from `frontend/`** — running from repo root fails with `ERR_PNPM_RECURSIVE_EXEC_NO_PACKAGE`. Use `cd frontend && pnpm exec ...` or `pnpm --dir frontend exec ...`.
+
 ## Svelte 5 Patterns
 
 This project uses **Svelte 5 runes** exclusively. Do not use Svelte 4 syntax.
