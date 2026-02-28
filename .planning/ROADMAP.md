@@ -209,6 +209,16 @@ Research spike to answer blocking questions before committing to categorization 
 
 Cross-phase impact: Unblocks Phase 13 (Content Categories), Phase 14 (AG Grid Power Features), and Phase 4B (perspective display with grouping). See `04-CONTEXT.md` and `13-context.md` for architecture decisions already captured.
 
+### Phase 03.5.1: Wikidata integration and universal content types (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 3.5
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 03.5.1 to break down)
+
 ### Phase 4: Add Perspective Flow
 **Goal**: Users can create perspectives on videos with ratings, Like, and Review text
 **Depends on**: Phase 3

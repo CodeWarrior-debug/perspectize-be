@@ -202,6 +202,7 @@ Recent decisions affecting current work:
 - Phase 18 added: Server-Side Pagination & Filtering with Data Mode Toggle — Add data mode toggle to ActivityTable switching between "All Items" (server-side sort/filter/search across full dataset) and "Loaded Items" (client-side sort/filter/search on currently loaded page). Expand backend filtering and sorting capabilities.
 - Phase 4.1 inserted after Phase 4: GraphQL Dataloaders for N+1 Query Prevention (URGENT) — Implement dataloadgen-based batching for 3 N+1-vulnerable nested relationships (Perspective→User, Perspective→Content, Content→User). Add batch repository methods (GetByIDs), field resolvers, per-request middleware. Related to Phase 8.1 M-08.
 - Phase 18.1 inserted after Phase 18: Mobile Activity Page Redesign (URGENT) — Redesign mobile activity page with 3-column layout (Item, Summary info-grid, Perspective glasses icon). Rethink mobile data display away from hidden AG Grid columns toward summary-based approach.
+- Phase 03.5.1 inserted after Phase 3.5: Wikidata Integration and Universal Content Types (URGENT) — Build Go client for Wikidata APIs (Entity Search, REST, SPARQL), expand domain model beyond YouTube with Q-ID entity resolution, create enrichment layer. Extends Phase 3.5 research spike into production code.
 
 ### Project-Level Plan Requirements
 
