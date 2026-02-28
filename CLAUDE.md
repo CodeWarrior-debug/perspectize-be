@@ -59,6 +59,8 @@ qmd ls perspectize
 
 ## GitHub & Repository Management
 
+**Git branch gotcha:** Local default branch is `master`, remote is `main`. Use `origin/main` (not `main`) for diff/log comparisons: `git diff origin/main...HEAD`.
+
 **Always use `gh` CLI** for GitHub operations. Do not use MCP plugins.
 
 **Note:** In Claude Code web sessions, `gh` CLI may not be authenticated. If `gh` auth fails:

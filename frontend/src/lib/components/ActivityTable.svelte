@@ -68,6 +68,7 @@
 	let activeFilterModel = $state<Record<string, any>>({});
 	// Responsive tier: 'xs' (<445px), 'sm' (445-639px), 'md' (640-899px), 'lg' (900px+)
 	let responsiveTier = $state<'xs' | 'sm' | 'md' | 'lg'>('lg');
+	const isMobile = $derived(responsiveTier === 'xs' || responsiveTier === 'sm');
 
 	// Selected user for perspectives query
 	const selectedUserId = $derived(getSelectedUserId());
@@ -485,6 +486,12 @@
 		});
 	});
 
+	// Switch to autoHeight on mobile — eliminates empty gap below last row
+	$effect(() => {
+		if (!gridApi || !gridReady) return;
+		gridApi.setGridOption('domLayout', isMobile ? 'autoHeight' : 'normal');
+	});
+
 	// Update loading state reactively
 	$effect(() => {
 		if (gridApi) {
@@ -525,14 +532,14 @@
 		<FilterChips {gridApi} filterModel={activeFilterModel} />
 
 		<!-- AG Grid -->
-		<div bind:this={gridContainer} class="flex-1 min-h-0" style="--ag-row-height: 44px; --ag-header-height: 40px;">
+		<div bind:this={gridContainer} class="{isMobile ? 'overflow-y-auto' : 'flex-1'} min-h-0" style="--ag-row-height: 44px; --ag-header-height: 40px;">
 			<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
 		</div>
 	{/if}
 
 	<!-- Manual Pagination Controls -->
 	<div
-		class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0 px-2 md:px-4 py-2 border-t border-border text-xs md:text-sm"
+		class="shrink-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0 px-2 md:px-4 py-2 border-t border-border text-xs md:text-sm"
 	>
 		<div class="flex items-center gap-2 md:gap-4">
 			<div class="text-muted-foreground">
