@@ -67,6 +67,10 @@ func (m *mockContentRepository) ReassignByUser(ctx context.Context, fromUserID, 
 	return nil
 }
 
+func (m *mockContentRepository) UpdatePrimaryCategoryID(ctx context.Context, contentID int, categoryID *int) error {
+	return nil
+}
+
 // mockYouTubeClient implements services.YouTubeClient for testing
 type mockYouTubeClient struct {
 	getVideoMetadataFn func(ctx context.Context, videoID string) (*portservices.VideoMetadata, error)
@@ -190,6 +194,25 @@ func (m *mockPerspectiveRepository) ReassignByUser(ctx context.Context, fromUser
 	return nil
 }
 
+// mockCategoryRepository implements repositories.CategoryRepository for testing
+type mockCategoryRepository struct{}
+
+func (m *mockCategoryRepository) Upsert(ctx context.Context, category *domain.Category) (*domain.Category, error) {
+	category.ID = 1
+	return category, nil
+}
+
+func (m *mockCategoryRepository) GetByID(ctx context.Context, id int) (*domain.Category, error) {
+	return nil, domain.ErrNotFound
+}
+
+// mockWikidataClient implements services.WikidataClient for testing
+type mockWikidataClient struct{}
+
+func (m *mockWikidataClient) Search(ctx context.Context, query string, language string, limit int) ([]domain.WikidataSearchResult, error) {
+	return []domain.WikidataSearchResult{}, nil
+}
+
 // graphqlResponse represents a generic GraphQL JSON response
 type graphqlResponse struct {
 	Data   json.RawMessage `json:"data"`
@@ -202,10 +225,13 @@ type graphqlResponse struct {
 func setupTestServer(repo *mockContentRepository, ytClient *mockYouTubeClient) *httptest.Server {
 	userRepo := &mockUserRepository{}
 	perspectiveRepo := &mockPerspectiveRepository{}
+	categoryRepo := &mockCategoryRepository{}
+	wikidataClient := &mockWikidataClient{}
 	contentService := services.NewContentService(repo, ytClient)
 	userService := services.NewUserService(userRepo, repo, perspectiveRepo)
 	perspectiveService := services.NewPerspectiveService(perspectiveRepo, userRepo)
-	resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
+	categoryService := services.NewCategoryService(categoryRepo, repo, wikidataClient)
+	resolver := resolvers.NewResolver(contentService, userService, perspectiveService, categoryService)
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 	return httptest.NewServer(srv)
 }
@@ -931,14 +957,18 @@ func TestNewResolver(t *testing.T) {
 	ytClient := &mockYouTubeClient{}
 	userRepo := &mockUserRepository{}
 	perspectiveRepo := &mockPerspectiveRepository{}
+	categoryRepo := &mockCategoryRepository{}
+	wikidataClient := &mockWikidataClient{}
 	contentService := services.NewContentService(repo, ytClient)
 	userService := services.NewUserService(userRepo, repo, perspectiveRepo)
 	perspectiveService := services.NewPerspectiveService(perspectiveRepo, userRepo)
+	categoryService := services.NewCategoryService(categoryRepo, repo, wikidataClient)
 
-	resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
+	resolver := resolvers.NewResolver(contentService, userService, perspectiveService, categoryService)
 
 	assert.NotNil(t, resolver)
 	assert.Equal(t, contentService, resolver.ContentService)
 	assert.Equal(t, userService, resolver.UserService)
 	assert.Equal(t, perspectiveService, resolver.PerspectiveService)
+	assert.Equal(t, categoryService, resolver.CategoryService)
 }

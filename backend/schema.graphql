@@ -79,6 +79,23 @@ type CreateContentResult {
   alreadyExisted: Boolean!
 }
 
+type Category {
+  id: ID!
+  wikidataQid: String!
+  label: String!
+  description: String
+  entityType: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type WikidataSearchResult {
+  qid: String!
+  label: String!
+  description: String
+  entityType: String
+}
+
 type Content {
   id: ID!
   name: String!
@@ -96,6 +113,7 @@ type Content {
   tags: [String!]
   description: String
   response: JSON
+  primaryCategory: Category
   createdAt: String!
   updatedAt: String!
 }
@@ -213,6 +231,14 @@ input PerspectiveFilter {
   privacy: Privacy
 }
 
+input SetPrimaryCategoryInput {
+  contentId: IntID!
+  qid: String!
+  label: String!
+  description: String
+  entityType: String
+}
+
 input CreateClaimInput {
   text: String!            # The claim text (may contain @this/@here tokens)
   userID: IntID!           # Who created the claim
@@ -234,6 +260,9 @@ type Mutation {
 
   # Claim mutations
   createClaim(input: CreateClaimInput!): Content!
+
+  # Category mutations
+  setPrimaryCategory(input: SetPrimaryCategoryInput!): Content!
 }
 
 type Query {
@@ -256,6 +285,9 @@ type Query {
   userByID(id: ID!): User
   userByUsername(username: String!): User
   users: [User!]!
+
+  # Category queries
+  wikidataSearch(query: String!, language: String, limit: Int): [WikidataSearchResult!]!
 
   # Perspective queries
   perspectiveByID(id: ID!): Perspective

@@ -21,6 +21,22 @@ func (UserModel) TableName() string {
 	return "users"
 }
 
+// CategoryModel is the GORM persistence model for categories table
+type CategoryModel struct {
+	ID          int       `gorm:"primaryKey;autoIncrement"`
+	WikidataQID string    `gorm:"column:wikidata_qid;uniqueIndex;not null"`
+	Label       string    `gorm:"not null"`
+	Description string    `gorm:"column:description;default:''"`
+	EntityType  string    `gorm:"column:entity_type;default:''"`
+	CreatedAt   time.Time `gorm:"autoCreateTime"`
+	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
+}
+
+// TableName returns the table name for CategoryModel
+func (CategoryModel) TableName() string {
+	return "categories"
+}
+
 // ContentModel is the GORM persistence model for content table
 type ContentModel struct {
 	ID            int             `gorm:"primaryKey;autoIncrement"`
@@ -30,7 +46,8 @@ type ContentModel struct {
 	AddedByUserID int             `gorm:"column:added_by_user_id;not null"`
 	Length        *int            `gorm:""`
 	LengthUnits   *string         `gorm:""`
-	Response      json.RawMessage `gorm:"type:jsonb"`
+	Response          json.RawMessage `gorm:"type:jsonb"`
+	PrimaryCategoryID *int            `gorm:"column:primary_category_id"`
 
 	// Dummy fields for gorm-cursor-paginator sort key validation.
 	// These are NOT database columns — SQLRepr provides the actual SQL.

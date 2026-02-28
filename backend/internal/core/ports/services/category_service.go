@@ -22,4 +22,7 @@ type CategoryService interface {
 
 	// SearchWikidata proxies a search query to the Wikidata Entity Search API
 	SearchWikidata(ctx context.Context, query string, language string, limit int) ([]domain.WikidataSearchResult, error)
+
+	// GetCategoryByID fetches a category by its primary key
+	GetCategoryByID(ctx context.Context, id int) (*domain.Category, error)
 }

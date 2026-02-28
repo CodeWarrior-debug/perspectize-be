@@ -19,6 +19,33 @@ import (
 	portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
 )
 
+// PrimaryCategory is the resolver for the primaryCategory field.
+func (r *contentResolver) PrimaryCategory(ctx context.Context, obj *model.Content) (*model.Category, error) {
+	// Parse content ID to look up PrimaryCategoryID from domain
+	contentID, err := strconv.Atoi(obj.ID)
+	if err != nil {
+		return nil, nil
+	}
+
+	// Fetch the content to get PrimaryCategoryID
+	content, err := r.ContentService.GetByID(ctx, contentID)
+	if err != nil {
+		return nil, nil
+	}
+
+	if content.PrimaryCategoryID == nil {
+		return nil, nil
+	}
+
+	category, err := r.CategoryService.GetCategoryByID(ctx, *content.PrimaryCategoryID)
+	if err != nil {
+		slog.Error("resolving primary category failed", "contentID", contentID, "categoryID", *content.PrimaryCategoryID, "error", err)
+		return nil, nil
+	}
+
+	return categoryDomainToModel(category), nil
+}
+
 // CreateContentFromYouTube is the resolver for the createContentFromYouTube field.
 func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input model.CreateContentFromYouTubeInput) (*model.CreateContentResult, error) {
 	content, err := r.ContentService.CreateFromYouTube(ctx, input.URL, input.UserID)
@@ -292,6 +319,40 @@ func (r *mutationResolver) CreateClaim(ctx context.Context, input model.CreateCl
 	return domainToModel(content), nil
 }
 
+// SetPrimaryCategory is the resolver for the setPrimaryCategory field.
+func (r *mutationResolver) SetPrimaryCategory(ctx context.Context, input model.SetPrimaryCategoryInput) (*model.Content, error) {
+	description := ""
+	if input.Description != nil {
+		description = *input.Description
+	}
+	entityType := ""
+	if input.EntityType != nil {
+		entityType = *input.EntityType
+	}
+
+	serviceInput := portservices.SetPrimaryCategoryInput{
+		ContentID:   input.ContentID,
+		QID:         input.Qid,
+		Label:       input.Label,
+		Description: description,
+		EntityType:  entityType,
+	}
+
+	content, err := r.CategoryService.SetPrimaryCategory(ctx, serviceInput)
+	if err != nil {
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("content not found")
+		}
+		slog.Error("setting primary category failed", "error", err, "contentID", input.ContentID)
+		return nil, fmt.Errorf("failed to set primary category: %v", err)
+	}
+
+	return domainToModel(content), nil
+}
+
 // ContentByID is the resolver for the contentByID field.
 func (r *queryResolver) ContentByID(ctx context.Context, id string) (*model.Content, error) {
 	intID, err := strconv.Atoi(id)
@@ -436,6 +497,36 @@ func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	return modelUsers, nil
 }
 
+// WikidataSearch is the resolver for the wikidataSearch field.
+func (r *queryResolver) WikidataSearch(ctx context.Context, query string, language *string, limit *int) ([]*model.WikidataSearchResult, error) {
+	lang := ""
+	if language != nil {
+		lang = *language
+	}
+	lim := 0
+	if limit != nil {
+		lim = *limit
+	}
+
+	results, err := r.CategoryService.SearchWikidata(ctx, query, lang, lim)
+	if err != nil {
+		slog.Error("wikidata search failed", "error", err, "query", query)
+		return nil, fmt.Errorf("wikidata search failed: %v", err)
+	}
+
+	models := make([]*model.WikidataSearchResult, len(results))
+	for i, r := range results {
+		models[i] = &model.WikidataSearchResult{
+			Qid:         r.QID,
+			Label:       r.Label,
+			Description: &r.Description,
+			EntityType:  &r.EntityType,
+		}
+	}
+
+	return models, nil
+}
+
 // PerspectiveByID is the resolver for the perspectiveByID field.
 func (r *queryResolver) PerspectiveByID(ctx context.Context, id string) (*model.Perspective, error) {
 	intID, err := strconv.Atoi(id)
@@ -527,11 +618,15 @@ func (r *queryResolver) Perspectives(ctx context.Context, first *int, after *str
 	return conn, nil
 }
 
+// Content returns generated.ContentResolver implementation.
+func (r *Resolver) Content() generated.ContentResolver { return &contentResolver{r} }
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+type contentResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

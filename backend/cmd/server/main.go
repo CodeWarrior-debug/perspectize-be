@@ -16,6 +16,7 @@ import (
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/generated"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/resolvers"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/repositories/postgres"
+	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/wikidata"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/youtube"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/config"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/services"
@@ -98,17 +99,20 @@ func main() {
 
 	// Initialize adapters
 	youtubeClient := youtube.NewClient(cfg.YouTube.APIKey)
+	wikidataClient := wikidata.NewClient()
 	contentRepo := postgres.NewGormContentRepository(db)
 	userRepo := postgres.NewGormUserRepository(db)
 	perspectiveRepo := postgres.NewGormPerspectiveRepository(db)
+	categoryRepo := postgres.NewGormCategoryRepository(db)
 
 	// Initialize services
 	contentService := services.NewContentService(contentRepo, youtubeClient)
 	userService := services.NewUserService(userRepo, contentRepo, perspectiveRepo)
 	perspectiveService := services.NewPerspectiveService(perspectiveRepo, userRepo)
+	categoryService := services.NewCategoryService(categoryRepo, contentRepo, wikidataClient)
 
 	// Initialize GraphQL
-	resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
+	resolver := resolvers.NewResolver(contentService, userService, perspectiveService, categoryService)
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 	srv.AroundOperations(gqltiming.OperationTimer())
 

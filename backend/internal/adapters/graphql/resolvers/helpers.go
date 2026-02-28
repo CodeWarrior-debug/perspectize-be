@@ -106,6 +106,22 @@ func parseStatCount(value, field string, contentID int) *int {
 	return &v
 }
 
+// categoryDomainToModel converts a domain Category to a GraphQL model Category
+func categoryDomainToModel(c *domain.Category) *model.Category {
+	if c == nil {
+		return nil
+	}
+	return &model.Category{
+		ID:          strconv.Itoa(c.ID),
+		WikidataQid: c.WikidataQID,
+		Label:       c.Label,
+		Description: &c.Description,
+		EntityType:  &c.EntityType,
+		CreatedAt:   c.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:   c.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+}
+
 // perspectiveDomainToModel converts a domain Perspective to a GraphQL model Perspective
 func perspectiveDomainToModel(p *domain.Perspective) *model.Perspective {
 	m := &model.Perspective{

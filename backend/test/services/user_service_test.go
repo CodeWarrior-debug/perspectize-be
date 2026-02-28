@@ -100,6 +100,9 @@ func (m *mockContentRepoForUser) ReassignByUser(ctx context.Context, fromUserID,
 	}
 	return nil
 }
+func (m *mockContentRepoForUser) UpdatePrimaryCategoryID(ctx context.Context, contentID int, categoryID *int) error {
+	return nil
+}
 
 // mockPerspectiveRepoForUser implements repositories.PerspectiveRepository for user tests
 type mockPerspectiveRepoForUser struct {

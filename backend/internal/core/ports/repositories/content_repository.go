@@ -18,4 +18,6 @@ type ContentRepository interface {
 	GetOrCreateByURL(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error)
 	List(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
 	ReassignByUser(ctx context.Context, fromUserID, toUserID int) error
+	// UpdatePrimaryCategoryID sets the primary_category_id FK on a content record
+	UpdatePrimaryCategoryID(ctx context.Context, contentID int, categoryID *int) error
 }
