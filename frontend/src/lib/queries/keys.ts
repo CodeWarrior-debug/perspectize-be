@@ -7,8 +7,15 @@ export const queryKeys = {
 	content: {
 		all: () => [...queryKeys.all, 'content'] as const,
 		lists: () => [...queryKeys.content.all(), 'list'] as const,
-		list: (filters: { sortBy?: string; sortOrder?: string; search?: string; first?: number; after?: string | null }) =>
-			[...queryKeys.content.lists(), filters] as const,
+		list: (filters: {
+			sortBy?: string;
+			sortOrder?: string;
+			search?: string;
+			first?: number;
+			after?: string | null;
+			filter?: Record<string, unknown>;
+			mode?: string;
+		}) => [...queryKeys.content.lists(), filters] as const,
 		details: () => [...queryKeys.content.all(), 'detail'] as const,
 		detail: (id: string) => [...queryKeys.content.details(), id] as const,
 	},
