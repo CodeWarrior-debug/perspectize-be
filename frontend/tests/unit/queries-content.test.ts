@@ -24,6 +24,7 @@ describe('GraphQL query definitions', () => {
 				publishedAt: '2024-01-01',
 				tags: ['test'],
 				description: 'Test description',
+				primaryCategory: null,
 				createdAt: '2024-01-01',
 				updatedAt: '2024-01-01',
 			};
@@ -62,6 +63,7 @@ describe('GraphQL query definitions', () => {
 						publishedAt: '2024-01-01',
 						tags: ['test'],
 						description: 'Test description',
+						primaryCategory: null,
 						createdAt: '2024-01-01',
 						updatedAt: '2024-01-01',
 					},

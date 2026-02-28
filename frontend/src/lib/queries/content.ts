@@ -13,6 +13,13 @@ export interface ContentItem {
 	publishedAt: string | null;
 	tags: string[] | null;
 	description: string | null;
+	primaryCategory: {
+		id: string;
+		wikidataQid: string;
+		label: string;
+		description: string | null;
+		entityType: string | null;
+	} | null;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -67,6 +74,13 @@ export const LIST_CONTENT = gql`
 				publishedAt
 				tags
 				description
+				primaryCategory {
+					id
+					wikidataQid
+					label
+					description
+					entityType
+				}
 				createdAt
 				updatedAt
 			}
@@ -116,6 +130,13 @@ export const CREATE_CONTENT_FROM_YOUTUBE = gql`
 				publishedAt
 				tags
 				description
+				primaryCategory {
+					id
+					wikidataQid
+					label
+					description
+					entityType
+				}
 				createdAt
 				updatedAt
 			}
