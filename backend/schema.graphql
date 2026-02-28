@@ -118,6 +118,8 @@ enum ContentSortBy {
   VIEW_COUNT
   LIKE_COUNT
   PUBLISHED_AT
+  CHANNEL_TITLE
+  LENGTH
 }
 
 enum SortOrder {
@@ -135,12 +137,29 @@ input CreateContentFromYouTubeInput {
   userId: IntID!
 }
 
-# TODO: Add additional filters (e.g., dateRange, search) or make filters dynamic
+# Filters for content queries
 input ContentFilter {
   contentType: ContentType
   minLengthSeconds: Int
   maxLengthSeconds: Int
   search: String
+  # View/like count filters
+  minViewCount: Int
+  maxViewCount: Int
+  minLikeCount: Int
+  maxLikeCount: Int
+  # Published date filters (ISO 8601 date string)
+  publishedAfter: String
+  publishedBefore: String
+  # Channel/tag/description filters
+  channelTitle: String       # ILIKE search
+  tagContains: String        # Tag text contains
+  descriptionSearch: String  # ILIKE search on description
+  # Record date filters
+  createdAfter: String
+  createdBefore: String
+  updatedAfter: String
+  updatedBefore: String
 }
 
 # User inputs

@@ -10,6 +10,8 @@ const (
 	ContentSortByViewCount   ContentSortBy = "VIEW_COUNT"
 	ContentSortByLikeCount   ContentSortBy = "LIKE_COUNT"
 	ContentSortByPublishedAt ContentSortBy = "PUBLISHED_AT"
+	ContentSortByChannelTitle ContentSortBy = "CHANNEL_TITLE"
+	ContentSortByLength      ContentSortBy = "LENGTH"
 )
 
 // SortOrder represents ascending or descending sort direction
@@ -26,6 +28,23 @@ type ContentFilter struct {
 	MinLengthSeconds *int
 	MaxLengthSeconds *int
 	Search           *string
+	// View/like count filters (JSONB extraction)
+	MinViewCount *int
+	MaxViewCount *int
+	MinLikeCount *int
+	MaxLikeCount *int
+	// Published date filters (ISO 8601 string comparison)
+	PublishedAfter  *string
+	PublishedBefore *string
+	// Channel/tag/description filters (JSONB extraction + ILIKE)
+	ChannelTitle      *string
+	TagContains       *string
+	DescriptionSearch *string
+	// Record date filters (direct columns)
+	CreatedAfter  *string
+	CreatedBefore *string
+	UpdatedAfter  *string
+	UpdatedBefore *string
 }
 
 // ContentListParams contains parameters for paginated content queries
