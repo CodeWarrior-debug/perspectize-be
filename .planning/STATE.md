@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 
 ## Current Position
 
-Phase: 17 (YouTube URL Normalization and Duplicate Upsert) — Complete
-Plan: 2/2 complete
-Status: Complete — Phase 17 both plans done. Plan 01 (URL normalization + idempotent upsert) and Plan 02 (CreateContentResult schema + frontend duplicate warning VIDEO-05) complete.
-Last activity: 2026-02-22 — Completed 17-02-PLAN.md (CreateContentResult type and frontend duplicate warning)
+Phase: 18 (Server-Side Pagination & Filtering with Data Mode Toggle) — In Progress
+Plan: 1/3 complete
+Status: Plan 01 complete — Backend expanded ContentFilter (13 new fields) and ContentSortBy (CHANNEL_TITLE, LENGTH). All gqlgen models regenerated, resolver mapping updated.
+Last activity: 2026-02-28 — Completed 18-01-PLAN.md (Backend Expanded Filtering & Sorting)
 
 Progress: [████████████████████] ~95% (34 plans complete)
 
@@ -46,6 +46,7 @@ Progress: [████████████████████] ~95% (3
 *Updated after each plan completion*
 | Phase 17-youtube-url-normalization-and-duplicate-upsert P01 | 8 | 2 tasks | 11 files |
 | Phase 17 P02 | 15 | 2 tasks | 12 files |
+| Phase 18 P01 | 4 | 6 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -184,6 +185,9 @@ Recent decisions affecting current work:
 - [Phase 17-youtube-url-normalization-and-duplicate-upsert]: GetOrCreateByURL uses clause.OnConflict{DoNothing: true} on url column for atomic TOCTOU-safe upsert
 - [Phase 17-youtube-url-normalization-and-duplicate-upsert]: CreateFromYouTube returns (content, ErrAlreadyExists) on duplicate — callers get both content AND can distinguish new vs existing
 - [Phase 17-02]: createContentFromYouTube returns CreateContentResult wrapper with alreadyExisted boolean for caller-side duplicate detection, enabling toast.warning UX without GraphQL errors
+- [Phase 18]: [18-01]: JSONB filter performance O(n) acceptable for <1000 items; Phase 11 will add indexes
+- [Phase 18]: [18-01]: Tag search uses (tags)::text ILIKE for MVP; can upgrade to jsonb_array_elements_text subquery later
+- [Phase 18]: [18-01]: ISO 8601 string comparison valid for publishedAt date filtering (lexicographic order matches chronological)
 
 ### Roadmap Evolution
 
@@ -377,7 +381,7 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 
 ## Session Continuity
 
-Last session: 2026-02-20
-Stopped at: Phase 3.5 Plan 01 complete — Postman collection and exploration guide delivered on main
+Last session: 2026-02-28
+Stopped at: Completed 18-01-PLAN.md (Backend Expanded Filtering & Sorting)
 Resume file: None
-Next up: Phase 3.5 Plan 02 — User fills in findings template from interactive exploration, then Plan 02 generates curated category list and SQL seed data
+Next up: Phase 18 Plan 02 — Frontend Data Mode Toggle and AG Grid column filter wiring
