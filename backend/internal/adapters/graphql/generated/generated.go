@@ -929,6 +929,8 @@ enum ContentSortBy {
   VIEW_COUNT
   LIKE_COUNT
   PUBLISHED_AT
+  CHANNEL_TITLE
+  LENGTH
 }
 
 enum SortOrder {
@@ -946,12 +948,29 @@ input CreateContentFromYouTubeInput {
   userId: IntID!
 }
 
-# TODO: Add additional filters (e.g., dateRange, search) or make filters dynamic
+# Filters for content queries
 input ContentFilter {
   contentType: ContentType
   minLengthSeconds: Int
   maxLengthSeconds: Int
   search: String
+  # View/like count filters
+  minViewCount: Int
+  maxViewCount: Int
+  minLikeCount: Int
+  maxLikeCount: Int
+  # Published date filters (ISO 8601 date string)
+  publishedAfter: String
+  publishedBefore: String
+  # Channel/tag/description filters
+  channelTitle: String       # ILIKE search
+  tagContains: String        # Tag text contains
+  descriptionSearch: String  # ILIKE search on description
+  # Record date filters
+  createdAfter: String
+  createdBefore: String
+  updatedAfter: String
+  updatedBefore: String
 }
 
 # User inputs
@@ -5654,7 +5673,7 @@ func (ec *executionContext) unmarshalInputContentFilter(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"contentType", "minLengthSeconds", "maxLengthSeconds", "search"}
+	fieldsInOrder := [...]string{"contentType", "minLengthSeconds", "maxLengthSeconds", "search", "minViewCount", "maxViewCount", "minLikeCount", "maxLikeCount", "publishedAfter", "publishedBefore", "channelTitle", "tagContains", "descriptionSearch", "createdAfter", "createdBefore", "updatedAfter", "updatedBefore"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5689,6 +5708,97 @@ func (ec *executionContext) unmarshalInputContentFilter(ctx context.Context, obj
 				return it, err
 			}
 			it.Search = data
+		case "minViewCount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minViewCount"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MinViewCount = data
+		case "maxViewCount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxViewCount"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxViewCount = data
+		case "minLikeCount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minLikeCount"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MinLikeCount = data
+		case "maxLikeCount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxLikeCount"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxLikeCount = data
+		case "publishedAfter":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("publishedAfter"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PublishedAfter = data
+		case "publishedBefore":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("publishedBefore"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PublishedBefore = data
+		case "channelTitle":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("channelTitle"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ChannelTitle = data
+		case "tagContains":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tagContains"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TagContains = data
+		case "descriptionSearch":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("descriptionSearch"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DescriptionSearch = data
+		case "createdAfter":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAfter"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAfter = data
+		case "createdBefore":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdBefore"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedBefore = data
+		case "updatedAfter":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAfter"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UpdatedAfter = data
+		case "updatedBefore":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedBefore"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UpdatedBefore = data
 		}
 	}
 
