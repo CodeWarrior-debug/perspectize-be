@@ -301,6 +301,19 @@ func (r *queryResolver) Content(ctx context.Context, first *int, after *string, 
 		params.Filter.MinLengthSeconds = filter.MinLengthSeconds
 		params.Filter.MaxLengthSeconds = filter.MaxLengthSeconds
 		params.Filter.Search = filter.Search
+		params.Filter.MinViewCount = filter.MinViewCount
+		params.Filter.MaxViewCount = filter.MaxViewCount
+		params.Filter.MinLikeCount = filter.MinLikeCount
+		params.Filter.MaxLikeCount = filter.MaxLikeCount
+		params.Filter.PublishedAfter = filter.PublishedAfter
+		params.Filter.PublishedBefore = filter.PublishedBefore
+		params.Filter.ChannelTitle = filter.ChannelTitle
+		params.Filter.TagContains = filter.TagContains
+		params.Filter.DescriptionSearch = filter.DescriptionSearch
+		params.Filter.CreatedAfter = filter.CreatedAfter
+		params.Filter.CreatedBefore = filter.CreatedBefore
+		params.Filter.UpdatedAfter = filter.UpdatedAfter
+		params.Filter.UpdatedBefore = filter.UpdatedBefore
 	}
 
 	result, err := r.ContentService.ListContent(ctx, params)
