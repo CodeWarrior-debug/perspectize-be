@@ -620,7 +620,7 @@ Plans:
   6. Sharing a URL with params restores the exact view (mode, sort, filters, search; page resets to 1)
   7. Default mode is "Loaded Items" with no URL params
   8. Hover tooltip on "Loaded X Items" explains the mode
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 18-01-PLAN.md — Backend expanded filtering & sorting (ContentFilter + ContentSortBy expansion, GORM JSONB WHERE clauses, sort rules)

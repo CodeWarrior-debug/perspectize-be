@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 17 complete (2/2 plans) — YouTube URL Normalization and Duplicate Upsert
+**Current focus:** Phase 18 complete (3/3 plans) — Server-Side Pagination & Filtering with Data Mode Toggle
 
 ## Current Position
 
-Phase: 18 (Server-Side Pagination & Filtering with Data Mode Toggle) — In Progress
-Plan: 1/3 complete
-Status: Plan 01 complete — Backend expanded ContentFilter (13 new fields) and ContentSortBy (CHANNEL_TITLE, LENGTH). All gqlgen models regenerated, resolver mapping updated.
-Last activity: 2026-02-28 — Completed 18-01-PLAN.md (Backend Expanded Filtering & Sorting)
+Phase: 18 (Server-Side Pagination & Filtering with Data Mode Toggle) — Complete
+Plan: 3/3 complete
+Status: All plans complete — Backend expanded ContentFilter, gridUrlState utilities, ActivityTable URL-driven state with DataModeToggle UI
+Last activity: 2026-02-28 — Completed 18-03-PLAN.md (Data Mode Toggle UI & Grid Integration)
 
-Progress: [████████████████████] ~95% (34 plans complete)
+Progress: [████████████████████] ~98% (37 plans complete)
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Progress: [████████████████████] ~95% (3
 | Phase 17 P02 | 15 | 2 tasks | 12 files |
 | Phase 18 P01 | 4 | 6 tasks | 8 files |
 | Phase 18 P02 | 5 | 5 tasks | 2 files |
+| Phase 18 P03 | 5 | 7 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -193,6 +194,11 @@ Recent decisions affecting current work:
 - [Phase 18]: f.* URL param prefix namespaces filter params from grid params (mode, sort, dir, page)
 - [Phase 18]: YYYY-MM date format in URL params for filter ranges (truncated from YYYY-MM-DD)
 - [Phase 18]: serializeGridParams omits defaults for clean bookmark-friendly URLs
+- [Phase 18]: URL-driven state via $derived(parseGridParams(page.url.searchParams)) — ActivityTable has zero internal sort/filter/page state
+- [Phase 18]: [18-03]: Default mode is 'loaded' (client-side) — omitted from URL when default for clean bookmarks
+- [Phase 18]: [18-03]: skipNextSortEvent flag breaks the sync loop between AG Grid applyColumnState and onSortChanged
+- [Phase 18]: [18-03]: postSortRows callback prevents AG Grid from client-side re-sorting server-pre-sorted data in All Items mode
+- [Phase 18]: [18-03]: COL_TO_SORT from gridUrlState.ts replaces local SORT_FIELD_MAP — Duration maps to LENGTH, Channel maps to CHANNEL_TITLE
 
 ### Roadmap Evolution
 
@@ -387,6 +393,6 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 18-01-PLAN.md (Backend Expanded Filtering & Sorting)
+Stopped at: Completed 18-03-PLAN.md (Data Mode Toggle UI & Grid Integration)
 Resume file: None
-Next up: Phase 18 Plan 02 — Frontend Data Mode Toggle and AG Grid column filter wiring
+Next up: Phase 18 complete — all 3 plans done. Determine next phase.
