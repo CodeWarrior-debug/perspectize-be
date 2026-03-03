@@ -1,6 +1,9 @@
 scalar JSON
 scalar IntID
 
+directive @auth on FIELD_DEFINITION
+directive @owner(idField: String!) on FIELD_DEFINITION
+
 # User enums
 enum UserRole {
   ADMIN

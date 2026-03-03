@@ -45,6 +45,8 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
+	Auth  func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
+	Owner func(ctx context.Context, obj any, next graphql.Resolver, idField string) (res any, err error)
 }
 
 type ComplexityRoot struct {
@@ -854,6 +856,9 @@ var sources = []*ast.Source{
 	{Name: "../../../../schema.graphql", Input: `scalar JSON
 scalar IntID
 
+directive @auth on FIELD_DEFINITION
+directive @owner(idField: String!) on FIELD_DEFINITION
+
 # User enums
 enum UserRole {
   ADMIN
@@ -1130,6 +1135,17 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) dir_owner_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "idField", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["idField"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_createClaim_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
