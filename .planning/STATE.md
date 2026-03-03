@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 17 complete (2/2 plans) — YouTube URL Normalization and Duplicate Upsert
+**Current focus:** Phase 09 in progress (1/6 plans) — Security Hardening (JWT Auth Infrastructure)
 
 ## Current Position
 
-Phase: 17 (YouTube URL Normalization and Duplicate Upsert) — Complete
-Plan: 2/2 complete
-Status: Complete — Phase 17 both plans done. Plan 01 (URL normalization + idempotent upsert) and Plan 02 (CreateContentResult schema + frontend duplicate warning VIDEO-05) complete.
-Last activity: 2026-02-22 — Completed 17-02-PLAN.md (CreateContentResult type and frontend duplicate warning)
+Phase: 09 (Security Hardening) — In Progress
+Plan: 1/6 complete
+Status: In Progress — Plan 01 (JWT Auth Infrastructure) complete. Plans 02-06 remaining.
+Last activity: 2026-03-02 — Completed 09-01-PLAN.md (JWT authentication infrastructure)
 
 Progress: [████████████████████] ~95% (34 plans complete)
 
@@ -46,6 +46,7 @@ Progress: [████████████████████] ~95% (3
 *Updated after each plan completion*
 | Phase 17-youtube-url-normalization-and-duplicate-upsert P01 | 8 | 2 tasks | 11 files |
 | Phase 17 P02 | 15 | 2 tasks | 12 files |
+| Phase 09-security-hardening P01 | 6 | 7 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -184,6 +185,9 @@ Recent decisions affecting current work:
 - [Phase 17-youtube-url-normalization-and-duplicate-upsert]: GetOrCreateByURL uses clause.OnConflict{DoNothing: true} on url column for atomic TOCTOU-safe upsert
 - [Phase 17-youtube-url-normalization-and-duplicate-upsert]: CreateFromYouTube returns (content, ErrAlreadyExists) on duplicate — callers get both content AND can distinguish new vs existing
 - [Phase 17-02]: createContentFromYouTube returns CreateContentResult wrapper with alreadyExisted boolean for caller-side duplicate detection, enabling toast.warning UX without GraphQL errors
+- [09-01]: Middleware authenticates (stores claims in context), directives authorize (enforce @auth on fields) — middleware never blocks unauthenticated requests
+- [09-01]: HS256 JWT signing with golang-jwt/jwt v5, httpOnly cookie transport, 15-min default TTL
+- [09-01]: Dev fallback JWT secret for local development; production requires explicit JWT_SECRET >=32 bytes
 
 ### Roadmap Evolution
 
@@ -379,7 +383,7 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 
 ## Session Continuity
 
-Last session: 2026-02-20
-Stopped at: Phase 3.5 Plan 01 complete — Postman collection and exploration guide delivered on main
+Last session: 2026-03-02
+Stopped at: Phase 09 Plan 01 complete — JWT auth infrastructure with middleware, directives, and server wiring
 Resume file: None
-Next up: Phase 3.5 Plan 02 — User fills in findings template from interactive exploration, then Plan 02 generates curated category list and SQL seed data
+Next up: Phase 09 Plan 02 — Continue security hardening (ownership checks, rate limiting, or next plan)
