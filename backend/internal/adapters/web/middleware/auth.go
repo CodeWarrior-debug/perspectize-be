@@ -49,3 +49,9 @@ func ForContext(ctx context.Context) (int, bool) {
 	}
 	return claims.UserID, true
 }
+
+// WithUserContext stores authenticated user claims in the context.
+// Exported for use in tests that need to simulate authenticated requests.
+func WithUserContext(ctx context.Context, userID int) context.Context {
+	return context.WithValue(ctx, userContextKey, &domain.Claims{UserID: userID})
+}
