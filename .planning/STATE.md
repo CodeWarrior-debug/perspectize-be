@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 09 in progress (4/6 plans) — Security Hardening (Authorization & Data Protection)
+**Current focus:** Phase 09 complete (6/6 plans) — Security Hardening (Authorization & Data Protection)
 
 ## Current Position
 
-Phase: 09 (Security Hardening) — In Progress
-Plan: 4/6 complete
-Status: In Progress — Plans 01, 02, 03 complete. Plans 04-06 remaining.
-Last activity: 2026-03-03 — Completed 09-02-PLAN.md (Authorization & User Data Protection)
+Phase: 09 (Security Hardening) — Complete
+Plan: 6/6 complete
+Status: Complete — All plans executed. Security documentation finalized.
+Last activity: 2026-03-03 — Completed 09-06-PLAN.md (Secret Management Documentation)
 
-Progress: [████████████████████] ~97% (37 plans complete)
+Progress: [████████████████████] ~100% (39 plans complete)
 
 ## Performance Metrics
 
@@ -49,6 +49,7 @@ Progress: [████████████████████] ~97% (3
 | Phase 09-security-hardening P01 | 6 | 7 tasks | 13 files |
 | Phase 09-security-hardening P02 | 7 | 5 tasks | 8 files |
 | Phase 09-security-hardening P03 | 4 | 7 tasks | 8 files |
+| Phase 09-security-hardening P06 | 2 | 4 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -197,6 +198,8 @@ Recent decisions affecting current work:
 - [09-02]: gqlgen field resolver for User.email (gqlgen.yml config) — auth-gated, returns null when not own account
 - [09-02]: email field nullable (String! -> String) to support returning null for unauthorized requests
 - [09-02]: @owner directive extracts ID from both top-level args and nested input objects for flexible mutation patterns
+- [09-06]: Documentation-only approach for M-28 (automated vault/rotation deferred, manual rotation documented)
+- [09-06]: 90-day rotation cadence for JWT and DB credentials, annual for YouTube API keys
 
 ### Roadmap Evolution
 
@@ -393,6 +396,6 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Phase 09 Plan 02 complete — Authorization with @owner directive and email visibility gating
+Stopped at: Phase 09 Plan 06 complete — Secret Management Documentation
 Resume file: None
-Next up: Phase 09 Plan 04 — Continue security hardening
+Next up: Phase 09 complete — All security hardening plans executed
