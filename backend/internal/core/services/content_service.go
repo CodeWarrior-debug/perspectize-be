@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/youtube"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
@@ -51,7 +52,14 @@ func (s *ContentService) CreateFromYouTube(ctx context.Context, url string, user
 	// 4. Fetch metadata from YouTube API (only for new videos)
 	metadata, err := s.youtubeClient.GetVideoMetadata(ctx, videoID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch YouTube metadata: %w", err)
+		// Log with context, but don't expose YouTube API details to GraphQL clients
+		slog.Error("failed to fetch YouTube metadata",
+			"videoID", videoID,
+			"userID", userID,
+			"error", err) // err is already sanitized by youtube client
+
+		// Generic error for GraphQL response
+		return nil, fmt.Errorf("failed to fetch video metadata")
 	}
 
 	// 5. Build content with canonical URL
