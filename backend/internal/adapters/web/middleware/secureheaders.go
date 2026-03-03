@@ -31,6 +31,9 @@ func SecureHeaders() func(http.Handler) http.Handler {
 		// Content Security Policy for backend responses
 		ContentSecurityPolicy: "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https://i.ytimg.com https://yt3.ggpht.com; connect-src 'self'; font-src 'self';",
 
+		// Detect HTTPS behind Sevalla/Cloudflare reverse proxy
+		SSLProxyHeaders: map[string]string{"X-Forwarded-Proto": "https"},
+
 		// Only enforce in production (development allows http://localhost)
 		IsDevelopment: isDevelopment,
 	})
