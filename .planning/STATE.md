@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 09 in progress (3/6 plans) — Security Hardening (API Protection Layer)
+**Current focus:** Phase 09 in progress (4/6 plans) — Security Hardening (Authorization & Data Protection)
 
 ## Current Position
 
 Phase: 09 (Security Hardening) — In Progress
-Plan: 3/6 complete
-Status: In Progress — Plans 01, 03 complete. Plans 02, 04-06 remaining.
-Last activity: 2026-03-02 — Completed 09-03-PLAN.md (API protection layer)
+Plan: 4/6 complete
+Status: In Progress — Plans 01, 02, 03 complete. Plans 04-06 remaining.
+Last activity: 2026-03-03 — Completed 09-02-PLAN.md (Authorization & User Data Protection)
 
-Progress: [████████████████████] ~96% (36 plans complete)
+Progress: [████████████████████] ~97% (37 plans complete)
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Progress: [████████████████████] ~96% (3
 | Phase 17-youtube-url-normalization-and-duplicate-upsert P01 | 8 | 2 tasks | 11 files |
 | Phase 17 P02 | 15 | 2 tasks | 12 files |
 | Phase 09-security-hardening P01 | 6 | 7 tasks | 13 files |
+| Phase 09-security-hardening P02 | 7 | 5 tasks | 8 files |
 | Phase 09-security-hardening P03 | 4 | 7 tasks | 8 files |
 
 ## Accumulated Context
@@ -193,6 +194,9 @@ Recent decisions affecting current work:
 - [09-03]: Rate limiting before auth in middleware stack to prevent auth endpoint DoS
 - [09-03]: Content-Type validation as CSRF protection (simpler than gorilla/csrf for API-only GraphQL)
 - [09-03]: Middleware order: RequestID -> RealIP -> RateLimit -> CORS -> ContentType -> Auth -> Timer -> Recoverer
+- [09-02]: gqlgen field resolver for User.email (gqlgen.yml config) — auth-gated, returns null when not own account
+- [09-02]: email field nullable (String! -> String) to support returning null for unauthorized requests
+- [09-02]: @owner directive extracts ID from both top-level args and nested input objects for flexible mutation patterns
 
 ### Roadmap Evolution
 
@@ -388,7 +392,7 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 
 ## Session Continuity
 
-Last session: 2026-03-02
-Stopped at: Phase 09 Plan 03 complete — API protection layer with rate limiting, CORS, CSRF, complexity limits, introspection control
+Last session: 2026-03-03
+Stopped at: Phase 09 Plan 02 complete — Authorization with @owner directive and email visibility gating
 Resume file: None
 Next up: Phase 09 Plan 04 — Continue security hardening
