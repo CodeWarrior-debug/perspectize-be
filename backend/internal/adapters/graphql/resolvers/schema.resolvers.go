@@ -36,12 +36,10 @@ func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input m
 		if errors.Is(err, domain.ErrInvalidURL) {
 			return nil, fmt.Errorf("invalid YouTube URL")
 		}
-		slog.Error("creating content failed",
-			"error", err,
-			"url", input.URL,
-			"userID", input.UserID,
-		)
-		return nil, fmt.Errorf("failed to create content: %s", err.Error())
+
+		// Generic error for any other failure (including YouTube API errors)
+		// Details are already logged server-side by service layer
+		return nil, fmt.Errorf("failed to create content from YouTube")
 	}
 
 	return &model.CreateContentResult{
