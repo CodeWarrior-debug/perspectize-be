@@ -12,12 +12,15 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/lru"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/directives"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/generated"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/resolvers"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/repositories/postgres"
-	authmw "github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/web/middleware"
+	apimw "github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/web/middleware"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/youtube"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/config"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/services"
@@ -27,7 +30,9 @@ import (
 	perfmw "github.com/CodeWarrior-debug/perspectize/backend/pkg/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
+	"github.com/vektah/gqlparser/v2/ast"
 )
 
 func main() {
@@ -127,32 +132,41 @@ func main() {
 			Owner: directiveRoot.Owner,
 		},
 	}
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(gqlConfig))
+	srv := handler.New(generated.NewExecutableSchema(gqlConfig))
+	srv.AddTransport(transport.Options{})
+	srv.AddTransport(transport.GET{})
+	srv.AddTransport(transport.POST{})
+	srv.AddTransport(transport.MultipartForm{})
+	srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))
+	srv.Use(extension.AutomaticPersistedQuery{
+		Cache: lru.New[string](100),
+	})
+	// C-04: Query complexity limit — reject expensive queries
+	srv.Use(extension.FixedComplexityLimit(500))
+	// C-10: Enable introspection only in non-production
+	if os.Getenv("APP_ENV") != "production" {
+		srv.Use(extension.Introspection{})
+	}
 	srv.AroundOperations(gqltiming.OperationTimer())
 
 	// Setup chi router
 	r := chi.NewRouter()
 
-	// Middleware stack
+	// Middleware stack (order matters: rate limit before auth to prevent DoS)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(authmw.AuthMiddleware(authService)) // JWT auth from httpOnly cookie
-	r.Use(perfmw.RequestTimer)                // structured request timing (replaces chi Logger)
-	r.Use(perfmw.Recoverer)                   // structured panic recovery (JSON via slog)
-
-	// CORS middleware
-	r.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-			if r.Method == http.MethodOptions {
-				w.WriteHeader(http.StatusOK)
-				return
-			}
-			next.ServeHTTP(w, r)
-		})
-	})
+	r.Use(apimw.GlobalRateLimit(secCfg.RateLimitPerMin)) // H-11: rate limiting before auth
+	r.Use(cors.Handler(cors.Options{                     // C-05: CORS restricted to config origins
+		AllowedOrigins:   secCfg.CORSOrigins,
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
+	r.Use(apimw.ContentTypeValidation) // M-15: CSRF protection via Content-Type
+	r.Use(apimw.AuthMiddleware(authService))
+	r.Use(perfmw.RequestTimer) // structured request timing (replaces chi Logger)
+	r.Use(perfmw.Recoverer)    // structured panic recovery (JSON via slog)
 
 	// Health check — liveness probe (M-10)
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
