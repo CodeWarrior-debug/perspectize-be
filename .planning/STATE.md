@@ -50,6 +50,7 @@ Progress: [████████████████████] ~100% (
 | Phase 09-security-hardening P02 | 7 | 5 tasks | 8 files |
 | Phase 09-security-hardening P03 | 4 | 7 tasks | 8 files |
 | Phase 09-security-hardening P06 | 2 | 4 tasks | 3 files |
+| Phase 09 P05 | 4 | 5 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -200,6 +201,7 @@ Recent decisions affecting current work:
 - [09-02]: @owner directive extracts ID from both top-level args and nested input objects for flexible mutation patterns
 - [09-06]: Documentation-only approach for M-28 (automated vault/rotation deferred, manual rotation documented)
 - [09-06]: 90-day rotation cadence for JWT and DB credentials, annual for YouTube API keys
+- [Phase 09]: sanitizeYouTubeError is unexported helper — keeps sanitization logic internal to YouTube adapter
 
 ### Roadmap Evolution
 
