@@ -15,7 +15,7 @@ enum UserRole {
 type User {
   id: ID!
   username: String!
-  email: String!
+  email: String
   active: Boolean!
   role: UserRole!
   createdAt: String!

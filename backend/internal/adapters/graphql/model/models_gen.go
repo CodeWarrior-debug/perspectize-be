@@ -172,7 +172,7 @@ type UpdateUserInput struct {
 type User struct {
 	ID        string          `json:"id"`
 	Username  string          `json:"username"`
-	Email     string          `json:"email"`
+	Email     *string         `json:"email,omitempty"`
 	Active    bool            `json:"active"`
 	Role      domain.UserRole `json:"role"`
 	CreatedAt string          `json:"createdAt"`
