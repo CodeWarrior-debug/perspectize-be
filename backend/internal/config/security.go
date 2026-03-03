@@ -5,12 +5,15 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
+	"strings"
 )
 
-// Security holds JWT and authentication configuration.
+// Security holds JWT, authentication, rate limiting, and CORS configuration.
 type Security struct {
 	JWTSecret          string
 	AccessTokenMinutes int
+	RateLimitPerMin    int      // Default 100
+	CORSOrigins        []string // Explicit origins
 }
 
 // LoadSecurity reads security configuration from environment variables.
@@ -41,5 +44,29 @@ func LoadSecurity() Security {
 	return Security{
 		JWTSecret:          secret,
 		AccessTokenMinutes: minutes,
+		RateLimitPerMin:    getEnvInt("RATE_LIMIT_PER_MIN", 100),
+		CORSOrigins:        getEnvStringSlice("CORS_ORIGINS", []string{"*"}),
 	}
+}
+
+// getEnvInt reads an integer from an environment variable with a default.
+func getEnvInt(key string, defaultValue int) int {
+	val := os.Getenv(key)
+	if val == "" {
+		return defaultValue
+	}
+	v, err := strconv.Atoi(val)
+	if err != nil || v <= 0 {
+		return defaultValue
+	}
+	return v
+}
+
+// getEnvStringSlice reads a comma-separated string list from an environment variable.
+func getEnvStringSlice(key string, defaultValue []string) []string {
+	val := os.Getenv(key)
+	if val == "" {
+		return defaultValue
+	}
+	return strings.Split(val, ",")
 }
