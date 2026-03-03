@@ -222,7 +222,7 @@ func setupTestServer(repo *mockContentRepository, ytClient *mockYouTubeClient) *
 	userService := services.NewUserService(userRepo, repo, perspectiveRepo)
 	perspectiveService := services.NewPerspectiveService(perspectiveRepo, userRepo)
 	resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
-	directiveRoot := directives.NewDirectiveRoot()
+	directiveRoot := directives.NewDirectiveRoot(contentService, perspectiveService)
 	gqlConfig := generated.Config{
 		Resolvers: resolver,
 		Directives: generated.DirectiveRoot{

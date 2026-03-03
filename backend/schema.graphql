@@ -232,8 +232,8 @@ type Mutation {
 
   # Perspective mutations
   createPerspective(input: CreatePerspectiveInput!): Perspective! @auth
-  updatePerspective(input: UpdatePerspectiveInput!): Perspective! @auth
-  deletePerspective(id: ID!): Boolean! @auth
+  updatePerspective(input: UpdatePerspectiveInput!): Perspective! @auth @owner(idField: "id")
+  deletePerspective(id: ID!): Boolean! @auth @owner(idField: "id")
 
   # Claim mutations
   createClaim(input: CreateClaimInput!): Content! @auth

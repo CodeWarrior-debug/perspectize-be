@@ -1091,8 +1091,8 @@ type Mutation {
 
   # Perspective mutations
   createPerspective(input: CreatePerspectiveInput!): Perspective! @auth
-  updatePerspective(input: UpdatePerspectiveInput!): Perspective! @auth
-  deletePerspective(id: ID!): Boolean! @auth
+  updatePerspective(input: UpdatePerspectiveInput!): Perspective! @auth @owner(idField: "id")
+  deletePerspective(id: ID!): Boolean! @auth @owner(idField: "id")
 
   # Claim mutations
   createClaim(input: CreateClaimInput!): Content! @auth
@@ -2506,8 +2506,20 @@ func (ec *executionContext) _Mutation_updatePerspective(ctx context.Context, fie
 				}
 				return ec.directives.Auth(ctx, nil, directive0)
 			}
+			directive2 := func(ctx context.Context) (any, error) {
+				idField, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal *model.Perspective
+					return zeroVal, err
+				}
+				if ec.directives.Owner == nil {
+					var zeroVal *model.Perspective
+					return zeroVal, errors.New("directive owner is not implemented")
+				}
+				return ec.directives.Owner(ctx, nil, directive1, idField)
+			}
 
-			next = directive1
+			next = directive2
 			return next
 		},
 		ec.marshalNPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective,
@@ -2608,8 +2620,20 @@ func (ec *executionContext) _Mutation_deletePerspective(ctx context.Context, fie
 				}
 				return ec.directives.Auth(ctx, nil, directive0)
 			}
+			directive2 := func(ctx context.Context) (any, error) {
+				idField, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.Owner == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive owner is not implemented")
+				}
+				return ec.directives.Owner(ctx, nil, directive1, idField)
+			}
 
-			next = directive1
+			next = directive2
 			return next
 		},
 		ec.marshalNBoolean2bool,
