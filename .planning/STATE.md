@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 09 in progress (1/6 plans) — Security Hardening (JWT Auth Infrastructure)
+**Current focus:** Phase 09 in progress (3/6 plans) — Security Hardening (API Protection Layer)
 
 ## Current Position
 
 Phase: 09 (Security Hardening) — In Progress
-Plan: 1/6 complete
-Status: In Progress — Plan 01 (JWT Auth Infrastructure) complete. Plans 02-06 remaining.
-Last activity: 2026-03-02 — Completed 09-01-PLAN.md (JWT authentication infrastructure)
+Plan: 3/6 complete
+Status: In Progress — Plans 01, 03 complete. Plans 02, 04-06 remaining.
+Last activity: 2026-03-02 — Completed 09-03-PLAN.md (API protection layer)
 
-Progress: [████████████████████] ~95% (34 plans complete)
+Progress: [████████████████████] ~96% (36 plans complete)
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Progress: [████████████████████] ~95% (3
 | Phase 17-youtube-url-normalization-and-duplicate-upsert P01 | 8 | 2 tasks | 11 files |
 | Phase 17 P02 | 15 | 2 tasks | 12 files |
 | Phase 09-security-hardening P01 | 6 | 7 tasks | 13 files |
+| Phase 09-security-hardening P03 | 4 | 7 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -188,6 +189,10 @@ Recent decisions affecting current work:
 - [09-01]: Middleware authenticates (stores claims in context), directives authorize (enforce @auth on fields) — middleware never blocks unauthenticated requests
 - [09-01]: HS256 JWT signing with golang-jwt/jwt v5, httpOnly cookie transport, 15-min default TTL
 - [09-01]: Dev fallback JWT secret for local development; production requires explicit JWT_SECRET >=32 bytes
+- [09-03]: handler.New instead of NewDefaultServer for selective gqlgen extension control (introspection toggle)
+- [09-03]: Rate limiting before auth in middleware stack to prevent auth endpoint DoS
+- [09-03]: Content-Type validation as CSRF protection (simpler than gorilla/csrf for API-only GraphQL)
+- [09-03]: Middleware order: RequestID -> RealIP -> RateLimit -> CORS -> ContentType -> Auth -> Timer -> Recoverer
 
 ### Roadmap Evolution
 
@@ -384,6 +389,6 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Phase 09 Plan 01 complete — JWT auth infrastructure with middleware, directives, and server wiring
+Stopped at: Phase 09 Plan 03 complete — API protection layer with rate limiting, CORS, CSRF, complexity limits, introspection control
 Resume file: None
-Next up: Phase 09 Plan 02 — Continue security hardening (ownership checks, rate limiting, or next plan)
+Next up: Phase 09 Plan 04 — Continue security hardening
