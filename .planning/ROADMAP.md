@@ -278,7 +278,7 @@ Phases 6-10 address issues from the bug backlog (`.planning/phases/bugs/BACKLOG.
 - [x] **Phase 7.4: Performance Monitoring** - Request timing, GORM slow query logging, DB stats, GraphQL timing, Go benchmarks, Web Vitals (INSERTED)
 - [x] **Phase 8: User Integration Flow** - Frontend create user flow, shared FormPopover, optional email in schema (INSERTED)
 - [ ] **Phase 8.1: API & Schema Quality** - Fix GraphQL types, race conditions, nested resolvers
-- [ ] **Phase 9: Security Hardening** - Authentication, rate limiting, query complexity, headers, HTTPS
+- [x] **Phase 9: Security Hardening** - Authentication, rate limiting, query complexity, headers, HTTPS (completed 2026-03-03)
 - [ ] **Phase 10: Frontend Quality & Test Coverage** - XSS fix, codegen, error boundaries, cleanup, test gaps
 
 ### Phase 8: User Integration Flow (INSERTED)
@@ -623,7 +623,7 @@ Plans:
   6. Frontend shows success toast when new video is added
   7. Data migration backfills existing raw URLs to canonical form
   8. All backend and frontend tests pass
-**Plans:** 2/2 plans complete
+**Plans:** 6/6 plans complete
 
 Plans:
 - [ ] 17-01-PLAN.md — Backend: NormalizeYouTubeURL, GetOrCreateByURL with ON CONFLICT, idempotent CreateFromYouTube, data migration, tests (TDD)
@@ -715,7 +715,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 
 | 7.4 Performance Monitoring | 1/1 | Complete | 2026-02-15 |
 | 8. User Integration Flow | 1/1 | Complete | 2026-02-15 |
 | 8.1 API & Schema Quality | 0/5 | Not started | - |
-| 9. Security Hardening | 0/6 | Not started | - |
+| 9. Security Hardening | 0/6 | Complete    | 2026-03-03 |
 | 10. Frontend Quality & Test Coverage | 0/6 | Not started | - |
 | 11. Database Optimization | 0/3 | Not started | - |
 | 12. Authentication | 0/3 | Not started | - |
