@@ -163,6 +163,7 @@ func main() {
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
+	r.Use(apimw.SecureHeaders())       // M-14: security headers (HSTS, X-Content-Type-Options, X-Frame-Options)
 	r.Use(apimw.ContentTypeValidation) // M-15: CSRF protection via Content-Type
 	r.Use(apimw.AuthMiddleware(authService))
 	r.Use(perfmw.RequestTimer) // structured request timing (replaces chi Logger)
