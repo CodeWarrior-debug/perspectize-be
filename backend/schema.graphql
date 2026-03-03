@@ -223,20 +223,20 @@ input CreateClaimInput {
 }
 
 type Mutation {
-  createContentFromYouTube(input: CreateContentFromYouTubeInput!): CreateContentResult!
+  createContentFromYouTube(input: CreateContentFromYouTubeInput!): CreateContentResult! @auth
 
   # User mutations
-  createUser(input: CreateUserInput!): User!
-  updateUser(input: UpdateUserInput!): User!
-  deleteUser(id: ID!): Boolean!
+  createUser(input: CreateUserInput!): User! @auth
+  updateUser(input: UpdateUserInput!): User! @auth
+  deleteUser(id: ID!): Boolean! @auth
 
   # Perspective mutations
-  createPerspective(input: CreatePerspectiveInput!): Perspective!
-  updatePerspective(input: UpdatePerspectiveInput!): Perspective!
-  deletePerspective(id: ID!): Boolean!
+  createPerspective(input: CreatePerspectiveInput!): Perspective! @auth
+  updatePerspective(input: UpdatePerspectiveInput!): Perspective! @auth
+  deletePerspective(id: ID!): Boolean! @auth
 
   # Claim mutations
-  createClaim(input: CreateClaimInput!): Content!
+  createClaim(input: CreateClaimInput!): Content! @auth
 }
 
 type Query {
