@@ -51,6 +51,7 @@ Progress: [████████████████████] ~100% (
 | Phase 09-security-hardening P03 | 4 | 7 tasks | 8 files |
 | Phase 09-security-hardening P06 | 2 | 4 tasks | 3 files |
 | Phase 09 P05 | 4 | 5 tasks | 5 files |
+| Phase 09 P04 | 4 | 6 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -202,6 +203,7 @@ Recent decisions affecting current work:
 - [09-06]: Documentation-only approach for M-28 (automated vault/rotation deferred, manual rotation documented)
 - [09-06]: 90-day rotation cadence for JWT and DB credentials, annual for YouTube API keys
 - [Phase 09]: sanitizeYouTubeError is unexported helper — keeps sanitization logic internal to YouTube adapter
+- [Phase 09]: SSLProxyHeaders for Sevalla: Added X-Forwarded-Proto detection so HSTS works behind Sevalla/Cloudflare reverse proxy
 
 ### Roadmap Evolution
 
