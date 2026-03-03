@@ -124,7 +124,7 @@ func main() {
 
 	// Initialize GraphQL with directive wiring
 	resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
-	directiveRoot := directives.NewDirectiveRoot()
+	directiveRoot := directives.NewDirectiveRoot(contentService, perspectiveService)
 	gqlConfig := generated.Config{
 		Resolvers: resolver,
 		Directives: generated.DirectiveRoot{
