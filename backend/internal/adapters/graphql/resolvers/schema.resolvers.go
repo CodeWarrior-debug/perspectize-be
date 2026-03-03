@@ -15,6 +15,7 @@ import (
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/generated"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/model"
+	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/web/middleware"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 	portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
 )
@@ -527,11 +528,36 @@ func (r *queryResolver) Perspectives(ctx context.Context, first *int, after *str
 	return conn, nil
 }
 
+// Email is the resolver for the email field.
+// Returns email only when the authenticated user is requesting their own account (H-10).
+func (r *userResolver) Email(ctx context.Context, obj *model.User) (*string, error) {
+	authenticatedUserID, authenticated := middleware.ForContext(ctx)
+	if !authenticated {
+		return nil, nil
+	}
+
+	// Compare authenticated user ID with the requested user's ID
+	requestedUserID, err := strconv.Atoi(obj.ID)
+	if err != nil {
+		return nil, nil
+	}
+
+	if authenticatedUserID != requestedUserID {
+		return nil, nil // Not own account — hide email
+	}
+
+	return obj.Email, nil
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// User returns generated.UserResolver implementation.
+func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type userResolver struct{ *Resolver }
