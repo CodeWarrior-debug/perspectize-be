@@ -13,9 +13,11 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/directives"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/generated"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/resolvers"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/repositories/postgres"
+	authmw "github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/web/middleware"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/youtube"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/config"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/services"
@@ -96,6 +98,14 @@ func main() {
 		slog.Warn("YOUTUBE_API_KEY is empty — YouTube metadata fetching will fail")
 	}
 
+	// Load security config and create auth service
+	secCfg := config.LoadSecurity()
+	authService := services.NewAuthService(
+		[]byte(secCfg.JWTSecret),
+		time.Duration(secCfg.AccessTokenMinutes)*time.Minute,
+	)
+	slog.Info("auth service initialized", "tokenTTL", fmt.Sprintf("%dm", secCfg.AccessTokenMinutes))
+
 	// Initialize adapters
 	youtubeClient := youtube.NewClient(cfg.YouTube.APIKey)
 	contentRepo := postgres.NewGormContentRepository(db)
@@ -107,9 +117,17 @@ func main() {
 	userService := services.NewUserService(userRepo, contentRepo, perspectiveRepo)
 	perspectiveService := services.NewPerspectiveService(perspectiveRepo, userRepo)
 
-	// Initialize GraphQL
+	// Initialize GraphQL with directive wiring
 	resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
+	directiveRoot := directives.NewDirectiveRoot()
+	gqlConfig := generated.Config{
+		Resolvers: resolver,
+		Directives: generated.DirectiveRoot{
+			Auth:  directiveRoot.Auth,
+			Owner: directiveRoot.Owner,
+		},
+	}
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(gqlConfig))
 	srv.AroundOperations(gqltiming.OperationTimer())
 
 	// Setup chi router
@@ -118,8 +136,9 @@ func main() {
 	// Middleware stack
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(perfmw.RequestTimer) // structured request timing (replaces chi Logger)
-	r.Use(perfmw.Recoverer)    // structured panic recovery (JSON via slog)
+	r.Use(authmw.AuthMiddleware(authService)) // JWT auth from httpOnly cookie
+	r.Use(perfmw.RequestTimer)                // structured request timing (replaces chi Logger)
+	r.Use(perfmw.Recoverer)                   // structured panic recovery (JSON via slog)
 
 	// CORS middleware
 	r.Use(func(next http.Handler) http.Handler {
