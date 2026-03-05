@@ -4,14 +4,14 @@ package domain
 type ContentSortBy string
 
 const (
-	ContentSortByCreatedAt   ContentSortBy = "CREATED_AT"
-	ContentSortByUpdatedAt   ContentSortBy = "UPDATED_AT"
-	ContentSortByName        ContentSortBy = "NAME"
-	ContentSortByViewCount   ContentSortBy = "VIEW_COUNT"
-	ContentSortByLikeCount   ContentSortBy = "LIKE_COUNT"
-	ContentSortByPublishedAt ContentSortBy = "PUBLISHED_AT"
+	ContentSortByCreatedAt    ContentSortBy = "CREATED_AT"
+	ContentSortByUpdatedAt    ContentSortBy = "UPDATED_AT"
+	ContentSortByName         ContentSortBy = "NAME"
+	ContentSortByViewCount    ContentSortBy = "VIEW_COUNT"
+	ContentSortByLikeCount    ContentSortBy = "LIKE_COUNT"
+	ContentSortByPublishedAt  ContentSortBy = "PUBLISHED_AT"
 	ContentSortByChannelTitle ContentSortBy = "CHANNEL_TITLE"
-	ContentSortByLength      ContentSortBy = "LENGTH"
+	ContentSortByLength       ContentSortBy = "LENGTH"
 )
 
 // SortOrder represents ascending or descending sort direction
