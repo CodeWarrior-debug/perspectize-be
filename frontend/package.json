@@ -54,7 +54,7 @@
 		"@ag-grid-community/core": "32.3.9",
 		"@ag-grid-community/theming": "32.3.9",
 		"@capacitor/core": "^8.1.0",
-		"@capacitor/haptics": "^7.0.3",
+		"@capacitor/haptics": "^8.0.1",
 		"@tanstack/svelte-form": "^1.28.4",
 		"@tanstack/svelte-query": "^6.1.0",
 		"ag-grid-svelte5": "^1.0.3",
