@@ -42,9 +42,12 @@ type Config struct {
 type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
+	User() UserResolver
 }
 
 type DirectiveRoot struct {
+	Auth  func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
+	Owner func(ctx context.Context, obj any, next graphql.Resolver, idField string) (res any, err error)
 }
 
 type ComplexityRoot struct {
@@ -80,6 +83,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		CreateClaim              func(childComplexity int, input model.CreateClaimInput) int
 		CreateContentFromYouTube func(childComplexity int, input model.CreateContentFromYouTubeInput) int
 		CreatePerspective        func(childComplexity int, input model.CreatePerspectiveInput) int
 		CreateUser               func(childComplexity int, input model.CreateUserInput) int
@@ -109,25 +113,29 @@ type ComplexityRoot struct {
 	}
 
 	Perspective struct {
-		Agreement          func(childComplexity int) int
-		CategorizedRatings func(childComplexity int) int
-		Category           func(childComplexity int) int
-		Confidence         func(childComplexity int) int
-		Content            func(childComplexity int) int
-		ContentID          func(childComplexity int) int
-		CreatedAt          func(childComplexity int) int
-		Description        func(childComplexity int) int
-		ID                 func(childComplexity int) int
-		Importance         func(childComplexity int) int
-		Labels             func(childComplexity int) int
-		Like               func(childComplexity int) int
-		Parts              func(childComplexity int) int
-		Privacy            func(childComplexity int) int
-		Quality            func(childComplexity int) int
-		ReviewStatus       func(childComplexity int) int
-		UpdatedAt          func(childComplexity int) int
-		User               func(childComplexity int) int
-		UserID             func(childComplexity int) int
+		Agreement             func(childComplexity int) int
+		CategorizedRatings    func(childComplexity int) int
+		Category              func(childComplexity int) int
+		Confidence            func(childComplexity int) int
+		Content               func(childComplexity int) int
+		ContentID             func(childComplexity int) int
+		CreatedAt             func(childComplexity int) int
+		CustomFields          func(childComplexity int) int
+		Description           func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		Importance            func(childComplexity int) int
+		Labels                func(childComplexity int) int
+		Like                  func(childComplexity int) int
+		Parts                 func(childComplexity int) int
+		PrimaryPerspectiveID  func(childComplexity int) int
+		Privacy               func(childComplexity int) int
+		Quality               func(childComplexity int) int
+		RelatedPerspectiveIDs func(childComplexity int) int
+		Review                func(childComplexity int) int
+		ReviewStatus          func(childComplexity int) int
+		UpdatedAt             func(childComplexity int) int
+		User                  func(childComplexity int) int
+		UserID                func(childComplexity int) int
 	}
 
 	Query struct {
@@ -159,6 +167,7 @@ type MutationResolver interface {
 	CreatePerspective(ctx context.Context, input model.CreatePerspectiveInput) (*model.Perspective, error)
 	UpdatePerspective(ctx context.Context, input model.UpdatePerspectiveInput) (*model.Perspective, error)
 	DeletePerspective(ctx context.Context, id string) (bool, error)
+	CreateClaim(ctx context.Context, input model.CreateClaimInput) (*model.Content, error)
 }
 type QueryResolver interface {
 	ContentByID(ctx context.Context, id string) (*model.Content, error)
@@ -168,6 +177,9 @@ type QueryResolver interface {
 	Users(ctx context.Context) ([]*model.User, error)
 	PerspectiveByID(ctx context.Context, id string) (*model.Perspective, error)
 	Perspectives(ctx context.Context, first *int, after *string, last *int, before *string, sortBy *domain.PerspectiveSortBy, sortOrder *domain.SortOrder, includeTotalCount *bool, filter *model.PerspectiveFilter) (*model.PaginatedPerspectives, error)
+}
+type UserResolver interface {
+	Email(ctx context.Context, obj *model.User) (*string, error)
 }
 
 type executableSchema struct {
@@ -324,6 +336,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateContentResult.Content(childComplexity), true
 
+	case "Mutation.createClaim":
+		if e.complexity.Mutation.CreateClaim == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createClaim_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateClaim(childComplexity, args["input"].(model.CreateClaimInput)), true
 	case "Mutation.createContentFromYouTube":
 		if e.complexity.Mutation.CreateContentFromYouTube == nil {
 			break
@@ -507,6 +530,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Perspective.CreatedAt(childComplexity), true
+	case "Perspective.customFields":
+		if e.complexity.Perspective.CustomFields == nil {
+			break
+		}
+
+		return e.complexity.Perspective.CustomFields(childComplexity), true
 	case "Perspective.description":
 		if e.complexity.Perspective.Description == nil {
 			break
@@ -543,6 +572,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Perspective.Parts(childComplexity), true
+	case "Perspective.primaryPerspectiveID":
+		if e.complexity.Perspective.PrimaryPerspectiveID == nil {
+			break
+		}
+
+		return e.complexity.Perspective.PrimaryPerspectiveID(childComplexity), true
 	case "Perspective.privacy":
 		if e.complexity.Perspective.Privacy == nil {
 			break
@@ -555,6 +590,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Perspective.Quality(childComplexity), true
+	case "Perspective.relatedPerspectiveIDs":
+		if e.complexity.Perspective.RelatedPerspectiveIDs == nil {
+			break
+		}
+
+		return e.complexity.Perspective.RelatedPerspectiveIDs(childComplexity), true
+	case "Perspective.review":
+		if e.complexity.Perspective.Review == nil {
+			break
+		}
+
+		return e.complexity.Perspective.Review(childComplexity), true
 	case "Perspective.reviewStatus":
 		if e.complexity.Perspective.ReviewStatus == nil {
 			break
@@ -706,6 +753,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputCategorizedRatingInput,
 		ec.unmarshalInputContentFilter,
+		ec.unmarshalInputCreateClaimInput,
 		ec.unmarshalInputCreateContentFromYouTubeInput,
 		ec.unmarshalInputCreatePerspectiveInput,
 		ec.unmarshalInputCreateUserInput,
@@ -812,6 +860,9 @@ var sources = []*ast.Source{
 	{Name: "../../../../schema.graphql", Input: `scalar JSON
 scalar IntID
 
+directive @auth on FIELD_DEFINITION
+directive @owner(idField: String!) on FIELD_DEFINITION
+
 # User enums
 enum UserRole {
   ADMIN
@@ -823,7 +874,7 @@ enum UserRole {
 type User {
   id: ID!
   username: String!
-  email: String!
+  email: String
   active: Boolean!
   role: UserRole!
   createdAt: String!
@@ -871,6 +922,10 @@ type Perspective {
   parts: [Int!]
   labels: [String!]
   categorizedRatings: [CategorizedRating!]
+  primaryPerspectiveID: ID
+  relatedPerspectiveIDs: [Int!]
+  customFields: JSON
+  review: String
   createdAt: String!
   updatedAt: String!
 }
@@ -940,6 +995,7 @@ enum SortOrder {
 
 enum ContentType {
   YOUTUBE
+  CLAIM
 }
 
 # Inputs
@@ -1005,6 +1061,10 @@ input CreatePerspectiveInput {
   parts: [Int!]
   labels: [String!]
   categorizedRatings: [CategorizedRatingInput!]
+  primaryPerspectiveID: IntID
+  relatedPerspectiveIDs: [Int!]
+  customFields: JSON
+  review: String
 }
 
 input UpdatePerspectiveInput {
@@ -1022,6 +1082,10 @@ input UpdatePerspectiveInput {
   parts: [Int!]
   labels: [String!]
   categorizedRatings: [CategorizedRatingInput!]
+  primaryPerspectiveID: IntID
+  relatedPerspectiveIDs: [Int!]
+  customFields: JSON
+  review: String
 }
 
 input PerspectiveFilter {
@@ -1030,18 +1094,27 @@ input PerspectiveFilter {
   privacy: Privacy
 }
 
+input CreateClaimInput {
+  text: String!            # The claim text (may contain @this/@here tokens)
+  userID: IntID!           # Who created the claim
+  parentContentID: IntID!  # The content item this claim is about
+}
+
 type Mutation {
-  createContentFromYouTube(input: CreateContentFromYouTubeInput!): CreateContentResult!
+  createContentFromYouTube(input: CreateContentFromYouTubeInput!): CreateContentResult! @auth
 
   # User mutations
-  createUser(input: CreateUserInput!): User!
-  updateUser(input: UpdateUserInput!): User!
-  deleteUser(id: ID!): Boolean!
+  createUser(input: CreateUserInput!): User! @auth
+  updateUser(input: UpdateUserInput!): User! @auth
+  deleteUser(id: ID!): Boolean! @auth
 
   # Perspective mutations
-  createPerspective(input: CreatePerspectiveInput!): Perspective!
-  updatePerspective(input: UpdatePerspectiveInput!): Perspective!
-  deletePerspective(id: ID!): Boolean!
+  createPerspective(input: CreatePerspectiveInput!): Perspective! @auth
+  updatePerspective(input: UpdatePerspectiveInput!): Perspective! @auth @owner(idField: "id")
+  deletePerspective(id: ID!): Boolean! @auth @owner(idField: "id")
+
+  # Claim mutations
+  createClaim(input: CreateClaimInput!): Content! @auth
 }
 
 type Query {
@@ -1085,6 +1158,28 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) dir_owner_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "idField", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["idField"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createClaim_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateClaimInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateClaimInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_createContentFromYouTube_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
@@ -2064,7 +2159,20 @@ func (ec *executionContext) _Mutation_createContentFromYouTube(ctx context.Conte
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().CreateContentFromYouTube(ctx, fc.Args["input"].(model.CreateContentFromYouTubeInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.Auth == nil {
+					var zeroVal *model.CreateContentResult
+					return zeroVal, errors.New("directive auth is not implemented")
+				}
+				return ec.directives.Auth(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNCreateContentResult2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateContentResult,
 		true,
 		true,
@@ -2111,7 +2219,20 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().CreateUser(ctx, fc.Args["input"].(model.CreateUserInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.Auth == nil {
+					var zeroVal *model.User
+					return zeroVal, errors.New("directive auth is not implemented")
+				}
+				return ec.directives.Auth(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
 		true,
 		true,
@@ -2168,7 +2289,20 @@ func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field grap
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().UpdateUser(ctx, fc.Args["input"].(model.UpdateUserInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.Auth == nil {
+					var zeroVal *model.User
+					return zeroVal, errors.New("directive auth is not implemented")
+				}
+				return ec.directives.Auth(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUser,
 		true,
 		true,
@@ -2225,7 +2359,20 @@ func (ec *executionContext) _Mutation_deleteUser(ctx context.Context, field grap
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().DeleteUser(ctx, fc.Args["id"].(string))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.Auth == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive auth is not implemented")
+				}
+				return ec.directives.Auth(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNBoolean2bool,
 		true,
 		true,
@@ -2266,7 +2413,20 @@ func (ec *executionContext) _Mutation_createPerspective(ctx context.Context, fie
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().CreatePerspective(ctx, fc.Args["input"].(model.CreatePerspectiveInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.Auth == nil {
+					var zeroVal *model.Perspective
+					return zeroVal, errors.New("directive auth is not implemented")
+				}
+				return ec.directives.Auth(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective,
 		true,
 		true,
@@ -2315,6 +2475,14 @@ func (ec *executionContext) fieldContext_Mutation_createPerspective(ctx context.
 				return ec.fieldContext_Perspective_labels(ctx, field)
 			case "categorizedRatings":
 				return ec.fieldContext_Perspective_categorizedRatings(ctx, field)
+			case "primaryPerspectiveID":
+				return ec.fieldContext_Perspective_primaryPerspectiveID(ctx, field)
+			case "relatedPerspectiveIDs":
+				return ec.fieldContext_Perspective_relatedPerspectiveIDs(ctx, field)
+			case "customFields":
+				return ec.fieldContext_Perspective_customFields(ctx, field)
+			case "review":
+				return ec.fieldContext_Perspective_review(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Perspective_createdAt(ctx, field)
 			case "updatedAt":
@@ -2347,7 +2515,32 @@ func (ec *executionContext) _Mutation_updatePerspective(ctx context.Context, fie
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().UpdatePerspective(ctx, fc.Args["input"].(model.UpdatePerspectiveInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.Auth == nil {
+					var zeroVal *model.Perspective
+					return zeroVal, errors.New("directive auth is not implemented")
+				}
+				return ec.directives.Auth(ctx, nil, directive0)
+			}
+			directive2 := func(ctx context.Context) (any, error) {
+				idField, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal *model.Perspective
+					return zeroVal, err
+				}
+				if ec.directives.Owner == nil {
+					var zeroVal *model.Perspective
+					return zeroVal, errors.New("directive owner is not implemented")
+				}
+				return ec.directives.Owner(ctx, nil, directive1, idField)
+			}
+
+			next = directive2
+			return next
+		},
 		ec.marshalNPerspective2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐPerspective,
 		true,
 		true,
@@ -2396,6 +2589,14 @@ func (ec *executionContext) fieldContext_Mutation_updatePerspective(ctx context.
 				return ec.fieldContext_Perspective_labels(ctx, field)
 			case "categorizedRatings":
 				return ec.fieldContext_Perspective_categorizedRatings(ctx, field)
+			case "primaryPerspectiveID":
+				return ec.fieldContext_Perspective_primaryPerspectiveID(ctx, field)
+			case "relatedPerspectiveIDs":
+				return ec.fieldContext_Perspective_relatedPerspectiveIDs(ctx, field)
+			case "customFields":
+				return ec.fieldContext_Perspective_customFields(ctx, field)
+			case "review":
+				return ec.fieldContext_Perspective_review(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Perspective_createdAt(ctx, field)
 			case "updatedAt":
@@ -2428,7 +2629,32 @@ func (ec *executionContext) _Mutation_deletePerspective(ctx context.Context, fie
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().DeletePerspective(ctx, fc.Args["id"].(string))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.Auth == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive auth is not implemented")
+				}
+				return ec.directives.Auth(ctx, nil, directive0)
+			}
+			directive2 := func(ctx context.Context) (any, error) {
+				idField, err := ec.unmarshalNString2string(ctx, "id")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.Owner == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive owner is not implemented")
+				}
+				return ec.directives.Owner(ctx, nil, directive1, idField)
+			}
+
+			next = directive2
+			return next
+		},
 		ec.marshalNBoolean2bool,
 		true,
 		true,
@@ -2453,6 +2679,98 @@ func (ec *executionContext) fieldContext_Mutation_deletePerspective(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deletePerspective_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createClaim(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createClaim,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().CreateClaim(ctx, fc.Args["input"].(model.CreateClaimInput))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.Auth == nil {
+					var zeroVal *model.Content
+					return zeroVal, errors.New("directive auth is not implemented")
+				}
+				return ec.directives.Auth(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createClaim(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Content_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Content_name(ctx, field)
+			case "url":
+				return ec.fieldContext_Content_url(ctx, field)
+			case "contentType":
+				return ec.fieldContext_Content_contentType(ctx, field)
+			case "addedByUserID":
+				return ec.fieldContext_Content_addedByUserID(ctx, field)
+			case "addedBy":
+				return ec.fieldContext_Content_addedBy(ctx, field)
+			case "length":
+				return ec.fieldContext_Content_length(ctx, field)
+			case "lengthUnits":
+				return ec.fieldContext_Content_lengthUnits(ctx, field)
+			case "viewCount":
+				return ec.fieldContext_Content_viewCount(ctx, field)
+			case "likeCount":
+				return ec.fieldContext_Content_likeCount(ctx, field)
+			case "commentCount":
+				return ec.fieldContext_Content_commentCount(ctx, field)
+			case "channelTitle":
+				return ec.fieldContext_Content_channelTitle(ctx, field)
+			case "publishedAt":
+				return ec.fieldContext_Content_publishedAt(ctx, field)
+			case "tags":
+				return ec.fieldContext_Content_tags(ctx, field)
+			case "description":
+				return ec.fieldContext_Content_description(ctx, field)
+			case "response":
+				return ec.fieldContext_Content_response(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Content_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Content_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Content", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createClaim_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -2768,6 +3086,14 @@ func (ec *executionContext) fieldContext_PaginatedPerspectives_items(_ context.C
 				return ec.fieldContext_Perspective_labels(ctx, field)
 			case "categorizedRatings":
 				return ec.fieldContext_Perspective_categorizedRatings(ctx, field)
+			case "primaryPerspectiveID":
+				return ec.fieldContext_Perspective_primaryPerspectiveID(ctx, field)
+			case "relatedPerspectiveIDs":
+				return ec.fieldContext_Perspective_relatedPerspectiveIDs(ctx, field)
+			case "customFields":
+				return ec.fieldContext_Perspective_customFields(ctx, field)
+			case "review":
+				return ec.fieldContext_Perspective_review(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Perspective_createdAt(ctx, field)
 			case "updatedAt":
@@ -3400,6 +3726,122 @@ func (ec *executionContext) fieldContext_Perspective_categorizedRatings(_ contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Perspective_primaryPerspectiveID(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_primaryPerspectiveID,
+		func(ctx context.Context) (any, error) {
+			return obj.PrimaryPerspectiveID, nil
+		},
+		nil,
+		ec.marshalOID2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_primaryPerspectiveID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_relatedPerspectiveIDs(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_relatedPerspectiveIDs,
+		func(ctx context.Context) (any, error) {
+			return obj.RelatedPerspectiveIDs, nil
+		},
+		nil,
+		ec.marshalOInt2ᚕintᚄ,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_relatedPerspectiveIDs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_customFields(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_customFields,
+		func(ctx context.Context) (any, error) {
+			return obj.CustomFields, nil
+		},
+		nil,
+		ec.marshalOJSON2map,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_customFields(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type JSON does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Perspective_review(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Perspective_review,
+		func(ctx context.Context) (any, error) {
+			return obj.Review, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Perspective_review(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Perspective",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Perspective_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Perspective) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3804,6 +4246,14 @@ func (ec *executionContext) fieldContext_Query_perspectiveByID(ctx context.Conte
 				return ec.fieldContext_Perspective_labels(ctx, field)
 			case "categorizedRatings":
 				return ec.fieldContext_Perspective_categorizedRatings(ctx, field)
+			case "primaryPerspectiveID":
+				return ec.fieldContext_Perspective_primaryPerspectiveID(ctx, field)
+			case "relatedPerspectiveIDs":
+				return ec.fieldContext_Perspective_relatedPerspectiveIDs(ctx, field)
+			case "customFields":
+				return ec.fieldContext_Perspective_customFields(ctx, field)
+			case "review":
+				return ec.fieldContext_Perspective_review(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Perspective_createdAt(ctx, field)
 			case "updatedAt":
@@ -4048,12 +4498,12 @@ func (ec *executionContext) _User_email(ctx context.Context, field graphql.Colle
 		field,
 		ec.fieldContext_User_email,
 		func(ctx context.Context) (any, error) {
-			return obj.Email, nil
+			return ec.resolvers.User().Email(ctx, obj)
 		},
 		nil,
-		ec.marshalNString2string,
+		ec.marshalOString2ᚖstring,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -4061,8 +4511,8 @@ func (ec *executionContext) fieldContext_User_email(_ context.Context, field gra
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -5805,6 +6255,47 @@ func (ec *executionContext) unmarshalInputContentFilter(ctx context.Context, obj
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateClaimInput(ctx context.Context, obj any) (model.CreateClaimInput, error) {
+	var it model.CreateClaimInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"text", "userID", "parentContentID"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "text":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Text = data
+		case "userID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userID"))
+			data, err := ec.unmarshalNIntID2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UserID = data
+		case "parentContentID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentContentID"))
+			data, err := ec.unmarshalNIntID2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ParentContentID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateContentFromYouTubeInput(ctx context.Context, obj any) (model.CreateContentFromYouTubeInput, error) {
 	var it model.CreateContentFromYouTubeInput
 	asMap := map[string]any{}
@@ -5846,7 +6337,7 @@ func (ec *executionContext) unmarshalInputCreatePerspectiveInput(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"userID", "contentID", "quality", "agreement", "importance", "confidence", "like", "privacy", "description", "category", "parts", "labels", "categorizedRatings"}
+	fieldsInOrder := [...]string{"userID", "contentID", "quality", "agreement", "importance", "confidence", "like", "privacy", "description", "category", "parts", "labels", "categorizedRatings", "primaryPerspectiveID", "relatedPerspectiveIDs", "customFields", "review"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5944,6 +6435,34 @@ func (ec *executionContext) unmarshalInputCreatePerspectiveInput(ctx context.Con
 				return it, err
 			}
 			it.CategorizedRatings = data
+		case "primaryPerspectiveID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("primaryPerspectiveID"))
+			data, err := ec.unmarshalOIntID2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PrimaryPerspectiveID = data
+		case "relatedPerspectiveIDs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("relatedPerspectiveIDs"))
+			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RelatedPerspectiveIDs = data
+		case "customFields":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customFields"))
+			data, err := ec.unmarshalOJSON2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomFields = data
+		case "review":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("review"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Review = data
 		}
 	}
 
@@ -6032,7 +6551,7 @@ func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "contentID", "quality", "agreement", "importance", "confidence", "like", "privacy", "description", "category", "reviewStatus", "parts", "labels", "categorizedRatings"}
+	fieldsInOrder := [...]string{"id", "contentID", "quality", "agreement", "importance", "confidence", "like", "privacy", "description", "category", "reviewStatus", "parts", "labels", "categorizedRatings", "primaryPerspectiveID", "relatedPerspectiveIDs", "customFields", "review"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -6137,6 +6656,34 @@ func (ec *executionContext) unmarshalInputUpdatePerspectiveInput(ctx context.Con
 				return it, err
 			}
 			it.CategorizedRatings = data
+		case "primaryPerspectiveID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("primaryPerspectiveID"))
+			data, err := ec.unmarshalOIntID2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PrimaryPerspectiveID = data
+		case "relatedPerspectiveIDs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("relatedPerspectiveIDs"))
+			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RelatedPerspectiveIDs = data
+		case "customFields":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customFields"))
+			data, err := ec.unmarshalOJSON2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomFields = data
+		case "review":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("review"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Review = data
 		}
 	}
 
@@ -6436,6 +6983,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createClaim":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createClaim(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6653,6 +7207,14 @@ func (ec *executionContext) _Perspective(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = ec._Perspective_labels(ctx, field, obj)
 		case "categorizedRatings":
 			out.Values[i] = ec._Perspective_categorizedRatings(ctx, field, obj)
+		case "primaryPerspectiveID":
+			out.Values[i] = ec._Perspective_primaryPerspectiveID(ctx, field, obj)
+		case "relatedPerspectiveIDs":
+			out.Values[i] = ec._Perspective_relatedPerspectiveIDs(ctx, field, obj)
+		case "customFields":
+			out.Values[i] = ec._Perspective_customFields(ctx, field, obj)
+		case "review":
+			out.Values[i] = ec._Perspective_review(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._Perspective_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -6892,37 +7454,65 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		case "id":
 			out.Values[i] = ec._User_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "username":
 			out.Values[i] = ec._User_username(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "email":
-			out.Values[i] = ec._User_email(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_email(ctx, field, obj)
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "active":
 			out.Values[i] = ec._User_active(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "role":
 			out.Values[i] = ec._User_role(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdAt":
 			out.Values[i] = ec._User_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
 			out.Values[i] = ec._User_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -7313,6 +7903,10 @@ func (ec *executionContext) unmarshalNCategorizedRatingInput2ᚖgithubᚗcomᚋC
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNContent2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContent(ctx context.Context, sel ast.SelectionSet, v model.Content) graphql.Marshaler {
+	return ec._Content(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNContent2ᚕᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐContentᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Content) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -7365,6 +7959,11 @@ func (ec *executionContext) marshalNContent2ᚖgithubᚗcomᚋCodeWarriorᚑdebu
 		return graphql.Null
 	}
 	return ec._Content(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCreateClaimInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateClaimInput(ctx context.Context, v any) (model.CreateClaimInput, error) {
+	res, err := ec.unmarshalInputCreateClaimInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNCreateContentFromYouTubeInput2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐCreateContentFromYouTubeInput(ctx context.Context, v any) (model.CreateContentFromYouTubeInput, error) {

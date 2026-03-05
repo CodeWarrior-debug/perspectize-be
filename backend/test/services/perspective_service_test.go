@@ -110,8 +110,10 @@ func TestPerspectiveCreate_Success(t *testing.T) {
 	userRepo := &mockUserRepoForPerspective{}
 
 	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
+	like := "up"
 	input := portservices.CreatePerspectiveInput{
 		UserID: 1,
+		Like:   &like, // at least one field required by validation
 	}
 
 	result, err := svc.Create(context.Background(), input)
@@ -228,8 +230,10 @@ func TestPerspectiveCreate_RepositoryError(t *testing.T) {
 	userRepo := &mockUserRepoForPerspective{}
 
 	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
+	like := "up"
 	input := portservices.CreatePerspectiveInput{
 		UserID: 1,
+		Like:   &like, // at least one field required by validation
 	}
 
 	result, err := svc.Create(context.Background(), input)
@@ -237,6 +241,24 @@ func TestPerspectiveCreate_RepositoryError(t *testing.T) {
 	assert.Nil(t, result)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to create perspective")
+}
+
+func TestPerspectiveCreate_NoFieldsProvided(t *testing.T) {
+	perspectiveRepo := &mockPerspectiveRepository{}
+	userRepo := &mockUserRepoForPerspective{}
+
+	svc := services.NewPerspectiveService(perspectiveRepo, userRepo)
+	input := portservices.CreatePerspectiveInput{
+		UserID: 1,
+		// No quality, agreement, importance, confidence, like, review, or description
+	}
+
+	result, err := svc.Create(context.Background(), input)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
+	assert.Contains(t, err.Error(), "at least one field must be provided")
 }
 
 // --- GetByID Tests ---

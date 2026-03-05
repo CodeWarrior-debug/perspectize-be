@@ -1,6 +1,9 @@
 scalar JSON
 scalar IntID
 
+directive @auth on FIELD_DEFINITION
+directive @owner(idField: String!) on FIELD_DEFINITION
+
 # User enums
 enum UserRole {
   ADMIN
@@ -12,7 +15,7 @@ enum UserRole {
 type User {
   id: ID!
   username: String!
-  email: String!
+  email: String
   active: Boolean!
   role: UserRole!
   createdAt: String!
@@ -60,6 +63,10 @@ type Perspective {
   parts: [Int!]
   labels: [String!]
   categorizedRatings: [CategorizedRating!]
+  primaryPerspectiveID: ID
+  relatedPerspectiveIDs: [Int!]
+  customFields: JSON
+  review: String
   createdAt: String!
   updatedAt: String!
 }
@@ -129,6 +136,7 @@ enum SortOrder {
 
 enum ContentType {
   YOUTUBE
+  CLAIM
 }
 
 # Inputs
@@ -194,6 +202,10 @@ input CreatePerspectiveInput {
   parts: [Int!]
   labels: [String!]
   categorizedRatings: [CategorizedRatingInput!]
+  primaryPerspectiveID: IntID
+  relatedPerspectiveIDs: [Int!]
+  customFields: JSON
+  review: String
 }
 
 input UpdatePerspectiveInput {
@@ -211,6 +223,10 @@ input UpdatePerspectiveInput {
   parts: [Int!]
   labels: [String!]
   categorizedRatings: [CategorizedRatingInput!]
+  primaryPerspectiveID: IntID
+  relatedPerspectiveIDs: [Int!]
+  customFields: JSON
+  review: String
 }
 
 input PerspectiveFilter {
@@ -219,18 +235,27 @@ input PerspectiveFilter {
   privacy: Privacy
 }
 
+input CreateClaimInput {
+  text: String!            # The claim text (may contain @this/@here tokens)
+  userID: IntID!           # Who created the claim
+  parentContentID: IntID!  # The content item this claim is about
+}
+
 type Mutation {
-  createContentFromYouTube(input: CreateContentFromYouTubeInput!): CreateContentResult!
+  createContentFromYouTube(input: CreateContentFromYouTubeInput!): CreateContentResult! @auth
 
   # User mutations
-  createUser(input: CreateUserInput!): User!
-  updateUser(input: UpdateUserInput!): User!
-  deleteUser(id: ID!): Boolean!
+  createUser(input: CreateUserInput!): User! @auth
+  updateUser(input: UpdateUserInput!): User! @auth
+  deleteUser(id: ID!): Boolean! @auth
 
   # Perspective mutations
-  createPerspective(input: CreatePerspectiveInput!): Perspective!
-  updatePerspective(input: UpdatePerspectiveInput!): Perspective!
-  deletePerspective(id: ID!): Boolean!
+  createPerspective(input: CreatePerspectiveInput!): Perspective! @auth
+  updatePerspective(input: UpdatePerspectiveInput!): Perspective! @auth @owner(idField: "id")
+  deletePerspective(id: ID!): Boolean! @auth @owner(idField: "id")
+
+  # Claim mutations
+  createClaim(input: CreateClaimInput!): Content! @auth
 }
 
 type Query {

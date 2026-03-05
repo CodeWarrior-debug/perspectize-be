@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
-**Current focus:** Phase 18 complete (3/3 plans) — Server-Side Pagination & Filtering with Data Mode Toggle
+**Current focus:** Phase 09 complete (6/6 plans) — Security Hardening (Authorization & Data Protection)
 
 ## Current Position
 
-Phase: 18 (Server-Side Pagination & Filtering with Data Mode Toggle) — Complete
-Plan: 3/3 complete
-Status: All plans complete — Backend expanded ContentFilter, gridUrlState utilities, ActivityTable URL-driven state with DataModeToggle UI
-Last activity: 2026-02-28 — Completed 18-03-PLAN.md (Data Mode Toggle UI & Grid Integration)
+Phase: 09 (Security Hardening) — Complete
+Plan: 6/6 complete
+Status: Complete — All plans executed. Security documentation finalized.
+Last activity: 2026-03-03 — Completed 09-06-PLAN.md (Secret Management Documentation)
 
-Progress: [████████████████████] ~98% (37 plans complete)
+Progress: [████████████████████] ~100% (39 plans complete)
 
 ## Performance Metrics
 
@@ -46,9 +46,12 @@ Progress: [████████████████████] ~98% (3
 *Updated after each plan completion*
 | Phase 17-youtube-url-normalization-and-duplicate-upsert P01 | 8 | 2 tasks | 11 files |
 | Phase 17 P02 | 15 | 2 tasks | 12 files |
-| Phase 18 P01 | 4 | 6 tasks | 8 files |
-| Phase 18 P02 | 5 | 5 tasks | 2 files |
-| Phase 18 P03 | 5 | 7 tasks | 5 files |
+| Phase 09-security-hardening P01 | 6 | 7 tasks | 13 files |
+| Phase 09-security-hardening P02 | 7 | 5 tasks | 8 files |
+| Phase 09-security-hardening P03 | 4 | 7 tasks | 8 files |
+| Phase 09-security-hardening P06 | 2 | 4 tasks | 3 files |
+| Phase 09 P05 | 4 | 5 tasks | 5 files |
+| Phase 09 P04 | 4 | 6 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -187,18 +190,20 @@ Recent decisions affecting current work:
 - [Phase 17-youtube-url-normalization-and-duplicate-upsert]: GetOrCreateByURL uses clause.OnConflict{DoNothing: true} on url column for atomic TOCTOU-safe upsert
 - [Phase 17-youtube-url-normalization-and-duplicate-upsert]: CreateFromYouTube returns (content, ErrAlreadyExists) on duplicate — callers get both content AND can distinguish new vs existing
 - [Phase 17-02]: createContentFromYouTube returns CreateContentResult wrapper with alreadyExisted boolean for caller-side duplicate detection, enabling toast.warning UX without GraphQL errors
-- [Phase 18]: [18-01]: JSONB filter performance O(n) acceptable for <1000 items; Phase 11 will add indexes
-- [Phase 18]: [18-01]: Tag search uses (tags)::text ILIKE for MVP; can upgrade to jsonb_array_elements_text subquery later
-- [Phase 18]: [18-01]: ISO 8601 string comparison valid for publishedAt date filtering (lexicographic order matches chronological)
-- [Phase 18]: ContentFilterInput defined in gridUrlState.ts (not queries/) so Wave 1 plans are independent
-- [Phase 18]: f.* URL param prefix namespaces filter params from grid params (mode, sort, dir, page)
-- [Phase 18]: YYYY-MM date format in URL params for filter ranges (truncated from YYYY-MM-DD)
-- [Phase 18]: serializeGridParams omits defaults for clean bookmark-friendly URLs
-- [Phase 18]: URL-driven state via $derived(parseGridParams(page.url.searchParams)) — ActivityTable has zero internal sort/filter/page state
-- [Phase 18]: [18-03]: Default mode is 'loaded' (client-side) — omitted from URL when default for clean bookmarks
-- [Phase 18]: [18-03]: skipNextSortEvent flag breaks the sync loop between AG Grid applyColumnState and onSortChanged
-- [Phase 18]: [18-03]: postSortRows callback prevents AG Grid from client-side re-sorting server-pre-sorted data in All Items mode
-- [Phase 18]: [18-03]: COL_TO_SORT from gridUrlState.ts replaces local SORT_FIELD_MAP — Duration maps to LENGTH, Channel maps to CHANNEL_TITLE
+- [09-01]: Middleware authenticates (stores claims in context), directives authorize (enforce @auth on fields) — middleware never blocks unauthenticated requests
+- [09-01]: HS256 JWT signing with golang-jwt/jwt v5, httpOnly cookie transport, 15-min default TTL
+- [09-01]: Dev fallback JWT secret for local development; production requires explicit JWT_SECRET >=32 bytes
+- [09-03]: handler.New instead of NewDefaultServer for selective gqlgen extension control (introspection toggle)
+- [09-03]: Rate limiting before auth in middleware stack to prevent auth endpoint DoS
+- [09-03]: Content-Type validation as CSRF protection (simpler than gorilla/csrf for API-only GraphQL)
+- [09-03]: Middleware order: RequestID -> RealIP -> RateLimit -> CORS -> ContentType -> Auth -> Timer -> Recoverer
+- [09-02]: gqlgen field resolver for User.email (gqlgen.yml config) — auth-gated, returns null when not own account
+- [09-02]: email field nullable (String! -> String) to support returning null for unauthorized requests
+- [09-02]: @owner directive extracts ID from both top-level args and nested input objects for flexible mutation patterns
+- [09-06]: Documentation-only approach for M-28 (automated vault/rotation deferred, manual rotation documented)
+- [09-06]: 90-day rotation cadence for JWT and DB credentials, annual for YouTube API keys
+- [Phase 09]: sanitizeYouTubeError is unexported helper — keeps sanitization logic internal to YouTube adapter
+- [Phase 09]: SSLProxyHeaders for Sevalla: Added X-Forwarded-Proto detection so HSTS works behind Sevalla/Cloudflare reverse proxy
 
 ### Roadmap Evolution
 
@@ -215,6 +220,8 @@ Recent decisions affecting current work:
 - Phase 3.5 inserted after Phase 3.4: Google NL Taxonomy Research Spike (URGENT) — Deep-dive on Google taxonomy depth, traversal, subcategories, ltree mapping, YouTube classification. Unblocks Phase 13 (Content Categories) and Phase 4B (AG Grid grouping). See 04-CONTEXT.md cross-phase architecture and 13-context.md open questions.
 - Phase 17 added: YouTube URL normalization and duplicate upsert — Normalize all YouTube URL variants to canonical form, implement upsert (return existing content instead of error on duplicate), add database unique constraint on external_id. Related to Phase 6 M-03 and Phase 8.1 H-06/H-07.
 - Phase 18 added: Server-Side Pagination & Filtering with Data Mode Toggle — Add data mode toggle to ActivityTable switching between "All Items" (server-side sort/filter/search across full dataset) and "Loaded Items" (client-side sort/filter/search on currently loaded page). Expand backend filtering and sorting capabilities.
+- Phase 4.1 inserted after Phase 4: GraphQL Dataloaders for N+1 Query Prevention (URGENT) — Implement dataloadgen-based batching for 3 N+1-vulnerable nested relationships (Perspective→User, Perspective→Content, Content→User). Add batch repository methods (GetByIDs), field resolvers, per-request middleware. Related to Phase 8.1 M-08.
+- Phase 18.1 inserted after Phase 18: Mobile Activity Page Redesign (URGENT) — Redesign mobile activity page with 3-column layout (Item, Summary info-grid, Perspective glasses icon). Rethink mobile data display away from hidden AG Grid columns toward summary-based approach.
 
 ### Project-Level Plan Requirements
 
@@ -392,7 +399,7 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 
 ## Session Continuity
 
-Last session: 2026-02-28
-Stopped at: Completed 18-03-PLAN.md (Data Mode Toggle UI & Grid Integration)
+Last session: 2026-03-03
+Stopped at: Phase 09 Plan 06 complete — Secret Management Documentation
 Resume file: None
-Next up: Phase 18 complete — all 3 plans done. Determine next phase.
+Next up: Phase 09 complete — All security hardening plans executed

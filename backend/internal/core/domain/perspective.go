@@ -54,6 +54,12 @@ type Perspective struct {
 	// JSONB field
 	CategorizedRatings []CategorizedRating
 
+	// Perspective reference fields (Phase 4)
+	PrimaryPerspectiveID  *int            // FK to another perspective (optional)
+	RelatedPerspectiveIDs []int           // array of perspective IDs (max 50 app-level cap)
+	CustomFields          json.RawMessage // JSONB custom fields
+	Review                *string         // review text (freeform)
+
 	// Timestamps
 	CreatedAt time.Time
 	UpdatedAt time.Time

@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
 	formatDuration,
+	formatDurationSeconds,
+	parseDurationInput,
 	formatDate,
 	formatDateCompact,
 	formatCount,
@@ -13,6 +15,7 @@ import {
 	typeCellRenderer,
 	nameCellRenderer,
 	durationValueGetter,
+	durationFilterValueGetter,
 	dateValueFormatter,
 	contentRowId,
 	headerMinWidth,
@@ -89,6 +92,100 @@ describe('durationValueGetter', () => {
 
 	it('returns formatted duration for non-seconds', () => {
 		expect(durationValueGetter({ data: { length: 10, lengthUnits: 'minutes' } })).toBe('10 minutes');
+	});
+});
+
+describe('durationFilterValueGetter', () => {
+	it('returns null when data is missing', () => {
+		expect(durationFilterValueGetter({ data: undefined })).toBeNull();
+	});
+
+	it('returns raw seconds for valid data', () => {
+		expect(durationFilterValueGetter({ data: { length: 137 } })).toBe(137);
+	});
+
+	it('returns null for null length', () => {
+		expect(durationFilterValueGetter({ data: { length: null } })).toBeNull();
+	});
+
+	it('returns zero for zero length', () => {
+		expect(durationFilterValueGetter({ data: { length: 0 } })).toBe(0);
+	});
+});
+
+describe('formatDurationSeconds', () => {
+	it('formats seconds as m:ss', () => {
+		expect(formatDurationSeconds(137)).toBe('2:17');
+	});
+
+	it('formats zero seconds', () => {
+		expect(formatDurationSeconds(0)).toBe('0:00');
+	});
+
+	it('formats exact minutes', () => {
+		expect(formatDurationSeconds(300)).toBe('5:00');
+	});
+
+	it('pads single-digit seconds', () => {
+		expect(formatDurationSeconds(65)).toBe('1:05');
+	});
+
+	it('formats large durations', () => {
+		expect(formatDurationSeconds(3661)).toBe('61:01');
+	});
+
+	it('formats sub-minute durations', () => {
+		expect(formatDurationSeconds(45)).toBe('0:45');
+	});
+});
+
+describe('parseDurationInput', () => {
+	it('returns null for null', () => {
+		expect(parseDurationInput(null)).toBeNull();
+	});
+
+	it('returns null for empty string', () => {
+		expect(parseDurationInput('')).toBeNull();
+	});
+
+	it('returns null for whitespace-only', () => {
+		expect(parseDurationInput('   ')).toBeNull();
+	});
+
+	it('parses m:ss format to seconds', () => {
+		expect(parseDurationInput('5:00')).toBe(300);
+	});
+
+	it('parses m:ss with non-zero seconds', () => {
+		expect(parseDurationInput('2:17')).toBe(137);
+	});
+
+	it('parses 0:45 as 45 seconds', () => {
+		expect(parseDurationInput('0:45')).toBe(45);
+	});
+
+	it('parses large minute values', () => {
+		expect(parseDurationInput('61:01')).toBe(3661);
+	});
+
+	it('parses plain number as seconds', () => {
+		expect(parseDurationInput('300')).toBe(300);
+	});
+
+	it('parses plain decimal number', () => {
+		expect(parseDurationInput('45.5')).toBe(45.5);
+	});
+
+	it('returns null for non-numeric input', () => {
+		expect(parseDurationInput('abc')).toBeNull();
+	});
+
+	it('returns null for malformed m:ss', () => {
+		expect(parseDurationInput(':30')).toBeNull();
+	});
+
+	it('trims whitespace before parsing', () => {
+		expect(parseDurationInput(' 5:00 ')).toBe(300);
 	});
 });
 

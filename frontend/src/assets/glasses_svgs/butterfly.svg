@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 30">
+  <defs>
+    <linearGradient id="butterfly-fill" x1="0" y1="0" x2="0.15" y2="1">
+      <stop offset="0%" stop-color="var(--glasses-fill-start, #9F7AEA)" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="var(--glasses-fill-end, #44337A)" stop-opacity="0.88"/>
+    </linearGradient>
+  </defs>
+  <path d="M3 6 L4 3 L30 5 Q34 5 34 9 L33 18 Q32 24 26 25 L12 25 Q5 24 4 18 L3 9 Z" fill="url(#butterfly-fill)" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+  <path d="M73 6 L72 3 L46 5 Q42 5 42 9 L43 18 Q44 24 50 25 L64 25 Q71 24 72 18 L73 9 Z" fill="url(#butterfly-fill)" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+  <path d="M34 8 Q38 5 42 8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+  <line x1="3" y1="7" x2="0" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+  <line x1="73" y1="7" x2="76" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+</svg>

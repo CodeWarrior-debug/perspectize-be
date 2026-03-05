@@ -38,6 +38,8 @@ pnpm run test:run     # Tests once (CI/verification)
 pnpm run test         # Tests in watch mode
 ```
 
+**`pnpm exec` must run from `frontend/`** — running from repo root fails with `ERR_PNPM_RECURSIVE_EXEC_NO_PACKAGE`. Use `cd frontend && pnpm exec ...` or `pnpm --dir frontend exec ...`.
+
 ## Svelte 5 Patterns
 
 This project uses **Svelte 5 runes** exclusively. Do not use Svelte 4 syntax.
@@ -117,19 +119,28 @@ Full setup and examples: [docs/AG_GRID.md](docs/AG_GRID.md)
 
 ## Figma Design Workflow
 
-- **[docs/FIGMA.md](docs/FIGMA.md)** — Figma file reference (file key, pages, variables, code↔Figma mapping)
+- **[docs/FIGMA.md](docs/FIGMA.md)** — Figma file reference (file keys, pages, variables, code↔Figma mapping)
 - **[docs/FIGMA_VERIFICATION.md](docs/FIGMA_VERIFICATION.md)** — Verification guide for Figma Make outputs
+- **[Code to Figma Canvas](../.claude/docs/CODE_TO_FIGMA_CANVAS.md)** — Capture running app into Figma to keep designs in sync
+
+**Code-to-Figma capture gotchas:**
+- CSP in `app.html` blocks `mcp.figma.com` — temporarily add to `script-src` and `connect-src`, revert after capture
+- AG Grid canvas-rendered cells (thumbnails) don't serialize into Figma captures
+- SPA hash navigation may not re-trigger auto-capture — reload or click "Send to Figma" manually
 
 ## Self-Verification (Chrome DevTools MCP)
 
-| Step       | Tool                                          | Purpose                     |
-| ---------- | --------------------------------------------- | --------------------------- |
-| Navigate   | `mcp__chrome-devtools__navigate_page`         | Load frontend URL           |
-| Screenshot | `mcp__chrome-devtools__take_screenshot`       | Visual verification         |
-| Snapshot   | `mcp__chrome-devtools__take_snapshot`         | DOM structure               |
-| Resize     | `mcp__chrome-devtools__resize_page`           | Responsive (375/768/1024px) |
-| Console    | `mcp__chrome-devtools__list_console_messages` | JS errors                   |
-| Interact   | `mcp__chrome-devtools__click`                 | Buttons, navigation         |
+| Step       | Tool                                          | Purpose                        |
+| ---------- | --------------------------------------------- | ------------------------------ |
+| Navigate   | `mcp__chrome-devtools__navigate_page`         | Load frontend URL              |
+| Screenshot | `mcp__chrome-devtools__take_screenshot`       | Visual verification            |
+| Snapshot   | `mcp__chrome-devtools__take_snapshot`         | DOM structure                  |
+| Resize     | `mcp__chrome-devtools__resize_page`           | Desktop breakpoints (768+)     |
+| Emulate    | `mcp__chrome-devtools__emulate`               | Mobile/tablet device emulation |
+| Console    | `mcp__chrome-devtools__list_console_messages` | JS errors                      |
+| Interact   | `mcp__chrome-devtools__click`                 | Buttons, navigation            |
+
+**Mobile screenshots:** Use `emulate` (NOT `resize_page`) for mobile/tablet. AG Grid and CSS media queries only respond to viewport changes when `isMobile: true` is set. `resize_page` alone doesn't trigger responsive column hiding. Example: `emulate({ viewport: { width: 375, height: 812, deviceScaleFactor: 3, isMobile: true, hasTouch: true } })`. Reset with `emulate({ viewport: null, userAgent: null })` after. Use `resize_page` for desktop breakpoint comparisons (768px+).
 
 ## Testing Gotchas
 
