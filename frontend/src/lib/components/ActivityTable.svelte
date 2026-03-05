@@ -4,7 +4,7 @@
 	import { themeQuartz } from '@ag-grid-community/theming';
 	import type { GridApi, GridOptions, SortChangedEvent, FilterChangedEvent, ColDef, CellClickedEvent } from '@ag-grid-community/core';
 	import { createQuery, keepPreviousData } from '@tanstack/svelte-query';
-	import { graphqlClient } from '$lib/queries/client';
+	import { graphqlRequest } from '$lib/queries/client';
 	import { LIST_CONTENT, type ContentItem, type ContentResponse } from '$lib/queries/content';
 	import {
 		LIST_PERSPECTIVES_BY_USER,
@@ -77,7 +77,7 @@
 	const perspectivesQuery = createQuery(() => ({
 		queryKey: queryKeys.perspectives.listByUser(selectedUserId ?? 0),
 		queryFn: () =>
-			graphqlClient.request<ListPerspectivesByUserResponse>(LIST_PERSPECTIVES_BY_USER, {
+			graphqlRequest<ListPerspectivesByUserResponse>(LIST_PERSPECTIVES_BY_USER, {
 				userID: selectedUserId,
 			}),
 		enabled: selectedUserId !== null,
@@ -108,7 +108,7 @@
 			after: currentCursor,
 		}),
 		queryFn: async () => {
-			const response = await graphqlClient.request<ContentResponse>(LIST_CONTENT, {
+			const response = await graphqlRequest<ContentResponse>(LIST_CONTENT, {
 				first: pageSize,
 				after: currentCursor,
 				sortBy,

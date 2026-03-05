@@ -6,8 +6,8 @@ const config = {
 		adapter: adapter({
 			pages: 'build',
 			assets: 'build',
-			fallback: '404.html',
-			strict: true,
+			fallback: 'index.html',
+			strict: false,
 		}),
 		paths: {
 			base: '',

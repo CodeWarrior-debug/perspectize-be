@@ -27,11 +27,9 @@ vi.mock('ag-grid-svelte5', () => ({
 	})),
 }));
 
-// Mock graphqlClient
+// Mock graphqlRequest
 vi.mock('$lib/queries/client', () => ({
-	graphqlClient: {
-		request: mockRequest,
-	},
+	graphqlRequest: mockRequest,
 }));
 
 // queryKeys is used directly, no need to mock since it's a simple object

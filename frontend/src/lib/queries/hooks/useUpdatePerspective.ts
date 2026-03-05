@@ -1,6 +1,6 @@
 import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 import { toast } from 'svelte-sonner';
-import { graphqlClient } from '../client';
+import { graphqlRequest } from '../client';
 import { UPDATE_PERSPECTIVE, type UpdatePerspectiveResponse } from '../perspectives';
 import { queryKeys } from '../keys';
 
@@ -19,7 +19,7 @@ export function useUpdatePerspective() {
 
 	return createMutation(() => ({
 		mutationFn: async (input: UpdatePerspectiveInput) => {
-			return graphqlClient.request<UpdatePerspectiveResponse>(UPDATE_PERSPECTIVE, { input });
+			return graphqlRequest<UpdatePerspectiveResponse>(UPDATE_PERSPECTIVE, { input });
 		},
 		onSuccess: () => {
 			toast.success('Perspective updated');

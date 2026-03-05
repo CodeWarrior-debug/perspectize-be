@@ -38,9 +38,7 @@ vi.mock('svelte-sonner', () => ({
 }));
 
 vi.mock('$lib/queries/client', () => ({
-	graphqlClient: {
-		request: vi.fn(),
-	},
+	graphqlRequest: vi.fn(),
 }));
 
 vi.mock('$lib/queries/users', () => ({
@@ -88,17 +86,17 @@ describe('CreateUserPopover component', () => {
 		expect(typeof capturedMutationOptions.mutationFn).toBe('function');
 	});
 
-	it('mutationFn calls graphqlClient.request with correct args', async () => {
+	it('mutationFn calls graphqlRequest with correct args', async () => {
 		render(CreateUserPopover, { props: { onUserCreated: mockOnUserCreated } });
 		expect(capturedMutationOptions).toBeDefined();
-		const { graphqlClient } = await import('$lib/queries/client');
-		(graphqlClient.request as any).mockResolvedValue({
+		const { graphqlRequest } = await import('$lib/queries/client');
+		(graphqlRequest as any).mockResolvedValue({
 			createUser: { id: '123', username: 'testuser' },
 		});
 
 		await capturedMutationOptions.mutationFn({ username: 'testuser' });
 
-		expect(graphqlClient.request).toHaveBeenCalledWith(expect.anything(), {
+		expect(graphqlRequest).toHaveBeenCalledWith(expect.anything(), {
 			input: { username: 'testuser' },
 		});
 	});

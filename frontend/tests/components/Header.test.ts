@@ -1,10 +1,22 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/svelte';
+import { render, screen } from '@testing-library/svelte';
 import Header from '$lib/components/Header.svelte';
 
-// Mock UserSelector component
-vi.mock('$lib/components/UserSelector.svelte', () => ({
-	default: vi.fn(() => ({
+// Mock svelte-clerk components
+vi.mock('svelte-clerk', () => ({
+	Show: vi.fn(() => ({
+		$$: {},
+		$set: vi.fn(),
+		$on: vi.fn(),
+		$destroy: vi.fn(),
+	})),
+	SignInButton: vi.fn(() => ({
+		$$: {},
+		$set: vi.fn(),
+		$on: vi.fn(),
+		$destroy: vi.fn(),
+	})),
+	UserButton: vi.fn(() => ({
 		$$: {},
 		$set: vi.fn(),
 		$on: vi.fn(),
@@ -116,12 +128,5 @@ describe('Header component', () => {
 		const rightContainer = container.querySelector('.shrink-0');
 		expect(rightContainer).toBeInTheDocument();
 		expect(rightContainer?.className).toContain('shrink-0');
-	});
-
-	it('UserSelector and AddVideoPopover are rendered in correct order', () => {
-		const { container } = render(Header);
-		const rightContainer = container.querySelector('.shrink-0');
-		// Both components are mocked, just verify container structure
-		expect(rightContainer).toBeInTheDocument();
 	});
 });

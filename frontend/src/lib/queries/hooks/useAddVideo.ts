@@ -1,6 +1,6 @@
 import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 import { toast } from 'svelte-sonner';
-import { graphqlClient } from '../client';
+import { graphqlRequest } from '../client';
 import { CREATE_CONTENT_FROM_YOUTUBE, type CreateContentResponse, type ContentResponse } from '../content';
 import { queryKeys } from '../keys';
 import { getSelectedUserId } from '$lib/stores/userSelection.svelte';
@@ -14,7 +14,7 @@ export function useAddVideo() {
 			if (userId === null) {
 				throw new Error('No user selected');
 			}
-			return graphqlClient.request<CreateContentResponse>(CREATE_CONTENT_FROM_YOUTUBE, {
+			return graphqlRequest<CreateContentResponse>(CREATE_CONTENT_FROM_YOUTUBE, {
 				input: { url, userId },
 			});
 		},

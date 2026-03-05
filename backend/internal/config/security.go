@@ -12,6 +12,7 @@ import (
 type Security struct {
 	JWTSecret          string
 	AccessTokenMinutes int
+	ClerkSecretKey     string
 	RateLimitPerMin    int      // Default 100
 	CORSOrigins        []string // Explicit origins
 }
@@ -41,9 +42,17 @@ func LoadSecurity() Security {
 		secret = "dev-only-insecure-jwt-secret-key-32b"
 	}
 
+	clerkKey := os.Getenv("CLERK_SECRET_KEY")
+	if os.Getenv("APP_ENV") == "production" && clerkKey == "" {
+		log.Fatal("CLERK_SECRET_KEY is required in production")
+	} else if clerkKey == "" {
+		slog.Warn("CLERK_SECRET_KEY not set — Clerk auth will not work")
+	}
+
 	return Security{
 		JWTSecret:          secret,
 		AccessTokenMinutes: minutes,
+		ClerkSecretKey:     clerkKey,
 		RateLimitPerMin:    getEnvInt("RATE_LIMIT_PER_MIN", 100),
 		CORSOrigins:        getEnvStringSlice("CORS_ORIGINS", []string{"*"}),
 	}

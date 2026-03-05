@@ -21,13 +21,14 @@ const (
 
 // User represents a user who can create perspectives
 type User struct {
-	ID        int
-	Username  string
-	Email     string
-	Role      UserRole
-	Active    bool
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID          int
+	ClerkUserID string
+	Username    string
+	Email       string
+	Role        UserRole
+	Active      bool
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 // IsSentinel returns true if this is a system sentinel user ([deleted] or [system]).

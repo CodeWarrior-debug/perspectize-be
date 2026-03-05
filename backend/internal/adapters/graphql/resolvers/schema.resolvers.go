@@ -13,9 +13,9 @@ import (
 	"log/slog"
 	"strconv"
 
+	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/auth"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/generated"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/model"
-	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/web/middleware"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 	portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
 )
@@ -529,7 +529,7 @@ func (r *queryResolver) Perspectives(ctx context.Context, first *int, after *str
 // Email is the resolver for the email field.
 // Returns email only when the authenticated user is requesting their own account (H-10).
 func (r *userResolver) Email(ctx context.Context, obj *model.User) (*string, error) {
-	authenticatedUserID, authenticated := middleware.ForContext(ctx)
+	authenticatedUser, authenticated := auth.ForContext(ctx)
 	if !authenticated {
 		return nil, nil
 	}
@@ -540,7 +540,7 @@ func (r *userResolver) Email(ctx context.Context, obj *model.User) (*string, err
 		return nil, nil
 	}
 
-	if authenticatedUserID != requestedUserID {
+	if authenticatedUser.ID != requestedUserID {
 		return nil, nil // Not own account — hide email
 	}
 

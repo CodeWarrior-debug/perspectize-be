@@ -10,9 +10,13 @@ import (
 type UserRepository interface {
 	Create(ctx context.Context, user *domain.User) (*domain.User, error)
 	GetByID(ctx context.Context, id int) (*domain.User, error)
+	GetByClerkID(ctx context.Context, clerkID string) (*domain.User, error)
 	GetByUsername(ctx context.Context, username string) (*domain.User, error)
 	GetByEmail(ctx context.Context, email string) (*domain.User, error)
 	ListAll(ctx context.Context) ([]*domain.User, error)
 	Update(ctx context.Context, user *domain.User) (*domain.User, error)
 	Delete(ctx context.Context, id int) error
+	CreateFromClerk(ctx context.Context, clerkID string, username string, email string) (*domain.User, error)
+	UpdateByClerkID(ctx context.Context, clerkID string, username string, email string) error
+	DeactivateByClerkID(ctx context.Context, clerkID string) error
 }

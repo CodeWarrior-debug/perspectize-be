@@ -23,10 +23,12 @@ require (
 	github.com/air-verse/air v1.61.7 // indirect
 	github.com/bep/godartsass/v2 v2.5.0 // indirect
 	github.com/bep/golibsass v1.2.0 // indirect
+	github.com/clerk/clerk-sdk-go/v2 v2.5.1 // indirect
 	github.com/creack/pty v1.1.23 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
@@ -48,10 +50,12 @@ require (
 	github.com/sosodev/duration v1.3.1 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
 	github.com/spf13/cast v1.9.2 // indirect
+	github.com/svix/svix-webhooks v1.86.0 // indirect
 	github.com/tdewolff/parse/v2 v2.8.3 // indirect
 	github.com/unrolled/secure v1.17.0 // indirect
 	github.com/urfave/cli/v3 v3.6.2 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
+	golang.org/x/crypto v0.43.0 // indirect
 	golang.org/x/mod v0.33.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
