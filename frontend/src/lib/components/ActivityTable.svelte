@@ -270,7 +270,8 @@
 				flex: 2,
 				minWidth: 200,
 
-				filter: false, // Search handled by page-level search input
+				filter: 'agTextColumnFilter',
+				filterValueGetter: (params) => params.data?.name ?? '',
 				cellRenderer: itemCellRenderer,
 				tooltipValueGetter: (params) => params.data?.name ?? '',
 				headerTooltip: 'Video title and thumbnail from YouTube API',
