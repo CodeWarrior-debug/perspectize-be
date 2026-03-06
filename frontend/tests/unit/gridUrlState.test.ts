@@ -498,6 +498,16 @@ describe('urlParamsToGraphQLFilter', () => {
 		});
 	});
 
+	it('maps item filter to search field', () => {
+		const result = urlParamsToGraphQLFilter({ item: 'baby shark' }, '');
+		expect(result).toEqual({ search: 'baby shark' });
+	});
+
+	it('item filter overrides search bar value', () => {
+		const result = urlParamsToGraphQLFilter({ item: 'specific title' }, 'broad search');
+		expect(result).toEqual({ search: 'specific title' });
+	});
+
 	it('ignores empty filter values', () => {
 		const result = urlParamsToGraphQLFilter({ type: '' }, '');
 		expect(result).toBeUndefined();

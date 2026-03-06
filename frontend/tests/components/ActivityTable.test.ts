@@ -128,4 +128,18 @@ describe('ActivityTable', () => {
 		// - Query invalidation for cache updates (no custom events)
 		expect(true).toBe(true);
 	});
+
+	it('hides pagination controls in loaded mode (default)', async () => {
+		mockRequest.mockResolvedValue(mockDataResponse);
+		const { container } = renderWithQuery();
+
+		await waitFor(() => {
+			// Pagination buttons should not be present in loaded mode
+			const buttons = Array.from(container.querySelectorAll('button'));
+			const paginationButtons = buttons.filter(
+				(b) => b.textContent?.includes('Previous') || b.textContent?.includes('Next'),
+			);
+			expect(paginationButtons).toHaveLength(0);
+		});
+	});
 });

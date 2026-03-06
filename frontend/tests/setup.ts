@@ -20,6 +20,24 @@ vi.mock('$app/navigation', () => ({
 	beforeNavigate: vi.fn(),
 }));
 
+// Mock $app/state (Svelte 5 runes) — mutable so tests can override url
+const mockPageState = {
+	url: new URL('http://localhost'),
+	params: {},
+	route: { id: '/' },
+	status: 200,
+	error: null,
+	data: {},
+	form: null,
+};
+
+vi.mock('$app/state', () => ({
+	page: mockPageState,
+}));
+
+// Export for tests that need to change the URL
+export { mockPageState };
+
 // Mock $app/stores for components that use page store
 vi.mock('$app/stores', () => {
 	return {
