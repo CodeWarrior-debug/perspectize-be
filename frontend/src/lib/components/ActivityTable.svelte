@@ -671,40 +671,44 @@
 			</div>
 			<!-- Data Mode Toggle -->
 			<DataModeToggle {mode} loadedCount={rowData.length} onToggle={handleModeToggle} />
-			<div class="hidden md:flex items-center gap-2">
-				<label for="pageSize" class="text-muted-foreground">Page size:</label>
-				<select
-					id="pageSize"
-					value={pageSize}
-					onchange={(e) => handlePageSizeChange(Number(e.currentTarget.value))}
-					class="px-2 py-1 text-sm border border-input rounded-md bg-background"
-				>
-					<option value={10}>10</option>
-					<option value={25}>25</option>
-					<option value={50}>50</option>
-				</select>
-			</div>
+			{#if mode === 'all'}
+				<div class="hidden md:flex items-center gap-2">
+					<label for="pageSize" class="text-muted-foreground">Page size:</label>
+					<select
+						id="pageSize"
+						value={pageSize}
+						onchange={(e) => handlePageSizeChange(Number(e.currentTarget.value))}
+						class="px-2 py-1 text-sm border border-input rounded-md bg-background"
+					>
+						<option value={10}>10</option>
+						<option value={25}>25</option>
+						<option value={50}>50</option>
+					</select>
+				</div>
+			{/if}
 		</div>
 
-		<div class="flex items-center gap-2">
-			<button
-				onclick={handlePrevPage}
-				disabled={pageNum <= 1}
-				class="px-3 py-1 text-sm border border-input rounded-md bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-			>
-				<span class="hidden sm:inline">Previous</span><span class="sm:hidden">&lt;</span>
-			</button>
-			<span class="text-muted-foreground">
-				Page {pageNum} of {Math.ceil(totalCount / pageSize) || 1}
-			</span>
-			<button
-				onclick={handleNextPage}
-				disabled={pageNum >= Math.ceil(totalCount / pageSize)}
-				class="px-3 py-1 text-sm border border-input rounded-md bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-			>
-				<span class="hidden sm:inline">Next</span><span class="sm:hidden">&gt;</span>
-			</button>
-		</div>
+		{#if mode === 'all'}
+			<div class="flex items-center gap-2">
+				<button
+					onclick={handlePrevPage}
+					disabled={pageNum <= 1}
+					class="px-3 py-1 text-sm border border-input rounded-md bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+				>
+					<span class="hidden sm:inline">Previous</span><span class="sm:hidden">&lt;</span>
+				</button>
+				<span class="text-muted-foreground">
+					Page {pageNum} of {Math.ceil(totalCount / pageSize) || 1}
+				</span>
+				<button
+					onclick={handleNextPage}
+					disabled={pageNum >= Math.ceil(totalCount / pageSize)}
+					class="px-3 py-1 text-sm border border-input rounded-md bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+				>
+					<span class="hidden sm:inline">Next</span><span class="sm:hidden">&gt;</span>
+				</button>
+			</div>
+		{/if}
 	</div>
 </div>
 
