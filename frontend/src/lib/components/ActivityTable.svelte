@@ -2,7 +2,14 @@
 	import AgGridSvelte5Component from 'ag-grid-svelte5';
 	import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
 	import { themeQuartz } from '@ag-grid-community/theming';
-	import type { GridApi, GridOptions, SortChangedEvent, FilterChangedEvent, ColDef, CellClickedEvent } from '@ag-grid-community/core';
+	import type {
+		GridApi,
+		GridOptions,
+		SortChangedEvent,
+		FilterChangedEvent,
+		ColDef,
+		CellClickedEvent,
+	} from '@ag-grid-community/core';
 	import { createQuery, keepPreviousData } from '@tanstack/svelte-query';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
@@ -172,6 +179,7 @@
 	const rowData = $derived(contentQuery.data?.content.items ?? []);
 	const totalCount = $derived(contentQuery.data?.content.totalCount ?? 0);
 	const loading = $derived(contentQuery.isLoading || contentQuery.isPlaceholderData);
+	const hasActiveFilters = $derived(Object.keys(filters).length > 0 || searchText !== '');
 
 	// ---------------------------------------------------------------------------
 	// Mode switch handler
@@ -295,8 +303,7 @@
 				filterParams: {
 					allowedCharPattern: '\\d\\:',
 					numberParser: parseDurationInput,
-					numberFormatter: (value: number | null) =>
-						value == null ? null : formatDurationSeconds(value),
+					numberFormatter: (value: number | null) => (value == null ? null : formatDurationSeconds(value)),
 				},
 				valueGetter: durationValueGetter,
 				filterValueGetter: durationFilterValueGetter,
@@ -504,7 +511,7 @@
 			// In "Loaded" mode, let AG Grid sort normally (default behavior)
 			if (mode === 'all') return;
 		},
-		overlayNoRowsTemplate: '<div class="py-12 text-center text-muted-foreground">No items</div>',
+		overlayNoRowsTemplate: '<div class="py-12 text-center text-muted-foreground">No content yet</div>',
 	};
 
 	// ---------------------------------------------------------------------------
@@ -534,6 +541,15 @@
 		if (gridApi) {
 			gridApi.setGridOption('loading', loading);
 		}
+	});
+
+	// Update empty state message based on active filters
+	$effect(() => {
+		if (!gridApi) return;
+		const template = hasActiveFilters
+			? '<div class="py-12 text-center"><p class="text-muted-foreground mb-1">No results match your filters</p><p class="text-xs text-muted-foreground/70">Try adjusting or clearing your filters</p></div>'
+			: '<div class="py-12 text-center text-muted-foreground">No content yet</div>';
+		gridApi.setGridOption('overlayNoRowsTemplate', template);
 	});
 
 	// Responsive breakpoint detection — 4 tiers for progressive column reveal
@@ -597,7 +613,6 @@
 		gridApi.setGridOption('domLayout', isMobile ? 'autoHeight' : 'normal');
 	});
 
-
 	// Re-evaluate flex column widths when the grid container resizes
 	// (e.g. DevTools panel open/close, sidebar toggle)
 	let gridContainer = $state<HTMLDivElement | null>(null);
@@ -613,11 +628,19 @@
 </script>
 
 <div class="flex flex-col h-full gap-4">
+	<!-- Active Filter Chips — always visible so users can clear filters even during errors -->
+	<FilterChips {gridApi} filterModel={activeFilterModel} />
+
 	<!-- Error State -->
 	{#if contentQuery.isError}
 		<div class="flex-1 min-h-0 flex items-center justify-center">
 			<div class="text-center py-12 px-4">
-				<p class="text-muted-foreground mb-4">Failed to load content. Please try again.</p>
+				<p class="text-muted-foreground mb-2">Failed to load content. Please try again.</p>
+				{#if hasActiveFilters}
+					<p class="text-xs text-muted-foreground/70 mb-4">
+						Your active filters may be causing this issue. Try clearing them.
+					</p>
+				{/if}
 				<button
 					onclick={() => contentQuery.refetch()}
 					class="px-4 py-2 text-sm font-medium border border-input rounded-md bg-background hover:bg-accent"
@@ -627,11 +650,12 @@
 			</div>
 		</div>
 	{:else}
-		<!-- Active Filter Chips -->
-		<FilterChips {gridApi} filterModel={activeFilterModel} />
-
 		<!-- AG Grid -->
-		<div bind:this={gridContainer} class="{isMobile ? 'overflow-y-auto' : 'flex-1'} min-h-0" style="--ag-row-height: 44px; --ag-header-height: 40px;">
+		<div
+			bind:this={gridContainer}
+			class="{isMobile ? 'overflow-y-auto' : 'flex-1'} min-h-0"
+			style="--ag-row-height: 44px; --ag-header-height: 40px;"
+		>
 			<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
 		</div>
 	{/if}
