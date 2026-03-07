@@ -27,6 +27,61 @@ pnpm add ag-grid-svelte5 @ag-grid-community/core@32.2.1 @ag-grid-community/clien
 <AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
 ```
 
+## Testing
+
+AG Grid requires a real browser for integration testing — jsdom doesn't support the DOM APIs AG Grid relies on.
+
+### Unit Tests (jsdom)
+
+Test pure logic extracted into `$lib/utils/grid-config.ts`:
+
+```bash
+pnpm run test:run          # Runs unit tests only (jsdom)
+```
+
+Covers: sort field mapping, pagination math, responsive tiers, column visibility, duration comparators, column metadata.
+
+### Browser Tests (Vitest Browser Mode + Playwright)
+
+Test AG Grid integration in a real Chromium browser via `vitest-browser-svelte`:
+
+```bash
+pnpm run test:browser      # Runs browser tests (requires Playwright)
+pnpm run test:browser:watch  # Watch mode for browser tests
+pnpm run test:all          # Runs both unit + browser tests
+```
+
+**First-time setup:** Install Playwright's Chromium: `npx playwright install chromium`
+
+Browser tests cover what jsdom cannot:
+
+- Grid lifecycle (`onGridReady`, GridApi availability)
+- Cell rendering (thumbnails, SVG icons, links)
+- Column sorting (header clicks, sort model)
+- Grid API operations (column visibility, `sizeColumnsToFit`, `domLayout`)
+- Row ID mapping and data access
+
+Test files: `tests/browser/ag-grid-integration.test.ts`
+Fixture: `tests/browser/fixtures/AGGridTestHarness.svelte`
+
+### Architecture
+
+```
+vitest.workspace.ts          # Workspace: unit (jsdom) + browser (playwright)
+vitest.config.browser.ts     # Browser project config
+tests/
+├── browser/
+│   ├── ag-grid-integration.test.ts  # Browser-mode AG Grid tests
+│   ├── fixtures/
+│   │   └── AGGridTestHarness.svelte # Minimal AG Grid for testing
+│   └── mocks/
+│       ├── app-environment.ts       # $app/environment mock
+│       ├── app-navigation.ts        # $app/navigation mock
+│       └── app-stores.ts            # $app/stores mock
+├── components/              # jsdom component tests
+└── unit/                    # jsdom pure function tests
+```
+
 ## Do NOT
 
 - Import from `ag-grid-community` (use `@ag-grid-community/*`)
