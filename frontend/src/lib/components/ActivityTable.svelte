@@ -31,6 +31,15 @@
 		contentRowId,
 		headerMinWidth,
 	} from '$lib/utils/formatting';
+	import {
+		SORT_FIELD_MAP,
+		resolveSortField,
+		resolveSortOrder,
+		capitalizeContentType,
+		durationComparator,
+		computeNextPage,
+		computePrevPage,
+	} from '$lib/utils/grid-config';
 	import { TagsTooltip } from '$lib/components/TagsTooltip';
 	import { DescriptionTooltip } from '$lib/components/DescriptionTooltip';
 	import FilterChips from '$lib/components/FilterChips.svelte';
@@ -41,19 +50,6 @@
 	let popoverContentId = $state<number | null>(null);
 	let popoverContentName = $state('');
 	let popoverExistingPerspective = $state<PerspectiveItem | null>(null);
-
-	// GraphQL ContentSortBy to AG Grid colId mapping
-	const SORT_FIELD_MAP: Record<string, string> = {
-		item: 'NAME',
-		type: 'NAME', // type not sortable in backend, fallback to NAME
-		duration: 'NAME', // duration not sortable, fallback to NAME
-		views: 'VIEW_COUNT',
-		likes: 'LIKE_COUNT',
-		publishDate: 'PUBLISHED_AT',
-		channel: 'NAME', // channel not sortable, fallback
-		createdAt: 'CREATED_AT',
-		updatedAt: 'UPDATED_AT',
-	};
 
 	// State management
 	let gridApi = $state<GridApi | null>(null);
@@ -193,11 +189,7 @@
 			maxWidth: 100,
 
 			filter: 'agTextColumnFilter',
-			valueGetter: (params) => {
-				const t = params.data?.contentType;
-				if (!t) return '';
-				return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
-			},
+			valueGetter: (params) => capitalizeContentType(params.data?.contentType),
 			filterValueGetter: (params) => {
 				return params.data?.contentType?.toLowerCase() ?? '';
 			},
@@ -219,11 +211,7 @@
 			},
 			valueGetter: durationValueGetter,
 			filterValueGetter: durationFilterValueGetter,
-			comparator: (_valueA, _valueB, nodeA, nodeB) => {
-				const a = nodeA?.data?.length ?? 0;
-				const b = nodeB?.data?.length ?? 0;
-				return a - b;
-			},
+			comparator: durationComparator,
 			headerTooltip: 'Video duration from YouTube API',
 		},
 		{
@@ -380,8 +368,8 @@
 
 			if (sortModel.length > 0) {
 				const col = sortModel[0];
-				sortBy = SORT_FIELD_MAP[col.colId ?? 'updatedAt'] ?? 'UPDATED_AT';
-				sortOrder = col.sort === 'asc' ? 'ASC' : 'DESC';
+				sortBy = resolveSortField(col.colId);
+				sortOrder = resolveSortOrder(col.sort);
 			} else {
 				sortBy = 'UPDATED_AT';
 				sortOrder = 'DESC';
@@ -414,15 +402,11 @@
 	};
 
 	function handleNextPage() {
-		if (currentPage < Math.ceil(totalCount / pageSize) - 1) {
-			currentPage += 1;
-		}
+		currentPage = computeNextPage(currentPage, totalCount, pageSize);
 	}
 
 	function handlePrevPage() {
-		if (currentPage > 0) {
-			currentPage -= 1;
-		}
+		currentPage = computePrevPage(currentPage);
 	}
 
 	function handlePageSizeChange(newSize: number) {
