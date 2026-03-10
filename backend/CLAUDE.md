@@ -75,6 +75,8 @@ Two sources (precedence order): **env vars** > `config/config.json`.
 Required: `DATABASE_URL`. Optional: `YOUTUBE_API_KEY`, `DATABASE_PASSWORD`.
 See `.env.example`. Production note: Sevalla may require `?sslmode=disable`.
 
+**Sevalla build strategy:** Dockerfile builder. Dockerfile path = `backend/Dockerfile` (relative to repo root, not context). Docker context = `backend`. Sevalla requires the redundant `backend/` prefix on the Dockerfile path even though context is already `backend`.
+
 **Database is remote (Sevalla)** — `DATABASE_URL` in `.env` points to `us-east1-001.proxy.sevalla.app`. No `make docker-up` needed for development. Migrations run against the remote DB.
 
 ## GraphQL
