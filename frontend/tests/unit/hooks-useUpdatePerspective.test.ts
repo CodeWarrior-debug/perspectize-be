@@ -30,7 +30,7 @@ vi.mock('svelte-sonner', () => ({
 }));
 
 vi.mock('$lib/queries/client', () => ({
-	graphqlClient: { request: vi.fn() },
+	graphqlRequest: vi.fn(),
 }));
 
 describe('useUpdatePerspective hook', () => {
@@ -56,41 +56,41 @@ describe('useUpdatePerspective hook', () => {
 			expect(typeof capturedMutationOptions.mutationFn).toBe('function');
 		});
 
-		it('calls graphqlClient.request with UPDATE_PERSPECTIVE and input', async () => {
-			const { graphqlClient } = await import('$lib/queries/client');
+		it('calls graphqlRequest with UPDATE_PERSPECTIVE and input', async () => {
+			const { graphqlRequest } = await import('$lib/queries/client');
 			const { UPDATE_PERSPECTIVE } = await import('$lib/queries/perspectives');
-			(graphqlClient.request as any).mockResolvedValue({
+			(graphqlRequest as any).mockResolvedValue({
 				updatePerspective: { id: '1', userID: '42', quality: 8000, privacy: 'PUBLIC', createdAt: '', updatedAt: '' },
 			});
 
 			const input = { id: 1, quality: 8000 };
 			await capturedMutationOptions.mutationFn(input);
 
-			expect(graphqlClient.request).toHaveBeenCalledWith(UPDATE_PERSPECTIVE, { input });
+			expect(graphqlRequest).toHaveBeenCalledWith(UPDATE_PERSPECTIVE, { input });
 		});
 
 		it('supports partial update with only quality', async () => {
-			const { graphqlClient } = await import('$lib/queries/client');
-			(graphqlClient.request as any).mockResolvedValue({
+			const { graphqlRequest } = await import('$lib/queries/client');
+			(graphqlRequest as any).mockResolvedValue({
 				updatePerspective: { id: '5', userID: '42', quality: 6000, privacy: 'PUBLIC', createdAt: '', updatedAt: '' },
 			});
 
 			const input = { id: 5, quality: 6000 };
 			await capturedMutationOptions.mutationFn(input);
 
-			expect(graphqlClient.request).toHaveBeenCalledWith(expect.anything(), { input: { id: 5, quality: 6000 } });
+			expect(graphqlRequest).toHaveBeenCalledWith(expect.anything(), { input: { id: 5, quality: 6000 } });
 		});
 
 		it('supports partial update with only like', async () => {
-			const { graphqlClient } = await import('$lib/queries/client');
-			(graphqlClient.request as any).mockResolvedValue({
+			const { graphqlRequest } = await import('$lib/queries/client');
+			(graphqlRequest as any).mockResolvedValue({
 				updatePerspective: { id: '3', userID: '42', like: 'THUMBS_UP', privacy: 'PUBLIC', createdAt: '', updatedAt: '' },
 			});
 
 			const input = { id: 3, like: 'THUMBS_UP' };
 			await capturedMutationOptions.mutationFn(input);
 
-			expect(graphqlClient.request).toHaveBeenCalledWith(expect.anything(), { input: { id: 3, like: 'THUMBS_UP' } });
+			expect(graphqlRequest).toHaveBeenCalledWith(expect.anything(), { input: { id: 3, like: 'THUMBS_UP' } });
 		});
 	});
 

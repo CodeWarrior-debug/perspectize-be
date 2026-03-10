@@ -37,7 +37,7 @@ vi.mock('@tanstack/svelte-query', () => ({
 }));
 
 vi.mock('$lib/queries/client', () => ({
-	graphqlClient: { request: vi.fn() },
+	graphqlRequest: vi.fn(),
 }));
 
 vi.mock('$lib/queries/users', () => ({

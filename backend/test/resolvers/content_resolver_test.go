@@ -10,10 +10,10 @@ import (
 	"testing"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	auth "github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/auth"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/directives"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/generated"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/resolvers"
-	authmw "github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/web/middleware"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 	portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/services"
@@ -114,6 +114,10 @@ func (m *mockUserRepository) GetByID(ctx context.Context, id int) (*domain.User,
 	return nil, domain.ErrNotFound
 }
 
+func (m *mockUserRepository) GetByClerkID(ctx context.Context, clerkID string) (*domain.User, error) {
+	return nil, domain.ErrNotFound
+}
+
 func (m *mockUserRepository) GetByUsername(ctx context.Context, username string) (*domain.User, error) {
 	if m.getByUsernameFn != nil {
 		return m.getByUsernameFn(ctx, username)
@@ -141,6 +145,18 @@ func (m *mockUserRepository) Update(ctx context.Context, user *domain.User) (*do
 
 func (m *mockUserRepository) Delete(ctx context.Context, id int) error {
 	return nil
+}
+
+func (m *mockUserRepository) CreateFromClerk(ctx context.Context, clerkID string, username string, email string) (*domain.User, error) {
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockUserRepository) UpdateByClerkID(ctx context.Context, clerkID string, username string, email string) error {
+	return domain.ErrNotFound
+}
+
+func (m *mockUserRepository) DeactivateByClerkID(ctx context.Context, clerkID string) error {
+	return domain.ErrNotFound
 }
 
 // mockPerspectiveRepository implements repositories.PerspectiveRepository for testing
@@ -200,21 +216,25 @@ type graphqlResponse struct {
 	} `json:"errors"`
 }
 
-// mockAuthService implements the AuthService interface for testing.
-// ValidateToken always returns valid claims for the test user.
-type mockAuthService struct{}
-
-func (m *mockAuthService) GenerateAccessToken(userID int, email string) (string, error) {
-	return "mock-token", nil
-}
-
-func (m *mockAuthService) ValidateToken(tokenString string) (*domain.Claims, error) {
-	return &domain.Claims{UserID: 1, Email: "test@example.com"}, nil
+// injectAuthMiddleware is a test HTTP middleware that injects an AuthenticatedUser
+// into the context, simulating a logged-in user for directive tests.
+func injectAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authUser := &domain.AuthenticatedUser{
+			ID:       1,
+			ClerkID:  "clerk_test_user",
+			Username: "testuser",
+			Email:    "test@example.com",
+			Role:     domain.UserRoleDefault,
+		}
+		ctx := auth.WithAuthenticatedUser(r.Context(), authUser)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 // setupTestServer creates a test GraphQL server with the given mock dependencies.
 // Wires auth directives and injects an authenticated user context via auth middleware
-// with a mock auth service so mutation tests pass the @auth directive check.
+// so mutation tests pass the @auth directive check.
 func setupTestServer(repo *mockContentRepository, ytClient *mockYouTubeClient) *httptest.Server {
 	userRepo := &mockUserRepository{}
 	perspectiveRepo := &mockPerspectiveRepository{}
@@ -232,13 +252,13 @@ func setupTestServer(repo *mockContentRepository, ytClient *mockYouTubeClient) *
 	}
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(gqlConfig))
 
-	// Wrap with auth middleware using a mock auth service that always authenticates
-	authHandler := authmw.AuthMiddleware(&mockAuthService{})(srv)
+	// Wrap with test middleware that injects an authenticated user context
+	authHandler := injectAuthMiddleware(srv)
 	return httptest.NewServer(authHandler)
 }
 
 // executeGraphQL sends a GraphQL query to the test server and returns the response.
-// Includes an auth_token cookie so the mock auth middleware sets the user context.
+// Authentication is handled by the injectAuthMiddleware in the test server setup.
 func executeGraphQL(t *testing.T, server *httptest.Server, query string) graphqlResponse {
 	t.Helper()
 
@@ -246,7 +266,6 @@ func executeGraphQL(t *testing.T, server *httptest.Server, query string) graphql
 	req, err := http.NewRequest("POST", server.URL, strings.NewReader(body))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
-	req.AddCookie(&http.Cookie{Name: "auth_token", Value: "mock-token"})
 
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)

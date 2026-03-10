@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/99designs/gqlgen/graphql"
+	auth "github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/auth"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/directives"
-	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/web/middleware"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 	portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
 	"github.com/stretchr/testify/assert"
@@ -85,9 +85,14 @@ func successResolver(ctx context.Context) (interface{}, error) {
 	return "success", nil
 }
 
+// withUserID creates a context with an authenticated user by ID (test helper)
+func withUserID(ctx context.Context, userID int) context.Context {
+	return auth.WithAuthenticatedUser(ctx, &domain.AuthenticatedUser{ID: userID})
+}
+
 func TestAuth_Authenticated(t *testing.T) {
 	d := directives.NewDirectiveRoot(nil, nil)
-	ctx := middleware.WithUserContext(context.Background(), 1)
+	ctx := withUserID(context.Background(), 1)
 
 	result, err := d.Auth(ctx, nil, successResolver)
 	require.NoError(t, err)
@@ -121,7 +126,7 @@ func TestOwner_PerspectiveOwnerAllowed(t *testing.T) {
 	}
 	d := directives.NewDirectiveRoot(nil, mockPersp)
 
-	ctx := middleware.WithUserContext(context.Background(), 42)
+	ctx := withUserID(context.Background(), 42)
 	ctx = withFieldContext(ctx, "deletePerspective", map[string]interface{}{"id": "10"})
 
 	result, err := d.Owner(ctx, nil, successResolver, "id")
@@ -137,7 +142,7 @@ func TestOwner_PerspectiveNonOwnerDenied(t *testing.T) {
 	}
 	d := directives.NewDirectiveRoot(nil, mockPersp)
 
-	ctx := middleware.WithUserContext(context.Background(), 42)
+	ctx := withUserID(context.Background(), 42)
 	ctx = withFieldContext(ctx, "updatePerspective", map[string]interface{}{
 		"input": map[string]interface{}{"id": 10},
 	})
@@ -155,7 +160,7 @@ func TestOwner_ContentOwnerAllowed(t *testing.T) {
 	}
 	d := directives.NewDirectiveRoot(mockContent, nil)
 
-	ctx := middleware.WithUserContext(context.Background(), 42)
+	ctx := withUserID(context.Background(), 42)
 	ctx = withFieldContext(ctx, "deleteContent", map[string]interface{}{"id": "5"})
 
 	result, err := d.Owner(ctx, nil, successResolver, "id")
@@ -171,7 +176,7 @@ func TestOwner_ContentNonOwnerDenied(t *testing.T) {
 	}
 	d := directives.NewDirectiveRoot(mockContent, nil)
 
-	ctx := middleware.WithUserContext(context.Background(), 42)
+	ctx := withUserID(context.Background(), 42)
 	ctx = withFieldContext(ctx, "deleteContent", map[string]interface{}{"id": "5"})
 
 	_, err := d.Owner(ctx, nil, successResolver, "id")
@@ -182,7 +187,7 @@ func TestOwner_ContentNonOwnerDenied(t *testing.T) {
 func TestOwner_MissingIDArg(t *testing.T) {
 	d := directives.NewDirectiveRoot(nil, nil)
 
-	ctx := middleware.WithUserContext(context.Background(), 42)
+	ctx := withUserID(context.Background(), 42)
 	ctx = withFieldContext(ctx, "deletePerspective", map[string]interface{}{})
 
 	_, err := d.Owner(ctx, nil, successResolver, "id")
@@ -198,7 +203,7 @@ func TestOwner_ResourceNotFound(t *testing.T) {
 	}
 	d := directives.NewDirectiveRoot(nil, mockPersp)
 
-	ctx := middleware.WithUserContext(context.Background(), 42)
+	ctx := withUserID(context.Background(), 42)
 	ctx = withFieldContext(ctx, "deletePerspective", map[string]interface{}{"id": "999"})
 
 	_, err := d.Owner(ctx, nil, successResolver, "id")

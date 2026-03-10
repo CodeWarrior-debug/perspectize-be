@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/web/middleware"
+	auth "github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/auth"
 	portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
 )
 
@@ -28,7 +28,7 @@ func NewDirectiveRoot(contentService portservices.ContentService, perspectiveSer
 // Auth enforces that the request is authenticated.
 // Returns an error if no valid user context is present.
 func (d *DirectiveRoot) Auth(ctx context.Context, obj interface{}, next graphql.Resolver) (interface{}, error) {
-	_, authenticated := middleware.ForContext(ctx)
+	_, authenticated := auth.ForContext(ctx)
 	if !authenticated {
 		return nil, fmt.Errorf("access denied: authentication required")
 	}
@@ -39,7 +39,7 @@ func (d *DirectiveRoot) Auth(ctx context.Context, obj interface{}, next graphql.
 // Extracts the resource ID from the specified argument field, looks up the resource,
 // and verifies the authenticated user is the owner.
 func (d *DirectiveRoot) Owner(ctx context.Context, obj interface{}, next graphql.Resolver, idField string) (interface{}, error) {
-	userID, authenticated := middleware.ForContext(ctx)
+	user, authenticated := auth.ForContext(ctx)
 	if !authenticated {
 		return nil, fmt.Errorf("access denied: authentication required")
 	}
@@ -59,7 +59,7 @@ func (d *DirectiveRoot) Owner(ctx context.Context, obj interface{}, next graphql
 		if err != nil {
 			return nil, fmt.Errorf("resource not found")
 		}
-		if perspective.UserID != userID {
+		if perspective.UserID != user.ID {
 			return nil, fmt.Errorf("access denied: you can only modify your own perspectives")
 		}
 	} else if strings.Contains(strings.ToLower(fieldName), "content") {
@@ -67,7 +67,7 @@ func (d *DirectiveRoot) Owner(ctx context.Context, obj interface{}, next graphql
 		if err != nil {
 			return nil, fmt.Errorf("resource not found")
 		}
-		if content.AddedByUserID != userID {
+		if content.AddedByUserID != user.ID {
 			return nil, fmt.Errorf("access denied: you can only modify your own content")
 		}
 	} else {
