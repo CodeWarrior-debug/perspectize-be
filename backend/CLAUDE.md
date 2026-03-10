@@ -48,6 +48,7 @@ Go 1.25+ (pinned via `toolchain` in go.mod + Dockerfile) · gqlgen (schema-first
 ```bash
 # Setup
 go mod download && make docker-up && make migrate-up && cp .env.example .env
+make install-hooks    # Activate pre-commit (gofmt + prettier)
 
 # Daily
 make run              # Server on :8080

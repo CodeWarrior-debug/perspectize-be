@@ -1,0 +1,29 @@
+#!/bin/sh
+# Pre-commit hook: auto-format staged Go and Svelte/TS files
+# Activated by: git config core.hooksPath .hooks (see Makefile setup target)
+
+# --- Go: gofmt ---
+STAGED_GO=$(git diff --cached --name-only --diff-filter=ACM -- 'backend/*.go')
+if [ -n "$STAGED_GO" ]; then
+    echo "$STAGED_GO" | while read -r file; do
+        if [ -f "$file" ]; then
+            gofmt -w "$file"
+            git add "$file"
+        fi
+    done
+fi
+
+# --- Frontend: prettier ---
+STAGED_FE=$(git diff --cached --name-only --diff-filter=ACM -- 'frontend/src/*.svelte' 'frontend/src/*.ts' 'frontend/src/*.js')
+if [ -n "$STAGED_FE" ]; then
+    if command -v pnpm >/dev/null 2>&1 && [ -f frontend/node_modules/.bin/prettier ]; then
+        echo "$STAGED_FE" | while read -r file; do
+            if [ -f "$file" ]; then
+                pnpm --dir frontend exec prettier --write "$file" 2>/dev/null
+                git add "$file"
+            fi
+        done
+    fi
+fi
+
+exit 0
