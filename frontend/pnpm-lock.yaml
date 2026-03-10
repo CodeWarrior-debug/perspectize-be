@@ -18,11 +18,11 @@ importers:
         specifier: 32.3.9
         version: 32.3.9
       '@capacitor/core':
-        specifier: ^8.1.0
-        version: 8.1.0
+        specifier: ^8.2.0
+        version: 8.2.0
       '@capacitor/haptics':
         specifier: ^8.0.1
-        version: 8.0.1(@capacitor/core@8.1.0)
+        version: 8.0.1(@capacitor/core@8.2.0)
       '@tanstack/svelte-form':
         specifier: ^1.28.4
         version: 1.28.4(svelte@5.53.7)
@@ -45,8 +45,8 @@ importers:
         specifier: ^1.0.1
         version: 1.0.1(@sveltejs/kit@2.53.4(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.53.7)(vite@7.3.1(@types/node@25.2.1)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)))(svelte@5.53.7)(typescript@5.9.3)(vite@7.3.1(@types/node@25.2.1)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)))(svelte@5.53.7)
       svelte-sonner:
-        specifier: ^1.0.8
-        version: 1.0.8(svelte@5.53.7)
+        specifier: ^1.1.0
+        version: 1.1.0(svelte@5.53.7)
       tailwind-merge:
         specifier: ^3.5.0
         version: 3.5.0
@@ -55,14 +55,14 @@ importers:
         version: 5.1.0
     devDependencies:
       '@capacitor/android':
-        specifier: ^8.1.0
-        version: 8.1.0(@capacitor/core@8.1.0)
+        specifier: ^8.2.0
+        version: 8.2.0(@capacitor/core@8.2.0)
       '@capacitor/cli':
         specifier: ^7.5.0
         version: 7.5.0
       '@capacitor/ios':
-        specifier: ^8.1.0
-        version: 8.1.0(@capacitor/core@8.1.0)
+        specifier: ^8.2.0
+        version: 8.2.0(@capacitor/core@8.2.0)
       '@internationalized/date':
         specifier: ^3.12.0
         version: 3.12.0
@@ -683,28 +683,28 @@ packages:
     resolution: {integrity: sha512-ctxtJ/eA+t+6q2++vj5j7FYX3nRu311q1wfYH3xjlLOsczhlhxAg2FWNUXhpGvAw3BWo1xBcvOV6/YLc2r5FJw==}
     hasBin: true
 
-  '@capacitor/android@8.1.0':
-    resolution: {integrity: sha512-z0acTPxj5DCy/U2FU7w+GA93oC+wdyKnsOcRg5rutDmSYa8Do1tzYqApKgf+hnuTNPbtrCTHp0Zy1cLiK/4MEw==}
+  '@capacitor/android@8.2.0':
+    resolution: {integrity: sha512-XLm5OsWLPfXQxDxzFS7SOdMEgGvW+2c7TGLXkTR2cSKdkWK5Abns4imlT5qghKYhjM9r74IrDkBWg/9ALUGNKQ==}
     peerDependencies:
-      '@capacitor/core': ^8.1.0
+      '@capacitor/core': ^8.2.0
 
   '@capacitor/cli@7.5.0':
     resolution: {integrity: sha512-mlohsvLZjWrO5eAVTn1+dABNQwQawcphVp6NQVJZ3I4x2BAoNmJj53QflX7PYGUipL9gF9EM9Yiku3m1McxFZg==}
     engines: {node: '>=20.0.0'}
     hasBin: true
 
-  '@capacitor/core@8.1.0':
-    resolution: {integrity: sha512-UfMBMWc1v7J+14AhH03QmeNwV3HZx3qnOWhpwnHfzALEwAwlV/itQOQqcasMQYhOHWL0tiymc5ByaLTn7KKQxw==}
+  '@capacitor/core@8.2.0':
+    resolution: {integrity: sha512-oKaoNeNtH2iIZMDFVrb1atoyRECDGHcfLMunJ5KWN8DtvpVBeeA4c41e20NTuhMxw1cSYbpq2PV2hb+/9CJxlQ==}
 
   '@capacitor/haptics@8.0.1':
     resolution: {integrity: sha512-8v8rowLBMeb3CryqoQvXndwyUsoi4pPXf0qFw7IGA4D32Uk7+K6juN2SjRowqunoovkvvbFmU9TD7JIAz2zmFw==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
-  '@capacitor/ios@8.1.0':
-    resolution: {integrity: sha512-wPaQ8ayL0UY+SxydZbrmfzPs8TryZVEB6hrL/XBnXxQtb6rpEmIy/3GIltPwM+/T4m/IuaSDZOToWK65ruC00g==}
+  '@capacitor/ios@8.2.0':
+    resolution: {integrity: sha512-X2/VtM4qP/R1SM0VQ5W/VotEc6PS/KTooD33EijsfAHWBdee+xmBapW8SeNLnu16wJ+tsfWlvtipaJEyfKbRKQ==}
     peerDependencies:
-      '@capacitor/core': ^8.1.0
+      '@capacitor/core': ^8.2.0
 
   '@clerk/backend@3.0.0':
     resolution: {integrity: sha512-y7P7mbc0vam0TjAzhrGUVaL95INp9ljgblxEjC+wXOfTI34dPKuWbIGv/S9bt3nIhbFSO+JM0rh9Qc8FvoZu2A==}
@@ -3083,8 +3083,8 @@ packages:
       '@sveltejs/kit':
         optional: true
 
-  svelte-sonner@1.0.8:
-    resolution: {integrity: sha512-TjF+MY8RpBSQfker9+mBHbdx8szrXzhLuqFE89WGgTRv1uYFFc/no10kRvSvSQ7zaAv90APq7qpP145ZcsvUwQ==}
+  svelte-sonner@1.1.0:
+    resolution: {integrity: sha512-3lYM6ZIqWe+p9vwwWHGWP/ZdvHiUtzURsud2quIxivrX4rvpXh6i+geBGn0m3JS6KwW6W8VgbOl3xQMcDuh6gg==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -4246,9 +4246,9 @@ snapshots:
     dependencies:
       css-tree: 3.1.0
 
-  '@capacitor/android@8.1.0(@capacitor/core@8.1.0)':
+  '@capacitor/android@8.2.0(@capacitor/core@8.2.0)':
     dependencies:
-      '@capacitor/core': 8.1.0
+      '@capacitor/core': 8.2.0
 
   '@capacitor/cli@7.5.0':
     dependencies:
@@ -4272,17 +4272,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@capacitor/core@8.1.0':
+  '@capacitor/core@8.2.0':
     dependencies:
       tslib: 2.8.1
 
-  '@capacitor/haptics@8.0.1(@capacitor/core@8.1.0)':
+  '@capacitor/haptics@8.0.1(@capacitor/core@8.2.0)':
     dependencies:
-      '@capacitor/core': 8.1.0
+      '@capacitor/core': 8.2.0
 
-  '@capacitor/ios@8.1.0(@capacitor/core@8.1.0)':
+  '@capacitor/ios@8.2.0(@capacitor/core@8.2.0)':
     dependencies:
-      '@capacitor/core': 8.1.0
+      '@capacitor/core': 8.2.0
 
   '@clerk/backend@3.0.0':
     dependencies:
@@ -6732,7 +6732,7 @@ snapshots:
       - react
       - react-dom
 
-  svelte-sonner@1.0.8(svelte@5.53.7):
+  svelte-sonner@1.1.0(svelte@5.53.7):
     dependencies:
       runed: 0.28.0(svelte@5.53.7)
       svelte: 5.53.7
