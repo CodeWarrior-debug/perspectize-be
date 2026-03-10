@@ -32,7 +32,7 @@ Domain layer rules: [.docs/DOMAIN_GUIDE.md](../.docs/DOMAIN_GUIDE.md)
 
 ## Stack
 
-Go 1.25+ · gqlgen (schema-first) · PostgreSQL 17 (GORM + pgx/v5) · golang-migrate · go-playground/validator · testify · log/slog · godotenv
+Go 1.25+ (pinned via `toolchain` in go.mod + Dockerfile) · gqlgen (schema-first) · PostgreSQL 17 (GORM + pgx/v5) · golang-migrate · go-playground/validator · testify · log/slog · godotenv
 
 ### ORM: GORM (Hex-Clean Separate Model Pattern)
 
@@ -48,6 +48,7 @@ Go 1.25+ · gqlgen (schema-first) · PostgreSQL 17 (GORM + pgx/v5) · golang-mig
 ```bash
 # Setup
 go mod download && make docker-up && make migrate-up && cp .env.example .env
+make install-hooks    # Activate pre-commit (gofmt + prettier)
 
 # Daily
 make run              # Server on :8080
@@ -142,6 +143,20 @@ models:
 4. Use `IntID` scalar (`pkg/graphql/intid.go`) instead of `ID` with `strconv.Atoi` for filter/input fields. Top-level query/mutation ID params (e.g., `contentByID(id: ID!)`) still use `strconv.Atoi`.
 
 **New enum checklist:** UPPERCASE constants → bind in `gqlgen.yml` → DB converter if stored → `make graphql-gen`
+
+## Go Version Management
+
+**`go.mod` uses `toolchain` directive** to decouple minimum version from local dev version:
+- `go 1.25` — minimum required (set by dependencies like gqlgen)
+- `toolchain go1.26.0` — version used for local development
+
+**Dockerfile pins the base image** (`golang:1.26-alpine`) so Sevalla builds always use a known-good version.
+
+**CI uses `go-version-file`** (`backend/go.mod`) so GitHub Actions auto-detects the version.
+
+**When Go updates locally** (e.g., Homebrew): only the `toolchain` line changes. The `go` minimum stays stable unless a dependency forces it up. Update the Dockerfile base image to match.
+
+**Never hardcode Go versions** in CI or deployment configs. Always reference `go.mod`.
 
 ## Self-Verification
 
