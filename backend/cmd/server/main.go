@@ -155,19 +155,6 @@ func main() {
 	// Setup chi router
 	r := chi.NewRouter()
 
-	// Webhook routes — registered before auth middleware; Svix signature provides verification
-	r.Group(func(r chi.Router) {
-		webhookSecret := os.Getenv("CLERK_WEBHOOK_SIGNING_SECRET")
-		if webhookSecret != "" {
-			webhookHandler := &auth.WebhookHandler{
-				WebhookSecret: webhookSecret,
-				UserRepo:      userRepo,
-			}
-			r.Post("/webhooks/clerk", webhookHandler.ServeHTTP)
-			slog.Info("Clerk webhook endpoint registered")
-		}
-	})
-
 	// Middleware stack (order matters: rate limit before auth to prevent DoS)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -184,6 +171,17 @@ func main() {
 	r.Use(auth.Middleware(userRepo))
 	r.Use(perfmw.RequestTimer) // structured request timing (replaces chi Logger)
 	r.Use(perfmw.Recoverer)    // structured panic recovery (JSON via slog)
+
+	// Webhook routes — skip auth middleware; Svix signature provides verification
+	webhookSecret := os.Getenv("CLERK_WEBHOOK_SIGNING_SECRET")
+	if webhookSecret != "" {
+		webhookHandler := &auth.WebhookHandler{
+			WebhookSecret: webhookSecret,
+			UserRepo:      userRepo,
+		}
+		r.Post("/webhooks/clerk", webhookHandler.ServeHTTP)
+		slog.Info("Clerk webhook endpoint registered")
+	}
 
 	// Health check — liveness probe (M-10)
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
