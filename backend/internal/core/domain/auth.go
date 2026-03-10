@@ -1,10 +1,11 @@
 package domain
 
-import "github.com/golang-jwt/jwt/v5"
-
-// Claims represents the JWT claims stored in authentication tokens.
-type Claims struct {
-	UserID int    `json:"user_id"`
-	Email  string `json:"email"`
-	jwt.RegisteredClaims
+// AuthenticatedUser holds resolved local user info for request context.
+// Used by auth middleware and accessed via auth.ForContext(ctx).
+type AuthenticatedUser struct {
+	ID       int
+	ClerkID  string
+	Username string
+	Email    string
+	Role     UserRole
 }

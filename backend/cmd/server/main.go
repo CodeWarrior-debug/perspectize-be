@@ -16,6 +16,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/auth"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/directives"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/generated"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/resolvers"
@@ -28,6 +29,7 @@ import (
 	gqltiming "github.com/CodeWarrior-debug/perspectize/backend/pkg/graphql"
 	"github.com/CodeWarrior-debug/perspectize/backend/pkg/logger"
 	perfmw "github.com/CodeWarrior-debug/perspectize/backend/pkg/middleware"
+	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -103,13 +105,14 @@ func main() {
 		slog.Warn("YOUTUBE_API_KEY is empty — YouTube metadata fetching will fail")
 	}
 
-	// Load security config and create auth service
+	// Load security config
 	secCfg := config.LoadSecurity()
-	authService := services.NewAuthService(
-		[]byte(secCfg.JWTSecret),
-		time.Duration(secCfg.AccessTokenMinutes)*time.Minute,
-	)
-	slog.Info("auth service initialized", "tokenTTL", fmt.Sprintf("%dm", secCfg.AccessTokenMinutes))
+
+	// Initialize Clerk SDK
+	if secCfg.ClerkSecretKey != "" {
+		clerk.SetKey(secCfg.ClerkSecretKey)
+		slog.Info("Clerk SDK initialized")
+	}
 
 	// Initialize adapters
 	youtubeClient := youtube.NewClient(cfg.YouTube.APIKey)
@@ -152,6 +155,19 @@ func main() {
 	// Setup chi router
 	r := chi.NewRouter()
 
+	// Webhook routes — registered before auth middleware; Svix signature provides verification
+	r.Group(func(r chi.Router) {
+		webhookSecret := os.Getenv("CLERK_WEBHOOK_SIGNING_SECRET")
+		if webhookSecret != "" {
+			webhookHandler := &auth.WebhookHandler{
+				WebhookSecret: webhookSecret,
+				UserRepo:      userRepo,
+			}
+			r.Post("/webhooks/clerk", webhookHandler.ServeHTTP)
+			slog.Info("Clerk webhook endpoint registered")
+		}
+	})
+
 	// Middleware stack (order matters: rate limit before auth to prevent DoS)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -165,7 +181,7 @@ func main() {
 	}))
 	r.Use(apimw.SecureHeaders())       // M-14: security headers (HSTS, X-Content-Type-Options, X-Frame-Options)
 	r.Use(apimw.ContentTypeValidation) // M-15: CSRF protection via Content-Type
-	r.Use(apimw.AuthMiddleware(authService))
+	r.Use(auth.Middleware(userRepo))
 	r.Use(perfmw.RequestTimer) // structured request timing (replaces chi Logger)
 	r.Use(perfmw.Recoverer)    // structured panic recovery (JSON via slog)
 

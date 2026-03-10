@@ -30,7 +30,7 @@ vi.mock('svelte-sonner', () => ({
 }));
 
 vi.mock('$lib/queries/client', () => ({
-	graphqlClient: { request: vi.fn() },
+	graphqlRequest: vi.fn(),
 }));
 
 describe('useCreatePerspective hook', () => {
@@ -56,29 +56,29 @@ describe('useCreatePerspective hook', () => {
 			expect(typeof capturedMutationOptions.mutationFn).toBe('function');
 		});
 
-		it('calls graphqlClient.request with CREATE_PERSPECTIVE and input', async () => {
-			const { graphqlClient } = await import('$lib/queries/client');
+		it('calls graphqlRequest with CREATE_PERSPECTIVE and input', async () => {
+			const { graphqlRequest } = await import('$lib/queries/client');
 			const { CREATE_PERSPECTIVE } = await import('$lib/queries/perspectives');
-			(graphqlClient.request as any).mockResolvedValue({
+			(graphqlRequest as any).mockResolvedValue({
 				createPerspective: { id: '1', userID: '42', quality: 7500, privacy: 'PUBLIC', createdAt: '', updatedAt: '' },
 			});
 
 			const input = { userID: 42, contentID: 10, quality: 7500 };
 			await capturedMutationOptions.mutationFn(input);
 
-			expect(graphqlClient.request).toHaveBeenCalledWith(CREATE_PERSPECTIVE, { input });
+			expect(graphqlRequest).toHaveBeenCalledWith(CREATE_PERSPECTIVE, { input });
 		});
 
 		it('passes partial input (only quality)', async () => {
-			const { graphqlClient } = await import('$lib/queries/client');
-			(graphqlClient.request as any).mockResolvedValue({
+			const { graphqlRequest } = await import('$lib/queries/client');
+			(graphqlRequest as any).mockResolvedValue({
 				createPerspective: { id: '1', userID: '42', quality: 5000, privacy: 'PUBLIC', createdAt: '', updatedAt: '' },
 			});
 
 			const input = { userID: 42, quality: 5000 };
 			await capturedMutationOptions.mutationFn(input);
 
-			expect(graphqlClient.request).toHaveBeenCalledWith(expect.anything(), { input });
+			expect(graphqlRequest).toHaveBeenCalledWith(expect.anything(), { input });
 		});
 	});
 

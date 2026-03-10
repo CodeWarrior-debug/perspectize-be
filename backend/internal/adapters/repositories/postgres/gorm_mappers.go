@@ -16,14 +16,19 @@ func userModelToDomain(m *UserModel) *domain.User {
 	if m.Email != nil {
 		email = *m.Email
 	}
+	clerkUserID := ""
+	if m.ClerkUserID != nil {
+		clerkUserID = *m.ClerkUserID
+	}
 	return &domain.User{
-		ID:        m.ID,
-		Username:  m.Username,
-		Email:     email,
-		Role:      domain.UserRole(strings.ToUpper(m.Role)),
-		Active:    m.Active,
-		CreatedAt: m.CreatedAt,
-		UpdatedAt: m.UpdatedAt,
+		ID:          m.ID,
+		ClerkUserID: clerkUserID,
+		Username:    m.Username,
+		Email:       email,
+		Role:        domain.UserRole(strings.ToUpper(m.Role)),
+		Active:      m.Active,
+		CreatedAt:   m.CreatedAt,
+		UpdatedAt:   m.UpdatedAt,
 	}
 }
 
@@ -36,12 +41,17 @@ func userDomainToModel(u *domain.User) *UserModel {
 	if u.Email != "" {
 		email = &u.Email
 	}
+	var clerkUserID *string
+	if u.ClerkUserID != "" {
+		clerkUserID = &u.ClerkUserID
+	}
 	return &UserModel{
-		ID:       u.ID,
-		Username: u.Username,
-		Email:    email,
-		Role:     strings.ToLower(string(u.Role)),
-		Active:   u.Active,
+		ID:          u.ID,
+		ClerkUserID: clerkUserID,
+		Username:    u.Username,
+		Email:       email,
+		Role:        strings.ToLower(string(u.Role)),
+		Active:      u.Active,
 		// CreatedAt and UpdatedAt are managed by GORM
 	}
 }

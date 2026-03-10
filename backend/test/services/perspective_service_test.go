@@ -86,6 +86,10 @@ func (m *mockUserRepoForPerspective) GetByEmail(ctx context.Context, email strin
 	return nil, domain.ErrNotFound
 }
 
+func (m *mockUserRepoForPerspective) GetByClerkID(ctx context.Context, clerkID string) (*domain.User, error) {
+	return nil, domain.ErrNotFound
+}
+
 func (m *mockUserRepoForPerspective) ListAll(ctx context.Context) ([]*domain.User, error) {
 	return []*domain.User{}, nil
 }
@@ -96,6 +100,18 @@ func (m *mockUserRepoForPerspective) Update(ctx context.Context, user *domain.Us
 
 func (m *mockUserRepoForPerspective) Delete(ctx context.Context, id int) error {
 	return nil
+}
+
+func (m *mockUserRepoForPerspective) CreateFromClerk(ctx context.Context, clerkID string, username string, email string) (*domain.User, error) {
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockUserRepoForPerspective) UpdateByClerkID(ctx context.Context, clerkID string, username string, email string) error {
+	return domain.ErrNotFound
+}
+
+func (m *mockUserRepoForPerspective) DeactivateByClerkID(ctx context.Context, clerkID string) error {
+	return domain.ErrNotFound
 }
 
 // --- Create Tests ---

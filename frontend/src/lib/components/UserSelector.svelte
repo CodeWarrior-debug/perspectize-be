@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createQuery } from '@tanstack/svelte-query';
-	import { graphqlClient } from '$lib/queries/client';
+	import { graphqlRequest } from '$lib/queries/client';
 	import { LIST_USERS, type User, type UsersResponse } from '$lib/queries/users';
 	import { queryKeys } from '$lib/queries/keys';
 	import { setSelectedUserId, getSelectedUserId } from '$lib/stores/userSelection.svelte';
@@ -9,7 +9,7 @@
 
 	const usersQuery = createQuery(() => ({
 		queryKey: queryKeys.users.list(),
-		queryFn: () => graphqlClient.request<UsersResponse>(LIST_USERS),
+		queryFn: () => graphqlRequest<UsersResponse>(LIST_USERS),
 		staleTime: 5 * 60 * 1000, // 5 minutes
 	}));
 

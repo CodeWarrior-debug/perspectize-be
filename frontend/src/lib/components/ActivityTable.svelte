@@ -13,7 +13,7 @@
 	import { createQuery, keepPreviousData } from '@tanstack/svelte-query';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
-	import { graphqlClient } from '$lib/queries/client';
+	import { graphqlRequest } from '$lib/queries/client';
 	import { LIST_CONTENT, type ContentItem, type ContentResponse } from '$lib/queries/content';
 	import {
 		LIST_PERSPECTIVES_BY_USER,
@@ -49,6 +49,15 @@
 		contentRowId,
 		headerMinWidth,
 	} from '$lib/utils/formatting';
+	import {
+		SORT_FIELD_MAP,
+		resolveSortField,
+		resolveSortOrder,
+		capitalizeContentType,
+		durationComparator,
+		computeNextPage,
+		computePrevPage,
+	} from '$lib/utils/grid-config';
 	import { TagsTooltip } from '$lib/components/TagsTooltip';
 	import { DescriptionTooltip } from '$lib/components/DescriptionTooltip';
 	import DataModeToggle from '$lib/components/DataModeToggle.svelte';
@@ -92,6 +101,7 @@
 	// Grid state
 	// ---------------------------------------------------------------------------
 
+
 	let gridApi = $state<GridApi | null>(null);
 	let gridReady = $state(false);
 	let debounceTimer: ReturnType<typeof setTimeout>;
@@ -108,7 +118,7 @@
 	const perspectivesQuery = createQuery(() => ({
 		queryKey: queryKeys.perspectives.listByUser(selectedUserId ?? 0),
 		queryFn: () =>
-			graphqlClient.request<ListPerspectivesByUserResponse>(LIST_PERSPECTIVES_BY_USER, {
+			graphqlRequest<ListPerspectivesByUserResponse>(LIST_PERSPECTIVES_BY_USER, {
 				userID: selectedUserId,
 			}),
 		enabled: selectedUserId !== null,
@@ -153,7 +163,7 @@
 			mode,
 		}),
 		queryFn: async () => {
-			const response = await graphqlClient.request<ContentResponse>(LIST_CONTENT, {
+			const response = await graphqlRequest<ContentResponse>(LIST_CONTENT, {
 				first: mode === 'all' ? pageSize : 100, // Load more in client mode for client-side filtering
 				after: mode === 'all' ? currentCursor : null,
 				sortBy: mode === 'all' ? sortBy : 'UPDATED_AT',

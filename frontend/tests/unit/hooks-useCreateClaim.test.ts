@@ -30,7 +30,7 @@ vi.mock('svelte-sonner', () => ({
 }));
 
 vi.mock('$lib/queries/client', () => ({
-	graphqlClient: { request: vi.fn() },
+	graphqlRequest: vi.fn(),
 }));
 
 describe('useCreateClaim hook', () => {
@@ -56,19 +56,19 @@ describe('useCreateClaim hook', () => {
 			expect(typeof capturedMutationOptions.mutationFn).toBe('function');
 		});
 
-		it('calls graphqlClient.request with CREATE_CLAIM and input', async () => {
+		it('calls graphqlRequest with CREATE_CLAIM and input', async () => {
 			const { useCreateClaim } = await import('$lib/queries/hooks/useCreateClaim');
-			const { graphqlClient } = await import('$lib/queries/client');
+			const { graphqlRequest } = await import('$lib/queries/client');
 			useCreateClaim();
 
-			(graphqlClient.request as any).mockResolvedValue({
+			(graphqlRequest as any).mockResolvedValue({
 				createClaim: { id: '1', text: 'Test claim', userID: '42' },
 			});
 
 			const input = { text: 'Test claim', userID: 42, parentContentID: 10 };
 			await capturedMutationOptions.mutationFn(input);
 
-			expect(graphqlClient.request).toHaveBeenCalledWith(expect.anything(), { input });
+			expect(graphqlRequest).toHaveBeenCalledWith(expect.anything(), { input });
 		});
 	});
 
