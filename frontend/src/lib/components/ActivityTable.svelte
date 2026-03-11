@@ -438,6 +438,14 @@
 		};
 	});
 
+	// Null out gridApi on destroy to prevent $effect callbacks hitting a destroyed grid
+	$effect(() => {
+		return () => {
+			gridApi = null;
+			gridReady = false;
+		};
+	});
+
 	// Update AG Grid context reactively so perspectiveCellRenderer can access the map
 	$effect(() => {
 		if (gridApi) {
@@ -456,6 +464,7 @@
 		const api = gridApi;
 		const tier = responsiveTier;
 		requestAnimationFrame(() => {
+			if (!gridApi) return; // Grid may have been destroyed before rAF fires
 			const alwaysVisible = ['item', 'type', 'perspectize'];
 			const smCols = ['channel'];
 			const mdCols = ['duration', 'publishDate'];
@@ -490,6 +499,7 @@
 		if (!gridContainer || !gridApi || !gridReady) return;
 		const api = gridApi;
 		const observer = new ResizeObserver(() => {
+			if (!gridApi) return; // Grid may have been destroyed before observer fires
 			api.sizeColumnsToFit();
 		});
 		observer.observe(gridContainer);
