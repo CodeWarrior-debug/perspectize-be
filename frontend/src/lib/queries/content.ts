@@ -1,5 +1,7 @@
 import { gql } from 'graphql-request';
 
+export type { ContentFilterInput } from '$lib/utils/gridUrlState';
+
 export interface ContentItem {
 	id: string;
 	name: string;

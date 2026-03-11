@@ -142,6 +142,52 @@ func (r *GormContentRepository) List(ctx context.Context, params domain.ContentL
 		if params.Filter.Search != nil && *params.Filter.Search != "" {
 			query = query.Where("name ILIKE ?", "%"+*params.Filter.Search+"%")
 		}
+		// View count filters (JSONB extraction)
+		if params.Filter.MinViewCount != nil {
+			query = query.Where("(response->'items'->0->'statistics'->>'viewCount')::BIGINT >= ?", *params.Filter.MinViewCount)
+		}
+		if params.Filter.MaxViewCount != nil {
+			query = query.Where("(response->'items'->0->'statistics'->>'viewCount')::BIGINT <= ?", *params.Filter.MaxViewCount)
+		}
+		// Like count filters (JSONB extraction)
+		if params.Filter.MinLikeCount != nil {
+			query = query.Where("(response->'items'->0->'statistics'->>'likeCount')::BIGINT >= ?", *params.Filter.MinLikeCount)
+		}
+		if params.Filter.MaxLikeCount != nil {
+			query = query.Where("(response->'items'->0->'statistics'->>'likeCount')::BIGINT <= ?", *params.Filter.MaxLikeCount)
+		}
+		// Published date filters (JSONB extraction, ISO 8601 string comparison)
+		if params.Filter.PublishedAfter != nil {
+			query = query.Where("response->'items'->0->'snippet'->>'publishedAt' >= ?", *params.Filter.PublishedAfter)
+		}
+		if params.Filter.PublishedBefore != nil {
+			query = query.Where("response->'items'->0->'snippet'->>'publishedAt' <= ?", *params.Filter.PublishedBefore)
+		}
+		// Channel title filter (JSONB extraction + ILIKE)
+		if params.Filter.ChannelTitle != nil && *params.Filter.ChannelTitle != "" {
+			query = query.Where("response->'items'->0->'snippet'->>'channelTitle' ILIKE ?", "%"+*params.Filter.ChannelTitle+"%")
+		}
+		// Tag contains filter (JSONB array cast to text for ILIKE search)
+		if params.Filter.TagContains != nil && *params.Filter.TagContains != "" {
+			query = query.Where("(response->'items'->0->'snippet'->'tags')::text ILIKE ?", "%"+*params.Filter.TagContains+"%")
+		}
+		// Description search (JSONB extraction + ILIKE)
+		if params.Filter.DescriptionSearch != nil && *params.Filter.DescriptionSearch != "" {
+			query = query.Where("response->'items'->0->'snippet'->>'description' ILIKE ?", "%"+*params.Filter.DescriptionSearch+"%")
+		}
+		// Created/Updated date filters (direct columns)
+		if params.Filter.CreatedAfter != nil {
+			query = query.Where("created_at >= ?", *params.Filter.CreatedAfter)
+		}
+		if params.Filter.CreatedBefore != nil {
+			query = query.Where("created_at <= ?", *params.Filter.CreatedBefore)
+		}
+		if params.Filter.UpdatedAfter != nil {
+			query = query.Where("updated_at >= ?", *params.Filter.UpdatedAfter)
+		}
+		if params.Filter.UpdatedBefore != nil {
+			query = query.Where("updated_at <= ?", *params.Filter.UpdatedBefore)
+		}
 	}
 
 	// Total count (before cursor/limit — respects filters only)
