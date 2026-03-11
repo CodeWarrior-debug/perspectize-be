@@ -21,7 +21,7 @@ vi.mock('svelte-sonner', () => ({
 }));
 
 vi.mock('$lib/queries/client', () => ({
-	graphqlClient: { request: vi.fn() },
+	graphqlRequest: vi.fn(),
 }));
 
 // Helper to render FormPopover with required props

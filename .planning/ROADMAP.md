@@ -279,7 +279,7 @@ Phases 6-10 address issues from the bug backlog (`.planning/phases/bugs/BACKLOG.
 - [x] **Phase 7.4: Performance Monitoring** - Request timing, GORM slow query logging, DB stats, GraphQL timing, Go benchmarks, Web Vitals (INSERTED)
 - [x] **Phase 8: User Integration Flow** - Frontend create user flow, shared FormPopover, optional email in schema (INSERTED)
 - [ ] **Phase 8.1: API & Schema Quality** - Fix GraphQL types, race conditions, nested resolvers
-- [ ] **Phase 9: Security Hardening** - Authentication, rate limiting, query complexity, headers, HTTPS
+- [x] **Phase 9: Security Hardening** - Authentication, rate limiting, query complexity, headers, HTTPS (completed 2026-03-03)
 - [ ] **Phase 10: Frontend Quality & Test Coverage** - XSS fix, codegen, error boundaries, cleanup, test gaps
 
 ### Phase 8: User Integration Flow (INSERTED)
@@ -624,11 +624,41 @@ Plans:
   6. Frontend shows success toast when new video is added
   7. Data migration backfills existing raw URLs to canonical form
   8. All backend and frontend tests pass
-**Plans:** 2/2 plans complete
+**Plans:** 6/6 plans complete
 
 Plans:
 - [ ] 17-01-PLAN.md — Backend: NormalizeYouTubeURL, GetOrCreateByURL with ON CONFLICT, idempotent CreateFromYouTube, data migration, tests (TDD)
 - [ ] 17-02-PLAN.md — GraphQL: CreateContentResult wrapper type, resolver update, frontend mutation/hook update for alreadyExisted signal
+
+### Phase 18: Server-Side Pagination & Filtering with Data Mode Toggle
+
+**Goal:** Add a data mode toggle to ActivityTable that switches between "All Items" (server-side sort/filter/search across full dataset) and "Loaded X Items" (client-side sort/filter/search on currently loaded page). Expand backend filtering and sorting capabilities to support full server-side operation. Reflect query state in URL for shareable views.
+**Depends on:** Phase 17
+**Success Criteria** (what must be TRUE):
+  1. Data mode toggle visible in pagination area with "All Items" / "Loaded X Items" labels
+  2. In "All Items" mode, sorting any column triggers server-side sort
+  3. In "All Items" mode, filtering any column triggers server-side filter via expanded ContentFilter
+  4. In "Loaded Items" mode, sort/filter/search works client-side only
+  5. URL reflects current query state (mode, sort, filters, page, search)
+  6. Sharing a URL with params restores the exact view (mode, sort, filters, search; page resets to 1)
+  7. Default mode is "Loaded Items" with no URL params
+  8. Hover tooltip on "Loaded X Items" explains the mode
+**Plans:** 3 plans in 2 waves
+
+Plans:
+- [ ] 18-01-PLAN.md — Backend expanded filtering & sorting (ContentFilter + ContentSortBy expansion, GORM JSONB WHERE clauses, sort rules)
+- [ ] 18-02-PLAN.md — URL state management & grid state utilities (gridUrlState.ts with parse/serialize, filter model ↔ URL converters, unit tests)
+- [ ] 18-03-PLAN.md — Data mode toggle UI & grid integration (DataModeToggle component, URL-driven ActivityTable refactor, page search wiring)
+
+### Phase 19: Content Familiarity Tracking
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 18
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 19 to break down)
 
 ---
 
@@ -642,6 +672,15 @@ Phases 11-15 planned from FEATURE_BACKLOG.md. Phase 16 added for mobile app rese
 - [ ] **Phase 14: AG Grid Power Features** - Advanced table features, column grouping, export
 - [ ] **Phase 15: Discover Page** - Content discovery and recommendation interface
 - [ ] **Phase 16: Mobile App Strategy** - Research native mobile approaches for SvelteKit SPA
+
+### Phase 18.1: Mobile Activity Page Redesign (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Depends on:** Phase 18
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 18.1 to break down)
 
 ### Phase 16: Mobile App Strategy
 **Goal**: Research and evaluate native mobile app approaches (Capacitor, Tauri, PWA) for wrapping the existing SvelteKit SPA. Produce a recommendation with proof-of-concept.
@@ -687,7 +726,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 
 | 7.4 Performance Monitoring | 1/1 | Complete | 2026-02-15 |
 | 8. User Integration Flow | 1/1 | Complete | 2026-02-15 |
 | 8.1 API & Schema Quality | 0/5 | Not started | - |
-| 9. Security Hardening | 0/6 | Not started | - |
+| 9. Security Hardening | 0/6 | Complete    | 2026-03-03 |
 | 10. Frontend Quality & Test Coverage | 0/6 | Not started | - |
 | 11. Database Optimization | 0/3 | Not started | - |
 | 12. Authentication | 0/3 | Not started | - |

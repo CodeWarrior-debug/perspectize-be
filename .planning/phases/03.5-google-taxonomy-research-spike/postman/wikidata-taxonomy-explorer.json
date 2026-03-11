@@ -1,0 +1,596 @@
+{
+  "info": {
+    "_postman_id": "wd-taxonomy-explorer-001",
+    "name": "Wikidata Taxonomy Explorer",
+    "description": "Interactive exploration of Wikidata's knowledge graph for Perspectize content categorization.\n\nThree APIs:\n1. SPARQL Endpoint — structured queries for hierarchical data\n2. Entity Search (Action API) — find entity IDs by name\n3. REST API — get full entity details by ID\n\nNo API key required. Rate limits: 5 parallel queries, 60s compute/minute.\nAlways set User-Agent header (Wikidata blocks default agents).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "SPARQL_ENDPOINT",
+      "value": "https://query.wikidata.org/sparql",
+      "type": "string"
+    },
+    {
+      "key": "ACTION_API",
+      "value": "https://www.wikidata.org/w/api.php",
+      "type": "string"
+    },
+    {
+      "key": "REST_API",
+      "value": "https://www.wikidata.org/w/rest.php/wikibase/v1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Quickstart — Validate Access",
+      "item": [
+        {
+          "name": "0a - Entity Search (Action API)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "url": {
+              "raw": "{{ACTION_API}}?action=wbsearchentities&search=Kansas City Chiefs&format=json&language=en&type=item&limit=5",
+              "host": ["{{ACTION_API}}"],
+              "query": [
+                { "key": "action", "value": "wbsearchentities" },
+                { "key": "search", "value": "Kansas City Chiefs" },
+                { "key": "format", "value": "json" },
+                { "key": "language", "value": "en" },
+                { "key": "type", "value": "item" },
+                { "key": "limit", "value": "5" }
+              ]
+            },
+            "description": "Search for entities by name. Returns entity IDs (Q-numbers), labels, descriptions.\n\nTry changing 'search' to: Presbyterian Church, Taylor Swift, Machine Learning, etc.\n\nKey fields in response:\n- id: Q223522 (the Wikidata entity ID)\n- label: Kansas City Chiefs\n- description: National Football League franchise..."
+          }
+        },
+        {
+          "name": "0b - Get Entity Details (REST API)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "url": {
+              "raw": "{{REST_API}}/entities/items/Q223522",
+              "host": ["{{REST_API}}"],
+              "path": ["entities", "items", "Q223522"]
+            },
+            "description": "Get full entity data by Q-number. Returns labels, descriptions, aliases, statements (properties), sitelinks.\n\nReplace Q223522 with any entity ID from search results.\n\nKey response shape:\n- type: 'item'\n- labels: { en: 'Kansas City Chiefs', es: '...', ... }\n- descriptions: { en: 'National Football League franchise...' }\n- aliases: { en: ['Dallas Texans', 'KC Chiefs', 'Chiefs'] }\n- statements: { P31: [...], P118: [...], ... } (property claims)\n- sitelinks: { enwiki: { title: '...' }, ... }"
+          }
+        },
+        {
+          "name": "0c - SPARQL Hello World",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?item ?itemLabel ?itemDescription WHERE {\n  VALUES ?item { wd:Q223522 wd:Q1215884 wd:Q178169 }\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}\nLIMIT 10"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "Minimal SPARQL query to confirm endpoint works.\n\nLooks up 3 known entities: Kansas City Chiefs (Q223522), NFL (Q1215884), Presbyterianism (Q178169).\n\nResponse shape:\n- head.vars: ['item', 'itemLabel', 'itemDescription']\n- results.bindings: [ { item: { type: 'uri', value: '...' }, itemLabel: { type: 'literal', value: '...' } } ]\n\nIf this returns data, you're good to go."
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Sports — Teams & Seasons",
+      "item": [
+        {
+          "name": "1a - All NFL Teams",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?team ?teamLabel ?teamDescription ?stadiumLabel WHERE {\n  ?team wdt:P31 wd:Q17156793 .\n  ?team wdt:P118 wd:Q1215884 .\n  OPTIONAL { ?team wdt:P115 ?stadium . }\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}\nORDER BY ?teamLabel"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "All American football teams in the NFL.\n\nKey properties used:\n- P31 (instance of) = Q17156793 (American football team)\n- P118 (league) = Q1215884 (NFL)\n- P115 (home venue) — stadium\n\nTo get NBA teams: change Q17156793 to Q13393265 (basketball team) and Q1215884 to Q53232 (NBA).\nTo get MLB: Q476028 (baseball team) + Q132427 (MLB).\nTo get Premier League: Q476028 (association football club) + Q9448 (PL)."
+          }
+        },
+        {
+          "name": "1b - Kansas City Chiefs Seasons (by year)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?season ?seasonLabel ?seasonDescription WHERE {\n  ?season wdt:P5138 wd:Q223522 .\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}\nORDER BY DESC(?seasonLabel)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "Every Kansas City Chiefs season on record.\n\nProperty P5138 = 'sports season of league or competition' linked to the team.\n\nThis is the granularity Google NL can't provide — individual seasons for specific teams.\n\nReplace Q223522 with any team Q-number to get their seasons."
+          }
+        },
+        {
+          "name": "1c - All Major US Sports Leagues",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?league ?leagueLabel ?leagueDescription ?sportLabel ?countryLabel WHERE {\n  VALUES ?league { wd:Q1215884 wd:Q53232 wd:Q132427 wd:Q1147187 wd:Q854068 wd:Q43325 wd:Q324867 }\n  OPTIONAL { ?league wdt:P641 ?sport . }\n  OPTIONAL { ?league wdt:P17 ?country . }\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "Reference query for major US sports leagues.\n\nQ1215884 = NFL, Q53232 = NBA, Q132427 = MLB, Q1147187 = MLS, Q854068 = NHL, Q43325 = Premier League, Q324867 = La Liga.\n\nUse these IDs in other queries to get teams for any league."
+          }
+        },
+        {
+          "name": "1d - Class Hierarchy for a Team",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?class ?classLabel WHERE {\n  wd:Q223522 wdt:P31/wdt:P279* ?class .\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "Traverse the full class hierarchy for Kansas City Chiefs.\n\nPattern: P31 (instance of) then P279* (zero or more subclass of).\n\nThis shows: American football team → sports team → organization → group of humans → entity.\n\nThis is the Wikidata equivalent of a taxonomy path. Replace Q223522 with any entity."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Religion — Denominations & Traditions",
+      "item": [
+        {
+          "name": "2a - Search Denominations (Action API)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "url": {
+              "raw": "{{ACTION_API}}?action=wbsearchentities&search=Presbyterian&format=json&language=en&type=item&limit=10",
+              "host": ["{{ACTION_API}}"],
+              "query": [
+                { "key": "action", "value": "wbsearchentities" },
+                { "key": "search", "value": "Presbyterian" },
+                { "key": "format", "value": "json" },
+                { "key": "language", "value": "en" },
+                { "key": "type", "value": "item" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Search for denominations by name.\n\nTry: Presbyterian, Baptist, Methodist, Lutheran, Pentecostal, Orthodox, Catholic, Reformed, Anglican.\n\nNote the Q-numbers returned — use them in SPARQL queries to explore further."
+          }
+        },
+        {
+          "name": "2b - Major Christian Denomination Families",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?denom ?denomLabel ?denomDescription WHERE {\n  VALUES ?denom {\n    wd:Q178169   # Presbyterianism\n    wd:Q93191    # Baptists\n    wd:Q33203    # Methodism\n    wd:Q75809    # Lutheranism\n    wd:Q170208   # Pentecostalism\n    wd:Q9592     # Catholicism\n    wd:Q35032    # Eastern Orthodoxy\n    wd:Q23540    # Anglicanism\n    wd:Q101480   # Calvinism/Reformed\n    wd:Q170790   # Mormonism\n  }\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "Reference lookup of major Christian denomination families with their Q-numbers.\n\nUse these Q-numbers to drill deeper — e.g., find all specific Presbyterian denominations."
+          }
+        },
+        {
+          "name": "2c - All Presbyterian Denominations",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?denom ?denomLabel ?denomDescription ?countryLabel WHERE {\n  ?denom wdt:P140 wd:Q178169 .\n  OPTIONAL { ?denom wdt:P17 ?country . }\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}\nORDER BY ?denomLabel\nLIMIT 50"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "Find organizations with religion (P140) = Presbyterianism.\n\nShows specific Presbyterian bodies like Presbyterian Church (USA), Presbyterian Church in America, etc.\n\nChange Q178169 to Q93191 (Baptist), Q33203 (Methodist), etc. for other families."
+          }
+        },
+        {
+          "name": "2d - World Religions Top-Level",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?religion ?religionLabel ?religionDescription WHERE {\n  VALUES ?religion {\n    wd:Q5043     # Christianity\n    wd:Q432      # Islam\n    wd:Q9268     # Judaism\n    wd:Q748       # Buddhism\n    wd:Q9089     # Hinduism\n    wd:Q747980   # Sikhism\n    wd:Q35357    # Bahá'í Faith\n    wd:Q9585     # Jainism\n    wd:Q9316     # Shinto\n    wd:Q9326     # Taoism\n  }\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "Reference lookup of world religions with Q-numbers.\n\nUse these as starting points for exploring branches, denominations, and traditions within each religion."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Entertainment — Music, Film, Gaming",
+      "item": [
+        {
+          "name": "3a - Music Genres Hierarchy",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?genre ?genreLabel ?parentLabel WHERE {\n  ?genre wdt:P31 wd:Q188451 .\n  OPTIONAL { ?genre wdt:P279 ?parent . }\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}\nORDER BY ?genreLabel\nLIMIT 50"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "Music genres with parent genre relationships.\n\nP31 (instance of) Q188451 (music genre), P279 (subclass of) for hierarchy.\n\nShows: hip hop → popular music, jazz → music, etc."
+          }
+        },
+        {
+          "name": "3b - Video Game Genres",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?genre ?genreLabel ?genreDescription WHERE {\n  ?genre wdt:P31 wd:Q659563 .\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}\nORDER BY ?genreLabel\nLIMIT 50"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "All video game genres in Wikidata.\n\nQ659563 = video game genre.\n\nShows: first-person shooter, battle royale, RPG, MOBA, etc."
+          }
+        },
+        {
+          "name": "3c - Film Genres",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?genre ?genreLabel ?genreDescription WHERE {\n  ?genre wdt:P31 wd:Q201658 .\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}\nORDER BY ?genreLabel\nLIMIT 50"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "All film genres in Wikidata.\n\nQ201658 = film genre.\n\nShows: action, comedy, documentary, thriller, horror, etc."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Science & Technology",
+      "item": [
+        {
+          "name": "4a - Fields of Science",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?field ?fieldLabel ?parentLabel WHERE {\n  ?field wdt:P31 wd:Q11862829 .\n  OPTIONAL { ?field wdt:P279 ?parent . }\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}\nORDER BY ?fieldLabel\nLIMIT 50"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "Academic disciplines and fields of science.\n\nQ11862829 = academic discipline.\n\nShows: physics, biology, computer science, etc. with parent fields."
+          }
+        },
+        {
+          "name": "4b - Programming Languages",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?lang ?langLabel ?langDescription ?paradigmLabel WHERE {\n  ?lang wdt:P31 wd:Q9143 .\n  OPTIONAL { ?lang wdt:P3966 ?paradigm . }\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}\nORDER BY ?langLabel\nLIMIT 50"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "Programming languages with programming paradigm.\n\nQ9143 = programming language, P3966 = programming paradigm.\n\nShows: Go, Python, Rust, etc. with functional/OOP/etc. paradigm."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Hierarchy Traversal (Reusable Patterns)",
+      "item": [
+        {
+          "name": "5a - Walk UP: Entity → Root Classes",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?class ?classLabel WHERE {\n  wd:Q223522 wdt:P31/wdt:P279* ?class .\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "Walk UP the class hierarchy from any entity to root.\n\nPattern: entity → P31 (instance of) → P279* (subclass of, recursive)\n\nReplace Q223522 (Chiefs) with any entity ID.\n\nThis is the Wikidata equivalent of building a taxonomy breadcrumb path."
+          }
+        },
+        {
+          "name": "5b - Walk DOWN: Class → All Instances",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?item ?itemLabel ?itemDescription WHERE {\n  ?item wdt:P31/wdt:P279* wd:Q17156793 .\n  ?item wdt:P118 wd:Q1215884 .\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}\nORDER BY ?itemLabel\nLIMIT 50"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "Walk DOWN from a class to find all instances.\n\nPattern: ?item → P31/P279* (instance of / subclass chain) → target class\n\nThis finds all NFL teams by looking for anything that's an instance of 'American football team' (Q17156793) in league NFL (Q1215884).\n\nReplace the target class to explore any category."
+          }
+        },
+        {
+          "name": "5c - Direct Subclasses Only (one level)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?subclass ?subclassLabel ?subclassDescription WHERE {\n  ?subclass wdt:P279 wd:Q349 .\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}\nORDER BY ?subclassLabel\nLIMIT 50"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "Get direct subclasses of a class (one level down only).\n\nQ349 = sport. Shows: team sport, water sport, combat sport, etc.\n\nPattern: ?subclass P279 (subclass of) → target. No * = direct only.\n\nGreat for building taxonomy trees level by level."
+          }
+        },
+        {
+          "name": "5d - Entity Relationships (properties of an item)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?prop ?propLabel ?value ?valueLabel WHERE {\n  wd:Q223522 ?p ?value .\n  ?prop wikibase:directClaim ?p .\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}\nLIMIT 50"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "See ALL properties and values for any entity.\n\nReplace Q223522 with any entity ID.\n\nShows: instance of, league, home venue, country, sport, head coach, etc.\n\nUseful for discovering which properties are available for a type of entity."
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. YouTube-Specific",
+      "item": [
+        {
+          "name": "6a - YouTube as an Entity",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?prop ?propLabel ?value ?valueLabel WHERE {\n  wd:Q866 ?p ?value .\n  ?prop wikibase:directClaim ?p .\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}\nLIMIT 50"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "Properties of YouTube itself (Q866) in Wikidata.\n\nSee what Wikidata knows about YouTube — owner, launch date, programming language, etc."
+          }
+        },
+        {
+          "name": "6b - YouTubers / YouTube Channels",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/sparql-results+json" },
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "User-Agent", "value": "Perspectize/1.0 (taxonomy-research)" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT ?channel ?channelLabel ?channelDescription ?subscriberCount WHERE {\n  ?channel wdt:P31 wd:Q36834616 .\n  OPTIONAL { ?channel wdt:P8814 ?subscriberCount . }\n  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\" . }\n}\nORDER BY DESC(?subscriberCount)\nLIMIT 30"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SPARQL_ENDPOINT}}",
+              "host": ["{{SPARQL_ENDPOINT}}"]
+            },
+            "description": "YouTube channels tracked in Wikidata, sorted by subscriber count.\n\nQ36834616 = YouTube channel, P8814 = number of subscribers.\n\nNot comprehensive but shows that Wikidata tracks YouTube-specific entities."
+          }
+        }
+      ]
+    }
+  ]
+}

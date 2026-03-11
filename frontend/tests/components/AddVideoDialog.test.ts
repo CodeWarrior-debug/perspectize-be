@@ -31,7 +31,7 @@ vi.mock('svelte-sonner', () => ({
 	toast: { success: mocks.mockToastSuccess, error: mocks.mockToastError },
 }));
 
-vi.mock('$lib/queries/client', () => ({ graphqlClient: { request: vi.fn() } }));
+vi.mock('$lib/queries/client', () => ({ graphqlRequest: vi.fn() }));
 vi.mock('$lib/utils/youtube', () => ({ validateYouTubeUrl: (url: string) => mocks.mockValidate(url) }));
 vi.mock('$lib/stores/userSelection.svelte', () => ({ getSelectedUserId: () => mocks.mockGetSelectedUserId() }));
 
@@ -80,11 +80,11 @@ describe('AddVideoDialog mutation setup', () => {
 		expect(mocks.capturedMutationOptions.onError).toBeDefined();
 	});
 
-	it('mutationFn calls graphqlClient.request with correct args', async () => {
-		const { graphqlClient } = await import('$lib/queries/client');
-		(graphqlClient.request as any).mockResolvedValue({ createContentFromYouTube: { content: { name: 'Test' }, alreadyExisted: false } });
+	it('mutationFn calls graphqlRequest with correct args', async () => {
+		const { graphqlRequest } = await import('$lib/queries/client');
+		(graphqlRequest as any).mockResolvedValue({ createContentFromYouTube: { content: { name: 'Test' }, alreadyExisted: false } });
 		await mocks.capturedMutationOptions.mutationFn('https://youtube.com/watch?v=abc123');
-		expect(graphqlClient.request).toHaveBeenCalledWith(expect.anything(), {
+		expect(graphqlRequest).toHaveBeenCalledWith(expect.anything(), {
 			input: { url: 'https://youtube.com/watch?v=abc123', userId: 1 },
 		});
 	});

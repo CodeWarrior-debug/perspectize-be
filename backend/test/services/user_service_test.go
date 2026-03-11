@@ -39,6 +39,10 @@ func (m *mockUserRepository) GetByID(ctx context.Context, id int) (*domain.User,
 	return nil, domain.ErrNotFound
 }
 
+func (m *mockUserRepository) GetByClerkID(ctx context.Context, clerkID string) (*domain.User, error) {
+	return nil, domain.ErrNotFound
+}
+
 func (m *mockUserRepository) GetByUsername(ctx context.Context, username string) (*domain.User, error) {
 	if m.getByUsernameFn != nil {
 		return m.getByUsernameFn(ctx, username)
@@ -72,6 +76,18 @@ func (m *mockUserRepository) Delete(ctx context.Context, id int) error {
 		return m.deleteFn(ctx, id)
 	}
 	return nil
+}
+
+func (m *mockUserRepository) CreateFromClerk(ctx context.Context, clerkID string, username string, email string) (*domain.User, error) {
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockUserRepository) UpdateByClerkID(ctx context.Context, clerkID string, username string, email string) error {
+	return domain.ErrNotFound
+}
+
+func (m *mockUserRepository) DeactivateByClerkID(ctx context.Context, clerkID string) error {
+	return domain.ErrNotFound
 }
 
 // mockContentRepoForUser implements repositories.ContentRepository for user tests

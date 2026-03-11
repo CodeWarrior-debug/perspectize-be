@@ -60,6 +60,23 @@ func (s *PerspectiveService) Create(ctx context.Context, input portservices.Crea
 		}
 	}
 
+	// Validate at least one field is non-empty
+	hasContent := input.Quality != nil ||
+		input.Agreement != nil ||
+		input.Importance != nil ||
+		input.Confidence != nil ||
+		input.Like != nil ||
+		input.Review != nil ||
+		input.Description != nil
+	if !hasContent {
+		return nil, fmt.Errorf("%w: at least one field must be provided", domain.ErrInvalidInput)
+	}
+
+	// Validate related perspective IDs array cap
+	if len(input.RelatedPerspectiveIDs) > 50 {
+		return nil, fmt.Errorf("%w: related_perspective_ids cannot exceed 50 entries", domain.ErrInvalidInput)
+	}
+
 	// Set default privacy
 	privacy := domain.PrivacyPublic
 	if input.Privacy != nil {
@@ -67,19 +84,23 @@ func (s *PerspectiveService) Create(ctx context.Context, input portservices.Crea
 	}
 
 	perspective := &domain.Perspective{
-		UserID:             input.UserID,
-		ContentID:          input.ContentID,
-		Quality:            input.Quality,
-		Agreement:          input.Agreement,
-		Importance:         input.Importance,
-		Confidence:         input.Confidence,
-		Like:               input.Like,
-		Privacy:            privacy,
-		Description:        input.Description,
-		Category:           input.Category,
-		Parts:              input.Parts,
-		Labels:             input.Labels,
-		CategorizedRatings: input.CategorizedRatings,
+		UserID:                input.UserID,
+		ContentID:             input.ContentID,
+		Quality:               input.Quality,
+		Agreement:             input.Agreement,
+		Importance:            input.Importance,
+		Confidence:            input.Confidence,
+		Like:                  input.Like,
+		Privacy:               privacy,
+		Description:           input.Description,
+		Category:              input.Category,
+		Parts:                 input.Parts,
+		Labels:                input.Labels,
+		CategorizedRatings:    input.CategorizedRatings,
+		PrimaryPerspectiveID:  input.PrimaryPerspectiveID,
+		RelatedPerspectiveIDs: input.RelatedPerspectiveIDs,
+		CustomFields:          input.CustomFields,
+		Review:                input.Review,
 	}
 
 	created, err := s.repo.Create(ctx, perspective)
@@ -176,6 +197,21 @@ func (s *PerspectiveService) Update(ctx context.Context, input portservices.Upda
 	}
 	if input.Labels != nil {
 		existing.Labels = input.Labels
+	}
+	if input.PrimaryPerspectiveID != nil {
+		existing.PrimaryPerspectiveID = input.PrimaryPerspectiveID
+	}
+	if input.RelatedPerspectiveIDs != nil {
+		if len(input.RelatedPerspectiveIDs) > 50 {
+			return nil, fmt.Errorf("%w: related_perspective_ids cannot exceed 50 entries", domain.ErrInvalidInput)
+		}
+		existing.RelatedPerspectiveIDs = input.RelatedPerspectiveIDs
+	}
+	if input.CustomFields != nil {
+		existing.CustomFields = input.CustomFields
+	}
+	if input.Review != nil {
+		existing.Review = input.Review
 	}
 
 	updated, err := s.repo.Update(ctx, existing)

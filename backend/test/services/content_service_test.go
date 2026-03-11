@@ -321,7 +321,7 @@ func TestCreateFromYouTube_YouTubeAPIError(t *testing.T) {
 
 	assert.Nil(t, result)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to fetch YouTube metadata")
+	assert.Contains(t, err.Error(), "failed to fetch video metadata")
 }
 
 func TestCreateFromYouTube_RepositoryCreateError(t *testing.T) {

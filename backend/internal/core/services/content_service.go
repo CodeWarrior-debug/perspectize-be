@@ -2,8 +2,10 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/youtube"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
@@ -50,7 +52,14 @@ func (s *ContentService) CreateFromYouTube(ctx context.Context, url string, user
 	// 4. Fetch metadata from YouTube API (only for new videos)
 	metadata, err := s.youtubeClient.GetVideoMetadata(ctx, videoID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch YouTube metadata: %w", err)
+		// Log with context, but don't expose YouTube API details to GraphQL clients
+		slog.Error("failed to fetch YouTube metadata",
+			"videoID", videoID,
+			"userID", userID,
+			"error", err) // err is already sanitized by youtube client
+
+		// Generic error for GraphQL response
+		return nil, fmt.Errorf("failed to fetch video metadata")
 	}
 
 	// 5. Build content with canonical URL
@@ -90,6 +99,54 @@ func (s *ContentService) GetByID(ctx context.Context, id int) (*domain.Content, 
 		return nil, fmt.Errorf("failed to get content: %w", err)
 	}
 	return content, nil
+}
+
+// CreateClaim creates a new claim content entry associated with a parent content item.
+// The claim text is stored raw (preserving @this/@here tokens for display-time resolution).
+// The parent content ID and raw text are stored in the response JSONB column.
+func (s *ContentService) CreateClaim(ctx context.Context, input portservices.CreateClaimInput) (*domain.Content, error) {
+	if input.Text == "" {
+		return nil, fmt.Errorf("%w: claim text cannot be empty", domain.ErrInvalidInput)
+	}
+	if input.UserID <= 0 {
+		return nil, fmt.Errorf("%w: user id must be a positive integer", domain.ErrInvalidInput)
+	}
+	if input.ParentContentID <= 0 {
+		return nil, fmt.Errorf("%w: parent content id must be a positive integer", domain.ErrInvalidInput)
+	}
+
+	// Validate parent content exists
+	_, err := s.repo.GetByID(ctx, input.ParentContentID)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("%w: parent content not found", domain.ErrNotFound)
+		}
+		return nil, fmt.Errorf("failed to validate parent content: %w", err)
+	}
+
+	// Build response JSONB: stores parentContentId and raw text for reference resolution
+	responsePayload := map[string]interface{}{
+		"parentContentId": input.ParentContentID,
+		"text":            input.Text,
+	}
+	responseJSON, err := json.Marshal(responsePayload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal claim response: %w", err)
+	}
+
+	content := &domain.Content{
+		Name:          input.Text,
+		ContentType:   domain.ContentTypeClaim,
+		AddedByUserID: input.UserID,
+		Response:      responseJSON,
+	}
+
+	created, err := s.repo.Create(ctx, content)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save claim: %w", err)
+	}
+
+	return created, nil
 }
 
 // ListContent retrieves a paginated list of content

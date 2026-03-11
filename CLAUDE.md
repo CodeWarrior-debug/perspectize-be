@@ -18,6 +18,8 @@ Monorepo with two stacks:
 
 ⚠️ **DO NOT use MCP qmd tools** — use Bash commands only. MCP is not available in all contexts.
 
+⚠️ **Cloud sessions (claude.ai/code web):** qmd is NOT available. Skip qmd entirely and use Read/Glob/Grep directly.
+
 **Allowed commands (pre-approved):**
 - `qmd search *` — keyword search
 - `qmd vsearch *` — semantic search
@@ -56,6 +58,8 @@ qmd ls perspectize
 **Update index after major changes:** `qmd update && qmd embed`
 
 ## GitHub & Repository Management
+
+**Git branch gotcha:** Local default branch is `master`, remote is `main`. Use `origin/main` (not `main`) for diff/log comparisons: `git diff origin/main...HEAD`.
 
 **Always use `gh` CLI** for GitHub operations. Do not use MCP plugins.
 
@@ -139,6 +143,10 @@ Include: GSD Plan Reference (`.planning/phases/{phase}/{plan}-PLAN.md`), accepta
 defer db.Close()
 ```
 
+**No chained bash commands:** Do not use `&&` to chain shell commands. Run each command as a separate Bash tool call. Chained commands don't match permission allow-list patterns and block on approval prompts. This applies to all agents and subagents.
+
+**Migration numbering:** Always check existing migration files before creating new ones. Plan-specified numbers may be stale — use `ls backend/migrations/ | tail -5` to find the next available number.
+
 **Commit messages:** Conventional commit format (`feat`, `fix`, `refactor`, `chore`, `docs`, `test`). One logical change per commit. GSD planning work (PLAN.md, CONTEXT.md, RESEARCH.md, ROADMAP.md) uses the `docs` tag — e.g., `docs(11,13): create execution plans`.
 
 ## GSD Workflow
@@ -161,6 +169,8 @@ Planning and execution artifacts in `.planning/`: `PROJECT.md`, `ROADMAP.md`, `S
 
 Run the relevant subset (e.g., backend-only changes skip step 3). Report results explicitly — don't just say "tests pass", show the output summary.
 
+**GSD verification is not self-verification.** The GSD verifier checks must_haves against codebase structure. It does NOT run builds or tests. Always run the full checklist (build, backend tests, frontend tests) before creating a PR, even after GSD verification passes.
+
 See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow.
 
 ## Resources
@@ -171,6 +181,7 @@ See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow
 - [Agent Routing](.docs/AGENTS.md) — AI agent navigation guide
 - [Domain Guide](.docs/DOMAIN_GUIDE.md) — Domain layer rules and patterns
 - [Go Patterns](.docs/GO_PATTERNS.md) — Error handling and DB query patterns
+- [Security](.docs/SECURITY.md) — Secret management, rotation procedures, incident response
 
 **Frontend docs:**
 - [Frontend CLAUDE.md](frontend/CLAUDE.md) — SvelteKit, Svelte 5, TanStack Query patterns
@@ -180,6 +191,7 @@ See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow
 **How-to guides:**
 - [Adding an AG Grid Column](.claude/docs/ADDING_AG_GRID_COLUMN.md) — Decision checklist for adding columns to the ActivityTable
 - [Adding a Content Type](.claude/docs/ADDING_CONTENT_TYPE.md) — End-to-end guide for new content types (backend + frontend)
+- [Code to Figma Canvas](.claude/docs/CODE_TO_FIGMA_CANVAS.md) — Capture running app into Figma to keep designs in sync
 
 **Planning & backlog:**
 - [Feature Backlog](FEATURE_BACKLOG.md) — Future ideas and enhancements not tied to any milestone. Capture ideas here during development; evaluate when planning new work.
@@ -188,6 +200,7 @@ See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow
 **Bug logging (MANDATORY):** When you discover a bug during development, review, or testing, log it in `.planning/phases/bugs/BACKLOG.md` with severity and location. Also create a GitHub issue using the bug report template — keep sensitive details (exact paths, line numbers, security specifics) in the backlog only. When a bug is fixed, move it to `.planning/phases/bugs/CLOSED.md` with the PR reference. These files are gitignored — never commit them.
 
 **Hookify rules (check `.claude/hookify.*.local.md` for all rules):**
+- **qmd first:** Glob/Grep/Read triggers a warning to use `qmd search`/`qmd get` first. Only fall back to Glob/Grep/Read if qmd doesn't return what you need.
 - **Pre-PR:** `gh pr create` is blocked until `claude-md-management:revise-claude-md` has been run. The block can't detect completion, so use `gh api` to create the PR after running the skill. Example: `gh api repos/CodeWarrior-debug/perspectize/pulls -f title="..." -f body="..." -f head="branch" -f base="main"`
 - **Pre-commit tests:** `git commit` triggers a warning to verify test coverage for new/modified frontend `src/` files. Config, styles, docs, and test files are exempt.
 - **Pre-commit prettier:** `git commit` triggers a warning to run `pnpm exec prettier --write` on staged frontend files.

@@ -2,43 +2,52 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 )
 
 // CreatePerspectiveInput contains the data needed to create a perspective
 type CreatePerspectiveInput struct {
-	UserID             int
-	ContentID          *int
-	Quality            *int
-	Agreement          *int
-	Importance         *int
-	Confidence         *int
-	Like               *string
-	Privacy            *domain.Privacy
-	Description        *string
-	Category           *string
-	Parts              []int
-	Labels             []string
-	CategorizedRatings []domain.CategorizedRating
+	UserID                int
+	ContentID             *int
+	Quality               *int
+	Agreement             *int
+	Importance            *int
+	Confidence            *int
+	Like                  *string
+	Privacy               *domain.Privacy
+	Description           *string
+	Category              *string
+	Parts                 []int
+	Labels                []string
+	CategorizedRatings    []domain.CategorizedRating
+	PrimaryPerspectiveID  *int
+	RelatedPerspectiveIDs []int
+	CustomFields          json.RawMessage
+	Review                *string
 }
 
 // UpdatePerspectiveInput contains the data needed to update a perspective
 type UpdatePerspectiveInput struct {
-	ID                 int
-	ContentID          *int
-	Quality            *int
-	Agreement          *int
-	Importance         *int
-	Confidence         *int
-	Like               *string
-	Privacy            *domain.Privacy
-	Description        *string
-	Category           *string
-	ReviewStatus       *domain.ReviewStatus
-	Parts              []int
-	Labels             []string
-	CategorizedRatings []domain.CategorizedRating
+	ID                    int
+	ContentID             *int
+	Quality               *int
+	Agreement             *int
+	Importance            *int
+	Confidence            *int
+	Like                  *string
+	Privacy               *domain.Privacy
+	Description           *string
+	Category              *string
+	ReviewStatus          *domain.ReviewStatus
+	Parts                 []int
+	Labels                []string
+	CategorizedRatings    []domain.CategorizedRating
+	PrimaryPerspectiveID  *int
+	RelatedPerspectiveIDs []int
+	CustomFields          json.RawMessage
+	Review                *string
 }
 
 // PerspectiveService defines the contract for perspective business logic

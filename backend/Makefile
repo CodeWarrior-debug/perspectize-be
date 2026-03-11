@@ -81,10 +81,10 @@ fmt:
 lint:
 	golangci-lint run ./...
 
-# Install git hooks
+# Install git hooks (shared hooks in repo root .hooks/)
 install-hooks:
-	git config core.hooksPath .githooks
-	@echo "Git hooks installed (.githooks/pre-commit)"
+	git config core.hooksPath .hooks
+	@echo "Git hooks installed (.hooks/pre-commit)"
 
 # Test duplication detection (requires jscpd: npm install -g jscpd)
 test-duplication:
