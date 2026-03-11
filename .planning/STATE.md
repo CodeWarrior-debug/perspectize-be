@@ -238,6 +238,7 @@ Plans that only modify infrastructure (CI/CD, config) must still verify they don
 - **Configure CORS origins for production:** Set `CORS_ORIGINS` in Sevalla to frontend domain (currently defaults to `*`)
 - **Set up Clerk webhook endpoint:** Configure webhook in Clerk dashboard and set `CLERK_WEBHOOK_SIGNING_SECRET` in Sevalla for user sync
 - **Set up custom domain and Clerk production instance:** Buy domain, point to Sevalla, add Clerk CNAME records, switch to production keys
+- **Remove UserSelector and use authenticated Clerk user:** Pre-auth dropdown artifact; use Clerk auth user for perspectives/videos instead
 
 ### Known Bugs
 
