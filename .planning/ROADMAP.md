@@ -239,10 +239,11 @@ Plans:
   5. Field resolvers call dataloaders (not direct DB queries) — batching verified via slow query log
   6. Nested fields return populated data (not nil) when requested in GraphQL queries
   7. All existing backend tests pass
-**Plans:** 0 plans
+**Plans:** 2 plans in 2 waves
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 04.1 to break down)
+- [ ] 04.1-01-PLAN.md — Batch repository methods (GetByIDs) + dataloadgen loaders package with per-request middleware
+- [ ] 04.1-02-PLAN.md — gqlgen field resolvers + main.go wiring + N+1 prevention integration tests
 
 **Details:**
 Analysis found zero dataloader infrastructure: no batch libraries in go.mod, no `GetByIDs()` methods, no custom field resolvers. The 3 generated field resolvers (`_Perspective_user`, `_Perspective_content`, `_Content_addedBy`) return `obj.Field` which is always nil because `helpers.go` converters never populate nested pointers. Architecture: dataloaders live in `internal/adapters/graphql/dataloaders/` (adapter layer), call service/repository batch methods, never leak into domain. Related to Phase 8.1 M-08 (missing nested field resolvers).
@@ -649,6 +650,16 @@ Plans:
 - [ ] 18-02-PLAN.md — URL state management & grid state utilities (gridUrlState.ts with parse/serialize, filter model ↔ URL converters, unit tests)
 - [ ] 18-03-PLAN.md — Data mode toggle UI & grid integration (DataModeToggle component, URL-driven ActivityTable refactor, page search wiring)
 
+### Phase 19: Content Familiarity Tracking
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 18
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 19 to break down)
+
 ---
 
 ## v1.1 Feature Phases (11-16)
@@ -705,7 +716,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 
 | 3.4 Perspectize Branding & Glasses Identity | 0/4 | Not started | - |
 | 3.5 Google NL Taxonomy Research Spike | 0/2 | Not started | - |
 | 4. Add Perspective Flow | 0/3 | Not started | - |
-| 4.1 GraphQL Dataloaders for N+1 Prevention | 0/0 | Not started | - |
+| 4.1 GraphQL Dataloaders for N+1 Prevention | 0/2 | Planned | - |
 | 5. Testing + Deployment | 2/3 | Complete | 2026-02-15 |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
 | 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |

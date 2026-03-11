@@ -253,6 +253,7 @@
 		headerColumnResizeHandleColor: 'rgba(255, 255, 255, 0.5)',
 		rowHeight: 44,
 		headerHeight: 40,
+		listItemHeight: 24,
 	});
 
 	// flex = clamp-like: proportional sizing with min/max constraints
@@ -586,6 +587,14 @@
 		};
 	});
 
+	// Null out gridApi on destroy to prevent $effect callbacks hitting a destroyed grid
+	$effect(() => {
+		return () => {
+			gridApi = null;
+			gridReady = false;
+		};
+	});
+
 	// Update AG Grid context reactively so perspectiveCellRenderer can access the map
 	$effect(() => {
 		if (gridApi) {
@@ -604,6 +613,7 @@
 		const api = gridApi;
 		const tier = responsiveTier;
 		requestAnimationFrame(() => {
+			if (!gridApi) return; // Grid may have been destroyed before rAF fires
 			const alwaysVisible = ['item', 'type', 'perspectize'];
 			const smCols = ['channel'];
 			const mdCols = ['duration', 'publishDate'];
@@ -631,6 +641,7 @@
 		if (!gridContainer || !gridApi || !gridReady) return;
 		const api = gridApi;
 		const observer = new ResizeObserver(() => {
+			if (!gridApi) return; // Grid may have been destroyed before observer fires
 			api.sizeColumnsToFit();
 		});
 		observer.observe(gridContainer);

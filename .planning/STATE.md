@@ -222,6 +222,7 @@ Recent decisions affecting current work:
 - Phase 18 added: Server-Side Pagination & Filtering with Data Mode Toggle — Add data mode toggle to ActivityTable switching between "All Items" (server-side sort/filter/search across full dataset) and "Loaded Items" (client-side sort/filter/search on currently loaded page). Expand backend filtering and sorting capabilities.
 - Phase 4.1 inserted after Phase 4: GraphQL Dataloaders for N+1 Query Prevention (URGENT) — Implement dataloadgen-based batching for 3 N+1-vulnerable nested relationships (Perspective→User, Perspective→Content, Content→User). Add batch repository methods (GetByIDs), field resolvers, per-request middleware. Related to Phase 8.1 M-08.
 - Phase 18.1 inserted after Phase 18: Mobile Activity Page Redesign (URGENT) — Redesign mobile activity page with 3-column layout (Item, Summary info-grid, Perspective glasses icon). Rethink mobile data display away from hidden AG Grid columns toward summary-based approach.
+- Phase 19 added: Content Familiarity Tracking — Backend system for users to record familiarity level (1-16 scale) with content and set target levels. Migrations, models, repository, service, and API endpoints. Open design questions on level count, table structure, and API style to resolve during planning.
 
 ### Project-Level Plan Requirements
 
@@ -234,6 +235,10 @@ Plans that only modify infrastructure (CI/CD, config) must still verify they don
 ### Pending Todos
 
 - **Remove AddVideoDialog (low priority):** After manual verification of AddVideoPopover passes, delete AddVideoDialog.svelte and AddVideoDialog.test.ts (kept temporarily for coverage threshold)
+- **Configure CORS origins for production:** Set `CORS_ORIGINS` in Sevalla to frontend domain (currently defaults to `*`)
+- **Set up Clerk webhook endpoint:** Configure webhook in Clerk dashboard and set `CLERK_WEBHOOK_SIGNING_SECRET` in Sevalla for user sync
+- **Set up custom domain and Clerk production instance:** Buy domain, point to Sevalla, add Clerk CNAME records, switch to production keys
+- **Remove UserSelector and use authenticated Clerk user:** Pre-auth dropdown artifact; use Clerk auth user for perspectives/videos instead
 
 ### Known Bugs
 

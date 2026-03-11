@@ -61,12 +61,12 @@ func TestLoad_RealConfigWithEnvOverrides(t *testing.T) {
 	assert.Equal(t, "yt_key_456", cfg.YouTube.APIKey, "YOUTUBE_API_KEY env var should override config")
 }
 
-// TestLoad_InvalidPath tests error handling for missing file
-func TestLoad_InvalidPath(t *testing.T) {
+// TestLoad_MissingFile returns defaults when config file is missing (production uses env vars)
+func TestLoad_MissingFile(t *testing.T) {
 	cfg, err := config.Load("/nonexistent/path/config.json")
-	assert.Error(t, err)
-	assert.Nil(t, cfg)
-	assert.Contains(t, err.Error(), "failed to open config file")
+	assert.NoError(t, err)
+	assert.NotNil(t, cfg)
+	assert.Equal(t, 8080, cfg.Server.Port)
 }
 
 // TestLoad_InvalidJSON tests error handling for malformed JSON

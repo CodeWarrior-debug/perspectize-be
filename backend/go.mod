@@ -1,9 +1,12 @@
 module github.com/CodeWarrior-debug/perspectize/backend
 
-go 1.24.0
+go 1.25
+
+toolchain go1.26.0
 
 require (
-	github.com/99designs/gqlgen v0.17.86
+	github.com/99designs/gqlgen v0.17.88
+	github.com/clerk/clerk-sdk-go/v2 v2.5.1
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-chi/cors v1.2.2
 	github.com/go-chi/httprate v0.15.0
@@ -12,6 +15,8 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/pilagod/gorm-cursor-paginator/v2 v2.7.0
 	github.com/stretchr/testify v1.11.1
+	github.com/svix/svix-webhooks v1.86.0
+	github.com/unrolled/secure v1.17.0
 	github.com/vektah/gqlparser/v2 v2.5.32
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.1
@@ -23,7 +28,6 @@ require (
 	github.com/air-verse/air v1.61.7 // indirect
 	github.com/bep/godartsass/v2 v2.5.0 // indirect
 	github.com/bep/golibsass v1.2.0 // indirect
-	github.com/clerk/clerk-sdk-go/v2 v2.5.1 // indirect
 	github.com/creack/pty v1.1.23 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.18.0 // indirect
@@ -47,13 +51,11 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/sosodev/duration v1.3.1 // indirect
+	github.com/sosodev/duration v1.4.0 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
 	github.com/spf13/cast v1.9.2 // indirect
-	github.com/svix/svix-webhooks v1.86.0 // indirect
 	github.com/tdewolff/parse/v2 v2.8.3 // indirect
-	github.com/unrolled/secure v1.17.0 // indirect
-	github.com/urfave/cli/v3 v3.6.2 // indirect
+	github.com/urfave/cli/v3 v3.7.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	golang.org/x/crypto v0.43.0 // indirect
 	golang.org/x/mod v0.33.0 // indirect
