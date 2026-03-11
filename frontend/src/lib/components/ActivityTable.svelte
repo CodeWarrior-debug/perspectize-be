@@ -151,6 +151,7 @@
 		headerColumnResizeHandleColor: 'rgba(255, 255, 255, 0.5)',
 		rowHeight: 44,
 		headerHeight: 40,
+		listItemHeight: 24,
 	});
 
 	// flex = clamp-like: proportional sizing with min/max constraints
