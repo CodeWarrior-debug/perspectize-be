@@ -125,8 +125,18 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, err
 
 // CreatePerspective is the resolver for the createPerspective field.
 func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.CreatePerspectiveInput) (*model.Perspective, error) {
+	// Use authenticated user when userID is not provided or zero
+	userID := input.UserID
+	if userID == 0 {
+		authUser, err := auth.RequireAuth(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("access denied: authentication required")
+		}
+		userID = authUser.ID
+	}
+
 	serviceInput := portservices.CreatePerspectiveInput{
-		UserID:                input.UserID,
+		UserID:                userID,
 		Quality:               input.Quality,
 		Agreement:             input.Agreement,
 		Importance:            input.Importance,
