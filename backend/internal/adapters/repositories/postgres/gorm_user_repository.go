@@ -118,8 +118,9 @@ func (r *GormUserRepository) Update(ctx context.Context, user *domain.User) (*do
 	model.ID = user.ID
 
 	result := r.db.WithContext(ctx).Model(model).Updates(map[string]interface{}{
-		"username": model.Username,
-		"email":    model.Email,
+		"username":      model.Username,
+		"email":         model.Email,
+		"clerk_user_id": model.ClerkUserID,
 	})
 	if result.Error != nil {
 		return nil, result.Error

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 	repositories "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/repositories"
@@ -74,18 +75,51 @@ func Middleware(userRepo repositories.UserRepository) func(http.Handler) http.Ha
 
 						localUser, createErr := userRepo.CreateFromClerk(r.Context(), clerkUserID, username, email)
 						if createErr != nil {
-							slog.Error("failed to create user on-demand",
+							// Duplicate email: pre-existing user has this email but no clerk_user_id.
+							// Link the Clerk identity to the existing user.
+							if strings.Contains(createErr.Error(), "unique_email") || strings.Contains(createErr.Error(), "23505") {
+								existing, linkErr := userRepo.GetByEmail(r.Context(), email)
+								if linkErr == nil {
+									existing.ClerkUserID = clerkUserID
+									linked, updErr := userRepo.Update(r.Context(), existing)
+									if updErr == nil {
+										slog.Info("linked clerk ID to existing user by email",
+											"clerk_user_id", clerkUserID,
+											"local_user_id", existing.ID,
+										)
+										user = linked
+									} else {
+										slog.Error("failed to link clerk ID to existing user",
+											"clerk_user_id", clerkUserID,
+											"error", updErr,
+										)
+										next.ServeHTTP(w, r)
+										return
+									}
+								} else {
+									slog.Error("failed to find existing user by email for linking",
+										"clerk_user_id", clerkUserID,
+										"email", email,
+										"error", linkErr,
+									)
+									next.ServeHTTP(w, r)
+									return
+								}
+							} else {
+								slog.Error("failed to create user on-demand",
+									"clerk_user_id", clerkUserID,
+									"error", createErr,
+								)
+								next.ServeHTTP(w, r)
+								return
+							}
+						} else {
+							slog.Info("on-demand user creation",
 								"clerk_user_id", clerkUserID,
-								"error", createErr,
+								"local_user_id", localUser.ID,
 							)
-							next.ServeHTTP(w, r)
-							return
+							user = localUser
 						}
-						slog.Info("on-demand user creation",
-							"clerk_user_id", clerkUserID,
-							"local_user_id", localUser.ID,
-						)
-						user = localUser
 					} else {
 						slog.Error("failed to lookup user by clerk ID",
 							"clerk_user_id", clerkUserID,
