@@ -15,7 +15,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/pilagod/gorm-cursor-paginator/v2 v2.7.0
 	github.com/stretchr/testify v1.11.1
-	github.com/svix/svix-webhooks v1.86.0
+	github.com/svix/svix-webhooks v1.88.0
 	github.com/unrolled/secure v1.17.0
 	github.com/vektah/gqlparser/v2 v2.5.32
 	gorm.io/driver/postgres v1.6.0
