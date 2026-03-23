@@ -1,6 +1,6 @@
 module github.com/CodeWarrior-debug/perspectize/backend
 
-go 1.25
+go 1.25.0
 
 toolchain go1.26.0
 
@@ -11,11 +11,11 @@ require (
 	github.com/go-chi/cors v1.2.2
 	github.com/go-chi/httprate v0.15.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/jackc/pgx/v5 v5.8.0
+	github.com/jackc/pgx/v5 v5.9.1
 	github.com/joho/godotenv v1.5.1
 	github.com/pilagod/gorm-cursor-paginator/v2 v2.7.0
 	github.com/stretchr/testify v1.11.1
-	github.com/svix/svix-webhooks v1.86.0
+	github.com/svix/svix-webhooks v1.89.0
 	github.com/unrolled/secure v1.17.0
 	github.com/vektah/gqlparser/v2 v2.5.32
 	gorm.io/driver/postgres v1.6.0
