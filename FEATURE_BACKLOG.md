@@ -380,3 +380,86 @@ The Perspectize column in the ActivityTable currently shows a glasses icon for a
 **Priority:** Medium — improves discoverability of un-perspectized content.
 
 **Source:** User feedback (2026-02-27)
+
+---
+
+## AG Grid Sort Cycle: Unsorted → Descending → Ascending
+
+The default AG Grid sort cycle is ascending → descending → unsorted. Preferred behavior is **unsorted → descending → ascending → unsorted** — so the first click shows highest values first (most views, newest date, etc.), which is the more common use case.
+
+**Implementation:**
+- Set `sortingOrder: ['desc', 'asc', null]` on the grid's `defaultColDef` or per-column
+- This changes the click cycle to: unsorted → desc → asc → unsorted
+
+**Priority:** Low — UX polish.
+
+**Source:** User preference (2026-03-23)
+
+---
+
+## Server-Side Pagination Sort Inconsistencies
+
+When server-side pagination is active, AG Grid sort events don't consistently trigger server re-fetches. Clicking a column header to sort sometimes only reorders the current page of rows instead of sending the sort parameters to the backend for a full dataset sort.
+
+**Observed issues:**
+- Sort change events not firing on every column header click
+- Inconsistent behavior between first sort click and subsequent clicks
+- May be related to event handler debouncing or AG Grid's `onSortChanged` not always propagating in server-side mode
+
+**What to investigate:**
+- Verify `onSortChanged` fires reliably — add debug logging
+- Check if AG Grid's `sortModel` is being read and sent to the GraphQL query on every change
+- Ensure TanStack Query's `queryKey` includes sort parameters so cache invalidation triggers re-fetch
+- Consider using `onGridReady` + `onSortChanged` with a stable callback ref to prevent stale closures
+
+**Priority:** Medium — data correctness issue when using server-side pagination with sorting.
+
+**Source:** User report (2026-03-23)
+
+---
+
+## Grafana Cloud OpenTelemetry Integration
+
+Connect the backend's OTel tracing (merged in PR #175) to Grafana Cloud for production trace visualization and log correlation.
+
+### Setup Steps
+
+1. **Sign up** at [grafana.com/products/cloud](https://grafana.com/products/cloud/) (free tier: 50GB traces/month)
+
+2. **Get OTLP credentials** — In Grafana Cloud, go to **Connections → Add new connection → OpenTelemetry (OTLP)**. It provides:
+   - An OTLP endpoint URL
+   - An instance ID and API token
+
+3. **Add 3 env vars to Sevalla:**
+   ```
+   OTEL_EXPORTER_OTLP_ENDPOINT=https://otlp-gateway-prod-us-east-0.grafana.net/otlp
+   OTEL_EXPORTER_OTLP_HEADERS=Authorization=Basic <base64(instanceId:token)>
+   OTEL_SERVICE_NAME=perspectize-backend
+   ```
+
+   To generate the base64 value:
+   ```bash
+   echo -n "instanceId:yourApiToken" | base64
+   ```
+
+4. **Deploy** — The backend already reads these env vars automatically (the OTLP HTTP exporter picks them up). No code changes needed.
+
+### What you'll see
+
+- **Grafana Explore → Tempo** — trace timelines showing request flow with span durations
+- **Sevalla logs** — JSON lines with `trace_id` and `span_id` fields matching Grafana traces
+- **Correlation** — click a trace in Grafana to see all related logs, or search Sevalla logs by `trace_id` to find a specific request
+
+### Phase 2: Granular Instrumentation
+
+The current implementation creates a TracerProvider but doesn't instrument individual operations. To get richer traces:
+
+- **`otelchi` middleware** — automatic HTTP spans for every request (method, route, status code, duration)
+- **GORM OTel plugin** — DB query spans showing SQL, duration, and row counts
+- **Custom resolver spans** — wrap GraphQL resolvers to trace individual field resolution
+
+This would give a full waterfall view: HTTP request → GraphQL operation → DB queries, all linked by trace_id.
+
+**Priority:** Medium — the env var setup is zero-effort; granular instrumentation is a follow-up.
+
+**Source:** Architecture discussion (2026-03-23)
