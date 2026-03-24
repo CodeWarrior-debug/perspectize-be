@@ -42,3 +42,14 @@ $RECYCLE.BIN/
 
 # Coverage
 coverage/
+
+# Local Claude Code settings and hooks (machine-specific)
+.claude/*.local.md
+.claude/*.local.json
+
+# Private bug tracking (not for public exposure)
+.planning/phases/bugs/
+.planning/codebase/CONCERNS.md
+
+# Figma Make reference artifacts (large generated code, not for commit)
+.planning/phases/*/figma-make-ref/

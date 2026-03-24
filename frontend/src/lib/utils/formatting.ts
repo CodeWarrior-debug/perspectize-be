@@ -22,7 +22,7 @@ export function formatDate(isoString: string): string {
 	return date.toLocaleDateString('en-US', {
 		year: 'numeric',
 		month: 'short',
-		day: 'numeric'
+		day: 'numeric',
 	});
 }
 
@@ -32,6 +32,41 @@ export function formatDate(isoString: string): string {
 export function durationValueGetter(params: { data?: { length: number | null; lengthUnits: string | null } }): string {
 	if (!params.data) return '—';
 	return formatDuration(params.data.length, params.data.lengthUnits);
+}
+
+/**
+ * AG Grid filter value getter for duration column.
+ * Returns raw seconds so agNumberColumnFilter compares numerically.
+ */
+export function durationFilterValueGetter(params: { data?: { length: number | null } }): number | null {
+	return params.data?.length ?? null;
+}
+
+/**
+ * Format seconds as m:ss display string (for filter chip display).
+ */
+export function formatDurationSeconds(seconds: number): string {
+	const m = Math.floor(seconds / 60);
+	const s = seconds % 60;
+	return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Parse duration filter input. Accepts "m:ss" or plain seconds.
+ * Returns total seconds, or null if unparseable.
+ */
+export function parseDurationInput(text: string | null): number | null {
+	if (text == null || text.trim() === '') return null;
+	const trimmed = text.trim();
+	if (trimmed.includes(':')) {
+		const [minStr, secStr] = trimmed.split(':');
+		const mins = parseInt(minStr, 10);
+		const secs = parseInt(secStr, 10);
+		if (isNaN(mins) || isNaN(secs)) return null;
+		return mins * 60 + secs;
+	}
+	const n = parseFloat(trimmed);
+	return isNaN(n) ? null : n;
 }
 
 /**
@@ -65,6 +100,18 @@ export function formatCount(count: number | null): string {
 export function formatCountExact(count: number | null): string {
 	if (count === null) return '--';
 	return count.toLocaleString('en-US');
+}
+
+/**
+ * Format date in compact form: "MMM 'YY" (e.g., "Jul '10") for tight columns.
+ */
+export function formatDateCompact(isoString: string | null): string {
+	if (!isoString) return '—';
+	const date = new Date(isoString);
+	if (isNaN(date.getTime())) return '—';
+	const month = date.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+	const year = String(date.getUTCFullYear()).slice(2);
+	return `${month} '${year}`;
 }
 
 /**
@@ -111,6 +158,22 @@ export function extractVideoIdFromUrl(url: string | null): string | null {
 	} catch {
 		return null;
 	}
+}
+
+/**
+ * Compute minimum AG Grid column width (px) so header text + icons never truncate.
+ * AG Grid only accepts px — we derive from the grid's font metrics.
+ */
+const GRID_FONT_SIZE = 14; // matches AG Grid theme fontSize
+export function headerMinWidth(name: string, hasFilter = true): number {
+	const charWidthEm = 0.55; // approx em per char at font-weight 600
+	const paddingEm = 1.5; // left + right cell padding
+	const sortIconEm = 1.2; // sort indicator
+	const filterIconEm = hasFilter ? 1.5 : 0;
+	const separatorEm = 0.5; // column border/handle
+	const totalEm =
+		name.length * charWidthEm + paddingEm + sortIconEm + filterIconEm + separatorEm;
+	return Math.ceil(totalEm * GRID_FONT_SIZE);
 }
 
 /**
@@ -173,10 +236,79 @@ export function typeCellRenderer(params: { data?: { contentType: string } }): HT
 	svg.setAttribute('fill', '#FF0000');
 
 	const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-	path.setAttribute('d', 'M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z');
+	path.setAttribute(
+		'd',
+		'M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z',
+	);
 
 	svg.appendChild(path);
 	container.appendChild(svg);
+
+	return container;
+}
+
+/**
+ * Perspectize glasses SVG path data (inline SVG for AG Grid cell renderer).
+ * Simple glasses silhouette using currentColor.
+ */
+const GLASSES_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <!-- Left lens -->
+  <circle cx="7.5" cy="13.5" r="3.5"/>
+  <!-- Right lens -->
+  <circle cx="16.5" cy="13.5" r="3.5"/>
+  <!-- Bridge -->
+  <line x1="11" y1="13.5" x2="13" y2="13.5"/>
+  <!-- Left arm -->
+  <line x1="4" y1="13.5" x2="2" y2="11"/>
+  <!-- Right arm -->
+  <line x1="20" y1="13.5" x2="22" y2="11"/>
+</svg>`;
+
+/**
+ * Perspectize column header component class for AG Grid.
+ * AG Grid headerComponent requires a class with init() and getGui() methods.
+ */
+export class PerspectiveHeaderRenderer {
+	private eGui!: HTMLElement;
+
+	init(): void {
+		this.eGui = document.createElement('div');
+		this.eGui.className = 'flex items-center justify-center w-full h-full';
+		this.eGui.innerHTML = GLASSES_SVG;
+		this.eGui.title = 'Perspectize — add or edit your perspective';
+	}
+
+	getGui(): HTMLElement {
+		return this.eGui;
+	}
+}
+
+/**
+ * AG Grid cell renderer for the Perspectize column.
+ * Shows "+" if user has no perspective on this row, or glasses icon if they do.
+ * Reads perspectivesByContentId from AG Grid context.
+ */
+export function perspectiveCellRenderer(params: {
+	data?: { id: string };
+	context?: { perspectivesByContentId?: Map<string, unknown> };
+}): HTMLElement {
+	const container = document.createElement('div');
+	container.className = 'h-full w-full flex items-center justify-center cursor-pointer';
+
+	const hasPerspective = params.context?.perspectivesByContentId?.has(params.data?.id ?? '');
+
+	if (hasPerspective) {
+		container.innerHTML = GLASSES_SVG;
+		container.title = 'Edit your perspective';
+		container.style.color = '#1a365d';
+	} else {
+		const span = document.createElement('span');
+		span.textContent = '+';
+		span.className = 'text-xl font-bold leading-none';
+		span.style.color = 'color-mix(in srgb, var(--color-muted-foreground) 40%, transparent)';
+		container.appendChild(span);
+		container.title = 'Add a perspective';
+	}
 
 	return container;
 }

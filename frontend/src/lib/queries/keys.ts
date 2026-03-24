@@ -13,6 +13,8 @@ export const queryKeys = {
 			search?: string;
 			first?: number;
 			after?: string | null;
+			filter?: Record<string, unknown>;
+			mode?: string;
 		}) => [...queryKeys.content.lists(), filters] as const,
 		details: () => [...queryKeys.content.all(), 'detail'] as const,
 		detail: (id: string) => [...queryKeys.content.details(), id] as const,
@@ -24,5 +26,13 @@ export const queryKeys = {
 		list: () => [...queryKeys.users.lists()] as const,
 		details: () => [...queryKeys.users.all(), 'detail'] as const,
 		detail: (id: string) => [...queryKeys.users.details(), id] as const,
+	},
+
+	perspectives: {
+		all: () => [...queryKeys.all, 'perspectives'] as const,
+		lists: () => [...queryKeys.perspectives.all(), 'list'] as const,
+		listByUser: (userId: number) => [...queryKeys.perspectives.lists(), { userId }] as const,
+		details: () => [...queryKeys.perspectives.all(), 'detail'] as const,
+		detail: (id: string) => [...queryKeys.perspectives.details(), id] as const,
 	},
 } as const;

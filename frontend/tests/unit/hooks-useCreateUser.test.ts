@@ -1,13 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Hoisted mocks — these are referenced inside vi.mock factories
-const { mockMutate, mockInvalidateQueries, mockToastSuccess, mockToastError } =
-	vi.hoisted(() => ({
-		mockMutate: vi.fn(),
-		mockInvalidateQueries: vi.fn(),
-		mockToastSuccess: vi.fn(),
-		mockToastError: vi.fn(),
-	}));
+const { mockMutate, mockInvalidateQueries, mockToastSuccess, mockToastError } = vi.hoisted(() => ({
+	mockMutate: vi.fn(),
+	mockInvalidateQueries: vi.fn(),
+	mockToastSuccess: vi.fn(),
+	mockToastError: vi.fn(),
+}));
 
 // Capture mutation options for behavioral testing
 let capturedMutationOptions: any;
@@ -33,9 +32,7 @@ vi.mock('svelte-sonner', () => ({
 }));
 
 vi.mock('$lib/queries/client', () => ({
-	graphqlClient: {
-		request: vi.fn(),
-	},
+	graphqlRequest: vi.fn(),
 }));
 
 describe('useCreateUser hook', () => {
@@ -86,40 +83,37 @@ describe('useCreateUser hook', () => {
 			expect(typeof capturedMutationOptions.mutationFn).toBe('function');
 		});
 
-		it('calls graphqlClient.request with CREATE_USER and input params', async () => {
-			const { graphqlClient } = await import('$lib/queries/client');
-			(graphqlClient.request as any).mockResolvedValue({
+		it('calls graphqlRequest with CREATE_USER and input params', async () => {
+			const { graphqlRequest } = await import('$lib/queries/client');
+			(graphqlRequest as any).mockResolvedValue({
 				createUser: { id: '1', username: 'testuser' },
 			});
 
 			const input = { username: 'testuser' };
 			await capturedMutationOptions.mutationFn(input);
 
-			expect(graphqlClient.request).toHaveBeenCalledWith(
-				expect.anything(),
-				{ input }
-			);
+			expect(graphqlRequest).toHaveBeenCalledWith(expect.anything(), { input });
 		});
 
 		it('passes the full CREATE_USER mutation document', async () => {
-			const { graphqlClient } = await import('$lib/queries/client');
+			const { graphqlRequest } = await import('$lib/queries/client');
 			const { CREATE_USER } = await import('$lib/queries/users');
-			(graphqlClient.request as any).mockResolvedValue({
+			(graphqlRequest as any).mockResolvedValue({
 				createUser: { id: '1', username: 'testuser' },
 			});
 
 			const input = { username: 'testuser' };
 			await capturedMutationOptions.mutationFn(input);
 
-			const firstArg = (graphqlClient.request as any).mock.calls[0][0];
+			const firstArg = (graphqlRequest as any).mock.calls[0][0];
 			expect(firstArg).toBeDefined();
 			expect(firstArg).toBe(CREATE_USER);
 		});
 
-		it('returns the response from graphqlClient.request', async () => {
-			const { graphqlClient } = await import('$lib/queries/client');
+		it('returns the response from graphqlRequest', async () => {
+			const { graphqlRequest } = await import('$lib/queries/client');
 			const mockResponse = { createUser: { id: '42', username: 'newuser' } };
-			(graphqlClient.request as any).mockResolvedValue(mockResponse);
+			(graphqlRequest as any).mockResolvedValue(mockResponse);
 
 			const input = { username: 'newuser' };
 			const result = await capturedMutationOptions.mutationFn(input);
@@ -193,9 +187,7 @@ describe('useCreateUser hook', () => {
 
 			capturedMutationOptions.onError(error);
 
-			expect(mockToastError).toHaveBeenCalledWith(
-				'A user with that username already exists'
-			);
+			expect(mockToastError).toHaveBeenCalledWith('A user with that username already exists');
 		});
 
 		it('matches "already exists" case-insensitively', () => {
@@ -203,9 +195,7 @@ describe('useCreateUser hook', () => {
 
 			capturedMutationOptions.onError(error);
 
-			expect(mockToastError).toHaveBeenCalledWith(
-				'A user with that username already exists'
-			);
+			expect(mockToastError).toHaveBeenCalledWith('A user with that username already exists');
 		});
 
 		it('shows generic error toast for unknown errors', () => {
@@ -213,9 +203,7 @@ describe('useCreateUser hook', () => {
 
 			capturedMutationOptions.onError(error);
 
-			expect(mockToastError).toHaveBeenCalledWith(
-				'Failed to create user. Please try again.'
-			);
+			expect(mockToastError).toHaveBeenCalledWith('Failed to create user. Please try again.');
 		});
 
 		it('shows generic error toast for validation errors', () => {
@@ -223,9 +211,7 @@ describe('useCreateUser hook', () => {
 
 			capturedMutationOptions.onError(error);
 
-			expect(mockToastError).toHaveBeenCalledWith(
-				'Failed to create user. Please try again.'
-			);
+			expect(mockToastError).toHaveBeenCalledWith('Failed to create user. Please try again.');
 		});
 
 		it('shows generic error toast for network errors', () => {
@@ -233,9 +219,7 @@ describe('useCreateUser hook', () => {
 
 			capturedMutationOptions.onError(error);
 
-			expect(mockToastError).toHaveBeenCalledWith(
-				'Failed to create user. Please try again.'
-			);
+			expect(mockToastError).toHaveBeenCalledWith('Failed to create user. Please try again.');
 		});
 
 		it('handles error messages with extra whitespace', () => {
@@ -243,9 +227,7 @@ describe('useCreateUser hook', () => {
 
 			capturedMutationOptions.onError(error);
 
-			expect(mockToastError).toHaveBeenCalledWith(
-				'A user with that username already exists'
-			);
+			expect(mockToastError).toHaveBeenCalledWith('A user with that username already exists');
 		});
 	});
 
@@ -287,33 +269,29 @@ describe('useCreateUser hook', () => {
 		});
 
 		it('accepts CreateUserInput with username only', async () => {
-			const { graphqlClient } = await import('$lib/queries/client');
-			(graphqlClient.request as any).mockResolvedValue({
+			const { graphqlRequest } = await import('$lib/queries/client');
+			(graphqlRequest as any).mockResolvedValue({
 				createUser: { id: '1', username: 'testuser' },
 			});
 
 			const input = { username: 'testuser' };
 			await capturedMutationOptions.mutationFn(input);
 
-			expect(graphqlClient.request).toHaveBeenCalledWith(
-				expect.anything(),
-				{ input: { username: 'testuser' } }
-			);
+			expect(graphqlRequest).toHaveBeenCalledWith(expect.anything(), { input: { username: 'testuser' } });
 		});
 
 		it('accepts CreateUserInput with username and email', async () => {
-			const { graphqlClient } = await import('$lib/queries/client');
-			(graphqlClient.request as any).mockResolvedValue({
+			const { graphqlRequest } = await import('$lib/queries/client');
+			(graphqlRequest as any).mockResolvedValue({
 				createUser: { id: '1', username: 'testuser' },
 			});
 
 			const input = { username: 'testuser', email: 'test@example.com' };
 			await capturedMutationOptions.mutationFn(input);
 
-			expect(graphqlClient.request).toHaveBeenCalledWith(
-				expect.anything(),
-				{ input: { username: 'testuser', email: 'test@example.com' } }
-			);
+			expect(graphqlRequest).toHaveBeenCalledWith(expect.anything(), {
+				input: { username: 'testuser', email: 'test@example.com' },
+			});
 		});
 	});
 });

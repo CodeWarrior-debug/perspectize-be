@@ -46,17 +46,13 @@ describe('validateYouTubeUrl', () => {
 		});
 
 		it('accepts youtube-nocookie.com embed URLs', () => {
-			expect(validateYouTubeUrl('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ')).toBe(
-				true
-			);
+			expect(validateYouTubeUrl('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ')).toBe(true);
 			expect(validateYouTubeUrl('https://youtube-nocookie.com/embed/abc')).toBe(true);
 		});
 
 		it('accepts URLs with query parameters', () => {
 			expect(validateYouTubeUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=30')).toBe(true);
-			expect(
-				validateYouTubeUrl('https://www.youtube.com/watch?v=abc&list=PLxxx&index=1')
-			).toBe(true);
+			expect(validateYouTubeUrl('https://www.youtube.com/watch?v=abc&list=PLxxx&index=1')).toBe(true);
 		});
 
 		it('accepts URLs with trailing slash', () => {
@@ -64,9 +60,7 @@ describe('validateYouTubeUrl', () => {
 		});
 
 		it('accepts URLs with fragment', () => {
-			expect(validateYouTubeUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ#t=30')).toBe(
-				true
-			);
+			expect(validateYouTubeUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ#t=30')).toBe(true);
 		});
 	});
 

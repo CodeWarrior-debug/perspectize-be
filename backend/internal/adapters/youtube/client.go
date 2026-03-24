@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
@@ -29,7 +30,9 @@ func NewClient(apiKey string) *Client {
 	}
 }
 
-// YouTubeAPIResponse represents the response from YouTube Data API
+// YouTubeAPIResponse represents the trimmed response stored in the database.
+// Only fields the app actually reads are included — everything else
+// (thumbnails, etag, status, topicDetails, etc.) is stripped on ingest.
 type YouTubeAPIResponse struct {
 	Items []struct {
 		ID      string `json:"id"`
@@ -51,6 +54,34 @@ type YouTubeAPIResponse struct {
 	} `json:"items"`
 }
 
+// sanitizeYouTubeError removes sensitive information from YouTube API errors.
+// YouTube API errors may contain the full request URL including the API key
+// as a query parameter. This function strips any googleapis.com URLs to prevent
+// API key leakage in logs or error responses.
+func sanitizeYouTubeError(err error) string {
+	if err == nil {
+		return ""
+	}
+
+	errMsg := err.Error()
+
+	// Remove URLs that might contain API keys
+	// Pattern: https://www.googleapis.com/youtube/v3/videos?key=xxx&...
+	if strings.Contains(errMsg, "googleapis.com") {
+		// Extract just the HTTP status and generic message
+		if strings.Contains(errMsg, "status code") {
+			// Keep status code, discard URL
+			parts := strings.Split(errMsg, ":")
+			if len(parts) > 0 {
+				return "YouTube API error:" + strings.TrimSpace(parts[len(parts)-1])
+			}
+		}
+		return "YouTube API request failed"
+	}
+
+	return errMsg
+}
+
 // GetVideoMetadata fetches video metadata from YouTube Data API
 func (c *Client) GetVideoMetadata(ctx context.Context, videoID string) (*services.VideoMetadata, error) {
 	endpoint := fmt.Sprintf("%s/videos?part=snippet,statistics,contentDetails&id=%s&key=%s",
@@ -66,7 +97,9 @@ func (c *Client) GetVideoMetadata(ctx context.Context, videoID string) (*service
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch video metadata: %w", err)
+		sanitized := sanitizeYouTubeError(err)
+		slog.Error("YouTube API request failed", "error", sanitized, "videoID", videoID)
+		return nil, fmt.Errorf("failed to fetch video metadata: %s", sanitized)
 	}
 	defer resp.Body.Close()
 
@@ -76,7 +109,8 @@ func (c *Client) GetVideoMetadata(ctx context.Context, videoID string) (*service
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("%w: status %d: %s", domain.ErrYouTubeAPI, resp.StatusCode, string(body))
+		slog.Error("YouTube API returned error", "status", resp.StatusCode, "videoID", videoID)
+		return nil, fmt.Errorf("%w: status %d", domain.ErrYouTubeAPI, resp.StatusCode)
 	}
 
 	var apiResponse YouTubeAPIResponse
@@ -96,12 +130,18 @@ func (c *Client) GetVideoMetadata(ctx context.Context, videoID string) (*service
 		duration = 0
 	}
 
+	// Re-marshal from parsed struct to strip unused fields
+	trimmed, err := json.Marshal(apiResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal trimmed response: %w", err)
+	}
+
 	return &services.VideoMetadata{
 		Title:       item.Snippet.Title,
 		Description: item.Snippet.Description,
 		Duration:    duration,
 		ChannelName: item.Snippet.ChannelTitle,
-		Response:    body,
+		Response:    trimmed,
 	}, nil
 }
 

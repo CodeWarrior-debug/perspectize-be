@@ -49,6 +49,19 @@ func (r *GormUserRepository) GetByID(ctx context.Context, id int) (*domain.User,
 	return userModelToDomain(&model), nil
 }
 
+// GetByClerkID retrieves a user by their Clerk user ID
+func (r *GormUserRepository) GetByClerkID(ctx context.Context, clerkID string) (*domain.User, error) {
+	var model UserModel
+	err := r.db.WithContext(ctx).Where("clerk_user_id = ?", clerkID).First(&model).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, err
+	}
+	return userModelToDomain(&model), nil
+}
+
 // GetByUsername retrieves a user by their username
 func (r *GormUserRepository) GetByUsername(ctx context.Context, username string) (*domain.User, error) {
 	var model UserModel
@@ -105,8 +118,9 @@ func (r *GormUserRepository) Update(ctx context.Context, user *domain.User) (*do
 	model.ID = user.ID
 
 	result := r.db.WithContext(ctx).Model(model).Updates(map[string]interface{}{
-		"username": model.Username,
-		"email":    model.Email,
+		"username":      model.Username,
+		"email":         model.Email,
+		"clerk_user_id": model.ClerkUserID,
 	})
 	if result.Error != nil {
 		return nil, result.Error
@@ -127,6 +141,60 @@ func (r *GormUserRepository) Update(ctx context.Context, user *domain.User) (*do
 // Delete removes a user record by ID
 func (r *GormUserRepository) Delete(ctx context.Context, id int) error {
 	result := r.db.WithContext(ctx).Delete(&UserModel{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+// CreateFromClerk inserts a new user record seeded from Clerk webhook data.
+func (r *GormUserRepository) CreateFromClerk(ctx context.Context, clerkID string, username string, email string) (*domain.User, error) {
+	var emailPtr *string
+	if email != "" {
+		emailPtr = &email
+	}
+	model := &UserModel{
+		ClerkUserID: &clerkID,
+		Username:    username,
+		Email:       emailPtr,
+		Role:        "default",
+		Active:      true,
+	}
+	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
+		return nil, err
+	}
+	return userModelToDomain(model), nil
+}
+
+// UpdateByClerkID updates username and email for the user with the given Clerk ID.
+func (r *GormUserRepository) UpdateByClerkID(ctx context.Context, clerkID string, username string, email string) error {
+	var emailPtr *string
+	if email != "" {
+		emailPtr = &email
+	}
+	result := r.db.WithContext(ctx).Model(&UserModel{}).
+		Where("clerk_user_id = ?", clerkID).
+		Updates(map[string]interface{}{
+			"username": username,
+			"email":    emailPtr,
+		})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+// DeactivateByClerkID sets active=false for the user with the given Clerk ID.
+func (r *GormUserRepository) DeactivateByClerkID(ctx context.Context, clerkID string) error {
+	result := r.db.WithContext(ctx).Model(&UserModel{}).
+		Where("clerk_user_id = ?", clerkID).
+		Update("active", false)
 	if result.Error != nil {
 		return result.Error
 	}

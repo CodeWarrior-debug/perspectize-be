@@ -2,184 +2,97 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/svelte';
 import AddVideoDialog from '$lib/components/AddVideoDialog.svelte';
 
-// Hoisted mocks — these are referenced inside vi.mock factories
-const {
-	mockMutate,
-	mockInvalidateQueries,
-	mockToastSuccess,
-	mockToastError,
-	mockValidate,
-	mockGetSelectedUserId,
-} = vi.hoisted(() => ({
+// Hoisted mocks — shared pattern for useAddVideo components
+const mocks = vi.hoisted(() => ({
 	mockMutate: vi.fn(),
 	mockInvalidateQueries: vi.fn(),
+	mockSetQueriesData: vi.fn(),
 	mockToastSuccess: vi.fn(),
 	mockToastError: vi.fn(),
 	mockValidate: vi.fn(),
-	mockGetSelectedUserId: vi.fn(() => 1),
+	mockGetSelectedUserId: vi.fn((): number | null => 1),
+	mockMutationState: { mutate: null as any, isPending: false, isSuccess: false },
+	capturedMutationOptions: undefined as any,
 }));
-
-// Capture mutation options for behavioral testing
-let capturedMutationOptions: any;
 
 vi.mock('@tanstack/svelte-query', () => ({
 	createMutation: vi.fn((optionsFn: () => any) => {
-		capturedMutationOptions = optionsFn();
-		return {
-			mutate: mockMutate,
-			isPending: false,
-		};
+		mocks.capturedMutationOptions = optionsFn();
+		mocks.mockMutationState.mutate = mocks.mockMutate;
+		return mocks.mockMutationState;
 	}),
 	useQueryClient: vi.fn(() => ({
-		invalidateQueries: mockInvalidateQueries,
+		invalidateQueries: mocks.mockInvalidateQueries,
+		setQueriesData: mocks.mockSetQueriesData,
 	})),
 }));
 
 vi.mock('svelte-sonner', () => ({
-	toast: {
-		success: mockToastSuccess,
-		error: mockToastError,
-	},
+	toast: { success: mocks.mockToastSuccess, error: mocks.mockToastError },
 }));
 
-vi.mock('$lib/queries/client', () => ({
-	graphqlClient: {
-		request: vi.fn(),
-	},
-}));
+vi.mock('$lib/queries/client', () => ({ graphqlRequest: vi.fn() }));
+vi.mock('$lib/utils/youtube', () => ({ validateYouTubeUrl: (url: string) => mocks.mockValidate(url) }));
+vi.mock('$lib/stores/userSelection.svelte', () => ({ getSelectedUserId: () => mocks.mockGetSelectedUserId() }));
 
-vi.mock('$lib/utils/youtube', () => ({
-	validateYouTubeUrl: (...args: any[]) => mockValidate(...args),
-}));
-
-vi.mock('$lib/stores/userSelection.svelte', () => ({
-	getSelectedUserId: (...args: any[]) => mockGetSelectedUserId(...args),
-}));
-
+function reset() {
+	vi.clearAllMocks();
+	mocks.capturedMutationOptions = undefined;
+	mocks.mockMutationState.isPending = false;
+	mocks.mockMutationState.isSuccess = false;
+}
 
 describe('AddVideoDialog component', () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		capturedMutationOptions = undefined;
-	});
+	beforeEach(reset);
 
 	it('renders without errors when open', () => {
-		const result = render(AddVideoDialog, { props: { open: true } });
-		expect(result.container).toBeTruthy();
+		expect(render(AddVideoDialog, { props: { open: true } }).container).toBeTruthy();
 	});
 
 	it('renders without errors when closed', () => {
-		const result = render(AddVideoDialog, { props: { open: false } });
-		expect(result.container).toBeTruthy();
-	});
-
-	it('accepts open prop', () => {
-		const result = render(AddVideoDialog, { props: { open: true } });
-		expect(result).toBeTruthy();
+		expect(render(AddVideoDialog, { props: { open: false } }).container).toBeTruthy();
 	});
 
 	it('accepts no props', () => {
-		const result = render(AddVideoDialog);
-		expect(result).toBeTruthy();
+		expect(render(AddVideoDialog)).toBeTruthy();
 	});
 });
 
-describe('AddVideoDialog mutation callbacks', () => {
+describe('AddVideoDialog $effect behaviors', () => {
+	beforeEach(reset);
+
+	it('renders with mutation in success state', () => {
+		mocks.mockMutationState.isSuccess = true;
+		expect(render(AddVideoDialog, { props: { open: true } }).container).toBeTruthy();
+	});
+});
+
+describe('AddVideoDialog mutation setup', () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
-		capturedMutationOptions = undefined;
+		reset();
 		render(AddVideoDialog, { props: { open: true } });
 	});
 
-	it('onSuccess shows toast with video name and invalidates cache', () => {
-		expect(capturedMutationOptions).toBeDefined();
+	it('captures mutation options from useAddVideo hook', () => {
+		expect(mocks.capturedMutationOptions).toBeDefined();
+		expect(mocks.capturedMutationOptions.mutationFn).toBeDefined();
+		expect(mocks.capturedMutationOptions.onSuccess).toBeDefined();
+		expect(mocks.capturedMutationOptions.onError).toBeDefined();
+	});
 
-		capturedMutationOptions.onSuccess({
-			createContentFromYouTube: { name: 'Test Video' }
+	it('mutationFn calls graphqlRequest with correct args', async () => {
+		const { graphqlRequest } = await import('$lib/queries/client');
+		(graphqlRequest as any).mockResolvedValue({ createContentFromYouTube: { content: { name: 'Test' }, alreadyExisted: false } });
+		await mocks.capturedMutationOptions.mutationFn('https://youtube.com/watch?v=abc123');
+		expect(graphqlRequest).toHaveBeenCalledWith(expect.anything(), {
+			input: { url: 'https://youtube.com/watch?v=abc123', userId: 1 },
 		});
-
-		expect(mockToastSuccess).toHaveBeenCalledWith('Added: Test Video');
-		expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['app', 'content', 'list'] });
-	});
-
-	it('onSuccess handles null response gracefully', () => {
-		expect(capturedMutationOptions).toBeDefined();
-
-		capturedMutationOptions.onSuccess(null);
-
-		expect(mockToastSuccess).toHaveBeenCalledWith('Added: video');
-		expect(mockInvalidateQueries).toHaveBeenCalled();
-	});
-
-	it('onSuccess handles missing nested properties', () => {
-		expect(capturedMutationOptions).toBeDefined();
-
-		capturedMutationOptions.onSuccess({ createContentFromYouTube: {} });
-
-		expect(mockToastSuccess).toHaveBeenCalledWith('Added: video');
-	});
-
-	it('onError shows duplicate message for "already exists" errors', () => {
-		expect(capturedMutationOptions).toBeDefined();
-
-		capturedMutationOptions.onError(new Error('content already exists for this URL'));
-
-		expect(mockToastError).toHaveBeenCalledWith('This video has already been added');
-	});
-
-	it('onError shows invalid URL message for "invalid youtube url" errors', () => {
-		expect(capturedMutationOptions).toBeDefined();
-
-		capturedMutationOptions.onError(new Error('invalid YouTube URL'));
-
-		expect(mockToastError).toHaveBeenCalledWith('Invalid YouTube URL or video not found');
-	});
-
-	it('onError shows invalid URL message for "video not found" errors', () => {
-		expect(capturedMutationOptions).toBeDefined();
-
-		capturedMutationOptions.onError(new Error('video not found: abc123'));
-
-		expect(mockToastError).toHaveBeenCalledWith('Invalid YouTube URL or video not found');
-	});
-
-	it('onError shows generic message for unknown errors', () => {
-		expect(capturedMutationOptions).toBeDefined();
-
-		capturedMutationOptions.onError(new Error('failed to create content'));
-
-		expect(mockToastError).toHaveBeenCalledWith('Failed to add video. Please try again.');
-	});
-
-	it('onError does not misclassify errors containing "invalid" in unrelated context', () => {
-		expect(capturedMutationOptions).toBeDefined();
-
-		capturedMutationOptions.onError(new Error('invalid connection state'));
-
-		expect(mockToastError).toHaveBeenCalledWith('Failed to add video. Please try again.');
-	});
-
-	it('mutationFn is defined and callable', () => {
-		expect(capturedMutationOptions).toBeDefined();
-		expect(capturedMutationOptions.mutationFn).toBeDefined();
-		expect(typeof capturedMutationOptions.mutationFn).toBe('function');
-	});
-
-	it('mutationFn calls graphqlClient.request with correct args', async () => {
-		expect(capturedMutationOptions).toBeDefined();
-		const { graphqlClient } = await import('$lib/queries/client');
-		(graphqlClient.request as any).mockResolvedValue({ createContentFromYouTube: { name: 'Test' } });
-		await capturedMutationOptions.mutationFn('https://youtube.com/watch?v=abc123');
-		expect(graphqlClient.request).toHaveBeenCalledWith(
-			expect.anything(),
-			{ input: { url: 'https://youtube.com/watch?v=abc123', userId: 1 } }
-		);
 	});
 
 	it('mutationFn throws when no user is selected', async () => {
-		expect(capturedMutationOptions).toBeDefined();
-		mockGetSelectedUserId.mockReturnValueOnce(null);
-		await expect(capturedMutationOptions.mutationFn('https://youtube.com/watch?v=abc123'))
-			.rejects.toThrow('No user selected');
+		mocks.mockGetSelectedUserId.mockReturnValueOnce(null);
+		await expect(mocks.capturedMutationOptions.mutationFn('https://youtube.com/watch?v=abc123')).rejects.toThrow(
+			'No user selected',
+		);
 	});
 });

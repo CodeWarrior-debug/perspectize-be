@@ -49,3 +49,6 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# Duplication detection reports
+coverage/

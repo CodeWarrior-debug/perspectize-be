@@ -1,0 +1,99 @@
+version: 2
+
+updates:
+  # ──────────────────────────────────────────────
+  # Go modules (backend)
+  # ──────────────────────────────────────────────
+  - package-ecosystem: "gomod"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "build(deps):"
+      prefix-development: "build(deps-dev):"
+    groups:
+      # Patch updates — safe to auto-merge when CI is green
+      patch-updates:
+        applies-to: version-updates
+        update-types:
+          - "patch"
+      # Minor updates — merge after green CI + quick manual review
+      minor-updates:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+      # Major updates stay ungrouped — individual PRs for careful review
+
+  # ──────────────────────────────────────────────
+  # npm (frontend — SvelteKit / Svelte 5)
+  # ──────────────────────────────────────────────
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "build(deps):"
+      prefix-development: "build(deps-dev):"
+    groups:
+      # Family groups — packages that must update in tandem.
+      # These take priority over the general minor/patch groups for matched packages,
+      # ensuring tightly-coupled packages land in a single PR so they stay compatible.
+      svelte-ecosystem:
+        applies-to: version-updates
+        patterns:
+          - "@sveltejs/*"
+        update-types:
+          - "minor"
+          - "patch"
+      tanstack:
+        applies-to: version-updates
+        patterns:
+          - "@tanstack/*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Patch updates — safe to auto-merge when CI is green
+      patch-updates:
+        applies-to: version-updates
+        update-types:
+          - "patch"
+      # Minor updates — merge after green CI + quick manual review
+      minor-updates:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+      # Major updates stay ungrouped — individual PRs for careful review
+
+  # ──────────────────────────────────────────────
+  # GitHub Actions (CI workflows)
+  # ──────────────────────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "build(deps):"
+    groups:
+      # Patch updates — safe to auto-merge when CI is green
+      patch-updates:
+        applies-to: version-updates
+        update-types:
+          - "patch"
+      # Minor updates — merge after green CI + quick manual review
+      minor-updates:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+      # Major updates stay ungrouped — individual PRs for careful review

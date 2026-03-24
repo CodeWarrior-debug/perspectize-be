@@ -1,5 +1,7 @@
 import { gql } from 'graphql-request';
 
+export type { ContentFilterInput } from '$lib/utils/gridUrlState';
+
 export interface ContentItem {
 	id: string;
 	name: string;
@@ -32,16 +34,8 @@ export interface ContentResponse {
 
 export interface CreateContentResponse {
 	createContentFromYouTube: {
-		id: string;
-		name: string;
-		url: string;
-		contentType: string;
-		length: number | null;
-		lengthUnits: string | null;
-		viewCount: number | null;
-		likeCount: number | null;
-		commentCount: number | null;
-		createdAt: string;
+		content: ContentItem;
+		alreadyExisted: boolean;
 	};
 }
 
@@ -111,16 +105,23 @@ export const GET_CONTENT = gql`
 export const CREATE_CONTENT_FROM_YOUTUBE = gql`
 	mutation CreateContentFromYouTube($input: CreateContentFromYouTubeInput!) {
 		createContentFromYouTube(input: $input) {
-			id
-			name
-			url
-			contentType
-			length
-			lengthUnits
-			viewCount
-			likeCount
-			commentCount
-			createdAt
+			content {
+				id
+				name
+				url
+				contentType
+				length
+				lengthUnits
+				viewCount
+				likeCount
+				channelTitle
+				publishedAt
+				tags
+				description
+				createdAt
+				updatedAt
+			}
+			alreadyExisted
 		}
 	}
 `;

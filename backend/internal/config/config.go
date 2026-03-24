@@ -41,20 +41,27 @@ type LoggingConfig struct {
 	Format string `json:"format"`
 }
 
-// Load reads configuration from file and environment variables
+// Load reads configuration from file and environment variables.
+// If the config file is missing, returns sensible defaults (production uses env vars).
 func Load(configPath string) (*Config, error) {
-	// Read config file
+	cfg := Config{
+		Server: ServerConfig{Port: 8080, Host: ""},
+	}
+
+	// Read config file (optional in production where env vars provide all config)
 	file, err := os.Open(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open config file: %w", err)
-	}
-	defer file.Close()
-
-	// Parse JSON
-	var cfg Config
-	decoder := json.NewDecoder(file)
-	if err := decoder.Decode(&cfg); err != nil {
-		return nil, fmt.Errorf("failed to parse config file: %w", err)
+		if os.IsNotExist(err) {
+			// No config file — use defaults + env vars
+		} else {
+			return nil, fmt.Errorf("failed to open config file: %w", err)
+		}
+	} else {
+		defer file.Close()
+		decoder := json.NewDecoder(file)
+		if err := decoder.Decode(&cfg); err != nil {
+			return nil, fmt.Errorf("failed to parse config file: %w", err)
+		}
 	}
 
 	// Override with environment variables (for secrets)

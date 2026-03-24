@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	auth "github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/auth"
+	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/directives"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/generated"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/resolvers"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
@@ -21,10 +23,11 @@ import (
 
 // mockContentRepository implements repositories.ContentRepository for testing
 type mockContentRepository struct {
-	createFn   func(ctx context.Context, content *domain.Content) (*domain.Content, error)
-	getByIDFn  func(ctx context.Context, id int) (*domain.Content, error)
-	getByURLFn func(ctx context.Context, url string) (*domain.Content, error)
-	listFn     func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
+	createFn           func(ctx context.Context, content *domain.Content) (*domain.Content, error)
+	getByIDFn          func(ctx context.Context, id int) (*domain.Content, error)
+	getByURLFn         func(ctx context.Context, url string) (*domain.Content, error)
+	getOrCreateByURLFn func(ctx context.Context, content *domain.Content) (*domain.Content, bool, error)
+	listFn             func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
 }
 
 func (m *mockContentRepository) Create(ctx context.Context, content *domain.Content) (*domain.Content, error) {
@@ -46,6 +49,13 @@ func (m *mockContentRepository) GetByURL(ctx context.Context, url string) (*doma
 		return m.getByURLFn(ctx, url)
 	}
 	return nil, domain.ErrNotFound
+}
+
+func (m *mockContentRepository) GetOrCreateByURL(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error) {
+	if m.getOrCreateByURLFn != nil {
+		return m.getOrCreateByURLFn(ctx, content)
+	}
+	return content, false, nil
 }
 
 func (m *mockContentRepository) List(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
@@ -104,6 +114,10 @@ func (m *mockUserRepository) GetByID(ctx context.Context, id int) (*domain.User,
 	return nil, domain.ErrNotFound
 }
 
+func (m *mockUserRepository) GetByClerkID(ctx context.Context, clerkID string) (*domain.User, error) {
+	return nil, domain.ErrNotFound
+}
+
 func (m *mockUserRepository) GetByUsername(ctx context.Context, username string) (*domain.User, error) {
 	if m.getByUsernameFn != nil {
 		return m.getByUsernameFn(ctx, username)
@@ -131,6 +145,18 @@ func (m *mockUserRepository) Update(ctx context.Context, user *domain.User) (*do
 
 func (m *mockUserRepository) Delete(ctx context.Context, id int) error {
 	return nil
+}
+
+func (m *mockUserRepository) CreateFromClerk(ctx context.Context, clerkID string, username string, email string) (*domain.User, error) {
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockUserRepository) UpdateByClerkID(ctx context.Context, clerkID string, username string, email string) error {
+	return domain.ErrNotFound
+}
+
+func (m *mockUserRepository) DeactivateByClerkID(ctx context.Context, clerkID string) error {
+	return domain.ErrNotFound
 }
 
 // mockPerspectiveRepository implements repositories.PerspectiveRepository for testing
@@ -190,7 +216,25 @@ type graphqlResponse struct {
 	} `json:"errors"`
 }
 
-// setupTestServer creates a test GraphQL server with the given mock dependencies
+// injectAuthMiddleware is a test HTTP middleware that injects an AuthenticatedUser
+// into the context, simulating a logged-in user for directive tests.
+func injectAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authUser := &domain.AuthenticatedUser{
+			ID:       1,
+			ClerkID:  "clerk_test_user",
+			Username: "testuser",
+			Email:    "test@example.com",
+			Role:     domain.UserRoleDefault,
+		}
+		ctx := auth.WithAuthenticatedUser(r.Context(), authUser)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// setupTestServer creates a test GraphQL server with the given mock dependencies.
+// Wires auth directives and injects an authenticated user context via auth middleware
+// so mutation tests pass the @auth directive check.
 func setupTestServer(repo *mockContentRepository, ytClient *mockYouTubeClient) *httptest.Server {
 	userRepo := &mockUserRepository{}
 	perspectiveRepo := &mockPerspectiveRepository{}
@@ -198,16 +242,32 @@ func setupTestServer(repo *mockContentRepository, ytClient *mockYouTubeClient) *
 	userService := services.NewUserService(userRepo, repo, perspectiveRepo)
 	perspectiveService := services.NewPerspectiveService(perspectiveRepo, userRepo)
 	resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
-	return httptest.NewServer(srv)
+	directiveRoot := directives.NewDirectiveRoot(contentService, perspectiveService)
+	gqlConfig := generated.Config{
+		Resolvers: resolver,
+		Directives: generated.DirectiveRoot{
+			Auth:  directiveRoot.Auth,
+			Owner: directiveRoot.Owner,
+		},
+	}
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(gqlConfig))
+
+	// Wrap with test middleware that injects an authenticated user context
+	authHandler := injectAuthMiddleware(srv)
+	return httptest.NewServer(authHandler)
 }
 
-// executeGraphQL sends a GraphQL query to the test server and returns the response
+// executeGraphQL sends a GraphQL query to the test server and returns the response.
+// Authentication is handled by the injectAuthMiddleware in the test server setup.
 func executeGraphQL(t *testing.T, server *httptest.Server, query string) graphqlResponse {
 	t.Helper()
 
 	body := fmt.Sprintf(`{"query": %s}`, jsonString(query))
-	resp, err := http.Post(server.URL, "application/json", strings.NewReader(body))
+	req, err := http.NewRequest("POST", server.URL, strings.NewReader(body))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
 	defer resp.Body.Close()
 
@@ -347,9 +407,9 @@ func TestCreateContentFromYouTube_Success(t *testing.T) {
 		getByURLFn: func(ctx context.Context, url string) (*domain.Content, error) {
 			return nil, domain.ErrNotFound
 		},
-		createFn: func(ctx context.Context, content *domain.Content) (*domain.Content, error) {
+		getOrCreateByURLFn: func(ctx context.Context, content *domain.Content) (*domain.Content, bool, error) {
 			content.ID = 42
-			return content, nil
+			return content, false, nil
 		},
 	}
 
@@ -362,40 +422,61 @@ func TestCreateContentFromYouTube_Success(t *testing.T) {
 	server := setupTestServer(repo, ytClient)
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", userId: 1 }) { id name contentType } }`)
+	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", userId: 1 }) { content { id name contentType } alreadyExisted } }`)
 
 	assert.Empty(t, result.Errors)
 
 	var data struct {
 		CreateContentFromYouTube struct {
-			ID          string `json:"id"`
-			Name        string `json:"name"`
-			ContentType string `json:"contentType"`
+			Content struct {
+				ID          string `json:"id"`
+				Name        string `json:"name"`
+				ContentType string `json:"contentType"`
+			} `json:"content"`
+			AlreadyExisted bool `json:"alreadyExisted"`
 		} `json:"createContentFromYouTube"`
 	}
 	err := json.Unmarshal(result.Data, &data)
 	require.NoError(t, err)
 
-	assert.Equal(t, "42", data.CreateContentFromYouTube.ID)
-	assert.Equal(t, "Amazing Video", data.CreateContentFromYouTube.Name)
-	assert.Equal(t, "YOUTUBE", data.CreateContentFromYouTube.ContentType)
+	assert.Equal(t, "42", data.CreateContentFromYouTube.Content.ID)
+	assert.Equal(t, "Amazing Video", data.CreateContentFromYouTube.Content.Name)
+	assert.Equal(t, "YOUTUBE", data.CreateContentFromYouTube.Content.ContentType)
+	assert.False(t, data.CreateContentFromYouTube.AlreadyExisted)
 }
 
 func TestCreateContentFromYouTube_AlreadyExists(t *testing.T) {
-	existingURL := "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+	canonicalURL := "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+	existing := &domain.Content{ID: 1, Name: "Existing Video", URL: &canonicalURL, ContentType: domain.ContentTypeYouTube}
 	repo := &mockContentRepository{
 		getByURLFn: func(ctx context.Context, url string) (*domain.Content, error) {
-			return &domain.Content{ID: 1, URL: &existingURL}, nil
+			// The canonical URL is found — service returns existing content + ErrAlreadyExists
+			return existing, nil
 		},
 	}
 
+	// extractVideoIDFn default returns "dQw4w9WgXcQ" (see mockYouTubeClient default)
 	server := setupTestServer(repo, &mockYouTubeClient{})
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", userId: 1 }) { id } }`)
+	// Duplicate submission returns success (not an error) with alreadyExisted=true (VIDEO-05)
+	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", userId: 1 }) { content { id } alreadyExisted } }`)
 
-	require.NotEmpty(t, result.Errors)
-	assert.Contains(t, result.Errors[0].Message, "content already exists")
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		CreateContentFromYouTube struct {
+			Content struct {
+				ID string `json:"id"`
+			} `json:"content"`
+			AlreadyExisted bool `json:"alreadyExisted"`
+		} `json:"createContentFromYouTube"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+
+	assert.Equal(t, "1", data.CreateContentFromYouTube.Content.ID)
+	assert.True(t, data.CreateContentFromYouTube.AlreadyExisted)
 }
 
 func TestCreateContentFromYouTube_InvalidURL(t *testing.T) {
@@ -414,7 +495,7 @@ func TestCreateContentFromYouTube_InvalidURL(t *testing.T) {
 	server := setupTestServer(repo, ytClient)
 	defer server.Close()
 
-	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "not-a-youtube-url", userId: 1 }) { id } }`)
+	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "not-a-youtube-url", userId: 1 }) { content { id } alreadyExisted } }`)
 
 	require.NotEmpty(t, result.Errors)
 	assert.Contains(t, result.Errors[0].Message, "invalid YouTube URL")

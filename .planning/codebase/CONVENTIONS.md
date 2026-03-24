@@ -1,414 +1,293 @@
 # Coding Conventions
 
-**Analysis Date:** 2026-02-13
+**Analysis Date:** 2026-02-16
 
 ## Naming Patterns
 
-**Go Files:**
-- Package-level descriptors: `*_repository.go`, `*_service.go`, `*_resolver.go`, `*_test.go`
-- Example: `user_repository.go`, `content_service.go`, `gorm_models.go`, `gorm_content_repository.go`
-- Domain models: single nouns — `user.go`, `content.go`, `perspective.go`, `errors.go`
+**Files (Backend Go):**
+- Package-level: `{domain|service|repository}_{entity}.go` (e.g., `content_service.go`, `user_repository.go`)
+- Repository implementations: `gorm_{entity}_repository.go` (e.g., `gorm_user_repository.go`)
+- Mapper files: `gorm_mappers.go`, `gorm_models.go`
+- Test files: `{source}_test.go` (e.g., `content_service_test.go`)
+- Helper files: `helpers.go` for shared utilities
 
-**Go Functions/Methods:**
-- PascalCase for exported functions: `NewUserService()`, `Create()`, `GetByID()`, `ListAll()`
-- Descriptive verb-noun pattern: `CreateFromYouTube()`, `GetByUsername()`, `List()`
-- Receiver variable single lowercase letter: `func (s *UserService)`, `func (r *GormContentRepository)`
-- Repository initializers prefix type: `NewGormUserRepository()`, `NewGormContentRepository()`
+**Files (Frontend TypeScript/Svelte):**
+- Components: PascalCase with `.svelte` extension (e.g., `ActivityTable.svelte`, `Header.svelte`)
+- Utilities: camelCase with `.ts` extension (e.g., `formatting.ts`, `youtube.ts`)
+- Queries: camelCase with `.ts` extension (e.g., `content.ts`, `users.ts`)
+- Stores: camelCase with `.svelte.ts` extension (e.g., `userSelection.svelte.ts`)
+- Test files: `{source}.test.ts`
 
-**Go Types/Interfaces:**
-- PascalCase: `User`, `UserService`, `UserRepository`, `GormContentRepository`
-- Interface names do not end in "Interface" — use bare name: `ContentRepository`, `UserService`
-- Compile-time interface checks with underscore: `var _ repositories.ContentRepository = (*GormContentRepository)(nil)`
-- Model types for GORM: `UserModel`, `ContentModel`, `PerspectiveModel` (append Model suffix)
+**Functions (Go):**
+- CamelCase, exported functions start with capital letter
+- Constructor pattern: `New{TypeName}` (e.g., `NewContentService`, `NewGormUserRepository`)
+- Receiver methods follow interface contract names
+- Private functions: lowercase (e.g., `userDomainToModel`, `encodeCursor`)
 
-**Go Variables:**
-- camelCase for package vars: `emailRegex`, `STORAGE_KEY`
-- Struct field names PascalCase: `Username`, `CreatedAt`, `MaxOpenConns`
-- Short receiver names: `r`, `s`, `ctx` (context always abbreviated as `ctx`)
-- Abbreviated but clear: `db`, `repo`, `err`
-- Domain error constants UPPERCASE: `ErrNotFound`, `ErrAlreadyExists`, `ErrInvalidInput`
+**Functions (TypeScript/Svelte):**
+- camelCase for all functions
+- Export utility functions explicitly
+- Component event handlers: `on{EventName}` (e.g., `onclick` in Svelte 5)
 
-**TypeScript/Svelte Files:**
-- Components: PascalCase `.svelte` files: `AddVideoDialog.svelte`, `Header.svelte`, `UserSelector.svelte`
-- Query definitions: UPPERCASE_WITH_UNDERSCORE: `LIST_CONTENT`, `GET_CONTENT`, `CREATE_CONTENT_FROM_YOUTUBE`
-- Utility functions: camelCase: `validateYouTubeUrl()`, `cn()`, `getSelectedUserId()`, `setSelectedUserId()`
-- Store functions: camelCase with clear intent: `loadFromSession()`, `syncToSession()`, `clearUserSelection()`
-- Type interfaces: PascalCase: `ContentItem`, `ContentResponse`, `CreateUserInput`
-- Event handlers: camelCase with handle prefix or direct: `handleSubmit()`, `onclick={handler}`
+**Variables:**
+- Go: camelCase, interface types descriptive (e.g., `repo repositories.ContentRepository`)
+- TypeScript: camelCase for let/const, UPPERCASE for constants
+- Svelte 5 state: `let value = $state(initial)` pattern
 
-**Environment Variables:**
-- UPPERCASE_WITH_UNDERSCORES: `DATABASE_URL`, `YOUTUBE_API_KEY`, `APP_ENV`, `VITE_GRAPHQL_URL`
-- Database pool config: `DB_MAX_OPEN_CONNS`, `DB_MAX_IDLE_CONNS`, `DB_CONN_MAX_LIFETIME`
-- Storage keys: snake_case with namespace: `perspectize:selectedUserId`
+**Types:**
+- Go: PascalCase (exported), interfaces in `ports/` packages
+- Go enums: UPPERCASE constants (e.g., `ContentTypeYouTube = "YOUTUBE"`)
+- TypeScript: PascalCase interfaces and types
+
+**Packages/Modules:**
+- Go: lowercase, single-word or compound (e.g., `services`, `repositories`, `domain`)
+- TypeScript paths: `$lib/{feature}/{type}` (e.g., `$lib/queries/content`, `$lib/components/Header`)
 
 ## Code Style
 
-**Go Formatting:**
-- Tool: `go fmt` (built-in, enforced)
-- Run: `make fmt`
-- Indentation: tabs (Go standard)
-- Imports organized in three groups:
-  1. Standard library
-  2. Third-party packages
-  3. Local project imports
-- Line length: no strict limit but prefer readable wrapping
+**Formatting:**
 
-**Go Linting:**
-- Tool: `golangci-lint`
-- Run: `make lint`
-- Configuration: uses default ruleset (no config file checked in)
-- Pre-commit hooks available via `make install-hooks`
+Go:
+- Enforced by `go fmt` (standard)
+- Line length: no hard limit, readability-driven
+- Imports organized: stdlib > third-party > internal
 
-**TypeScript/Svelte Formatting:**
-- No explicit Prettier/ESLint config — project uses IDE defaults
-- Indentation: 2 spaces (SvelteKit standard)
-- Max line length: soft limit 120 characters
+TypeScript/Svelte:
+- No explicit formatter config (no `.prettierrc`)
+- Code follows consistent spacing patterns
+- svelte-check used during development (`npm run check`)
 
-**Svelte 5 Runes (MANDATORY):**
-- State: `let items = $state<Item[]>([])`
-- Derived values: `let total = $derived(items.length)` (never use `$effect` for derivation)
-- Props with defaults: `let { optional = 'default', required } = $props()`
-- Bindable props: `let { open = $bindable(false) } = $props()`
-- Side effects only: `$effect(() => { ... })` for DOM updates, subscriptions
-- Event handlers: `onclick={handler}` not `on:click={handler}`
-- Render children via snippet: `{@render children()}` not `<slot />`
+**Linting:**
 
-**GraphQL Query Organization:**
-- Define in separate resource files: `lib/queries/content.ts`, `lib/queries/users.ts`
-- Use `gql` tagged template literals
-- Export query/mutation definitions as named UPPERCASE constants
-- Export TypeScript interfaces alongside queries: `ContentItem`, `ContentResponse`
+Go:
+- No explicit linting tool configured in Makefile
+- Code follows standard Go conventions
+
+TypeScript/Svelte:
+- No ESLint/Prettier configured
+- Tests via `vitest` (in `package.json`)
+- svelte-check validates during `npm run check`
+
+**Comments:**
+- Explain "why" not "what"
+- JSDoc/TSDoc for exported functions (e.g., `/** Format ISO date string to locale string. */`)
+- Resolver comments document field purposes
+- Single-line comments for inline logic
 
 ## Import Organization
 
-**Go:**
-1. Standard library (`fmt`, `context`, `errors`)
-2. External packages (`github.com/*`, `gorm.io/*`)
-3. Local imports (`github.com/CodeWarrior-debug/perspectize/backend/*`)
+**Order (Go):**
+1. Standard library (`context`, `errors`, `fmt`, etc.)
+2. Third-party packages (`gorm.io`, `github.com/...`)
+3. Internal packages (full module path)
 
 Example from `content_service.go`:
 ```go
 import (
-	"context"
-	"errors"
-	"fmt"
+    "context"
+    "errors"
+    "fmt"
 
-	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
-	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/repositories"
-	portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
+    "github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
+    "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/repositories"
+    portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
 )
 ```
 
-**TypeScript/Svelte:**
-1. Framework imports: `svelte/*`, `$app/*`
-2. External packages: `@tanstack/svelte-query`, `graphql-request`
-3. Local imports: `$lib/*`
-4. Type imports: `import type { Type } from '...'`
+**Path Aliases (TypeScript):**
+- `$lib` → `src/lib/` (SvelteKit built-in)
+- No additional custom aliases
+- Imports: `import { ActivityTable } from '$lib/components/ActivityTable.svelte'`
 
-Example from `AddVideoDialog.svelte`:
-```svelte
-import { createMutation, useQueryClient } from '@tanstack/svelte-query';
-import { toast } from 'svelte-sonner';
-import { Dialog, DialogContent, /* ... */ } from '$lib/components/shadcn';
-import { graphqlClient } from '$lib/queries/client';
-import { CREATE_CONTENT_FROM_YOUTUBE } from '$lib/queries/content';
-import { validateYouTubeUrl } from '$lib/utils/youtube';
-```
-
-**Path Aliases:**
-- Go: Full explicit paths `github.com/CodeWarrior-debug/perspectize/backend/*`
-- TypeScript: `$lib/` for `frontend/src/lib`, `$app/` for SvelteKit internals
+**Order (TypeScript/Svelte):**
+1. Built-in/runtime imports (Svelte, SvelteKit)
+2. Third-party packages (TanStack Query, graphql-request)
+3. Local imports (components, queries, utilities)
 
 ## Error Handling
 
-**Go Domain Errors:**
-- Define as package variables in `core/domain/errors.go`
-- Examples: `var ErrNotFound = errors.New("resource not found")`
-- Use sentinel errors for specific cases: `ErrAlreadyExists`, `ErrInvalidInput`, `ErrInvalidURL`, `ErrYouTubeAPI`, `ErrInvalidRating`, `ErrDuplicateClaim`
-- Wrap with context: `fmt.Errorf("failed to create user: %w", err)`
-- Check via `errors.Is()`: `if errors.Is(err, domain.ErrNotFound) { ... }`
+**Go Pattern:**
 
-Example from `user_service.go`:
+Domain errors in `internal/core/domain/errors.go`:
 ```go
-if err == nil && existing != nil {
-    return nil, fmt.Errorf("%w: username already taken", domain.ErrAlreadyExists)
-}
-if err != nil && !errors.Is(err, domain.ErrNotFound) {
-    return nil, fmt.Errorf("failed to check username: %w", err)
-}
+var (
+    ErrNotFound       = errors.New("resource not found")
+    ErrAlreadyExists  = errors.New("resource already exists")
+    ErrInvalidInput   = errors.New("invalid input")
+    ErrInvalidURL     = errors.New("invalid URL")
+)
 ```
 
-**Go Repository Errors:**
-- Convert GORM errors to domain errors: `if errors.Is(err, gorm.ErrRecordNotFound) { return nil, domain.ErrNotFound }`
-- Wrap all database errors with context: `fmt.Errorf("failed to get content by id: %w", err)`
-
-Example from `gorm_content_repository.go`:
+Service layer wraps with context:
 ```go
-err := r.db.WithContext(ctx).First(&model, id).Error
-if err != nil {
-    if errors.Is(err, gorm.ErrRecordNotFound) {
-        return nil, domain.ErrNotFound
+func (s *ContentService) GetByID(ctx context.Context, id int) (*domain.Content, error) {
+    if id <= 0 {
+        return nil, fmt.Errorf("%w: content id must be positive", domain.ErrInvalidInput)
     }
-    return nil, fmt.Errorf("failed to get content by id: %w", err)
+    content, err := s.repo.GetByID(ctx, id)
+    if err != nil {
+        return nil, fmt.Errorf("failed to get content: %w", err)
+    }
+    return content, nil
 }
 ```
 
-**Go Resolver Errors:**
-- Translate domain errors to GraphQL error messages
-- Log via `slog.Error()` for unexpected errors
-- Return generic message to client for security
-
-Example from `schema.resolvers.go`:
+Repository translates database errors:
 ```go
-if errors.Is(err, domain.ErrAlreadyExists) {
-    return nil, fmt.Errorf("content already exists for this URL")
+func (r *GormUserRepository) GetByID(ctx context.Context, id int) (*domain.User, error) {
+    var model UserModel
+    err := r.db.WithContext(ctx).First(&model, id).Error
+    if err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            return nil, domain.ErrNotFound
+        }
+        return nil, err
+    }
+    return userModelToDomain(&model), nil
 }
-if errors.Is(err, domain.ErrInvalidURL) {
-    return nil, fmt.Errorf("invalid YouTube URL")
-}
-slog.Error("creating content failed", "error", err)
-return nil, fmt.Errorf("failed to create content")
 ```
 
-**Svelte Error Handling:**
-- Mutation error callbacks via TanStack Query: `onError: (err: Error) => { ... }`
-- Parse error message for user-facing display
-- Toast notifications for user feedback via `svelte-sonner`
+Resolver translates to GraphQL errors:
+```go
+func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input model.CreateContentFromYouTubeInput) (*model.Content, error) {
+    content, err := r.ContentService.CreateFromYouTube(ctx, input.URL, input.UserID)
+    if err != nil {
+        if errors.Is(err, domain.ErrAlreadyExists) {
+            return nil, fmt.Errorf("content already exists for this URL")
+        }
+        slog.Error("creating content failed", "error", err, "url", input.URL)
+        return nil, fmt.Errorf("failed to create content")
+    }
+    return domainToModel(content), nil
+}
+```
 
-Example from `AddVideoDialog.svelte`:
+**TypeScript Pattern:**
+
+Errors via try-catch or TanStack Query state:
 ```typescript
-onError: (err: Error) => {
-    const message = err.message.toLowerCase();
-    if (message.includes('already exists')) {
-        toast.error('This video has already been added');
-    } else if (message.includes('invalid youtube url')) {
-        toast.error('Invalid YouTube URL or video not found');
-    } else {
-        toast.error('Failed to add video. Please try again.');
-    }
+if (query.isError) {
+    // Handle error
 }
 ```
 
 ## Logging
 
-**Go Framework:** `log/slog` (structured logging)
+**Framework:** Go uses `log/slog` (structured logging)
 
-**Patterns:**
-- Info level for startup/lifecycle: `slog.Info("server running", "addr", addr)`
-- Warn level for configuration issues: `slog.Warn(".env file not found", "hint", "set APP_ENV=production to suppress")`
-- Error level for actual errors: `slog.Error("shutdown failed", "error", err)`
-- Use key-value pairs for context: `"host", cfg.Database.Host, "port", cfg.Database.Port`
-- Mask credentials in output (avoid logging DATABASE_URL values directly)
-- Check examples in `cmd/server/main.go` for lifecycle logging pattern
-
-**Svelte:** `console.error()` for development, `toast` notifications for user messages
-
-## Comments
-
-**When to Comment:**
-- Explain non-obvious decisions, not obvious code
-- Document why not what — code should be self-describing
-- Mark temporary explanatory comments with `*TEMP*` prefix for easy grep/removal
-
-Example from `cmd/server/main.go`:
+**Pattern:**
 ```go
-// M-06: request logging
-r.Use(middleware.Logger)
-// panic recovery
-r.Use(middleware.Recoverer)
+slog.Error("creating content failed",
+    "error", err,
+    "url", input.URL,
+    "userID", input.UserID)
+
+slog.Warn("failed to parse response JSON",
+    "contentID", c.ID,
+    "error", err)
 ```
 
-**Avoid:**
-- Narrating what code does: "this function creates a user" (function name says this)
-- Comments that duplicate code: `db.Close() // close database` (obvious from name)
+**When to log:**
+- Errors at resolver level (post domain/service)
+- Warnings when data parsing fails but operation continues
 
-**Function/Type Documentation:**
-- Go requires doc comments for exported functions/types starting with the name
-- Example: `// NewUserService creates a new user service`
+TypeScript:
+- No structured logging
+- Frontend errors via TanStack Query error states or toast notifications
 
 ## Function Design
 
-**Size:**
-- Aim for single responsibility
-- Example: `validateYouTubeUrl()` — only validates, doesn't fetch or create
-- Go typical: 20-50 lines for clarity
-- Svelte components: 50-200 lines
+**Size (Go):**
+- Service methods: 15-50 lines
+- Repository methods: 10-30 lines
+- Resolvers: 20-40 lines (includes error handling)
 
 **Parameters:**
-- Go: Context first (for cancellation/timeout): `func (s *Service) GetByID(ctx context.Context, id int)`
-- Go: Pointer receivers for methods that modify state
-- Go: Input structs for multiple parameters: `func List(ctx context.Context, params domain.ContentListParams)`
-- TypeScript: Destructure props: `let { optional = 'default', required } = $props()`
+- Go: Receiver methods, context first param, domain entities as input
+- Validation early with specific error wrapping
+- Slices for lists, pointers for optional values
 
 **Return Values:**
-- Go: Multiple returns with error last: `(*domain.User, error)`
-- Go: Use domain types for return values (not GORM models)
-- TypeScript: Null/optional via union: `Promise<ContentResponse | null>`
+- Go: `(T, error)` pattern exclusively
+- Domain model conversion in mappers, not method returns
 
-**Interface Compliance:**
-- Use compile-time check: `var _ repositories.ContentRepository = (*GormContentRepository)(nil)`
-- All interface methods must be implemented or Go compiler will fail
+**Svelte Components:**
+- Use `let { prop } = $props()` for inputs
+- Reactivity via `$state`, `$derived`, `$effect`
+- Event handlers via `onchange={}`, `onclick={}` attributes
 
 ## Module Design
 
-**Go Exports:**
-- Package-level factory functions with `New` prefix: `NewUserService()`, `NewGormContentRepository()`
-- Explicit interface definitions in `ports/` — all implementations implement these interfaces
-- Unexported types/functions by default, export only for cross-package use
+**Exports (Go):**
+- Constructors: `New{Type}(...) *{Type}`
+- Methods on exported types implementing service/repository interfaces
+- Private helpers: lowercase
 
-**TypeScript Exports:**
-- Named exports for functions/types: `export function cn(...)`, `export interface ContentItem`
-- Barrel files for shadcn components: `lib/components/shadcn/index.ts` re-exports all primitives
-- Query definitions as named exports: `export const LIST_CONTENT = gql`...``
+**Exports (TypeScript):**
+- Named exports: `export function {name}() {}`
+- Barrel files sparingly (shadcn components have `index.ts`)
+- Components default exported
 
-**Barrel Files:**
-- Location: `src/lib/components/shadcn/index.ts`
-- Pattern: `export { default as Button } from './button'`
-- Enable concise imports: `import { Button } from '$lib/components/shadcn'`
+**Interfaces:**
+- Defined in `internal/core/ports/`
+- Compile-time check: `var _ Interface = (*ConcreteType)(nil)`
+- Decouple adapters from domain
 
-## Dependency Injection
+**Domain Models (Go):**
+- Pure Go structs, no external dependencies
+- In `internal/core/domain/`
+- Converted via mappers (`gorm_mappers.go`)
+- Ensures domain purity and testability
 
-**Go Pattern:**
-- Constructor injection via factory functions: `NewUserService(repo UserRepository)`
-- All dependencies are interfaces from `ports/`, not concrete types (enables testing/mocking)
-- Wiring happens in `cmd/server/main.go`
+## Specific Patterns
 
-Example from `main.go`:
+**GraphQL Enum Handling (REQUIRED):**
+Use gqlgen model binding; never switch statements:
 ```go
-userRepo := postgres.NewGormUserRepository(db)
-userService := services.NewUserService(userRepo)
-resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
+type ContentType string
+const ContentTypeYouTube ContentType = "YOUTUBE"
 ```
 
-**Svelte Pattern:**
-- Props for component composition
-- Store functions for shared state: `getSelectedUserId()`, `setSelectedUserId(value)`, `clearUserSelection()`
-- TanStack Query client via `useQueryClient()` in mutation callbacks
-
-## Database Naming Conventions
-
-**Table Names:** snake_case, lowercase: `users`, `content`, `perspectives`
-
-**Column Names:** snake_case, lowercase: `user_id`, `created_at`, `view_count`, `length_seconds`
-
-**GORM Model Tags:**
-- Use `gorm:` tags for database mapping: `gorm:"column:user_id"`, `gorm:"primaryKey"`
-- Domain models in `core/domain/` have NO ORM tags — only GORM models in adapters do
-
-Example from `gorm_models.go`:
-```go
-type UserModel struct {
-    ID        int       `gorm:"primaryKey"`
-    Username  string    `gorm:"uniqueIndex"`
-    Email     string    `gorm:"uniqueIndex"`
-    CreatedAt time.Time `gorm:"autoCreateTime"`
-}
+Bind in `gqlgen.yml`:
+```yaml
+models:
+  ContentType:
+    model:
+      - github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain.ContentType
 ```
 
-**Mappers Pattern:**
-- Bidirectional conversion functions: `userDomainToModel()` and `userModelToDomain()`
-- Located in `gorm_mappers.go` alongside domain models
-- Keep domain models pure, use mappers for ORM-specific conversions
+**ID Handling:**
+- Top-level query/mutation IDs: `string` type, convert via `strconv.Atoi` in resolver
+- Filter/input field IDs: use `IntID` scalar (`pkg/graphql/intid.go`)
 
-## Pagination Patterns
+**Repository Pagination (Go):**
+- Cursor-based with opaque base64 (`cursor:{id}`)
+- Fetch `limit+1` to determine `hasNextPage`
+- Helpers in `helpers.go`: `encodeCursor`, `decodeCursor`
+- Whitelist sort columns (prevents SQL injection)
 
-**Go Repository:**
-- Cursor-based pagination with base64 encoding
-- Helper functions: `encodeCursor(id)`, `decodeCursor(cursor)`
-- Fetch `limit + 1` to detect `hasNextPage`
-- Keyset pagination: `WHERE id > cursor` (not OFFSET)
+**GORM Patterns:**
+- Domain models: `core/domain/`
+- GORM models: `adapters/repositories/postgres/gorm_models.go`
+- Mappers: bidirectional conversion
+- `gorm.ErrRecordNotFound` → domain errors at repository
+- Context via `db.WithContext(ctx)` for all queries
 
-Example from `gorm_content_repository.go`:
-```go
-if params.After != nil {
-    cursorID, err := decodeCursor(*params.After)
-    if dir == "DESC" {
-        query = query.Where("id < ?", cursorID)
-    } else {
-        query = query.Where("id > ?", cursorID)
-    }
-}
-// Fetch limit+1 for hasNextPage detection
-query = query.Limit(limit + 1)
-```
+**TanStack Query (Frontend):**
+- Query functions return data or throw
+- Keys in `lib/queries/keys.ts`
+- Svelte 5: result is reactive object (access as `query.data`, not `$query.data`)
+- Function wrapper: `createQuery(() => ({ ... }))`
 
-**Domain Pagination Types:**
-- `PaginatedContent` contains `Items`, `HasNext`, `HasPrev`, `TotalCount`, `StartCursor`, `EndCursor`
-- `ContentListParams` contains filter, sort, pagination parameters
-- GORM handles pagination, domain models represent results
-
-**GraphQL Types:** `pageInfo` object with `hasNextPage`, `hasPreviousPage`, `startCursor`, `endCursor`, and optional `totalCount`
-
-## Svelte 5 Component Patterns
-
-**Props Binding:**
-- Use `$bindable()` for two-way binding: `let { open = $bindable(false) } = $props()`
-- Read-only props without `$bindable`: `let { data } = $props()`
-- Provide default values in destructuring
-
-Example from `AddVideoDialog.svelte`:
-```svelte
-let { open = $bindable(false) } = $props();
-let url = $state('');
-let error = $state('');
-
-$effect(() => {
-    if (open) {
-        url = '';
-        error = '';
-    }
-});
-```
-
-**Form Handling:**
-- Inline form submission: `onsubmit={handleSubmit}`
-- Input binding: `bind:value={url}`
-- Disabled state via query mutation status: `disabled={mutation.isPending}`
-
-**TanStack Query Mutations:**
-- Function wrapper pattern: `createMutation(() => ({ ... }))`
-- Success callback for cache invalidation: `queryClient.invalidateQueries({ queryKey: ['content'] })`
-- Error callback for error messages via toast notifications
-- Reactive mutation state: `mutation.isPending`, `mutation.error`, `mutation.data`
-
-**TanStack Query Queries:**
-- Function wrapper pattern for reactivity: `createQuery(() => ({ queryKey: ['key'], queryFn: () => ... }))`
-- Access as reactive object properties: `query.data`, `query.isLoading`, `query.error` (no `$` prefix)
-- Never pass options directly; wrap in function for Svelte 5 reactivity
-
-## GORM Patterns (Phase 7.1 ORM Migration)
-
-**Model Structure:**
-- GORM models in `adapters/repositories/postgres/gorm_models.go`
-- Domain models in `core/domain/` (pure Go, no ORM tags)
-- Mappers for bidirectional conversion in `gorm_mappers.go`
-
-**Repository Pattern:**
-- Implements interface from `core/ports/repositories/`
-- Compile-time check: `var _ repositories.ContentRepository = (*GormContentRepository)(nil)`
-- Use GORM method chaining for dynamic queries
-- Context propagation: `r.db.WithContext(ctx)`
-
-Example from `gorm_content_repository.go`:
-```go
-func (r *GormContentRepository) GetByID(ctx context.Context, id int) (*domain.Content, error) {
-	var model ContentModel
-	err := r.db.WithContext(ctx).First(&model, id).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, domain.ErrNotFound
-		}
-		return nil, fmt.Errorf("failed to get content by id: %w", err)
-	}
-	return contentModelToDomain(&model), nil
-}
-```
-
-**Filter Application:**
-- Build queries conditionally via GORM chaining
-- Never pass user input directly to `Where()` — use parameterized queries
-- Example: `query.Where("length >= ?", *params.Filter.MinLengthSeconds)`
+**Svelte 5 Patterns (REQUIRED):**
+- `let value = $state(initial)` for state
+- `let derived = $derived(computed)` for reactive values
+- `let { prop } = $props()` for props
+- `$effect(() => { ... })` for side effects
+- Event handlers: `on{EventName}` attribute (e.g., `onchange`, `onclick`)
+- Slot rendering: `{@render children()}` with `let { children } = $props()`
+- Never use Svelte 4: no `<slot/>`, no `$:` reactivity, no `export let`
 
 ---
 
-*Convention analysis: 2026-02-13*
+*Convention analysis: 2026-02-16*

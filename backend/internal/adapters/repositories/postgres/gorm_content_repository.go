@@ -10,6 +10,7 @@ import (
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/repositories"
 	paginator "github.com/pilagod/gorm-cursor-paginator/v2/paginator"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // GormContentRepository implements the ContentRepository interface using GORM
@@ -64,6 +65,45 @@ func (r *GormContentRepository) GetByURL(ctx context.Context, url string) (*doma
 	return contentModelToDomain(&model), nil
 }
 
+// GetOrCreateByURL atomically inserts content or returns existing content matching the URL.
+// When refreshOnConflict is true, updates response and updated_at on conflict (refreshes metadata).
+// When refreshOnConflict is false, does nothing on conflict (preserves original data).
+// Returns (content, alreadyExisted, error).
+func (r *GormContentRepository) GetOrCreateByURL(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error) {
+	model := contentDomainToModel(content)
+
+	conflictClause := clause.OnConflict{
+		Columns: []clause.Column{{Name: "url"}},
+	}
+	if refreshOnConflict {
+		conflictClause.DoUpdates = clause.AssignmentColumns([]string{"response", "updated_at"})
+	} else {
+		conflictClause.DoNothing = true
+	}
+
+	result := r.db.WithContext(ctx).Clauses(conflictClause).Create(model)
+
+	if result.Error != nil {
+		return nil, false, fmt.Errorf("failed to upsert content: %w", result.Error)
+	}
+
+	// If RowsAffected == 0, the row already existed — fetch it by URL
+	if result.RowsAffected == 0 {
+		existing, err := r.GetByURL(ctx, *content.URL)
+		if err != nil {
+			return nil, false, fmt.Errorf("failed to fetch existing content after conflict: %w", err)
+		}
+		return existing, true, nil
+	}
+
+	// Freshly created — re-fetch to get DB-generated timestamps
+	fresh, err := r.GetByID(ctx, model.ID)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to fetch created content: %w", err)
+	}
+	return fresh, false, nil
+}
+
 // List retrieves a paginated list of content using cursor-based pagination
 func (r *GormContentRepository) List(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
 	limit := 10
@@ -101,6 +141,52 @@ func (r *GormContentRepository) List(ctx context.Context, params domain.ContentL
 		}
 		if params.Filter.Search != nil && *params.Filter.Search != "" {
 			query = query.Where("name ILIKE ?", "%"+*params.Filter.Search+"%")
+		}
+		// View count filters (JSONB extraction)
+		if params.Filter.MinViewCount != nil {
+			query = query.Where("(response->'items'->0->'statistics'->>'viewCount')::BIGINT >= ?", *params.Filter.MinViewCount)
+		}
+		if params.Filter.MaxViewCount != nil {
+			query = query.Where("(response->'items'->0->'statistics'->>'viewCount')::BIGINT <= ?", *params.Filter.MaxViewCount)
+		}
+		// Like count filters (JSONB extraction)
+		if params.Filter.MinLikeCount != nil {
+			query = query.Where("(response->'items'->0->'statistics'->>'likeCount')::BIGINT >= ?", *params.Filter.MinLikeCount)
+		}
+		if params.Filter.MaxLikeCount != nil {
+			query = query.Where("(response->'items'->0->'statistics'->>'likeCount')::BIGINT <= ?", *params.Filter.MaxLikeCount)
+		}
+		// Published date filters (JSONB extraction, ISO 8601 string comparison)
+		if params.Filter.PublishedAfter != nil {
+			query = query.Where("response->'items'->0->'snippet'->>'publishedAt' >= ?", *params.Filter.PublishedAfter)
+		}
+		if params.Filter.PublishedBefore != nil {
+			query = query.Where("response->'items'->0->'snippet'->>'publishedAt' <= ?", *params.Filter.PublishedBefore)
+		}
+		// Channel title filter (JSONB extraction + ILIKE)
+		if params.Filter.ChannelTitle != nil && *params.Filter.ChannelTitle != "" {
+			query = query.Where("response->'items'->0->'snippet'->>'channelTitle' ILIKE ?", "%"+*params.Filter.ChannelTitle+"%")
+		}
+		// Tag contains filter (JSONB array cast to text for ILIKE search)
+		if params.Filter.TagContains != nil && *params.Filter.TagContains != "" {
+			query = query.Where("(response->'items'->0->'snippet'->'tags')::text ILIKE ?", "%"+*params.Filter.TagContains+"%")
+		}
+		// Description search (JSONB extraction + ILIKE)
+		if params.Filter.DescriptionSearch != nil && *params.Filter.DescriptionSearch != "" {
+			query = query.Where("response->'items'->0->'snippet'->>'description' ILIKE ?", "%"+*params.Filter.DescriptionSearch+"%")
+		}
+		// Created/Updated date filters (direct columns)
+		if params.Filter.CreatedAfter != nil {
+			query = query.Where("created_at >= ?", *params.Filter.CreatedAfter)
+		}
+		if params.Filter.CreatedBefore != nil {
+			query = query.Where("created_at <= ?", *params.Filter.CreatedBefore)
+		}
+		if params.Filter.UpdatedAfter != nil {
+			query = query.Where("updated_at >= ?", *params.Filter.UpdatedAfter)
+		}
+		if params.Filter.UpdatedBefore != nil {
+			query = query.Where("updated_at <= ?", *params.Filter.UpdatedBefore)
 		}
 	}
 

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 26">
+  <defs>
+    <linearGradient id="catEye-fill" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0%" stop-color="var(--glasses-fill-start, #9F7AEA)" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="var(--glasses-fill-end, #44337A)" stop-opacity="0.88"/>
+    </linearGradient>
+  </defs>
+  <path d="M3 7 L5 4 L28 5 Q32 5 32 9 L31 16 Q30 20 26 20 L10 20 Q6 20 5 16 L3 9 Z" fill="url(#catEye-fill)" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+  <path d="M69 7 L67 4 L44 5 Q40 5 40 9 L41 16 Q42 20 46 20 L62 20 Q66 20 67 16 L69 9 Z" fill="url(#catEye-fill)" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+  <path d="M32 8 Q36 6 40 8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+  <line x1="3" y1="8" x2="0" y2="5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+  <line x1="69" y1="8" x2="72" y2="5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+</svg>

@@ -58,13 +58,16 @@
 	let nextId = rowData.length + 1;
 
 	function addRow() {
-		rowData = [...rowData, {
-			id: nextId++,
-			title: `New Video ${nextId - 1}`,
-			duration: '10:00',
-			rating: 80,
-			published: new Date().toISOString().split('T')[0],
-		}];
+		rowData = [
+			...rowData,
+			{
+				id: nextId++,
+				title: `New Video ${nextId - 1}`,
+				duration: '10:00',
+				rating: 80,
+				published: new Date().toISOString().split('T')[0],
+			},
+		];
 	}
 </script>
 

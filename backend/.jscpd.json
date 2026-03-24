@@ -1,0 +1,12 @@
+{
+  "threshold": 0,
+  "reporters": ["html", "console"],
+  "output": "coverage/duplication",
+  "pattern": "**/*.go",
+  "ignore": ["vendor/**", "bin/**", "tmp/**"],
+  "minLines": 5,
+  "minTokens": 50,
+  "formatsExts": {
+    "go": ["go"]
+  }
+}

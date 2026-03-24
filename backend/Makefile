@@ -1,4 +1,4 @@
-.PHONY: build run dev test docker-up docker-down clean migrate-up migrate-up-n migrate-down migrate-down-n migrate-create graphql-gen fmt lint test-coverage install-hooks
+.PHONY: build run dev test docker-up docker-down clean migrate-up migrate-up-n migrate-down migrate-down-n migrate-create graphql-gen fmt lint test-coverage test-duplication install-hooks
 
 # Load .env file if it exists
 ifneq (,$(wildcard .env))
@@ -81,10 +81,14 @@ fmt:
 lint:
 	golangci-lint run ./...
 
-# Install git hooks
+# Install git hooks (shared hooks in repo root .hooks/)
 install-hooks:
-	git config core.hooksPath .githooks
-	@echo "Git hooks installed (.githooks/pre-commit)"
+	git config core.hooksPath .hooks
+	@echo "Git hooks installed (.hooks/pre-commit)"
+
+# Test duplication detection (requires jscpd: npm install -g jscpd)
+test-duplication:
+	jscpd .
 
 # Test with coverage report
 test-coverage:

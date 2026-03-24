@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
 	formatDuration,
+	formatDurationSeconds,
+	parseDurationInput,
 	formatDate,
+	formatDateCompact,
 	formatCount,
 	formatCountExact,
 	formatPublishDate,
@@ -12,8 +15,10 @@ import {
 	typeCellRenderer,
 	nameCellRenderer,
 	durationValueGetter,
+	durationFilterValueGetter,
 	dateValueFormatter,
 	contentRowId,
+	headerMinWidth,
 } from '$lib/utils/formatting';
 
 describe('formatDuration', () => {
@@ -90,6 +95,100 @@ describe('durationValueGetter', () => {
 	});
 });
 
+describe('durationFilterValueGetter', () => {
+	it('returns null when data is missing', () => {
+		expect(durationFilterValueGetter({ data: undefined })).toBeNull();
+	});
+
+	it('returns raw seconds for valid data', () => {
+		expect(durationFilterValueGetter({ data: { length: 137 } })).toBe(137);
+	});
+
+	it('returns null for null length', () => {
+		expect(durationFilterValueGetter({ data: { length: null } })).toBeNull();
+	});
+
+	it('returns zero for zero length', () => {
+		expect(durationFilterValueGetter({ data: { length: 0 } })).toBe(0);
+	});
+});
+
+describe('formatDurationSeconds', () => {
+	it('formats seconds as m:ss', () => {
+		expect(formatDurationSeconds(137)).toBe('2:17');
+	});
+
+	it('formats zero seconds', () => {
+		expect(formatDurationSeconds(0)).toBe('0:00');
+	});
+
+	it('formats exact minutes', () => {
+		expect(formatDurationSeconds(300)).toBe('5:00');
+	});
+
+	it('pads single-digit seconds', () => {
+		expect(formatDurationSeconds(65)).toBe('1:05');
+	});
+
+	it('formats large durations', () => {
+		expect(formatDurationSeconds(3661)).toBe('61:01');
+	});
+
+	it('formats sub-minute durations', () => {
+		expect(formatDurationSeconds(45)).toBe('0:45');
+	});
+});
+
+describe('parseDurationInput', () => {
+	it('returns null for null', () => {
+		expect(parseDurationInput(null)).toBeNull();
+	});
+
+	it('returns null for empty string', () => {
+		expect(parseDurationInput('')).toBeNull();
+	});
+
+	it('returns null for whitespace-only', () => {
+		expect(parseDurationInput('   ')).toBeNull();
+	});
+
+	it('parses m:ss format to seconds', () => {
+		expect(parseDurationInput('5:00')).toBe(300);
+	});
+
+	it('parses m:ss with non-zero seconds', () => {
+		expect(parseDurationInput('2:17')).toBe(137);
+	});
+
+	it('parses 0:45 as 45 seconds', () => {
+		expect(parseDurationInput('0:45')).toBe(45);
+	});
+
+	it('parses large minute values', () => {
+		expect(parseDurationInput('61:01')).toBe(3661);
+	});
+
+	it('parses plain number as seconds', () => {
+		expect(parseDurationInput('300')).toBe(300);
+	});
+
+	it('parses plain decimal number', () => {
+		expect(parseDurationInput('45.5')).toBe(45.5);
+	});
+
+	it('returns null for non-numeric input', () => {
+		expect(parseDurationInput('abc')).toBeNull();
+	});
+
+	it('returns null for malformed m:ss', () => {
+		expect(parseDurationInput(':30')).toBeNull();
+	});
+
+	it('trims whitespace before parsing', () => {
+		expect(parseDurationInput(' 5:00 ')).toBe(300);
+	});
+});
+
 describe('dateValueFormatter', () => {
 	it('formats a valid date value', () => {
 		expect(dateValueFormatter({ value: '2026-06-20T12:00:00Z' })).toMatch(/Jun 20, 2026/);
@@ -129,7 +228,7 @@ describe('nameCellRenderer', () => {
 
 	it('returns anchor element when URL is present', () => {
 		const result = nameCellRenderer({
-			data: { name: 'My Video', url: 'https://youtube.com/watch?v=abc' }
+			data: { name: 'My Video', url: 'https://youtube.com/watch?v=abc' },
 		});
 		expect(result).toBeInstanceOf(HTMLAnchorElement);
 		const anchor = result as HTMLAnchorElement;
@@ -142,7 +241,7 @@ describe('nameCellRenderer', () => {
 
 	it('returns span element when URL is null', () => {
 		const result = nameCellRenderer({
-			data: { name: 'No URL Video', url: null }
+			data: { name: 'No URL Video', url: null },
 		});
 		expect(result).toBeInstanceOf(HTMLSpanElement);
 		expect((result as HTMLSpanElement).textContent).toBe('No URL Video');
@@ -150,7 +249,7 @@ describe('nameCellRenderer', () => {
 
 	it('returns span element when URL is empty string', () => {
 		const result = nameCellRenderer({
-			data: { name: 'Empty URL', url: '' as unknown as null }
+			data: { name: 'Empty URL', url: '' as unknown as null },
 		});
 		expect(result).toBeInstanceOf(HTMLSpanElement);
 		expect((result as HTMLSpanElement).textContent).toBe('Empty URL');
@@ -204,6 +303,32 @@ describe('formatCountExact', () => {
 
 	it('formats millions with commas', () => {
 		expect(formatCountExact(1000000)).toBe('1,000,000');
+	});
+});
+
+describe('formatDateCompact', () => {
+	it('returns — for null', () => {
+		expect(formatDateCompact(null)).toBe('—');
+	});
+
+	it('returns — for empty string', () => {
+		expect(formatDateCompact('')).toBe('—');
+	});
+
+	it('returns — for invalid date', () => {
+		expect(formatDateCompact('not-a-date')).toBe('—');
+	});
+
+	it("formats date as MMM 'YY", () => {
+		expect(formatDateCompact('2010-07-18T12:00:00Z')).toBe("Jul '10");
+	});
+
+	it('formats recent date correctly', () => {
+		expect(formatDateCompact('2026-02-14T12:00:00Z')).toBe("Feb '26");
+	});
+
+	it('formats date with single-digit year', () => {
+		expect(formatDateCompact('2005-03-15T12:00:00Z')).toBe("Mar '05");
 	});
 });
 
@@ -299,7 +424,7 @@ describe('itemCellRenderer', () => {
 
 	it('renders container with thumbnail and title link', () => {
 		const result = itemCellRenderer({
-			data: { name: 'My Video', url: 'https://youtube.com/watch?v=abc123' }
+			data: { name: 'My Video', url: 'https://youtube.com/watch?v=abc123' },
 		}) as HTMLElement;
 
 		expect(result).toBeInstanceOf(HTMLDivElement);
@@ -320,7 +445,7 @@ describe('itemCellRenderer', () => {
 
 	it('renders without thumbnail when no video ID', () => {
 		const result = itemCellRenderer({
-			data: { name: 'No URL', url: null }
+			data: { name: 'No URL', url: null },
 		}) as HTMLElement;
 
 		expect(result.querySelector('img')).toBeNull();
@@ -330,7 +455,7 @@ describe('itemCellRenderer', () => {
 
 	it('adds thumbnail-mobile-hide class to thumbnail', () => {
 		const result = itemCellRenderer({
-			data: { name: 'Video with thumbnail', url: 'https://youtube.com/watch?v=test123' }
+			data: { name: 'Video with thumbnail', url: 'https://youtube.com/watch?v=test123' },
 		}) as HTMLElement;
 
 		const img = result.querySelector('img');
@@ -345,7 +470,7 @@ describe('typeCellRenderer', () => {
 
 	it('renders YouTube play icon with full centering', () => {
 		const result = typeCellRenderer({
-			data: { contentType: 'youtube_video' }
+			data: { contentType: 'youtube_video' },
 		}) as HTMLElement;
 
 		expect(result).toBeInstanceOf(HTMLDivElement);
@@ -366,11 +491,62 @@ describe('typeCellRenderer', () => {
 
 	it('includes sr-only span with content type for filter matching', () => {
 		const result = typeCellRenderer({
-			data: { contentType: 'YOUTUBE' }
+			data: { contentType: 'YOUTUBE' },
 		}) as HTMLElement;
 
 		const hidden = result.querySelector('.sr-only');
 		expect(hidden).toBeTruthy();
 		expect(hidden?.textContent).toBe('YOUTUBE');
+	});
+});
+
+describe('headerMinWidth', () => {
+	it('returns a positive integer', () => {
+		const result = headerMinWidth('Type');
+		expect(result).toBeGreaterThan(0);
+		expect(Number.isInteger(result)).toBe(true);
+	});
+
+	it('longer names produce wider minimums', () => {
+		const short = headerMinWidth('Date');
+		const long = headerMinWidth('Description');
+		expect(long).toBeGreaterThan(short);
+	});
+
+	it('filter icon adds width', () => {
+		const withFilter = headerMinWidth('Item', true);
+		const withoutFilter = headerMinWidth('Item', false);
+		expect(withFilter).toBeGreaterThan(withoutFilter);
+	});
+
+	it('defaults hasFilter to true', () => {
+		const defaultCall = headerMinWidth('Type');
+		const explicitTrue = headerMinWidth('Type', true);
+		expect(defaultCall).toBe(explicitTrue);
+	});
+
+	it('empty name still has space for icons and padding', () => {
+		const result = headerMinWidth('');
+		expect(result).toBeGreaterThan(0);
+	});
+
+	it('produces consistent results for known headers', () => {
+		// These are the actual column headers — verify they produce reasonable widths
+		const headers = ['Type', 'Length', 'Views', 'Likes', 'Date', 'Channel', 'Tags'];
+		for (const name of headers) {
+			const width = headerMinWidth(name);
+			// Must be wide enough for text + icons (at least 60px) and not absurdly large
+			expect(width).toBeGreaterThanOrEqual(60);
+			expect(width).toBeLessThanOrEqual(200);
+		}
+	});
+
+	it('width scales linearly with character count', () => {
+		const w4 = headerMinWidth('AAAA');
+		const w8 = headerMinWidth('AAAAAAAA');
+		// 4 extra chars at ~0.55em * 14px = ~30.8px difference
+		const diff = w8 - w4;
+		expect(diff).toBeGreaterThanOrEqual(28);
+		expect(diff).toBeLessThanOrEqual(34);
 	});
 });

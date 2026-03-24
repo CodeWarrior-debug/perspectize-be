@@ -27,10 +27,7 @@ export function validateYouTubeUrl(url: string): boolean {
 		}
 
 		// youtube-nocookie.com — only /embed is valid
-		if (
-			urlObj.hostname === 'youtube-nocookie.com' ||
-			urlObj.hostname.endsWith('.youtube-nocookie.com')
-		) {
+		if (urlObj.hostname === 'youtube-nocookie.com' || urlObj.hostname.endsWith('.youtube-nocookie.com')) {
 			return urlObj.pathname.startsWith('/embed/');
 		}
 

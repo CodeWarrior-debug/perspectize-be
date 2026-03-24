@@ -39,6 +39,10 @@ func (m *mockUserRepository) GetByID(ctx context.Context, id int) (*domain.User,
 	return nil, domain.ErrNotFound
 }
 
+func (m *mockUserRepository) GetByClerkID(ctx context.Context, clerkID string) (*domain.User, error) {
+	return nil, domain.ErrNotFound
+}
+
 func (m *mockUserRepository) GetByUsername(ctx context.Context, username string) (*domain.User, error) {
 	if m.getByUsernameFn != nil {
 		return m.getByUsernameFn(ctx, username)
@@ -74,6 +78,18 @@ func (m *mockUserRepository) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
+func (m *mockUserRepository) CreateFromClerk(ctx context.Context, clerkID string, username string, email string) (*domain.User, error) {
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockUserRepository) UpdateByClerkID(ctx context.Context, clerkID string, username string, email string) error {
+	return domain.ErrNotFound
+}
+
+func (m *mockUserRepository) DeactivateByClerkID(ctx context.Context, clerkID string) error {
+	return domain.ErrNotFound
+}
+
 // mockContentRepoForUser implements repositories.ContentRepository for user tests
 type mockContentRepoForUser struct {
 	reassignByUserFn func(ctx context.Context, fromUserID, toUserID int) error
@@ -87,6 +103,9 @@ func (m *mockContentRepoForUser) GetByID(ctx context.Context, id int) (*domain.C
 }
 func (m *mockContentRepoForUser) GetByURL(ctx context.Context, url string) (*domain.Content, error) {
 	return nil, domain.ErrNotFound
+}
+func (m *mockContentRepoForUser) GetOrCreateByURL(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error) {
+	return content, false, nil
 }
 func (m *mockContentRepoForUser) List(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
 	return &domain.PaginatedContent{Items: []*domain.Content{}}, nil

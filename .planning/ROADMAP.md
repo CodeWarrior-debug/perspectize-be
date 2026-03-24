@@ -18,9 +18,12 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Add Video Flow** - YouTube URL paste, auto-fetch metadata, toast notifications
 - [x] **Phase 3.1: Design Token System** - Implement all 27 Figma color variables, Geist + Charter typography, rating colors in code (INSERTED — rescoped)
 - [x] **Phase 3.2: Activity Page Beta Quality** - Rebuild Activity page to beta quality with server-side ops, new columns, popover dialog, data provenance (INSERTED)
-- [x] **Phase 3.3: Repository Rename & Folder Restructure** - Rename repo to perspectize, backend → backend, fe → fe, update imports and Sevalla (INSERTED)
+- [x] **Phase 3.3: Repository Rename & Folder Restructure** - OBSOLETE — repo already named `perspectize`, folders already `backend/` + `frontend/` (INSERTED)
+- [ ] **Phase 3.4: Perspectize Branding & Glasses Identity** - Glasses motif with 3 shapes, 8-color palette picker, JSONB preferences, avatar display, onboarding (INSERTED)
+- [ ] **Phase 3.5: Google NL Taxonomy Research Spike** - Deep-dive on Google taxonomy depth, traversal, subcategories, ltree mapping, YouTube classification (INSERTED)
 - [ ] **Phase 4: Add Perspective Flow** - TanStack Form with ratings, Like, Review, validation
-- [x] **Phase 5: Testing + Deployment** - Test coverage, CI/CD, hosting, CORS configuration
+- [ ] **Phase 4.1: GraphQL Dataloaders for N+1 Query Prevention** - Batch loading for Perspective→User, Perspective→Content, Content→User nested fields (INSERTED)
+- [x] **Phase 5: Testing + Deployment** - Coverage met, deployed on Sevalla, CORS working (wildcard — restriction deferred to Phase 9)
 
 ## Phase Details
 
@@ -153,12 +156,61 @@ Plans:
 **Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 03.3-01-PLAN.md — GitHub repo rename (checkpoint) + Go module path refactor (imports, gqlgen.yml, tests)
-- [ ] 03.3-02-PLAN.md — Folder rename (git mv) + bulk path updates across CI/CD, CLAUDE.md, docs, planning
-- [ ] 03.3-03-PLAN.md — Deployment config update (checkpoint) + push to GitHub + CI/CD verification
+- [x] 03.3-01-PLAN.md — OBSOLETE (repo already named perspectize, Go module path already correct)
+- [x] 03.3-02-PLAN.md — OBSOLETE (folders already backend/ and frontend/)
+- [x] 03.3-03-PLAN.md — OBSOLETE (Sevalla already deployed with current structure)
+
+### Phase 3.4: Perspectize Branding & Glasses Identity (INSERTED)
+**Goal**: Establish the Perspectize brand identity through the "glasses" motif — a `<GlassesIcon>` Svelte component with 3 shapes (sunglasses, round pince-nez, oval pince-nez), preset color palette picker, user preferences storage (JSONB), and glasses shown in user avatars across the app.
+**Depends on**: Phase 3.3
+**Success Criteria** (what must be TRUE):
+  1. `<GlassesIcon>` Svelte component renders 3 shapes (sunglasses, round pince-nez, oval pince-nez) with 8-color gradient palette
+  2. Preset color palette picker with 8 curated colors (each defines stroke + gradient stops)
+  3. Shape toggle + color swatch picker UI wired to local state with live preview
+  4. User preferences JSONB column in database (`{"glasses": {"shape": "oval", "color": "purple"}}`)
+  5. Go API endpoint to persist/retrieve glasses preferences
+  6. Glasses displayed in user avatars across app (header UserSelector + current user AG Grid rows)
+  7. "Pick your glasses" onboarding flow for first-run setup (skippable)
+  8. ~~Jeeves bot personality brief documented~~ DESCOPED (deferred to future phase)
+  9. ~~Chat UI treatment guidelines defined~~ DESCOPED (deferred to future phase)
+  10. ~~Brand guidelines document created in frontend/docs/~~ DESCOPED (deferred to future phase)
+**Plans**: 4 plans in 3 waves
+
+Plans:
+- [ ] 03.4-01-PLAN.md — Backend: domain types, migration 000012, GORM model/mapper, repository, GraphQL schema/resolver
+- [ ] 03.4-02-PLAN.md — Frontend: GlassesIcon Svelte component with 3 shapes + 8-color palette + types + tests
+- [ ] 03.4-03-PLAN.md — Frontend: GlassesPickerPopover, mutation hook, GQL definition, LIST_USERS preferences field
+- [ ] 03.4-04-PLAN.md — Integration: UserSelector wiring, AG Grid cell renderer, onboarding flow, random defaults, visual checkpoint
+
+**Details:**
+The glasses motif is the core brand element — "perspectives" seen through different lenses. Three shapes with purple gradient palettes (light: #9F7AEA/#44337A, dark: #B794F4/#9F7AEA). SVG reference designs in phase directory. Implementation order: component → picker UI → backend storage → avatar integration → onboarding.
+
+**Cleanup:** Delete the source reference file from Downloads after execution complete.
+
+**Reference:** `.planning/phases/03.4-jeeves-branding-identity/REFERENCE-glasses.md`
+
+### Phase 3.5: Google NL Taxonomy Research Spike (INSERTED)
+**Goal**: Produce implementation-ready taxonomy artifacts -- Postman collection for interactive API exploration, curated category list with ltree paths, SQL seed data, and YouTube category mapping -- to unblock Phase 13 (Content Categories) and Phase 4B (AG Grid grouping)
+**Depends on**: Phase 3.4
+**Plans**: 2 plans in 2 waves
+
+Plans:
+- [ ] 03.5-01-PLAN.md — Postman collection JSON (11 requests) + step-by-step exploration guide
+- [ ] 03.5-02-PLAN.md — Curated category list, ltree seed SQL, YouTube mapping document, user review checkpoint
+
+**Details:**
+Research spike to answer blocking questions before committing to categorization architecture:
+1. **Taxonomy depth:** How many levels does Google NL taxonomy have? (currently only using top-level 20/27)
+2. **Traversal:** How to see all categories at one level, drill deeper, go higher
+3. **Subcategory mapping:** What subcategories exist under top categories like Sports, Arts, etc.?
+4. **ltree fit:** Does the taxonomy hierarchy map cleanly to PostgreSQL ltree paths?
+5. **YouTube mapping:** Can YouTube video metadata (tags, channel, description) reliably map to taxonomy nodes?
+6. **Custom categories:** How do user-created categories coexist with Google taxonomy in the hierarchy?
+
+Cross-phase impact: Unblocks Phase 13 (Content Categories), Phase 14 (AG Grid Power Features), and Phase 4B (perspective display with grouping). See `04-CONTEXT.md` and `13-context.md` for architecture decisions already captured.
 
 ### Phase 4: Add Perspective Flow
-**Goal**: Users can create perspectives on videos with ratings, Like text, and Review text
+**Goal**: Users can create perspectives on videos with ratings, Like, and Review text
 **Depends on**: Phase 3
 **Requirements**: PERSP-01, PERSP-02, PERSP-03, PERSP-04, PERSP-05, PERSP-06, PERSP-07, PERSP-08, PERSP-09, USER-03, TEST-05
 **Success Criteria** (what must be TRUE):
@@ -167,11 +219,34 @@ Plans:
   3. User can enter Like text and Review text (freeform)
   4. User sees validation error toasts before submission if form is invalid
   5. User sees success toast after perspective is created, attributed to selected user
-**Plans**: 2 plans in 2 waves
+**Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 04-01-PLAN.md — Mutation definition, shadcn Progress/Textarea, RatingInput and VideoSelector components with tests
-- [ ] 04-02-PLAN.md — AddPerspectiveDialog with TanStack Form, Header wiring, validation, visual checkpoint
+- [ ] 04-01-PLAN.md — Backend schema migration (perspective refs, claim type), domain/GORM/GraphQL extensions, frontend query definitions + mutation hooks + tests
+- [ ] 04-02-PLAN.md — PerspectivePopover UI, RatingInput component, AG Grid Perspectize column with +/silhouette icons (hover=edit, click=create), visual checkpoint
+- [ ] 04-03-PLAN.md — Claim creation (createClaim mutation, frontend hook, @reference utils, claim trigger in PerspectivePopover)
+
+### Phase 04.1: GraphQL Dataloaders for N+1 Query Prevention (INSERTED)
+
+**Goal:** Implement dataloader batching for 3 N+1-vulnerable nested GraphQL relationships so that queries like `perspectives { items { user { ... } content { ... } } }` execute 3 SQL queries (batch) instead of 1+N+N (individual)
+**Depends on:** Phase 4 (nested fields become queryable after perspective flow exists)
+**Source:** Dataloader analysis (2026-02-24) — 3 relationships, 0 batch methods, 0 field resolvers
+**Success Criteria** (what must be TRUE):
+  1. `vikstrous/dataloadgen` library added as dependency (type-safe generics, gqlgen-native)
+  2. Batch repository methods exist: `UserRepository.GetByIDs()`, `ContentRepository.GetByIDs()` with `WHERE id IN (?)` queries
+  3. Custom field resolvers for `Perspective.user`, `Perspective.content`, `Content.addedBy` (gqlgen `resolver: true` in gqlgen.yml)
+  4. Per-request dataloader middleware injects loaders into context (HTTP middleware, not global cache)
+  5. Field resolvers call dataloaders (not direct DB queries) — batching verified via slow query log
+  6. Nested fields return populated data (not nil) when requested in GraphQL queries
+  7. All existing backend tests pass
+**Plans:** 2 plans in 2 waves
+
+Plans:
+- [ ] 04.1-01-PLAN.md — Batch repository methods (GetByIDs) + dataloadgen loaders package with per-request middleware
+- [ ] 04.1-02-PLAN.md — gqlgen field resolvers + main.go wiring + N+1 prevention integration tests
+
+**Details:**
+Analysis found zero dataloader infrastructure: no batch libraries in go.mod, no `GetByIDs()` methods, no custom field resolvers. The 3 generated field resolvers (`_Perspective_user`, `_Perspective_content`, `_Content_addedBy`) return `obj.Field` which is always nil because `helpers.go` converters never populate nested pointers. Architecture: dataloaders live in `internal/adapters/graphql/dataloaders/` (adapter layer), call service/repository batch methods, never leak into domain. Related to Phase 8.1 M-08 (missing nested field resolvers).
 
 ### Phase 5: Testing + Deployment
 **Goal**: Application is tested, deployed, and accessible via public URL with proper CORS
@@ -187,14 +262,15 @@ Plans:
 Plans:
 - [x] 05-01-PLAN.md — Coverage verification — SKIPPED (thresholds already met: 87.6% stmts, 90.1% lines)
 - [x] 05-02-PLAN.md — Sevalla static site deployment (cleanup GitHub Pages artifacts, deploy frontend) — COMPLETED (deployed manually)
-- [ ] 05-03-PLAN.md — CORS configuration with rs/cors and Sevalla frontend origin
+- [x] 05-03-PLAN.md — SKIPPED (CORS already working with wildcard `*`; restriction to specific origin deferred to Phase 9 C-05)
 
 ---
 
 ## Post-MVP: Concerns Remediation (Phases 6-10)
 
-Phases 6-10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md`. Ordered by dependency: fix errors first, then architecture, then schema, then security (which depends on clean architecture), then frontend. Each phase is a living checklist -- items can be picked off incrementally.
+Phases 6-10 address issues from the bug backlog (`.planning/phases/bugs/BACKLOG.md`, gitignored). Ordered by dependency: fix errors first, then architecture, then schema, then security (which depends on clean architecture), then frontend. Each phase is a living checklist -- items can be picked off incrementally.
 
+- [ ] **Bugs (persistent)** - Ongoing bug tracking and fixes (`.planning/phases/bugs/`, gitignored — see `.docs/BUG_TRACKING.md`)
 - [ ] **Phase 6: Error Handling & Data Integrity** - Fix silent failures, error leakage, and config validation
 - [x] **Phase 7: Backend Architecture** - Hexagonal cleanup, dependency injection, server infrastructure
 - [x] **Phase 7.1: ORM Migration -- sqlx to GORM** - Replace sqlx with GORM using hex-clean separate model pattern (INSERTED)
@@ -203,7 +279,7 @@ Phases 6-10 address the 77 issues cataloged in `.planning/codebase/CONCERNS.md`.
 - [x] **Phase 7.4: Performance Monitoring** - Request timing, GORM slow query logging, DB stats, GraphQL timing, Go benchmarks, Web Vitals (INSERTED)
 - [x] **Phase 8: User Integration Flow** - Frontend create user flow, shared FormPopover, optional email in schema (INSERTED)
 - [ ] **Phase 8.1: API & Schema Quality** - Fix GraphQL types, race conditions, nested resolvers
-- [ ] **Phase 9: Security Hardening** - Authentication, rate limiting, query complexity, headers, HTTPS
+- [x] **Phase 9: Security Hardening** - Authentication, rate limiting, query complexity, headers, HTTPS (completed 2026-03-03)
 - [ ] **Phase 10: Frontend Quality & Test Coverage** - XSS fix, codegen, error boundaries, cleanup, test gaps
 
 ### Phase 8: User Integration Flow (INSERTED)
@@ -225,7 +301,7 @@ Plans:
 ### Phase 6: Error Handling & Data Integrity
 **Goal**: Eliminate all silent failures so errors are visible, logged, and surfaced correctly to clients
 **Depends on**: Phase 5 (CI/CD catches regressions)
-**Source**: CONCERNS.md C-06, C-07, C-08, H-13, H-16, H-19, H-20, H-21, M-03, M-27
+**Source**: Bug Backlog C-06, C-07, C-08, H-13, H-16, H-19, H-20, H-21, M-03, M-27
 **Success Criteria** (what must be TRUE):
   1. All `json.Unmarshal` calls check and handle errors (C-06, C-08)
   2. All `strconv`/`time.Parse` calls check and handle errors (C-07, C-08)
@@ -235,25 +311,29 @@ Plans:
   6. `WriteString` return value checked in IntID marshal (H-21)
   7. `CreateFromYouTube` returns existing item on duplicate instead of error (M-03)
   8. `formatDate` handles invalid input gracefully (M-27)
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
+
+Plans:
+- [ ] 06-01-PLAN.md — Fix silent failures: log CategorizedRatings parse, idempotent CreateFromYouTube, IntID WriteString check
+- [ ] 06-02-PLAN.md — Standardize not-found handling, sanitize GraphQL errors, enforce YouTube API key in production
 
 **Concern checklist:**
-- [ ] C-06: Silent JSON unmarshal in perspective repository
-- [ ] C-07: Silent duration parse in YouTube client
-- [ ] C-08: Five silent parse failures in `domainToModel` helpers
-- [ ] H-13: Sensitive data leaked in GraphQL errors (use generic client errors, log full errors server-side)
-- [ ] H-16: Inconsistent not-found error handling across resolvers
-- [ ] H-19: `.env` load failure silently ignored
-- [ ] H-20: Empty YouTube API key not validated at startup
-- [ ] H-21: `WriteString` return value ignored in IntID
-- [ ] M-03: `CreateFromYouTube` returns error instead of idempotent result
-- [ ] M-07: Inconsistent not-found (duplicate of H-16)
-- [ ] M-27: `formatDate` silently produces "Invalid Date"
+- [ ] C-06: Silent JSON unmarshal in perspective repository → **06-01**
+- [x] C-07: Silent duration parse in YouTube client → **ALREADY FIXED** (parser.go returns fmt.Errorf)
+- [x] C-08: Five silent parse failures in `domainToModel` helpers → **MOSTLY FIXED** (parseStatCount logs via slog.Warn; remaining: CategorizedRatings in gorm_mappers → 06-01)
+- [ ] H-13: Sensitive data leaked in GraphQL errors → **06-02**
+- [ ] H-16: Inconsistent not-found error handling across resolvers → **06-02**
+- [x] H-19: `.env` load failure silently ignored → **ALREADY FIXED** (main.go warns unless production)
+- [ ] H-20: Empty YouTube API key not validated at startup → **06-02** (warn → fatal in production)
+- [ ] H-21: `WriteString` return value ignored in IntID → **06-01**
+- [ ] M-03: `CreateFromYouTube` returns error instead of idempotent result → **06-01**
+- [ ] M-07: Inconsistent not-found (duplicate of H-16) → **06-02**
+- [x] M-27: `formatDate` silently produces "Invalid Date" → **ALREADY FIXED** (returns '—' for invalid input)
 
 ### Phase 7: Backend Architecture
 **Goal**: Clean up hexagonal architecture violations, add proper dependency injection, and harden server infrastructure
 **Depends on**: Phase 6 (error handling patterns established first)
-**Source**: CONCERNS.md H-01, H-02, H-09, M-01, M-02, M-05, M-06, M-09, M-10, M-12, M-17
+**Source**: Bug Backlog H-01, H-02, H-09, M-01, M-02, M-05, M-06, M-09, M-10, M-12, M-17
 **Success Criteria** (what must be TRUE):
   1. No adapter-to-adapter imports -- resolvers use service ports only (H-01, H-02)
   2. Service port interfaces defined; resolver depends on interfaces, not concrete types (H-02)
@@ -325,7 +405,7 @@ Plans:
 ### Phase 7.2: gorm-cursor-paginator Integration (INSERTED)
 **Goal**: Replace hand-rolled cursor encoding with `gorm-cursor-paginator` library to fix C-02 (cursor pagination broken for non-ID sorts) and simplify pagination code in all GORM repositories
 **Depends on**: Phase 7.1 (GORM migration must be complete)
-**Source**: CONCERNS.md C-02, FEATURE_BACKLOG.md (HIGH PRIORITY)
+**Source**: Bug Backlog C-02, FEATURE_BACKLOG.md (HIGH PRIORITY)
 **Success Criteria** (what must be TRUE):
   1. `gorm-cursor-paginator` library added as dependency
   2. Cursor pagination works correctly for all sort columns (created_at, updated_at, name, JSONB fields), not just ID
@@ -337,8 +417,8 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 07.2-01-PLAN.md — Add gorm-cursor-paginator dep, dummy GORM model fields, sort rule builder functions
-- [ ] 07.2-02-PLAN.md — Rewrite Content + Perspective List() to use paginator, delete old cursor functions
+- [x] 07.2-01-PLAN.md — Add gorm-cursor-paginator dep, dummy GORM model fields, sort rule builder functions
+- [x] 07.2-02-PLAN.md — Rewrite Content + Perspective List() to use paginator, delete old cursor functions
 
 ### Phase 7.3: Frontend Caching Remediation (INSERTED)
 **Goal**: Fix critical caching architecture issues -- migrate ActivityTable to TanStack Query, remove eruda debug console from production, eliminate dual-signal anti-pattern, add query key factory, remove PII over-fetching, add CSP headers
@@ -392,12 +472,12 @@ Review findings by priority:
 Plans:
 - [x] 07.4-01-PLAN.md — Request timing middleware, GORM slow query logger, DB stats endpoint, GraphQL timing, Go benchmarks, Web Vitals
 
-### Phase 8: API & Schema Quality
+### Phase 8.1: API & Schema Quality
 **Goal**: Fix GraphQL schema types, pagination bugs, race conditions, and missing resolvers
 **Depends on**: Phase 7.2 (cursor pagination fixed first)
-**Source**: CONCERNS.md C-02, H-03, H-04, H-05, H-06, H-07, H-08, M-04, M-08, M-11, M-13, M-16
+**Source**: Bug Backlog C-02, H-03, H-04, H-05, H-06, H-07, H-08, M-04, M-08, M-11, M-13, M-16
 **Success Criteria** (what must be TRUE):
-  1. Cursor pagination works correctly for all sort columns, not just ID (C-02)
+  1. Cursor pagination works correctly for all sort columns, not just ID (C-02) — ALREADY FIXED in Phase 7.2
   2. `ListAll` users has pagination with configurable limit (H-03)
   3. Timestamps use `DateTime` scalar with proper serialization (H-04)
   4. `contentType` uses `ContentType` enum, not `String` (H-05)
@@ -407,64 +487,79 @@ Plans:
   8. Perspective `user` and `content` nested fields resolve correctly (M-08)
   9. Input length validation on description, labels, categorizedRatings (M-11)
   10. Update checks `RowsAffected` for optimistic concurrency (M-16)
-**Plans**: TBD
+**Plans**: 5 plans in 3 waves
+
+Plans:
+- [ ] 08.1-01-PLAN.md — Schema quality: DateTime scalar, ContentType enum, deletePerspective IntID fix
+- [ ] 08.1-02-PLAN.md — YouTube structured fields: remove response, add individual columns, migration
+- [ ] 08.1-03-PLAN.md — DB constraints: GORM uniqueIndex tags, migration, service error handling
+- [ ] 08.1-04-PLAN.md — Pagination, validation, RowsAffected: users limit param, input validation, concurrency checks
+- [ ] 08.1-05-PLAN.md — Nested resolvers: Perspective.user and Perspective.content field resolvers
 
 **Concern checklist:**
-- [ ] C-02: Cursor pagination broken for non-ID sorts -> **Moved to Phase 7.2**
-- [ ] H-03: `ListAll()` users has no pagination (unbounded query)
-- [ ] H-04: Timestamps as `String!` instead of `DateTime` scalar
-- [ ] H-05: `contentType` uses `String!` instead of `ContentType` enum
-- [ ] H-06: Race condition on perspective claim uniqueness check (TOCTOU)
-- [ ] H-07: Race condition on user uniqueness check (TOCTOU)
-- [ ] H-08: YouTube API response stored verbatim (~5KB bloat per item)
-- [ ] M-04: `deletePerspective` uses `ID` scalar instead of `IntID`
-- [ ] M-08: Missing nested field resolvers (perspective->user, perspective->content)
-- [ ] M-11: Missing input length validation
-- [ ] M-13: Unbounded JSON field (duplicate of H-08)
-- [ ] M-16: Update does not check `RowsAffected`
+- [x] C-02: Cursor pagination broken for non-ID sorts → **ALREADY FIXED in Phase 7.2**
+- [ ] H-03: `ListAll()` users has no pagination (unbounded query) → **08.1-04**
+- [ ] H-04: Timestamps as `String!` instead of `DateTime` scalar → **08.1-01**
+- [ ] H-05: `contentType` uses `String!` instead of `ContentType` enum → **08.1-01**
+- [ ] H-06: Race condition on perspective claim uniqueness check (TOCTOU) → **08.1-03**
+- [ ] H-07: Race condition on user uniqueness check (TOCTOU) → **08.1-03**
+- [ ] H-08: YouTube API response stored verbatim (~5KB bloat per item) → **08.1-02**
+- [ ] M-04: `deletePerspective` uses `ID` scalar instead of `IntID` → **08.1-01**
+- [ ] M-08: Missing nested field resolvers (perspective->user, perspective->content) → **08.1-05**
+- [ ] M-11: Missing input length validation → **08.1-04**
+- [ ] M-13: Unbounded JSON field (duplicate of H-08) → **08.1-02**
+- [ ] M-16: Update does not check `RowsAffected` → **08.1-04**
 
 ### Phase 9: Security Hardening
 **Goal**: Add authentication, authorization, rate limiting, and security headers to make the app safe for multi-user deployment
-**Depends on**: Phase 8 (clean schema + architecture required before layering auth)
-**Source**: CONCERNS.md C-01, C-04, C-05, C-09, C-10, H-10, H-11, H-12, H-14, H-15, H-25, M-14, M-15, M-28
+**Depends on**: Phase 8.1 (clean schema + architecture required before layering auth)
+**Source**: Bug backlog C-01, C-04, C-05, C-09, C-10, H-10, H-11, H-12, H-14, H-15, H-25, M-14, M-15, M-28
 **Success Criteria** (what must be TRUE):
   1. Authentication middleware validates JWT/session on all mutations (C-01)
   2. Authorization checks on all mutations -- users can only modify their own data (C-01)
   3. GraphQL query complexity limit enforced (C-04)
-  4. CORS restricted to explicit frontend origin (C-05 -- may already be done in Phase 5)
-  5. GraphQL playground disabled in production (C-09)
+  4. CORS restricted to explicit frontend origin (C-05)
+  5. GraphQL playground disabled in production (C-09) — ALREADY FIXED (Plan 07-03)
   6. Introspection disabled in production (C-10)
   7. User email addresses only visible to authenticated user for their own account (H-10)
   8. Rate limiting middleware installed (H-11)
   9. YouTube API key never appears in logs or error responses (H-12)
-  10. HTTP server has read/write/idle timeouts configured (H-15)
-  11. TLS/HTTPS via reverse proxy or `ListenAndServeTLS` (H-14)
+  10. HTTP server has read/write/idle timeouts configured (H-15) — ALREADY FIXED (Plan 07-03)
+  11. TLS/HTTPS via Sevalla reverse proxy (H-14)
   12. Security headers set: `X-Content-Type-Options`, `X-Frame-Options`, HSTS (M-14)
-  13. CSRF protection middleware installed (M-15)
-  14. Content Security Policy header on frontend (H-25)
-  15. Secrets managed via vault/rotation mechanism (M-28)
-**Plans**: TBD
+  13. CSRF protection via Content-Type validation (M-15)
+  14. Content Security Policy enhanced on frontend (H-25) — PARTIALLY FIXED (CSP meta tag exists from Plan 07.3-01)
+  15. Secrets management strategy documented (M-28)
+**Plans**: 6 plans in 3 waves
+
+Plans:
+- [ ] 09-01-PLAN.md — JWT auth infrastructure: dependencies, AuthService, auth middleware, GraphQL directives, wire to server (Wave 1)
+- [ ] 09-02-PLAN.md — Authorization: email visibility check, @owner directive with ownership checks, wire services to directives (Wave 2)
+- [ ] 09-03-PLAN.md — API protection: rate limiting, query complexity, CORS restriction, introspection disable, Content-Type validation (Wave 2)
+- [ ] 09-04-PLAN.md — Security headers: unrolled/secure middleware, enhanced CSP, HTTPS verification (Wave 3)
+- [ ] 09-05-PLAN.md — Error sanitization: YouTube API key removal from logs and GraphQL errors (Wave 3)
+- [ ] 09-06-PLAN.md — Secrets management: documentation with rotation procedures, Sevalla best practices (Wave 3)
 
 **Concern checklist:**
-- [ ] C-01: No authentication or authorization (CRITICAL)
-- [ ] C-04: No GraphQL query complexity limiting (DoS vector)
-- [ ] C-05: Wildcard CORS configuration (may be resolved by Phase 5, plan 05-03)
-- [ ] C-09: GraphQL playground exposed unconditionally
-- [ ] C-10: GraphQL introspection enabled without restriction
-- [ ] H-10: User email addresses exposed in public query
-- [ ] H-11: No rate limiting
-- [ ] H-12: YouTube API key exposure risk in logs/errors
-- [ ] H-14: No HTTPS/TLS
-- [ ] H-15: No HTTP server timeouts (Slowloris DoS)
-- [ ] H-25: No Content Security Policy
-- [ ] M-14: Missing security headers
-- [ ] M-15: No CSRF protection
-- [ ] M-28: No secret rotation or vault integration
+- [ ] C-01: No authentication or authorization (CRITICAL) → **09-01, 09-02**
+- [ ] C-04: No GraphQL query complexity limiting (DoS vector) → **09-03**
+- [ ] C-05: Wildcard CORS configuration → **09-03**
+- [x] C-09: GraphQL playground exposed unconditionally → **ALREADY FIXED** (Plan 07-03 gates with APP_ENV)
+- [ ] C-10: GraphQL introspection enabled without restriction → **09-03**
+- [ ] H-10: User email addresses exposed in public query → **09-02**
+- [ ] H-11: No rate limiting → **09-03**
+- [ ] H-12: YouTube API key exposure risk in logs/errors → **09-05**
+- [ ] H-14: No HTTPS/TLS → **09-04** (verify Sevalla handles TLS termination)
+- [x] H-15: No HTTP server timeouts (Slowloris DoS) → **ALREADY FIXED** (Plan 07-03: ReadTimeout, WriteTimeout, IdleTimeout)
+- [x] H-25: No Content Security Policy → **PARTIALLY FIXED** (Plan 07.3-01 added CSP meta tag, 09-04 enhances)
+- [ ] M-14: Missing security headers → **09-04**
+- [ ] M-15: No CSRF protection → **09-03** (Content-Type validation approach)
+- [ ] M-28: No secret rotation or vault integration → **09-06** (documentation-based strategy)
 
 ### Phase 10: Frontend Quality & Test Coverage
 **Goal**: Fix frontend vulnerabilities, add codegen, error boundaries, and close all test coverage gaps
-**Depends on**: Phase 8 (schema fixes enable codegen; nested resolvers enable frontend cleanup)
-**Source**: CONCERNS.md C-03, H-17, H-18, H-22, H-23, H-24, M-18-M-26, T-01-T-06, L-*
+**Depends on**: Phase 8.1 (schema fixes enable codegen; nested resolvers enable frontend cleanup)
+**Source**: Bug backlog C-03, H-17, H-18, H-22, H-23, H-24, M-18-M-26, T-01-T-06, L-*
 **Success Criteria** (what must be TRUE):
   1. AG Grid cellRenderer uses safe DOM APIs, no raw innerHTML interpolation (C-03)
   2. `+error.svelte` error boundary exists with retry UI (H-17, M-23)
@@ -481,36 +576,133 @@ Plans:
   13. Repository-layer tests exist (T-04)
   14. YouTube API client tested (T-05)
   15. `IntID` scalar tested (T-06)
-**Plans**: TBD
+**Plans**: 6 plans in 3 waves
+
+Plans:
+- [ ] 10-01-PLAN.md — GraphQL Code Generator setup (client-preset, codegen.ts, generated types)
+- [ ] 10-02-PLAN.md — Error boundaries and GraphQL client enhancements (+error.svelte, hooks.client.ts, timeout, selective retry)
+- [ ] 10-03-PLAN.md — Backend service and resolver tests (PerspectiveService.Update, User/Perspective resolvers)
+- [ ] 10-04-PLAN.md — Backend helper and scalar tests (helpers.go converters, IntID scalar)
+- [ ] 10-05-PLAN.md — Backend repository integration tests (Content/Perspective List with DB, pagination, sorting, filtering)
+- [ ] 10-06-PLAN.md — Frontend coverage gaps and dead code detection (Knip setup, tooltip tests, coverage thresholds)
 
 **Concern checklist:**
-- [ ] C-03: XSS vulnerability in AG Grid cellRenderer
-- [ ] H-17: Missing `+error.svelte` error boundary
-- [ ] H-18: Missing `hooks.client.ts` / `hooks.server.ts`
-- [ ] H-22: `prerender = true` without SSR (architectural mismatch)
-- [ ] H-23: No TypeScript types generated from GraphQL schema
-- [ ] H-24: GraphQL client missing error/timeout infrastructure
-- [ ] M-18: Duplicated type definitions across components
-- [ ] M-19: No server-side pagination integration (hard-coded 100)
-- [ ] M-20: `selectedUserId` store not consumed
-- [ ] M-21: Unused type guards
+- [x] C-03: XSS vulnerability in AG Grid cellRenderer → **ALREADY FIXED** (createElement used, not innerHTML)
+- [ ] H-17: Missing `+error.svelte` error boundary → **10-02**
+- [ ] H-18: Missing `hooks.client.ts` / `hooks.server.ts` → **10-02**
+- [x] H-22: `prerender = true` without SSR (architectural mismatch) → **ALREADY FIXED** (prerender false in +layout.ts)
+- [ ] H-23: No TypeScript types generated from GraphQL schema → **10-01**
+- [ ] H-24: GraphQL client missing error/timeout infrastructure → **10-02**
+- [ ] M-18: Duplicated type definitions across components → **10-01** (codegen eliminates duplication)
+- [x] M-19: No server-side pagination integration (hard-coded 100) → **ALREADY FIXED** (Phase 3.2)
+- [ ] M-20: `selectedUserId` store not consumed → **10-06** (Knip detection)
+- [ ] M-21: Unused type guards → **10-06** (Knip detection)
 - [ ] M-22: Search input not debounced
-- [ ] M-23: No error recovery UI (no retry button)
-- [ ] M-24: Dead code (`AGGridTest.svelte`)
-- [ ] M-25: HTTP fallback for GraphQL endpoint
-- [ ] M-26: Retry configuration retries all errors (should only retry 5xx)
-- [ ] T-01: `PerspectiveService.Update()` -- zero tests
-- [ ] T-02: No resolver tests
-- [ ] T-03: No `helpers.go` conversion tests
-- [ ] T-04: No repository-layer tests
-- [ ] T-05: No YouTube API client tests
-- [ ] T-06: No `IntID` scalar tests
-- [ ] L-*: Low priority cleanup (see CONCERNS.md L-01 through L-22)
+- [ ] M-23: No error recovery UI (no retry button) → **10-02**
+- [ ] M-24: Dead code (`AGGridTest.svelte`) → **10-06** (Knip detection, note: AGGridTest.svelte not found, may already be removed)
+- [ ] M-25: HTTP fallback for GraphQL endpoint → **10-02** (HTTPS auto-upgrade in client)
+- [ ] M-26: Retry configuration retries all errors (should only retry 5xx) → **10-02**
+- [ ] T-01: `PerspectiveService.Update()` -- zero tests → **10-03**
+- [ ] T-02: No resolver tests → **10-03**
+- [ ] T-03: No `helpers.go` conversion tests → **10-04**
+- [ ] T-04: No repository-layer tests → **10-05**
+- [ ] T-05: No YouTube API client tests → **DEFERRED** (requires client refactor for testability, 15 tests currently skipped)
+- [ ] T-06: No `IntID` scalar tests → **10-04**
+- [ ] L-*: Low priority cleanup (see Bug Backlog L-01 through L-22) → **DEFERRED** (low priority)
+
+### Phase 17: YouTube URL normalization and duplicate upsert
+
+**Goal:** Normalize all YouTube URL variants to canonical form (`https://www.youtube.com/watch?v=<videoID>`), implement idempotent upsert (return existing content instead of error on duplicate), and expose `alreadyExisted` signal to frontend for VIDEO-05 duplicate warning toast
+**Depends on:** Phase 7.1 (GORM ORM in place)
+**Requirements:** VIDEO-05, M-03
+**Success Criteria** (what must be TRUE):
+  1. All YouTube URL variants normalize to `https://www.youtube.com/watch?v=<videoID>` before storage
+  2. `CreateFromYouTube` returns existing content on duplicate URL (not an error) — M-03 resolved
+  3. Repository uses `INSERT ON CONFLICT DO NOTHING` for atomic deduplication (no TOCTOU race)
+  4. `createContentFromYouTube` GraphQL mutation returns `CreateContentResult { content, alreadyExisted }`
+  5. Frontend shows warning toast when video already exists (VIDEO-05)
+  6. Frontend shows success toast when new video is added
+  7. Data migration backfills existing raw URLs to canonical form
+  8. All backend and frontend tests pass
+**Plans:** 6/6 plans complete
+
+Plans:
+- [ ] 17-01-PLAN.md — Backend: NormalizeYouTubeURL, GetOrCreateByURL with ON CONFLICT, idempotent CreateFromYouTube, data migration, tests (TDD)
+- [ ] 17-02-PLAN.md — GraphQL: CreateContentResult wrapper type, resolver update, frontend mutation/hook update for alreadyExisted signal
+
+### Phase 18: Server-Side Pagination & Filtering with Data Mode Toggle
+
+**Goal:** Add a data mode toggle to ActivityTable that switches between "All Items" (server-side sort/filter/search across full dataset) and "Loaded X Items" (client-side sort/filter/search on currently loaded page). Expand backend filtering and sorting capabilities to support full server-side operation. Reflect query state in URL for shareable views.
+**Depends on:** Phase 17
+**Success Criteria** (what must be TRUE):
+  1. Data mode toggle visible in pagination area with "All Items" / "Loaded X Items" labels
+  2. In "All Items" mode, sorting any column triggers server-side sort
+  3. In "All Items" mode, filtering any column triggers server-side filter via expanded ContentFilter
+  4. In "Loaded Items" mode, sort/filter/search works client-side only
+  5. URL reflects current query state (mode, sort, filters, page, search)
+  6. Sharing a URL with params restores the exact view (mode, sort, filters, search; page resets to 1)
+  7. Default mode is "Loaded Items" with no URL params
+  8. Hover tooltip on "Loaded X Items" explains the mode
+**Plans:** 3 plans in 2 waves
+
+Plans:
+- [ ] 18-01-PLAN.md — Backend expanded filtering & sorting (ContentFilter + ContentSortBy expansion, GORM JSONB WHERE clauses, sort rules)
+- [ ] 18-02-PLAN.md — URL state management & grid state utilities (gridUrlState.ts with parse/serialize, filter model ↔ URL converters, unit tests)
+- [ ] 18-03-PLAN.md — Data mode toggle UI & grid integration (DataModeToggle component, URL-driven ActivityTable refactor, page search wiring)
+
+### Phase 19: Content Familiarity Tracking
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 18
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 19 to break down)
+
+---
+
+## v1.1 Feature Phases (11-16)
+
+Phases 11-15 planned from FEATURE_BACKLOG.md. Phase 16 added for mobile app research.
+
+- [ ] **Phase 11: Database Optimization** - Indexing, query performance, connection pooling tuning
+- [ ] **Phase 12: Authentication** - Clerk-based auth replacing user dropdown selector
+- [ ] **Phase 13: Content Categories** - Organize content by category/topic
+- [ ] **Phase 14: AG Grid Power Features** - Advanced table features, column grouping, export
+- [ ] **Phase 15: Discover Page** - Content discovery and recommendation interface
+- [ ] **Phase 16: Mobile App Strategy** - Research native mobile approaches for SvelteKit SPA
+
+### Phase 18.1: Mobile Activity Page Redesign (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Depends on:** Phase 18
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 18.1 to break down)
+
+### Phase 16: Mobile App Strategy
+**Goal**: Research and evaluate native mobile app approaches (Capacitor, Tauri, PWA) for wrapping the existing SvelteKit SPA. Produce a recommendation with proof-of-concept.
+**Depends on**: Phase 12 (auth must exist before shipping a mobile app)
+**Plans**: 2 plans in 2 waves
+
+**Research scope:**
+- Capacitor (Ionic) — WebView wrapper, native plugin ecosystem, App Store/Play Store distribution
+- Tauri Mobile — Rust-based, smaller binaries, newer mobile support (stability assessment)
+- PWA — Service worker, manifest, offline support, installable from browser (no app store)
+- Evaluation criteria: native API access (camera, push notifications, biometrics), offline support, app store distribution, development effort, bundle size, update mechanism
+- SvelteKit adapter-static compatibility with each approach
+- Proof-of-concept with recommended approach
+
+Plans:
+- [ ] 16-01-PLAN.md — Capacitor integration + PWA configuration (install deps, init platforms, manifest, service worker)
+- [ ] 16-02-PLAN.md — POC verification in iOS Simulator + recommendation document (checkpoint)
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 7.3 -> 7.4 -> 8 -> 8.1 -> 9 -> 10
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 -> 3.5 -> 4 -> 4.1 -> 5 -> 6 -> 7 -> 7.1 -> 7.2 -> 7.3 -> 7.4 -> 8 -> 8.1 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16 -> 17
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -519,10 +711,13 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 2.1 Mobile Responsive Fixes | 2/2 | Complete | 2026-02-07 |
 | 3. Add Video Flow | 2/2 | Complete | 2026-02-07 |
 | 3.1 Design Token System | 2/2 | Complete | 2026-02-12 |
-| 3.2 Activity Page Beta Quality | 4/8 | In progress | - |
-| 3.3 Repository Rename & Restructure | 0/3 | Planned | - |
-| 4. Add Perspective Flow | 0/2 | Not started | - |
-| 5. Testing + Deployment | 1/3 | In progress | - |
+| 3.2 Activity Page Beta Quality | 8/8 | Complete | 2026-02-16 |
+| 3.3 Repository Rename & Restructure | 0/3 | Obsolete | 2026-02-15 |
+| 3.4 Perspectize Branding & Glasses Identity | 0/4 | Not started | - |
+| 3.5 Google NL Taxonomy Research Spike | 0/2 | Not started | - |
+| 4. Add Perspective Flow | 0/3 | Not started | - |
+| 4.1 GraphQL Dataloaders for N+1 Prevention | 0/2 | Planned | - |
+| 5. Testing + Deployment | 2/3 | Complete | 2026-02-15 |
 | 6. Error Handling & Data Integrity | 0/0 | Not started | - |
 | 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |
 | 7.1 ORM Migration (sqlx -> GORM) | 3/3 | Complete | 2026-02-14 |
@@ -530,7 +725,13 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 4 ->
 | 7.3 Frontend Caching Remediation | 4/4 | Complete | 2026-02-14 |
 | 7.4 Performance Monitoring | 1/1 | Complete | 2026-02-15 |
 | 8. User Integration Flow | 1/1 | Complete | 2026-02-15 |
-| 8.1 API & Schema Quality | 0/0 | Not started | - |
-| 9. Security Hardening | 0/0 | Not started | - |
-| 10. Frontend Quality & Test Coverage | 0/0 | Not started | - |
-
+| 8.1 API & Schema Quality | 0/5 | Not started | - |
+| 9. Security Hardening | 0/6 | Complete    | 2026-03-03 |
+| 10. Frontend Quality & Test Coverage | 0/6 | Not started | - |
+| 11. Database Optimization | 0/3 | Not started | - |
+| 12. Authentication | 0/3 | Not started | - |
+| 13. Content Categories | 0/3 | Not started | - |
+| 14. AG Grid Power Features | 0/3 | Not started | - |
+| 15. Discover Page | 0/3 | Not started | - |
+| 16. Mobile App Strategy | 0/0 | Not started | - |
+| 17. YouTube URL Normalization & Upsert | 2/2 | Complete    | 2026-02-22 |

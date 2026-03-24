@@ -1,0 +1,457 @@
+{
+  "info": {
+    "name": "Google NL Taxonomy Explorer",
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "description": "Interactive taxonomy exploration for Google Cloud Natural Language API classifyText endpoint.\n\nUse this collection to discover the full Google NL V2 taxonomy (1091 categories, up to 5 levels deep) and validate category coverage for Perspectize Phase 13 (Content Categories) implementation.\n\n**Setup:** Set the `API_KEY` collection variable to your Google Cloud API key.\n\n**V2 vs V1:** All requests except Curl 1 use the V2 model, which returns the full category hierarchy (not just the best match).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "API_KEY",
+      "value": "YOUR_API_KEY_HERE",
+      "type": "string",
+      "description": "Your Google Cloud API key. Create one at: Google Cloud Console > APIs & Services > Credentials > Create Credentials > API Key. Restrict it to Cloud Natural Language API only."
+    }
+  ],
+  "item": [
+    {
+      "name": "1. V1 vs V2 Comparison",
+      "description": "Compare V1 and V2 model behavior side-by-side. V1 returns only the most specific category. V2 returns the full hierarchy including parent categories.",
+      "item": [
+        {
+          "name": "Curl 1 - V1 Basic (filtered, single category)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"document\": {\n    \"type\": \"PLAIN_TEXT\",\n    \"content\": \"Patrick Mahomes threw three touchdown passes as the Kansas City Chiefs defeated the San Francisco 49ers in overtime to win Super Bowl LVIII. The Chiefs quarterback was named Super Bowl MVP for the third time in his career, cementing his legacy as one of the greatest NFL quarterbacks of all time.\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://language.googleapis.com/v1/documents:classifyText?key={{API_KEY}}",
+              "protocol": "https",
+              "host": ["language", "googleapis", "com"],
+              "path": ["v1", "documents:classifyText"],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{API_KEY}}"
+                }
+              ]
+            },
+            "description": "**V1 model (no classificationModelOptions).** Returns only the single most confident, specific category.\n\n**Expected response:**\n```json\n{\n  \"categories\": [\n    {\n      \"name\": \"/Sports/Team Sports/American Football\",\n      \"confidence\": 0.95\n    }\n  ]\n}\n```\n\n**What to look for:** V1 collapses the hierarchy to a single leaf node. Run Curl 2 next to see how V2 differs."
+          },
+          "response": []
+        },
+        {
+          "name": "Curl 2 - V2 Model (unfiltered, full hierarchy)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"document\": {\n    \"type\": \"PLAIN_TEXT\",\n    \"content\": \"Patrick Mahomes threw three touchdown passes as the Kansas City Chiefs defeated the San Francisco 49ers in overtime to win Super Bowl LVIII. The Chiefs quarterback was named Super Bowl MVP for the third time in his career, cementing his legacy as one of the greatest NFL quarterbacks of all time.\"\n  },\n  \"classificationModelOptions\": {\n    \"v2Model\": {\n      \"contentCategoriesVersion\": \"V2\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://language.googleapis.com/v1/documents:classifyText?key={{API_KEY}}",
+              "protocol": "https",
+              "host": ["language", "googleapis", "com"],
+              "path": ["v1", "documents:classifyText"],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{API_KEY}}"
+                }
+              ]
+            },
+            "description": "**V2 model** via `classificationModelOptions.v2Model.contentCategoriesVersion: \"V2\"`. Returns the full category hierarchy including parent nodes.\n\n**Expected response (multiple categories with confidence scores):**\n```json\n{\n  \"categories\": [\n    { \"name\": \"/Sports\", \"confidence\": 0.97 },\n    { \"name\": \"/Sports/Team Sports\", \"confidence\": 0.95 },\n    { \"name\": \"/Sports/Team Sports/American Football\", \"confidence\": 0.93 },\n    { \"name\": \"/News/Sports News\", \"confidence\": 0.72 }\n  ]\n}\n```\n\n**What to look for:** V2 returns ALL matching categories including parent nodes. This reveals the full hierarchy and cross-categorization (e.g., Sports News from the News branch)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Sports",
+      "description": "Explore sports subcategories. Run both requests to see how the API distinguishes different sports within the same taxonomy branch.",
+      "item": [
+        {
+          "name": "Curl 3a - Basketball (V2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"document\": {\n    \"type\": \"PLAIN_TEXT\",\n    \"content\": \"LeBron James scored 35 points in the Lakers victory over the Boston Celtics at Staples Center. The four-time NBA champion demonstrated why he remains one of the most dominant players in basketball despite being in his 21st NBA season.\"\n  },\n  \"classificationModelOptions\": {\n    \"v2Model\": {\n      \"contentCategoriesVersion\": \"V2\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://language.googleapis.com/v1/documents:classifyText?key={{API_KEY}}",
+              "protocol": "https",
+              "host": ["language", "googleapis", "com"],
+              "path": ["v1", "documents:classifyText"],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{API_KEY}}"
+                }
+              ]
+            },
+            "description": "**Basketball content with V2 model.** Tests `/Sports/Team Sports/Basketball` path.\n\n**What to look for:**\n- Does `/Sports/Team Sports/Basketball` appear?\n- What confidence score does it receive vs `/Sports/Team Sports`?\n- Does `/News/Sports News` appear as a cross-category?\n- Compare with Curl 3b (Soccer) to see sport-specific differentiation."
+          },
+          "response": []
+        },
+        {
+          "name": "Curl 3b - Soccer (V2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"document\": {\n    \"type\": \"PLAIN_TEXT\",\n    \"content\": \"Lionel Messi scored twice as Inter Miami defeated Nashville SC in the MLS Cup final. The Argentine World Cup winner has transformed Major League Soccer since his arrival, bringing unprecedented global attention to American soccer.\"\n  },\n  \"classificationModelOptions\": {\n    \"v2Model\": {\n      \"contentCategoriesVersion\": \"V2\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://language.googleapis.com/v1/documents:classifyText?key={{API_KEY}}",
+              "protocol": "https",
+              "host": ["language", "googleapis", "com"],
+              "path": ["v1", "documents:classifyText"],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{API_KEY}}"
+                }
+              ]
+            },
+            "description": "**Soccer/Football content with V2 model.** Tests `/Sports/Team Sports/Soccer` path.\n\n**What to look for:**\n- Does `/Sports/Team Sports/Soccer` appear, or is it labeled differently?\n- Compare confidence scores with Curl 3a (Basketball)\n- Does the taxonomy use 'Soccer' or 'Football'? (North American vs global naming)\n- Are any unexpected cross-categories returned?"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Entertainment",
+      "description": "Explore the Arts & Entertainment taxonomy branch. Music content often cross-classifies with People & Society.",
+      "item": [
+        {
+          "name": "Curl 4 - Music & Entertainment (V2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"document\": {\n    \"type\": \"PLAIN_TEXT\",\n    \"content\": \"Taylor Swift announced her new album featuring collaborations with several hip hop artists. The pop superstar has been on her record-breaking Eras Tour, which has become the highest-grossing concert tour in music history. Fans are excited about the new musical direction.\"\n  },\n  \"classificationModelOptions\": {\n    \"v2Model\": {\n      \"contentCategoriesVersion\": \"V2\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://language.googleapis.com/v1/documents:classifyText?key={{API_KEY}}",
+              "protocol": "https",
+              "host": ["language", "googleapis", "com"],
+              "path": ["v1", "documents:classifyText"],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{API_KEY}}"
+                }
+              ]
+            },
+            "description": "**Music & Entertainment content with V2 model.** Tests `/Arts & Entertainment/Music & Audio` branch.\n\n**What to look for:**\n- Does `/Arts & Entertainment/Music & Audio` appear?\n- Does `/Arts & Entertainment/Events & Listings/Concerts & Music Festivals` appear?\n- Any cross-classification into `/People & Society`?\n- What specific music genre subcategory is returned (pop, hip hop)?"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Technology",
+      "description": "Explore technology and AI taxonomy paths. AI content often cross-classifies across Science and Computers & Electronics.",
+      "item": [
+        {
+          "name": "Curl 5 - Technology & AI (V2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"document\": {\n    \"type\": \"PLAIN_TEXT\",\n    \"content\": \"OpenAI released a new large language model that demonstrates significant improvements in reasoning and code generation. The artificial intelligence system can now solve complex mathematical proofs and write production-quality software, raising questions about the future of software engineering jobs.\"\n  },\n  \"classificationModelOptions\": {\n    \"v2Model\": {\n      \"contentCategoriesVersion\": \"V2\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://language.googleapis.com/v1/documents:classifyText?key={{API_KEY}}",
+              "protocol": "https",
+              "host": ["language", "googleapis", "com"],
+              "path": ["v1", "documents:classifyText"],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{API_KEY}}"
+                }
+              ]
+            },
+            "description": "**Technology and AI content with V2 model.** Tests `/Computers & Electronics` and `/Science/Computer Science/Machine Learning & Artificial Intelligence` paths.\n\n**What to look for:**\n- Does `/Science/Computer Science/Machine Learning & Artificial Intelligence` appear?\n- Does `/Computers & Electronics` appear?\n- How deep does the technology taxonomy go?\n- Does `/Jobs & Education` appear due to 'software engineering jobs' mention?"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. News & Politics",
+      "description": "Explore the News taxonomy branch, which includes Business News, Politics, and Sports News sub-branches.",
+      "item": [
+        {
+          "name": "Curl 6 - News & Politics (V2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"document\": {\n    \"type\": \"PLAIN_TEXT\",\n    \"content\": \"The United States Senate passed a bipartisan infrastructure bill allocating billions of dollars for road repairs, broadband expansion, and clean energy projects. The legislation represents one of the largest federal investments in American infrastructure in decades.\"\n  },\n  \"classificationModelOptions\": {\n    \"v2Model\": {\n      \"contentCategoriesVersion\": \"V2\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://language.googleapis.com/v1/documents:classifyText?key={{API_KEY}}",
+              "protocol": "https",
+              "host": ["language", "googleapis", "com"],
+              "path": ["v1", "documents:classifyText"],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{API_KEY}}"
+                }
+              ]
+            },
+            "description": "**News and Politics content with V2 model.** Tests `/News/Politics` and `/Law & Government` paths.\n\n**What to look for:**\n- Does `/News/Politics` appear?\n- Does `/News/Politics/Campaigns & Elections` or `/Law & Government` appear?\n- How does it handle 'clean energy' - does `/Science` appear?\n- Are `/Business & Industrial` categories returned for the economic aspects?"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Gaming",
+      "description": "Explore the Games taxonomy. Gaming content (Call of Duty, battle royale) should map to /Games/Computer & Video Games.",
+      "item": [
+        {
+          "name": "Curl 7 - Gaming (V2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"document\": {\n    \"type\": \"PLAIN_TEXT\",\n    \"content\": \"The new Call of Duty game features an open world campaign with RPG elements and a revamped multiplayer mode. Players can customize their loadouts with over 100 weapons and compete in ranked matches. The game also introduces a new battle royale map set in a post-apocalyptic city.\"\n  },\n  \"classificationModelOptions\": {\n    \"v2Model\": {\n      \"contentCategoriesVersion\": \"V2\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://language.googleapis.com/v1/documents:classifyText?key={{API_KEY}}",
+              "protocol": "https",
+              "host": ["language", "googleapis", "com"],
+              "path": ["v1", "documents:classifyText"],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{API_KEY}}"
+                }
+              ]
+            },
+            "description": "**Gaming content with V2 model.** Tests `/Games/Computer & Video Games` path.\n\n**What to look for:**\n- Does `/Games/Computer & Video Games` appear?\n- Does `/Games/Computer & Video Games/Shooter Games` appear for Call of Duty?\n- Note: The taxonomy uses 'Games' not 'Gaming' at the top level\n- Does `/Arts & Entertainment` appear for the storytelling/campaign elements?"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. Food & Cooking",
+      "description": "Explore the Food & Drink taxonomy. Cooking content maps to /Food & Drink/Cooking & Recipes.",
+      "item": [
+        {
+          "name": "Curl 8 - Food & Cooking (V2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"document\": {\n    \"type\": \"PLAIN_TEXT\",\n    \"content\": \"Gordon Ramsay demonstrates how to make the perfect beef wellington with a mushroom duxelles and puff pastry. This classic French-inspired dish requires precise timing and temperature control. The recipe serves four and pairs well with a full-bodied red wine.\"\n  },\n  \"classificationModelOptions\": {\n    \"v2Model\": {\n      \"contentCategoriesVersion\": \"V2\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://language.googleapis.com/v1/documents:classifyText?key={{API_KEY}}",
+              "protocol": "https",
+              "host": ["language", "googleapis", "com"],
+              "path": ["v1", "documents:classifyText"],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{API_KEY}}"
+                }
+              ]
+            },
+            "description": "**Food and cooking content with V2 model.** Tests `/Food & Drink/Cooking & Recipes` path.\n\n**What to look for:**\n- Does `/Food & Drink/Cooking & Recipes` appear?\n- Does `/Food & Drink/Beverages` appear for wine mention?\n- Are there deeper subcategories (e.g., by cuisine type or cooking technique)?\n- Does `/Arts & Entertainment` appear for the Gordon Ramsay celebrity association?"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "8. Health & Fitness",
+      "description": "Explore the Health and Beauty & Fitness taxonomy branches. Fitness content often appears in both.",
+      "item": [
+        {
+          "name": "Curl 9 - Health & Fitness (V2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"document\": {\n    \"type\": \"PLAIN_TEXT\",\n    \"content\": \"This full body workout routine combines strength training with high intensity interval training for maximum fat loss. We cover proper squat form, deadlift technique, and bench press variations. The program is designed for intermediate lifters looking to build muscle and improve cardiovascular fitness.\"\n  },\n  \"classificationModelOptions\": {\n    \"v2Model\": {\n      \"contentCategoriesVersion\": \"V2\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://language.googleapis.com/v1/documents:classifyText?key={{API_KEY}}",
+              "protocol": "https",
+              "host": ["language", "googleapis", "com"],
+              "path": ["v1", "documents:classifyText"],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{API_KEY}}"
+                }
+              ]
+            },
+            "description": "**Health and fitness content with V2 model.** Tests `/Health` and `/Beauty & Fitness` taxonomy paths.\n\n**What to look for:**\n- Does `/Beauty & Fitness` or `/Health` appear? Which scores higher?\n- Are there specific fitness subcategories returned?\n- Does `/Sports/Sports Coaching & Training` appear?\n- Note which top-level branch captures fitness content -- important for ltree mapping."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "9. YouTube Video Metadata",
+      "description": "Test classification using realistic YouTube video metadata format (title + description + tags). This is the actual format Perspectize will use for auto-classification in Phase 13.",
+      "item": [
+        {
+          "name": "Curl 10 - YouTube Metadata Format (V2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"document\": {\n    \"type\": \"PLAIN_TEXT\",\n    \"content\": \"TITLE: Mahomes INSANE No-Look Pass Compilation | 2024 NFL Season Highlights\\n\\nDESCRIPTION: Watch Patrick Mahomes best no-look passes from the 2024 NFL season. The Kansas City Chiefs quarterback continues to amaze with his unorthodox throwing style. Includes plays from regular season and playoff games. Subscribe for more NFL highlights and Kansas City Chiefs content.\\n\\nTAGS: Mahomes, Chiefs, NFL, football, highlights, no-look pass, quarterback, Kansas City, 2024 season\"\n  },\n  \"classificationModelOptions\": {\n    \"v2Model\": {\n      \"contentCategoriesVersion\": \"V2\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://language.googleapis.com/v1/documents:classifyText?key={{API_KEY}}",
+              "protocol": "https",
+              "host": ["language", "googleapis", "com"],
+              "path": ["v1", "documents:classifyText"],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{API_KEY}}"
+                }
+              ]
+            },
+            "description": "**YouTube video metadata classification with V2 model.** Tests the actual input format Perspectize will use in Phase 13 for auto-classification.\n\nThe body concatenates: `TITLE + \\n\\n + DESCRIPTION + \\n\\n + TAGS` — this gives the classifier maximum context.\n\n**What to look for:**\n- Does classification match what you'd manually assign?\n- What confidence threshold feels right for primary vs secondary categories?\n- Try replacing this content with 2-3 of your own YouTube video titles/descriptions\n- Note: API requires at least 20 tokens (words) — metadata format ensures this\n\n**Pro tip:** Duplicate this request and paste your own video metadata to test real content from your YouTube library."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

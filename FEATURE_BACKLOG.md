@@ -92,6 +92,62 @@ Average response: **2,469 bytes/row**. All other columns combined: **136 bytes/r
 
 ---
 
+## Multi-Content-Type Schema Design (JSONB Philosophy)
+
+When adding content types beyond YouTube (books, articles, podcasts, etc.), the `content` table needs a clear column vs. JSONB strategy. The guiding principle: **shared fields get columns, type-specific fields stay in JSONB.**
+
+### Column Promotion Candidates
+
+Fields that are common across content types should be promoted to dedicated columns for indexing, sorting, and type safety:
+
+| Promoted Column | YouTube Source | Book Source | Data Type (TBD) |
+|----------------|---------------|-------------|------------------|
+| `name` | snippet.title | volumeInfo.title | already exists |
+| `image_url` | snippet.thumbnails | volumeInfo.imageLinks | already exists |
+| `creator` | snippet.channelTitle | volumeInfo.authors (array) | text vs text[] vs jsonb — needs discussion |
+| `published_at` | snippet.publishedAt | volumeInfo.publishedDate | timestamptz vs date — YouTube has full timestamps, books often only have year |
+| `description` | snippet.description | volumeInfo.description | text (potentially long) |
+| `length` | contentDetails.duration (ISO 8601) | volumeInfo.pageCount (integer) | text vs integer — needs discussion (heterogeneous units) |
+
+**Open questions on data types:**
+- `creator` — Single author vs. multiple authors (YouTube has one channel, books have co-authors). Store as `text` (comma-joined) or `text[]` or keep in JSONB?
+- `published_at` — YouTube provides RFC 3339 timestamps; books may only have "2024" or "2024-03". Use `timestamptz` with day-level precision fallback, or `text`?
+- `length` — Duration (PT15M33S) and page count (384) are fundamentally different units. Store as `text` with a `length_unit` column? Or keep type-specific in JSONB?
+
+### JSONB-Only Fields (Type-Specific)
+
+Fields that belong to one content type and don't generalize stay in the JSONB `metadata` column:
+
+| Field | Content Type | Why JSONB |
+|-------|-------------|-----------|
+| `viewCount`, `likeCount`, `commentCount` | YouTube | Video engagement metrics — no book equivalent |
+| `isbn`, `isbn13` | Book | Identifier unique to books |
+| `publisher` | Book | Books have publishers; YouTube has channels (→ `creator`) |
+| `pageCount` | Book | Could go either way — see `length` discussion above |
+| `language` | Book | YouTube has `defaultAudioLanguage` but rarely useful |
+| `categories` / `tags` | Both | Similar concept but different taxonomies per source |
+
+### Book API Recommendation: Google Books API
+
+For the first non-YouTube content type, **Google Books API** is the recommended data source:
+
+- **Free tier** — 1,000 req/day without API key, higher with key
+- **Shared infrastructure** — Same Google API ecosystem as YouTube (API key, client libs, error patterns, rate limits)
+- **Rich metadata** — title, authors, description, thumbnails, page count, categories, publisher, ISBNs, ratings, preview links
+- **Similar response structure** — `items[]` with `volumeInfo` parallels YouTube's `items[]` with `snippet`
+
+**Other APIs evaluated:**
+- **Open Library** (openlibrary.org) — Free, no key, 20M+ editions. Good fallback if Google quota is insufficient. Less structured metadata.
+- **Library of Congress** — Free, authoritative for bibliographic data, but clunky API and inconsistent response formats. Better for archival than consumer use.
+- **Goodreads** — API shut down by Amazon in 2020. Not available.
+- **ISBNdb** — Paid ($9/mo+). Not worth it when free options exist.
+
+**Priority:** Medium — design the schema strategy before adding the second content type. The column promotion migration (creator, published_at, description) should happen during the JSONB trim work above.
+
+**Source:** Architecture discussion (2026-02-16)
+
+---
+
 ## Server-Side Sorting and Filtering for Activity Table
 
 Currently AG Grid sorting and filtering is client-side only — operates on the current page of rows. With server-side pagination (`limit`/`offset`), this means sort/filter only affects the visible page, not the full dataset.
@@ -126,3 +182,201 @@ The `SELECT count(*) FROM "content"` query and JSONB-path ORDER BY queries are h
 **Priority:** Low — manageable at 50 rows but a known scaling bottleneck. Consider alongside JSONB trimming/extraction work.
 
 **Source:** Backend logs (2026-02-15)
+
+---
+
+## Technical Debt: Sticky Header Color Token
+
+**Problem:** Sticky header originally used `bg-background` but `--color-background` wasn't defined in `app.css`, causing transparent header and scroll bleed-through.
+
+**Current patch:** Changed `bg-background` to `bg-white` in `Header.svelte` (SHA: b42c457).
+
+**Long-term fix:** Define complete color theme in `app.css` (`--color-background`, `--color-foreground`, `--color-border`, etc.) so semantic utilities resolve correctly and support dark mode. Then revert header to `bg-background`.
+
+**Priority:** Low — cosmetic, works correctly now.
+
+---
+
+## Technical Debt: Client-Side Pagination Prefetch Strategy
+
+**Problem:** `ListContent` query fetches `first: 100` but AG Grid only shows 10 per page. Client-side pagination/filtering works over the pre-fetched set, but total count isn't exposed and fetch size isn't tied to page size.
+
+**Current patch:** `first: 100` hardcoded — covers all client-side page sizes (10/25/50) with room for search filtering. Acceptable for MVP.
+
+**Long-term fix:** Adaptive prefetch with exposed total count:
+1. Expose `totalCount` to the UI — if not provided by query, don't show. Total count = total available server-side, not total loaded.
+2. Allow items-per-page to be user-specified (max 100).
+3. Prefetch a multiple of page size: 1–10 items/page → fetch 5x (up to 50); 11–33 items/page → fetch 3x (up to 100); 34–100 items/page → fetch 1.5x (up to 100).
+
+**Priority:** Medium — related to server-side sorting/filtering work.
+
+**Related:** [#56](https://github.com/CodeWarrior-debug/perspectize/issues/56)
+
+---
+
+## Contributor License Agreement (CLA)
+
+Enable automatic contributor agreement signing for external contributions. One checkbox on first contribution — keeps it simple.
+
+**Options:**
+- [CLA Assistant](https://cla-assistant.io/) — Free GitHub integration, stores signatures, auto-comments on PRs from new contributors
+- [CLA Assistant Lite](https://github.com/contributor-assistant/github-action) — GitHub Action alternative, signatures stored in repo
+- Custom DCO (Developer Certificate of Origin) — Lightweight alternative using `Signed-off-by` in commits
+
+**What contributors agree to:**
+- They have the right to submit the contribution
+- The contribution is licensed under AGPL-3.0 (same as project)
+- No additional obligations — AGPL version stays open and available
+
+**Template reference:** [Apache ICLA](https://www.apache.org/licenses/icla.pdf) (for inspiration, ours would be simpler)
+
+**Priority:** Low — set up before accepting external contributions
+
+---
+
+## Content Categories (Google Content Taxonomy)
+
+Categorize content using [Google's Cloud NL Content Taxonomy](https://cloud.google.com/natural-language/docs/categories) — 27 top-level categories designed for digital content classification. Evaluated against Library of Congress Classification (too academic, book-oriented) and Dewey Decimal (too coarse at 10 categories, proprietary OCLC license).
+
+**Why Google's taxonomy wins for Perspectize:**
+- Built for web/digital content, not physical books
+- Maps almost 1:1 to YouTube's own category system
+- Intuitive labels users understand ("Arts & Entertainment" not "Class P")
+- Free to use, actively maintained
+- 3-4 levels of depth — enough granularity without overwhelming
+
+**Recommended v1 categories (20 of 27):** Arts & Entertainment, Autos & Vehicles, Beauty & Fitness, Books & Literature, Business & Industrial, Computers & Electronics, Finance, Food & Drink, Games, Health, Hobbies & Leisure, Home & Garden, Jobs & Education, Law & Government, News, People & Society, Pets & Animals, Science, Sports, Travel & Transportation.
+
+**Dropped for v1:** Adult, Internet & Telecom, Online Communities, Real Estate, Reference, Sensitive Subjects, Shopping.
+
+**Implementation approach:**
+- One category per content item (single-select)
+- Complements tags (tags = specific, categories = broad classification)
+- Store as enum or lookup table; plan for custom user-defined categories later
+- Consider auto-categorization via Google Cloud NL API or LLM classification on ingest
+
+**Source:** Taxonomy comparison discussion (2026-02-16)
+
+---
+
+## Robustness Score
+
+A computed metric indicating how well-supported a perspective is. Surfaces the difference between a quick hot-take and a thoroughly reasoned perspective.
+
+**Possible signal inputs:**
+- Number of supporting arguments or evidence points
+- Whether the perspective references specific timestamps/quotes from the content
+- Length and depth of the perspective text
+- Whether counter-arguments are acknowledged
+- Number of tags/categories applied
+- Whether the user has engaged with opposing perspectives on the same content
+
+**Design considerations:**
+- Display as a visual indicator (progress bar, shield icon, star rating)
+- Should encourage thoroughness without gatekeeping — all perspectives welcome, but well-supported ones are surfaced
+- Could be computed client-side initially, moved to backend as the formula stabilizes
+
+**Source:** Feature discussion (2026-02-16)
+
+---
+
+## Provenance Icons
+
+Visual indicators showing the source/origin of content items. At a glance, users should know where content came from.
+
+**v1 scope (YouTube only):**
+- YouTube icon/badge on all content (since only YouTube is supported initially)
+
+**Future multi-source scope:**
+- Distinct icons per content type: YouTube, Podcast, Article, Book, etc.
+- Icon displayed in the Activity Table, content detail views, and anywhere content is listed
+- Could use platform brand icons (YouTube play button, Spotify waves, etc.) or abstract content-type icons
+- Consider a "verified source" variant for content fetched directly via API vs. manually added
+
+**Source:** Feature discussion (2026-02-16)
+
+---
+
+## Chat / Discussion on Content
+
+Enable conversation threads on content items, allowing users to discuss perspectives with each other.
+
+**Possible scope:**
+- Comment threads on individual content items
+- Reply threads on specific perspectives
+- Real-time or near-real-time messaging
+- Threaded vs. flat discussion structure
+
+**Design considerations:**
+- Moderation strategy (community-driven, AI-assisted, manual)
+- Notification system for replies
+- How chat interacts with perspectives — is a chat message a lightweight perspective, or a separate concept?
+- Could start as simple comment threads and evolve toward real-time chat
+
+**Source:** Feature discussion (2026-02-16)
+
+---
+
+## Migration Tests
+
+Add automated tests for SQL migrations to catch syntax errors and verify up/down roundtrips.
+
+**What to test:**
+- **Up/down roundtrip** — Apply all migrations up, then down to zero, then back up. No errors = schema is reversible.
+- **Individual migration syntax** — Each `.up.sql` and `.down.sql` runs without errors against a clean or migrated DB
+- **Data preservation** — For data-transforming migrations (column renames, type changes), seed test data before `up` and verify it survives the roundtrip
+- **Idempotency** — Running `up` twice doesn't break (IF NOT EXISTS patterns)
+
+**Implementation approach:**
+- Go integration test that spins up a test PostgreSQL container (testcontainers-go or Docker Compose)
+- Iterate through `backend/migrations/` files in order
+- Could run in CI as a separate job (slower, needs Docker)
+
+**Priority:** Medium — prevents broken migrations from reaching production. Especially valuable as schema evolves (Phase 11 denormalization, multi-content-type work).
+
+**Source:** Development discussion (2026-02-20)
+
+---
+
+## Jeeves AI Assistant
+
+An AI-powered assistant integrated into the platform to help users discover, refine, and engage with content and perspectives.
+
+**Possible capabilities:**
+- **Perspective refinement** — Help users articulate their perspectives more clearly, suggest evidence, flag logical gaps
+- **Content discovery** — "Based on your perspectives, you might find this interesting"
+- **Summarization** — Summarize the range of perspectives on a given piece of content
+- **Challenge mode** — Present counter-arguments to strengthen a user's thinking
+- **Category/tag suggestions** — Auto-suggest categories and tags based on content analysis
+
+**Design considerations:**
+- Name "Jeeves" evokes a knowledgeable, helpful butler — the AI should feel like a thoughtful assistant, not a chatbot
+- Could be a sidebar panel, a chat interface, or contextual suggestions inline
+- Start with one focused capability (e.g., perspective refinement) rather than trying to do everything
+
+**Source:** Feature discussion (2026-02-16)
+
+---
+
+## Perspectize Column Sorting & Filtering
+
+The Perspectize column in the ActivityTable currently shows a glasses icon for adding/viewing perspectives but doesn't support AG Grid sorting or filtering. Users should be able to sort and filter content by perspective status.
+
+**Sorting options:**
+- Has perspective vs. no perspective (binary)
+- Number of perspectives per content item
+- Most recently perspectized
+
+**Filtering options:**
+- Show only items with perspectives
+- Show only items without perspectives (to find content needing review)
+- Filter by perspective count range
+
+**Implementation considerations:**
+- May require a computed/derived field (perspective count or boolean) exposed in the GraphQL content query
+- Backend needs to support sorting/filtering on perspective-related fields (JOIN or denormalized count column)
+- AG Grid column definition needs `sortable: true` and appropriate filter type
+
+**Priority:** Medium — improves discoverability of un-perspectized content.
+
+**Source:** User feedback (2026-02-27)

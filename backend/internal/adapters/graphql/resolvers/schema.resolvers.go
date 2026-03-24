@@ -7,11 +7,13 @@ package resolvers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
 	"strconv"
 
+	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/auth"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/generated"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/model"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
@@ -19,24 +21,31 @@ import (
 )
 
 // CreateContentFromYouTube is the resolver for the createContentFromYouTube field.
-func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input model.CreateContentFromYouTubeInput) (*model.Content, error) {
+func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input model.CreateContentFromYouTubeInput) (*model.CreateContentResult, error) {
 	content, err := r.ContentService.CreateFromYouTube(ctx, input.URL, input.UserID)
+
+	// Handle idempotent duplicate: service returns (content, ErrAlreadyExists)
+	if errors.Is(err, domain.ErrAlreadyExists) && content != nil {
+		return &model.CreateContentResult{
+			Content:        domainToModel(content),
+			AlreadyExisted: true,
+		}, nil
+	}
+
 	if err != nil {
-		if errors.Is(err, domain.ErrAlreadyExists) {
-			return nil, fmt.Errorf("content already exists for this URL")
-		}
 		if errors.Is(err, domain.ErrInvalidURL) {
 			return nil, fmt.Errorf("invalid YouTube URL")
 		}
-		slog.Error("creating content failed",
-			"error", err,
-			"url", input.URL,
-			"userID", input.UserID,
-		)
-		return nil, fmt.Errorf("failed to create content: %s", err.Error())
+
+		// Generic error for any other failure (including YouTube API errors)
+		// Details are already logged server-side by service layer
+		return nil, fmt.Errorf("failed to create content from YouTube")
 	}
 
-	return domainToModel(content), nil
+	return &model.CreateContentResult{
+		Content:        domainToModel(content),
+		AlreadyExisted: false,
+	}, nil
 }
 
 // CreateUser is the resolver for the createUser field.
@@ -54,7 +63,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 			return nil, fmt.Errorf("invalid input: %w", err)
 		}
 		slog.Error("creating user failed", "error", err)
-		return nil, fmt.Errorf("failed to create user")
+		return nil, fmt.Errorf("failed to create user: %v", err)
 	}
 
 	return userDomainToModel(user), nil
@@ -83,7 +92,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUse
 			return nil, fmt.Errorf("cannot modify system user")
 		}
 		slog.Error("updating user failed", "error", err)
-		return nil, fmt.Errorf("failed to update user")
+		return nil, fmt.Errorf("failed to update user: %v", err)
 	}
 
 	return userDomainToModel(user), nil
@@ -116,22 +125,43 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, err
 
 // CreatePerspective is the resolver for the createPerspective field.
 func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.CreatePerspectiveInput) (*model.Perspective, error) {
+	// Use authenticated user when userID is not provided or zero
+	userID := input.UserID
+	if userID == 0 {
+		authUser, err := auth.RequireAuth(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("access denied: authentication required")
+		}
+		userID = authUser.ID
+	}
+
 	serviceInput := portservices.CreatePerspectiveInput{
-		UserID:      input.UserID,
-		Quality:     input.Quality,
-		Agreement:   input.Agreement,
-		Importance:  input.Importance,
-		Confidence:  input.Confidence,
-		Like:        input.Like,
-		Privacy:     input.Privacy,
-		Description: input.Description,
-		Category:    input.Category,
-		Parts:       input.Parts,
-		Labels:      input.Labels,
+		UserID:                userID,
+		Quality:               input.Quality,
+		Agreement:             input.Agreement,
+		Importance:            input.Importance,
+		Confidence:            input.Confidence,
+		Like:                  input.Like,
+		Privacy:               input.Privacy,
+		Description:           input.Description,
+		Category:              input.Category,
+		Parts:                 input.Parts,
+		Labels:                input.Labels,
+		PrimaryPerspectiveID:  input.PrimaryPerspectiveID,
+		RelatedPerspectiveIDs: input.RelatedPerspectiveIDs,
+		Review:                input.Review,
 	}
 
 	if input.ContentID != nil {
 		serviceInput.ContentID = input.ContentID
+	}
+
+	// Convert customFields map to JSON
+	if input.CustomFields != nil {
+		data, err := json.Marshal(input.CustomFields)
+		if err == nil {
+			serviceInput.CustomFields = data
+		}
 	}
 
 	// Convert categorized ratings
@@ -157,7 +187,7 @@ func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.Cr
 			return nil, fmt.Errorf("user not found: %w", err)
 		}
 		slog.Error("creating perspective failed", "error", err)
-		return nil, fmt.Errorf("failed to create perspective")
+		return nil, fmt.Errorf("failed to create perspective: %v", err)
 	}
 
 	return perspectiveDomainToModel(perspective), nil
@@ -166,22 +196,33 @@ func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.Cr
 // UpdatePerspective is the resolver for the updatePerspective field.
 func (r *mutationResolver) UpdatePerspective(ctx context.Context, input model.UpdatePerspectiveInput) (*model.Perspective, error) {
 	serviceInput := portservices.UpdatePerspectiveInput{
-		ID:           input.ID,
-		Quality:      input.Quality,
-		Agreement:    input.Agreement,
-		Importance:   input.Importance,
-		Confidence:   input.Confidence,
-		Like:         input.Like,
-		Privacy:      input.Privacy,
-		Description:  input.Description,
-		Category:     input.Category,
-		ReviewStatus: input.ReviewStatus,
-		Parts:        input.Parts,
-		Labels:       input.Labels,
+		ID:                    input.ID,
+		Quality:               input.Quality,
+		Agreement:             input.Agreement,
+		Importance:            input.Importance,
+		Confidence:            input.Confidence,
+		Like:                  input.Like,
+		Privacy:               input.Privacy,
+		Description:           input.Description,
+		Category:              input.Category,
+		ReviewStatus:          input.ReviewStatus,
+		Parts:                 input.Parts,
+		Labels:                input.Labels,
+		PrimaryPerspectiveID:  input.PrimaryPerspectiveID,
+		RelatedPerspectiveIDs: input.RelatedPerspectiveIDs,
+		Review:                input.Review,
 	}
 
 	if input.ContentID != nil {
 		serviceInput.ContentID = input.ContentID
+	}
+
+	// Convert customFields map to JSON
+	if input.CustomFields != nil {
+		data, err := json.Marshal(input.CustomFields)
+		if err == nil {
+			serviceInput.CustomFields = data
+		}
 	}
 
 	// Convert categorized ratings
@@ -207,7 +248,7 @@ func (r *mutationResolver) UpdatePerspective(ctx context.Context, input model.Up
 			return nil, fmt.Errorf("invalid input: %w", err)
 		}
 		slog.Error("updating perspective failed", "error", err)
-		return nil, fmt.Errorf("failed to update perspective")
+		return nil, fmt.Errorf("failed to update perspective: %v", err)
 	}
 
 	return perspectiveDomainToModel(perspective), nil
@@ -233,6 +274,31 @@ func (r *mutationResolver) DeletePerspective(ctx context.Context, id string) (bo
 	}
 
 	return true, nil
+}
+
+// CreateClaim is the resolver for the createClaim field.
+func (r *mutationResolver) CreateClaim(ctx context.Context, input model.CreateClaimInput) (*model.Content, error) {
+	content, err := r.ContentService.CreateClaim(ctx, portservices.CreateClaimInput{
+		Text:            input.Text,
+		UserID:          input.UserID,
+		ParentContentID: input.ParentContentID,
+	})
+	if err != nil {
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("parent content not found")
+		}
+		slog.Error("creating claim failed",
+			"error", err,
+			"userID", input.UserID,
+			"parentContentID", input.ParentContentID,
+		)
+		return nil, fmt.Errorf("failed to create claim: %v", err)
+	}
+
+	return domainToModel(content), nil
 }
 
 // ContentByID is the resolver for the contentByID field.
@@ -292,6 +358,19 @@ func (r *queryResolver) Content(ctx context.Context, first *int, after *string, 
 		params.Filter.MinLengthSeconds = filter.MinLengthSeconds
 		params.Filter.MaxLengthSeconds = filter.MaxLengthSeconds
 		params.Filter.Search = filter.Search
+		params.Filter.MinViewCount = filter.MinViewCount
+		params.Filter.MaxViewCount = filter.MaxViewCount
+		params.Filter.MinLikeCount = filter.MinLikeCount
+		params.Filter.MaxLikeCount = filter.MaxLikeCount
+		params.Filter.PublishedAfter = filter.PublishedAfter
+		params.Filter.PublishedBefore = filter.PublishedBefore
+		params.Filter.ChannelTitle = filter.ChannelTitle
+		params.Filter.TagContains = filter.TagContains
+		params.Filter.DescriptionSearch = filter.DescriptionSearch
+		params.Filter.CreatedAfter = filter.CreatedAfter
+		params.Filter.CreatedBefore = filter.CreatedBefore
+		params.Filter.UpdatedAfter = filter.UpdatedAfter
+		params.Filter.UpdatedBefore = filter.UpdatedBefore
 	}
 
 	result, err := r.ContentService.ListContent(ctx, params)
@@ -470,11 +549,36 @@ func (r *queryResolver) Perspectives(ctx context.Context, first *int, after *str
 	return conn, nil
 }
 
+// Email is the resolver for the email field.
+// Returns email only when the authenticated user is requesting their own account (H-10).
+func (r *userResolver) Email(ctx context.Context, obj *model.User) (*string, error) {
+	authenticatedUser, authenticated := auth.ForContext(ctx)
+	if !authenticated {
+		return nil, nil
+	}
+
+	// Compare authenticated user ID with the requested user's ID
+	requestedUserID, err := strconv.Atoi(obj.ID)
+	if err != nil {
+		return nil, nil
+	}
+
+	if authenticatedUser.ID != requestedUserID {
+		return nil, nil // Not own account — hide email
+	}
+
+	return obj.Email, nil
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// User returns generated.UserResolver implementation.
+func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type userResolver struct{ *Resolver }

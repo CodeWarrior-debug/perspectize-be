@@ -11,10 +11,12 @@ import (
 
 // userDomainToModel converts a domain User to a GraphQL model User
 func userDomainToModel(u *domain.User) *model.User {
+	// Email stored on model for field resolver access (auth-gated by userResolver.Email)
+	email := u.Email
 	return &model.User{
 		ID:        strconv.Itoa(u.ID),
 		Username:  u.Username,
-		Email:     u.Email,
+		Email:     &email,
 		Active:    u.Active,
 		Role:      u.Role,
 		CreatedAt: u.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
@@ -141,6 +143,22 @@ func perspectiveDomainToModel(p *domain.Perspective) *model.Perspective {
 			}
 		}
 	}
+
+	// Convert new perspective reference fields
+	if p.PrimaryPerspectiveID != nil {
+		ppID := strconv.Itoa(*p.PrimaryPerspectiveID)
+		m.PrimaryPerspectiveID = &ppID
+	}
+	if len(p.RelatedPerspectiveIDs) > 0 {
+		m.RelatedPerspectiveIDs = p.RelatedPerspectiveIDs
+	}
+	if len(p.CustomFields) > 0 {
+		var customMap map[string]any
+		if err := json.Unmarshal(p.CustomFields, &customMap); err == nil {
+			m.CustomFields = customMap
+		}
+	}
+	m.Review = p.Review
 
 	return m
 }

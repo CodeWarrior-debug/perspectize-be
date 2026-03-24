@@ -7,13 +7,14 @@ import (
 
 // UserModel is the GORM persistence model for users table
 type UserModel struct {
-	ID        int       `gorm:"primaryKey;autoIncrement"`
-	Username  string    `gorm:"not null"`
-	Email     string    `gorm:"uniqueIndex;not null"`
-	Role      string    `gorm:"not null;default:default"`
-	Active    bool      `gorm:"not null;default:true"`
-	CreatedAt time.Time `gorm:"autoCreateTime"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime"`
+	ID          int       `gorm:"primaryKey;autoIncrement"`
+	ClerkUserID *string   `gorm:"column:clerk_user_id;type:text;uniqueIndex"`
+	Username    string    `gorm:"not null"`
+	Email       *string   `gorm:"uniqueIndex"`
+	Role        string    `gorm:"not null;default:default"`
+	Active      bool      `gorm:"not null;default:true"`
+	CreatedAt   time.Time `gorm:"autoCreateTime"`
+	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
 }
 
 // TableName returns the table name for UserModel
@@ -35,9 +36,10 @@ type ContentModel struct {
 	// Dummy fields for gorm-cursor-paginator sort key validation.
 	// These are NOT database columns — SQLRepr provides the actual SQL.
 	// The gorm:"-" tag tells GORM to ignore them for queries/migrations.
-	ViewCount   int64  `gorm:"-"`
-	LikeCount   int64  `gorm:"-"`
-	PublishedAt string `gorm:"-"`
+	ViewCount    int64  `gorm:"-"`
+	LikeCount    int64  `gorm:"-"`
+	PublishedAt  string `gorm:"-"`
+	ChannelTitle string `gorm:"-"` // Dummy field for gorm-cursor-paginator sort key validation
 
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
@@ -50,23 +52,27 @@ func (ContentModel) TableName() string {
 
 // PerspectiveModel is the GORM persistence model for perspectives table
 type PerspectiveModel struct {
-	ID                 int         `gorm:"primaryKey;autoIncrement"`
-	UserID             int         `gorm:"not null"`
-	ContentID          *int        `gorm:""`
-	Like               *string     `gorm:"column:like"`
-	Quality            *int        `gorm:""`
-	Agreement          *int        `gorm:""`
-	Importance         *int        `gorm:""`
-	Confidence         *int        `gorm:""`
-	Privacy            *string     `gorm:""`
-	Parts              Int64Array  `gorm:"type:integer[]"`
-	Category           *string     `gorm:""`
-	Labels             StringArray `gorm:"type:text[]"`
-	Description        *string     `gorm:""`
-	ReviewStatus       *string     `gorm:""`
-	CategorizedRatings JSONBArray  `gorm:"type:jsonb[];column:categorized_ratings"`
-	CreatedAt          time.Time   `gorm:"autoCreateTime"`
-	UpdatedAt          time.Time   `gorm:"autoUpdateTime"`
+	ID                    int             `gorm:"primaryKey;autoIncrement"`
+	UserID                int             `gorm:"not null"`
+	ContentID             *int            `gorm:""`
+	Like                  *string         `gorm:"column:like"`
+	Quality               *int            `gorm:""`
+	Agreement             *int            `gorm:""`
+	Importance            *int            `gorm:""`
+	Confidence            *int            `gorm:""`
+	Privacy               *string         `gorm:""`
+	Parts                 Int64Array      `gorm:"type:integer[]"`
+	Category              *string         `gorm:""`
+	Labels                StringArray     `gorm:"type:text[]"`
+	Description           *string         `gorm:""`
+	ReviewStatus          *string         `gorm:""`
+	CategorizedRatings    JSONBArray      `gorm:"type:jsonb[];column:categorized_ratings"`
+	PrimaryPerspectiveID  *int            `gorm:"column:primary_perspective_id"`
+	RelatedPerspectiveIDs Int64Array      `gorm:"type:integer[];column:related_perspective_ids"`
+	CustomFields          json.RawMessage `gorm:"type:jsonb;column:custom_fields;default:'{}'"`
+	Review                *string         `gorm:"column:review"`
+	CreatedAt             time.Time       `gorm:"autoCreateTime"`
+	UpdatedAt             time.Time       `gorm:"autoUpdateTime"`
 }
 
 // TableName returns the table name for PerspectiveModel

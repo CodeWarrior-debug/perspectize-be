@@ -6,7 +6,7 @@ import { readable } from 'svelte/store';
 vi.mock('$app/environment', () => ({
 	browser: true,
 	dev: true,
-	building: false
+	building: false,
 }));
 
 // Mock $app/navigation if needed
@@ -17,8 +17,26 @@ vi.mock('$app/navigation', () => ({
 	preloadData: vi.fn(),
 	preloadCode: vi.fn(),
 	afterNavigate: vi.fn(),
-	beforeNavigate: vi.fn()
+	beforeNavigate: vi.fn(),
 }));
+
+// Mock $app/state (Svelte 5 runes) — mutable so tests can override url
+const mockPageState = {
+	url: new URL('http://localhost'),
+	params: {},
+	route: { id: '/' },
+	status: 200,
+	error: null,
+	data: {},
+	form: null,
+};
+
+vi.mock('$app/state', () => ({
+	page: mockPageState,
+}));
+
+// Export for tests that need to change the URL
+export { mockPageState };
 
 // Mock $app/stores for components that use page store
 vi.mock('$app/stores', () => {
@@ -30,16 +48,16 @@ vi.mock('$app/stores', () => {
 			status: 200,
 			error: null,
 			data: {},
-			form: null
+			form: null,
 		}),
 		navigating: readable(null),
-		updated: { check: vi.fn(), subscribe: readable(false).subscribe }
+		updated: { check: vi.fn(), subscribe: readable(false).subscribe },
 	};
 });
 
 // Mock $lib/assets/favicon.svg
 vi.mock('$lib/assets/favicon.svg', () => ({
-	default: '/favicon.svg'
+	default: '/favicon.svg',
 }));
 
 // Mock window.matchMedia for responsive components
@@ -53,6 +71,6 @@ Object.defineProperty(window, 'matchMedia', {
 		removeListener: vi.fn(),
 		addEventListener: vi.fn(),
 		removeEventListener: vi.fn(),
-		dispatchEvent: vi.fn()
-	}))
+		dispatchEvent: vi.fn(),
+	})),
 });

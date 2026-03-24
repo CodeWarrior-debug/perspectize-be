@@ -122,6 +122,19 @@ func buildContentSortRules(sortBy domain.ContentSortBy, order domain.SortOrder) 
 			SQLRepr:         "response->'items'->0->'snippet'->>'publishedAt'",
 			NULLReplacement: "",
 		}
+	case domain.ContentSortByChannelTitle:
+		primaryRule = paginator.Rule{
+			Key:             "ChannelTitle",
+			Order:           paginatorOrder,
+			SQLRepr:         "response->'items'->0->'snippet'->>'channelTitle'",
+			NULLReplacement: "",
+		}
+	case domain.ContentSortByLength:
+		primaryRule = paginator.Rule{
+			Key:             "Length",
+			Order:           paginatorOrder,
+			NULLReplacement: int64(0),
+		}
 	case domain.ContentSortByUpdatedAt:
 		primaryRule = paginator.Rule{
 			Key:   "UpdatedAt",

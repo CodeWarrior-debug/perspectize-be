@@ -14,7 +14,7 @@ import { QueryClient } from '@tanstack/svelte-query';
 import TestWrapper from '../helpers/TestWrapper.svelte';
 
 const { mockRequest } = vi.hoisted(() => ({
-	mockRequest: vi.fn()
+	mockRequest: vi.fn(),
 }));
 
 // Mock AG Grid component
@@ -27,11 +27,9 @@ vi.mock('ag-grid-svelte5', () => ({
 	})),
 }));
 
-// Mock graphqlClient
+// Mock graphqlRequest
 vi.mock('$lib/queries/client', () => ({
-	graphqlClient: {
-		request: mockRequest
-	}
+	graphqlRequest: mockRequest,
 }));
 
 // queryKeys is used directly, no need to mock since it's a simple object
@@ -45,31 +43,40 @@ const mockEmptyResponse = {
 			hasNextPage: false,
 			hasPreviousPage: false,
 			startCursor: null,
-			endCursor: null
+			endCursor: null,
 		},
-		totalCount: 0
-	}
+		totalCount: 0,
+	},
 };
 
 const mockDataResponse = {
 	content: {
 		items: [
 			{
-				id: '1', name: 'Test Video', url: 'https://youtube.com/watch?v=abc',
-				contentType: 'YOUTUBE', length: 300, lengthUnits: 'seconds',
-				viewCount: 1500, likeCount: 100, channelTitle: 'Test Channel',
-				publishedAt: '2024-01-15T00:00:00Z', tags: ['test'],
-				description: 'A test video', createdAt: '2024-01-20', updatedAt: '2024-01-25'
-			}
+				id: '1',
+				name: 'Test Video',
+				url: 'https://youtube.com/watch?v=abc',
+				contentType: 'YOUTUBE',
+				length: 300,
+				lengthUnits: 'seconds',
+				viewCount: 1500,
+				likeCount: 100,
+				channelTitle: 'Test Channel',
+				publishedAt: '2024-01-15T00:00:00Z',
+				tags: ['test'],
+				description: 'A test video',
+				createdAt: '2024-01-20',
+				updatedAt: '2024-01-25',
+			},
 		],
 		pageInfo: {
 			hasNextPage: true,
 			hasPreviousPage: false,
 			startCursor: 'cursor1',
-			endCursor: 'cursor2'
+			endCursor: 'cursor2',
 		},
-		totalCount: 25
-	}
+		totalCount: 25,
+	},
 };
 
 function renderWithQuery() {
@@ -78,17 +85,17 @@ function renderWithQuery() {
 			queries: {
 				retry: false,
 				gcTime: 0,
-				staleTime: 0
+				staleTime: 0,
 			},
-			mutations: { retry: false }
-		}
+			mutations: { retry: false },
+		},
 	});
 	return render(TestWrapper, {
 		props: {
 			queryClient,
 			component: ActivityTable,
-			props: {}
-		}
+			props: {},
+		},
 	});
 }
 
@@ -118,5 +125,19 @@ describe('ActivityTable', () => {
 		// - No manual fetchData() function
 		// - Query invalidation for cache updates (no custom events)
 		expect(true).toBe(true);
+	});
+
+	it('hides pagination controls in loaded mode (default)', async () => {
+		mockRequest.mockResolvedValue(mockDataResponse);
+		const { container } = renderWithQuery();
+
+		await waitFor(() => {
+			// Pagination buttons should not be present in loaded mode
+			const buttons = Array.from(container.querySelectorAll('button'));
+			const paginationButtons = buttons.filter(
+				(b) => b.textContent?.includes('Previous') || b.textContent?.includes('Next'),
+			);
+			expect(paginationButtons).toHaveLength(0);
+		});
 	});
 });
