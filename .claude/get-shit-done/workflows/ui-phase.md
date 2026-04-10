@@ -8,6 +8,12 @@ UI-SPEC.md locks spacing, typography, color, copywriting, and design system deci
 @/Users/jamesjordan/GitHub/perspectize/.claude/get-shit-done/references/ui-brand.md
 </required_reading>
 
+<available_agent_types>
+Valid GSD subagent types (use exact names — do not fall back to 'general-purpose'):
+- gsd-ui-researcher — Researches UI/UX approaches
+- gsd-ui-checker — Reviews UI implementation quality
+</available_agent_types>
+
 <process>
 
 ## 1. Initialize
@@ -15,6 +21,8 @@ UI-SPEC.md locks spacing, typography, color, copywriting, and design system deci
 ```bash
 INIT=$(node "/Users/jamesjordan/GitHub/perspectize/.claude/get-shit-done/bin/gsd-tools.cjs" init plan-phase "$PHASE")
 if [[ "$INIT" == @file:* ]]; then INIT=$(cat "${INIT#@file:}"); fi
+AGENT_SKILLS_UI=$(node "/Users/jamesjordan/GitHub/perspectize/.claude/get-shit-done/bin/gsd-tools.cjs" agent-skills gsd-ui-researcher 2>/dev/null)
+AGENT_SKILLS_UI_CHECKER=$(node "/Users/jamesjordan/GitHub/perspectize/.claude/get-shit-done/bin/gsd-tools.cjs" agent-skills gsd-ui-checker 2>/dev/null)
 ```
 
 Parse JSON for: `phase_dir`, `phase_number`, `phase_name`, `phase_slug`, `padded_phase`, `has_context`, `has_research`, `commit_docs`.
@@ -36,11 +44,11 @@ UI_ENABLED=$(node "/Users/jamesjordan/GitHub/perspectize/.claude/get-shit-done/b
 
 **If `UI_ENABLED` is `false`:**
 ```
-UI phase is disabled in config. Enable via /gsd:settings.
+UI phase is disabled in config. Enable via /gsd-settings.
 ```
 Exit workflow.
 
-**If `planning_exists` is false:** Error — run `/gsd:new-project` first.
+**If `planning_exists` is false:** Error — run `/gsd-new-project` first.
 
 ## 2. Parse and Validate Phase
 
@@ -57,7 +65,7 @@ PHASE_INFO=$(node "/Users/jamesjordan/GitHub/perspectize/.claude/get-shit-done/b
 **If `has_context` is false:**
 ```
 No CONTEXT.md found for Phase {N}.
-Recommended: run /gsd:discuss-phase {N} first to capture design preferences.
+Recommended: run /gsd-discuss-phase {N} first to capture design preferences.
 Continuing without user decisions — UI researcher will ask all questions.
 ```
 Continue (non-blocking).
@@ -112,9 +120,11 @@ Answer: "What visual and interaction contracts does this phase need?"
 - {state_path} (Project State)
 - {roadmap_path} (Roadmap)
 - {requirements_path} (Requirements)
-- {context_path} (USER DECISIONS from /gsd:discuss-phase)
+- {context_path} (USER DECISIONS from /gsd-discuss-phase)
 - {research_path} (Technical Research — stack decisions)
 </files_to_read>
+
+${AGENT_SKILLS_UI}
 
 <output>
 Write to: {phase_dir}/{padded_phase}-UI-SPEC.md
@@ -174,6 +184,8 @@ Check all 6 dimensions. Return APPROVED or BLOCKED.
 - {research_path} (Technical Research — check stack alignment)
 </files_to_read>
 
+${AGENT_SKILLS_UI_CHECKER}
+
 <config>
 ui_safety_gate: {ui_safety_gate config value}
 </config>
@@ -226,7 +238,7 @@ Max revision iterations reached. Remaining issues:
 
 Options:
 1. Force approve — proceed with current UI-SPEC (FLAGs become accepted)
-2. Edit manually — open UI-SPEC.md in editor, re-run /gsd:ui-phase
+2. Edit manually — open UI-SPEC.md in editor, re-run /gsd-ui-phase
 3. Abandon — exit without approving
 ```
 
@@ -251,9 +263,9 @@ Dimensions: 6/6 passed
 
 **Plan Phase {N}** — planner will use UI-SPEC.md as design context
 
-`/gsd:plan-phase {N}`
+`/clear` then:
 
-<sub>/clear first → fresh context window</sub>
+`/gsd-plan-phase {N}`
 
 ───────────────────────────────────────────────────────────────
 ```

@@ -62,10 +62,10 @@ Errors: N | Warnings: N | Info: N
 ## Errors
 
 - [E001] config.json: JSON parse error at line 5
-  Fix: Run /gsd:health --repair to reset to defaults
+  Fix: Run /gsd-health --repair to reset to defaults
 
 - [E002] PROJECT.md not found
-  Fix: Run /gsd:new-project to create
+  Fix: Run /gsd-new-project to create
 ```
 
 **If warnings exist:**
@@ -90,7 +90,7 @@ Errors: N | Warnings: N | Info: N
 **Footer (if repairable issues exist and --repair was NOT used):**
 ```
 ---
-N issues can be auto-repaired. Run: /gsd:health --repair
+N issues can be auto-repaired. Run: /gsd-health --repair
 ```
 </step>
 
@@ -100,7 +100,7 @@ N issues can be auto-repaired. Run: /gsd:health --repair
 Ask user if they want to run repairs:
 
 ```
-Would you like to run /gsd:health --repair to fix N issues automatically?
+Would you like to run /gsd-health --repair to fix N issues automatically?
 ```
 
 If yes, re-run with --repair flag and display results.
@@ -168,7 +168,7 @@ When `--repair` is active, detect and clean up:
 # Check for stale task directories (older than 24 hours)
 TASKS_DIR="/Users/jamesjordan/GitHub/perspectize/.claude/tasks"
 if [ -d "$TASKS_DIR" ]; then
-  STALE_COUNT=$(find "$TASKS_DIR" -maxdepth 1 -type d -mtime +1 2>/dev/null | wc -l)
+  STALE_COUNT=$( (find "$TASKS_DIR" -maxdepth 1 -type d -mtime +1 2>/dev/null || true) | wc -l )
   if [ "$STALE_COUNT" -gt 0 ]; then
     echo "⚠️  Found $STALE_COUNT stale task directories in /Users/jamesjordan/GitHub/perspectize/.claude/tasks/"
     echo "   These are leftover from crashed subagent sessions."

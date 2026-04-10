@@ -28,7 +28,7 @@ Parse JSON for: `state_exists`, `roadmap_exists`, `project_exists`, `planning_ex
 
 **If `state_exists` is true:** Proceed to load_state
 **If `state_exists` is false but `roadmap_exists` or `project_exists` is true:** Offer to reconstruct STATE.md
-**If `planning_exists` is false:** This is a new project - route to /gsd:new-project
+**If `planning_exists` is false:** This is a new project - route to /gsd-new-project
 </step>
 
 <step name="load_state">
@@ -64,16 +64,17 @@ Look for incomplete work that needs attention:
 
 ```bash
 # Check for structured handoff (preferred — machine-readable)
-cat .planning/HANDOFF.json 2>/dev/null
+cat .planning/HANDOFF.json 2>/dev/null || true
 
 # Check for continue-here files (mid-plan resumption)
-ls .planning/phases/*/.continue-here*.md 2>/dev/null
+ls .planning/phases/*/.continue-here*.md 2>/dev/null || true
 
 # Check for plans without summaries (incomplete execution)
 for plan in .planning/phases/*/*-PLAN.md; do
+  [ -e "$plan" ] || continue
   summary="${plan/PLAN/SUMMARY}"
   [ ! -f "$summary" ] && echo "Incomplete: $plan"
-done 2>/dev/null
+done 2>/dev/null || true
 
 # Check for interrupted agents (use has_interrupted_agent and interrupted_agent_id from init)
 if [ "$has_interrupted_agent" = "true" ]; then
@@ -83,7 +84,7 @@ fi
 
 **If HANDOFF.json exists:**
 
-- This is the primary resumption source — structured data from `/gsd:pause-work`
+- This is the primary resumption source — structured data from `/gsd-pause-work`
 - Parse `status`, `phase`, `plan`, `task`, `total_tasks`, `next_action`
 - Check `blockers` and `human_actions_pending` — surface these immediately
 - Check `completed_tasks` for `in_progress` items — these need attention first
@@ -139,7 +140,7 @@ Present complete project status to user:
     Resume with: Task tool (resume parameter with agent ID)
 
 [If pending todos exist:]
-📋 [N] pending todos — /gsd:check-todos to review
+📋 [N] pending todos — /gsd-check-todos to review
 
 [If blockers exist:]
 ⚠️  Carried concerns:
@@ -199,11 +200,11 @@ What would you like to do?
 [Primary action based on state - e.g.:]
 1. Resume interrupted agent [if interrupted agent found]
    OR
-1. Execute phase (/gsd:execute-phase {phase} ${GSD_WS})
+1. Execute phase (/gsd-execute-phase {phase} ${GSD_WS})
    OR
-1. Discuss Phase 3 context (/gsd:discuss-phase 3 ${GSD_WS}) [if CONTEXT.md missing]
+1. Discuss Phase 3 context (/gsd-discuss-phase 3 ${GSD_WS}) [if CONTEXT.md missing]
    OR
-1. Plan Phase 3 (/gsd:plan-phase 3 ${GSD_WS}) [if CONTEXT.md exists or discuss option declined]
+1. Plan Phase 3 (/gsd-plan-phase 3 ${GSD_WS}) [if CONTEXT.md exists or discuss option declined]
 
 [Secondary options:]
 2. Review current phase status
@@ -215,7 +216,7 @@ What would you like to do?
 **Note:** When offering phase planning, check for CONTEXT.md existence first:
 
 ```bash
-ls .planning/phases/XX-name/*-CONTEXT.md 2>/dev/null
+ls .planning/phases/XX-name/*-CONTEXT.md 2>/dev/null || true
 ```
 
 If missing, suggest discuss-phase before plan. If exists, offer plan directly.
@@ -234,9 +235,9 @@ Based on user selection, route to appropriate workflow:
 
   **{phase}-{plan}: [Plan Name]** — [objective from PLAN.md]
 
-  `/gsd:execute-phase {phase} ${GSD_WS}`
+  `/clear` then:
 
-  <sub>`/clear` first → fresh context window</sub>
+  `/gsd-execute-phase {phase} ${GSD_WS}`
 
   ---
   ```
@@ -248,15 +249,15 @@ Based on user selection, route to appropriate workflow:
 
   **Phase [N]: [Name]** — [Goal from ROADMAP.md]
 
-  `/gsd:plan-phase [phase-number] ${GSD_WS}`
+  `/clear` then:
 
-  <sub>`/clear` first → fresh context window</sub>
+  `/gsd-plan-phase [phase-number] ${GSD_WS}`
 
   ---
 
   **Also available:**
-  - `/gsd:discuss-phase [N] ${GSD_WS}` — gather context first
-  - `/gsd:research-phase [N] ${GSD_WS}` — investigate unknowns
+  - `/gsd-discuss-phase [N] ${GSD_WS}` — gather context first
+  - `/gsd-research-phase [N] ${GSD_WS}` — investigate unknowns
 
   ---
   ```

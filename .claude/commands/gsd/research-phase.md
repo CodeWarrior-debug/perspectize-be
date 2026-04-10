@@ -1,6 +1,6 @@
 ---
 name: gsd:research-phase
-description: Research how to implement a phase (standalone - usually use /gsd:plan-phase instead)
+description: Research how to implement a phase (standalone - usually use /gsd-plan-phase instead)
 argument-hint: "[phase]"
 allowed-tools:
   - Read
@@ -11,7 +11,7 @@ allowed-tools:
 <objective>
 Research how to implement a phase. Spawns gsd-phase-researcher agent with phase context.
 
-**Note:** This is a standalone research command. For most workflows, use `/gsd:plan-phase` which integrates research automatically.
+**Note:** This is a standalone research command. For most workflows, use `/gsd-plan-phase` which integrates research automatically.
 
 **Use this command when:**
 - You want to research without planning yet
@@ -22,6 +22,11 @@ Research how to implement a phase. Spawns gsd-phase-researcher agent with phase 
 
 **Why subagent:** Research burns context fast (WebSearch, Context7 queries, source verification). Fresh 200k context for investigation. Main context stays lean for user interaction.
 </objective>
+
+<available_agent_types>
+Valid GSD subagent types (use exact names — do not fall back to 'general-purpose'):
+- gsd-phase-researcher — Researches technical approaches for a phase
+</available_agent_types>
 
 <context>
 Phase number: $ARGUMENTS (required)
@@ -110,7 +115,7 @@ Mode: ecosystem
 </additional_context>
 
 <downstream_consumer>
-Your RESEARCH.md will be loaded by `/gsd:plan-phase` which uses specific sections:
+Your RESEARCH.md will be loaded by `/gsd-plan-phase` which uses specific sections:
 - `## Standard Stack` → Plans use these libraries
 - `## Architecture Patterns` → Task structure follows these
 - `## Don't Hand-Roll` → Tasks NEVER build custom solutions for listed problems
