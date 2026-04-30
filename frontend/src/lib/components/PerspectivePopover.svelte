@@ -20,6 +20,7 @@
 	import CommentEditor from '$lib/components/CommentEditor.svelte';
 	import CommentFullscreen from '$lib/components/CommentFullscreen.svelte';
 	import AddFieldSearch from '$lib/components/AddFieldSearch.svelte';
+	import { sanitizeHtml } from '$lib/utils/sanitize';
 	import type { FieldDef } from '$lib/components/AddFieldSearch.svelte';
 	import { useCreatePerspective } from '$lib/queries/hooks/useCreatePerspective';
 	import { useUpdatePerspective } from '$lib/queries/hooks/useUpdatePerspective';
@@ -183,10 +184,10 @@
 		return Object.fromEntries(entries) as Record<string, number>;
 	}
 
-	// Get review text — only send if non-empty after stripping HTML tags
+	// Get review text — sanitize HTML and only send if non-empty
 	function getReview(): string | undefined {
 		const stripped = comment.replace(/<[^>]*>/g, '').trim();
-		return stripped ? comment : undefined;
+		return stripped ? sanitizeHtml(comment) : undefined;
 	}
 
 	function handleSubmit(e: Event) {
