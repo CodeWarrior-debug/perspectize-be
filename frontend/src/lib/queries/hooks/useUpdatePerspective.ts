@@ -12,6 +12,7 @@ export interface UpdatePerspectiveInput {
 	confidence?: number;
 	like?: string;
 	review?: string;
+	customFields?: Record<string, number>;
 }
 
 export function useUpdatePerspective() {

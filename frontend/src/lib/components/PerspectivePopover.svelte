@@ -107,8 +107,6 @@
 				break;
 			default:
 				dynamicValues = { ...dynamicValues, [key]: val };
-				// TODO: Backend integration — persist custom field value
-				console.log('[Perspectize] dynamic field changed', key, val);
 				break;
 		}
 	}
@@ -153,10 +151,17 @@
 		confidence = existingPerspective?.confidence ?? null;
 		const l = existingPerspective?.like;
 		likeValue = l === 'THUMBS_UP' ? 'THUMBS_UP' : l === 'THUMBS_DOWN' ? 'THUMBS_DOWN' : null;
-		comment = '';
+		comment = existingPerspective?.review ?? '';
 		commentFullscreenOpen = false;
-		activeFields = [...DEFAULT_FIELDS];
-		dynamicValues = {};
+		// Restore dynamic fields from customFields if editing
+		const cf = existingPerspective?.customFields as Record<string, number> | null;
+		if (cf && Object.keys(cf).length > 0) {
+			activeFields = [...DEFAULT_FIELDS, ...Object.keys(cf)];
+			dynamicValues = { ...cf };
+		} else {
+			activeFields = [...DEFAULT_FIELDS];
+			dynamicValues = {};
+		}
 	});
 
 	const isMobile = new MediaQuery('(max-width: 639px)');
@@ -169,8 +174,19 @@
 
 	function handleCommentChange(html: string) {
 		comment = html;
-		// TODO: Backend integration — comment not yet persisted
-		console.log('[Perspectize] comment changed', html);
+	}
+
+	// Build customFields payload from dynamic (non-core) field values
+	function buildCustomFields(): Record<string, number> | undefined {
+		const entries = Object.entries(dynamicValues).filter(([, v]) => v !== null);
+		if (entries.length === 0) return undefined;
+		return Object.fromEntries(entries) as Record<string, number>;
+	}
+
+	// Get review text — only send if non-empty after stripping HTML tags
+	function getReview(): string | undefined {
+		const stripped = comment.replace(/<[^>]*>/g, '').trim();
+		return stripped ? comment : undefined;
 	}
 
 	function handleSubmit(e: Event) {
@@ -194,6 +210,8 @@
 					importance: importance ?? undefined,
 					confidence: confidence ?? undefined,
 					like: likeValue ?? undefined,
+					review: getReview(),
+					customFields: buildCustomFields(),
 				},
 				{
 					onSuccess: () => {
@@ -211,6 +229,8 @@
 					importance: importance ?? undefined,
 					confidence: confidence ?? undefined,
 					like: likeValue ?? undefined,
+					review: getReview(),
+					customFields: buildCustomFields(),
 				},
 				{
 					onSuccess: () => {

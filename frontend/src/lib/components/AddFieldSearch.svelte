@@ -77,8 +77,6 @@
 	}
 
 	function addExisting(field: FieldDef) {
-		// TODO: Log field addition for backend sync
-		console.log('[Perspectize] add field', field);
 		onAdd(field);
 		query = '';
 		isOpen = false;
@@ -88,8 +86,6 @@
 		const name = query.trim();
 		const key = `custom:${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 		const field: FieldDef = { key, label: name, kind: 'rating', existing: false, custom: true };
-		// TODO: Persist custom field definition to backend
-		console.log('[Perspectize] create custom field', field);
 		onAdd(field);
 		query = '';
 		isOpen = false;
