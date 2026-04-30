@@ -60,15 +60,13 @@ describe('PerspectivePopover component', () => {
 			expect(container).toBeTruthy();
 		});
 
-		it('renders dialog with "Add Perspective" title when creating', async () => {
+		it('renders dialog with "Add perspective" title when creating', async () => {
 			renderPopover({ existingPerspective: null });
 			await tick();
-			// Both the dialog title and submit button contain "Add Perspective"
-			const matches = screen.getAllByText('Add Perspective');
-			expect(matches.length).toBeGreaterThanOrEqual(1);
+			expect(screen.getByText('Add perspective')).toBeInTheDocument();
 		});
 
-		it('renders dialog with "Edit Perspective" title when editing', async () => {
+		it('renders dialog with "Edit perspective" title when editing', async () => {
 			renderPopover({
 				existingPerspective: {
 					id: '1',
@@ -80,7 +78,7 @@ describe('PerspectivePopover component', () => {
 				},
 			});
 			await tick();
-			expect(screen.getByText('Edit Perspective')).toBeInTheDocument();
+			expect(screen.getByText('Edit perspective')).toBeInTheDocument();
 		});
 	});
 
@@ -157,10 +155,10 @@ describe('PerspectivePopover component', () => {
 			expect(screen.getByLabelText('Thumbs down')).toBeInTheDocument();
 		});
 
-		it('renders like section label', async () => {
+		it('renders overall section label', async () => {
 			renderPopover();
 			await tick();
-			expect(screen.getByText('Like')).toBeInTheDocument();
+			expect(screen.getByText('Overall')).toBeInTheDocument();
 		});
 
 		it('thumbs up button has aria-pressed attribute', async () => {
@@ -189,14 +187,14 @@ describe('PerspectivePopover component', () => {
 			expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
 		});
 
-		it('renders "Add Perspective" button when creating', async () => {
+		it('renders "Save perspective" button when creating', async () => {
 			renderPopover({ existingPerspective: null });
 			await tick();
-			const submitBtn = screen.getByRole('button', { name: 'Add Perspective' });
+			const submitBtn = screen.getByRole('button', { name: 'Save perspective' });
 			expect(submitBtn).toBeInTheDocument();
 		});
 
-		it('renders "Save Changes" button when editing', async () => {
+		it('renders "Save perspective" button when editing', async () => {
 			renderPopover({
 				existingPerspective: {
 					id: '1',
@@ -208,7 +206,7 @@ describe('PerspectivePopover component', () => {
 				},
 			});
 			await tick();
-			const submitBtn = screen.getByRole('button', { name: 'Save Changes' });
+			const submitBtn = screen.getByRole('button', { name: 'Save perspective' });
 			expect(submitBtn).toBeInTheDocument();
 		});
 	});
@@ -233,8 +231,7 @@ describe('PerspectivePopover component', () => {
 		it('displays dialog title', async () => {
 			renderPopover({ existingPerspective: null });
 			await tick();
-			const matches = screen.getAllByText('Add Perspective');
-			expect(matches.length).toBeGreaterThanOrEqual(1);
+			expect(screen.getByText('Add perspective')).toBeInTheDocument();
 		});
 
 		it('dialog has header with content name', async () => {
@@ -248,8 +245,8 @@ describe('PerspectivePopover component', () => {
 		it('is in create mode when existingPerspective is null', async () => {
 			renderPopover({ existingPerspective: null });
 			await tick();
-			const matches = screen.getAllByText('Add Perspective');
-			expect(matches.length).toBeGreaterThanOrEqual(2); // title + button
+			expect(screen.getByText('Add perspective')).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: 'Save perspective' })).toBeInTheDocument();
 		});
 
 		it('is in edit mode when existingPerspective is provided', async () => {
@@ -264,8 +261,8 @@ describe('PerspectivePopover component', () => {
 				},
 			});
 			await tick();
-			expect(screen.getByText('Edit Perspective')).toBeInTheDocument();
-			expect(screen.getByRole('button', { name: 'Save Changes' })).toBeInTheDocument();
+			expect(screen.getByText('Edit perspective')).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: 'Save perspective' })).toBeInTheDocument();
 		});
 
 		it('populates like value from existingPerspective', async () => {
@@ -388,7 +385,7 @@ describe('PerspectivePopover component', () => {
 			// Click thumbs up to set at least one field
 			await fireEvent.click(screen.getByLabelText('Thumbs up'));
 			// Submit
-			const submitBtn = screen.getByRole('button', { name: 'Add Perspective' });
+			const submitBtn = screen.getByRole('button', { name: 'Save perspective' });
 			await fireEvent.click(submitBtn);
 			expect(mocks.mockCreateMutate).toHaveBeenCalled();
 		});
@@ -405,7 +402,7 @@ describe('PerspectivePopover component', () => {
 				},
 			});
 			await tick();
-			const submitBtn = screen.getByRole('button', { name: 'Save Changes' });
+			const submitBtn = screen.getByRole('button', { name: 'Save perspective' });
 			await fireEvent.click(submitBtn);
 			expect(mocks.mockUpdateMutate).toHaveBeenCalled();
 		});
@@ -430,7 +427,7 @@ describe('PerspectivePopover component', () => {
 			renderPopover({ existingPerspective: null });
 			await tick();
 			expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
-			expect(screen.getByRole('button', { name: 'Add Perspective' })).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: 'Save perspective' })).toBeInTheDocument();
 		});
 	});
 });
