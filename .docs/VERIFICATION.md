@@ -4,12 +4,24 @@ Before marking any work complete, run interactive verification.
 
 ## 1. Start Services
 
-```bash
-# Terminal 1: Backend
-cd backend && make run
+The database is hosted on Sevalla (cloud PostgreSQL) — no Docker or local database setup needed.
 
-# Terminal 2: Frontend
-cd fe && pnpm run dev
+**Check if already running:**
+```bash
+lsof -i :8080  # Backend
+lsof -i :5173  # Frontend
+```
+
+**Start if not running:**
+```bash
+# Terminal 1: Backend (port 8080)
+cd backend
+make dev    # hot reload with air
+# or: make run  # standard mode
+
+# Terminal 2: Frontend (port 5173)
+cd frontend
+pnpm run dev
 ```
 
 ## 2. Verify Backend
