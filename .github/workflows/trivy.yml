@@ -6,10 +6,12 @@ on:
     paths:
       - "frontend/pnpm-lock.yaml"
       - "backend/go.sum"
+      - ".github/workflows/trivy.yml"
   pull_request:
     paths:
       - "frontend/pnpm-lock.yaml"
       - "backend/go.sum"
+      - ".github/workflows/trivy.yml"
 
 permissions:
   contents: read
