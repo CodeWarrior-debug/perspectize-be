@@ -38,22 +38,22 @@
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/svelte": "^5.3.1",
 		"@vite-pwa/sveltekit": "^1.1.0",
-		"@vitest/browser": "^4.0.18",
-		"@vitest/browser-playwright": "^4.0.18",
-		"@vitest/coverage-v8": "^4.0.18",
+		"@vitest/browser": "^4.1.8",
+		"@vitest/browser-playwright": "^4.1.8",
+		"@vitest/coverage-v8": "^4.1.8",
 		"bits-ui": "^2.16.3",
 		"jscpd": "^4.0.8",
 		"jsdom": "^28.1.0",
 		"prettier": "^3.8.1",
 		"prettier-plugin-svelte": "^3.5.1",
-		"svelte": "^5.53.7",
+		"svelte": "^5.56.3",
 		"svelte-check": "^4.4.5",
 		"tailwind-variants": "^3.2.2",
 		"tailwindcss": "^4.2.2",
 		"typescript": "^5.9.3",
 		"vite": "^7.3.1",
-		"vitest": "^4.0.18",
-		"vitest-browser-svelte": "^2.0.2"
+		"vitest": "^4.1.8",
+		"vitest-browser-svelte": "^2.1.1"
 	},
 	"dependencies": {
 		"@ag-grid-community/client-side-row-model": "32.3.9",
@@ -67,7 +67,7 @@
 		"clsx": "^2.1.1",
 		"graphql": "^16.13.1",
 		"graphql-request": "^7.4.0",
-		"svelte-clerk": "^1.0.1",
+		"svelte-clerk": "^1.1.9",
 		"svelte-sonner": "^1.1.0",
 		"tailwind-merge": "^3.5.0",
 		"web-vitals": "^5.1.0"
@@ -79,7 +79,8 @@
 			"serialize-javascript": ">=7.0.3",
 			"tar": ">=7.5.11",
 			"undici": ">=7.24.0",
-			"devalue": ">=5.6.4"
+			"devalue": ">=5.6.4",
+			"tinyglobby>picomatch": "^4.0.4"
 		}
 	}
 }
