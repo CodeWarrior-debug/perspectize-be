@@ -1,6 +1,10 @@
+allowBuilds:
+  esbuild: true
+  '@clerk/shared': true
+
 onlyBuiltDependencies:
-  - '@clerk/shared'
   - esbuild
+  - '@clerk/shared'
 
 overrides:
   rollup: ^4.59.0
