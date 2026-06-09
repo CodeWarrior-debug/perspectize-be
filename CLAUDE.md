@@ -182,6 +182,7 @@ See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow
 - [Domain Guide](.docs/DOMAIN_GUIDE.md) — Domain layer rules and patterns
 - [Go Patterns](.docs/GO_PATTERNS.md) — Error handling and DB query patterns
 - [Security](.docs/SECURITY.md) — Secret management, rotation procedures, incident response
+- [Dependency Security](.docs/DEPENDENCY_SECURITY.md) — Trivy/pnpm-audit scanning, CVE remediation workflow, CI gotchas
 
 **Frontend docs:**
 - [Frontend CLAUDE.md](frontend/CLAUDE.md) — SvelteKit, Svelte 5, TanStack Query patterns
