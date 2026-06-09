@@ -22,7 +22,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Trivy filesystem scan
+      - name: Run Trivy scan (table — visible in log)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: 0
+          format: table
+
+      - name: Run Trivy scan (SARIF — for GitHub Security tab)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
