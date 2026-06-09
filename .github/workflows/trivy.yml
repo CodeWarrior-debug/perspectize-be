@@ -6,10 +6,12 @@ on:
     paths:
       - "frontend/pnpm-lock.yaml"
       - "backend/go.sum"
+      - ".github/workflows/trivy.yml"
   pull_request:
     paths:
       - "frontend/pnpm-lock.yaml"
       - "backend/go.sum"
+      - ".github/workflows/trivy.yml"
 
 permissions:
   contents: read
@@ -22,13 +24,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Trivy filesystem scan
+      # Gating scan: table format prints findings directly in the log AND
+      # respects the severity filter for exit-code (HIGH,CRITICAL only).
+      - name: Run Trivy scan (table — gates the build, visible in log)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
           scan-ref: .
           severity: HIGH,CRITICAL
           exit-code: 1
+          format: table
+
+      # Upload-only scan: never fails the build. The trivy-action builds SARIF
+      # "with all severities" and would otherwise trip exit-code on LOW/MEDIUM
+      # findings, so we set exit-code 0 here and gate on the table step above.
+      # limit-severities-for-sarif keeps the Security tab scoped to HIGH,CRITICAL.
+      - name: Run Trivy scan (SARIF — for GitHub Security tab)
+        uses: aquasecurity/trivy-action@master
+        if: always()
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          limit-severities-for-sarif: true
+          exit-code: 0
           format: sarif
           output: trivy-results.sarif
 
