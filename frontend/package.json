@@ -32,7 +32,7 @@
 		"@lucide/svelte": "^0.577.0",
 		"@sveltejs/adapter-auto": "^7.0.1",
 		"@sveltejs/adapter-static": "^3.0.10",
-		"@sveltejs/kit": "^2.53.4",
+		"@sveltejs/kit": "^2.64.0",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
 		"@tailwindcss/vite": "^4.2.2",
 		"@testing-library/jest-dom": "^6.9.1",
@@ -51,7 +51,7 @@
 		"tailwind-variants": "^3.2.2",
 		"tailwindcss": "^4.2.2",
 		"typescript": "^5.9.3",
-		"vite": "^7.3.1",
+		"vite": "^7.3.5",
 		"vitest": "^4.1.8",
 		"vitest-browser-svelte": "^2.1.1"
 	},
@@ -79,8 +79,11 @@
 			"serialize-javascript": ">=7.0.3",
 			"tar": ">=7.5.11",
 			"undici": ">=7.24.0",
-			"devalue": ">=5.6.4",
-			"tinyglobby>picomatch": "^4.0.4"
+			"devalue": ">=5.8.1",
+			"tinyglobby>picomatch": "^4.0.4",
+			"js-cookie": ">=3.0.7",
+			"postcss": ">=8.5.10",
+			"cookie": ">=0.7.0"
 		}
 	}
 }
