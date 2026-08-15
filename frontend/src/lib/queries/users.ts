@@ -35,3 +35,21 @@ export const CREATE_USER = gql`
 		}
 	}
 `;
+
+export interface Me {
+	id: string;
+	username: string;
+}
+
+export interface MeResponse {
+	me: Me | null;
+}
+
+export const ME = gql`
+	query Me {
+		me {
+			id
+			username
+		}
+	}
+`;
