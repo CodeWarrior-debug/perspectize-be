@@ -1,22 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const {
-	mockMutate,
-	mockInvalidateQueries,
-	mockSetQueriesData,
-	mockToastSuccess,
-	mockToastError,
-	mockToastWarning,
-	mockGetSelectedUserId,
-} = vi.hoisted(() => ({
-	mockMutate: vi.fn(),
-	mockInvalidateQueries: vi.fn(),
-	mockSetQueriesData: vi.fn(),
-	mockToastSuccess: vi.fn(),
-	mockToastError: vi.fn(),
-	mockToastWarning: vi.fn(),
-	mockGetSelectedUserId: vi.fn((): number | null => 1),
-}));
+const { mockMutate, mockInvalidateQueries, mockSetQueriesData, mockToastSuccess, mockToastError, mockToastWarning } =
+	vi.hoisted(() => ({
+		mockMutate: vi.fn(),
+		mockInvalidateQueries: vi.fn(),
+		mockSetQueriesData: vi.fn(),
+		mockToastSuccess: vi.fn(),
+		mockToastError: vi.fn(),
+		mockToastWarning: vi.fn(),
+	}));
 
 let capturedMutationOptions: any;
 
@@ -44,10 +36,6 @@ vi.mock('svelte-sonner', () => ({
 
 vi.mock('$lib/queries/client', () => ({
 	graphqlRequest: vi.fn(),
-}));
-
-vi.mock('$lib/stores/userSelection.svelte', () => ({
-	getSelectedUserId: () => mockGetSelectedUserId(),
 }));
 
 describe('useAddVideo hook', () => {
@@ -147,11 +135,6 @@ describe('useAddVideo hook', () => {
 		it('shows server unreachable message for "failed to fetch" errors', () => {
 			capturedMutationOptions.onError(new Error('Failed to fetch'));
 			expect(mockToastError).toHaveBeenCalledWith('Cannot reach the server. Check your connection and try again.');
-		});
-
-		it('shows "no user selected" message', () => {
-			capturedMutationOptions.onError(new Error('No user selected'));
-			expect(mockToastError).toHaveBeenCalledWith('Please select a user first');
 		});
 
 		it('shows "video not found" message', () => {

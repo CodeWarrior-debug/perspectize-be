@@ -3,19 +3,16 @@ import { toast } from 'svelte-sonner';
 import { graphqlRequest } from '../client';
 import { CREATE_CONTENT_FROM_YOUTUBE, type CreateContentResponse, type ContentResponse } from '../content';
 import { queryKeys } from '../keys';
-import { getSelectedUserId } from '$lib/stores/userSelection.svelte';
 
 export function useAddVideo() {
 	const queryClient = useQueryClient();
 
 	return createMutation(() => ({
 		mutationFn: async (url: string) => {
-			const userId = getSelectedUserId();
-			if (userId === null) {
-				throw new Error('No user selected');
-			}
+			// userId: 0 is the "derive from my Clerk session" sentinel — the
+			// backend resolves it via auth.RequireAuth when zero.
 			return graphqlRequest<CreateContentResponse>(CREATE_CONTENT_FROM_YOUTUBE, {
-				input: { url, userId },
+				input: { url, userId: 0 },
 			});
 		},
 		onSuccess: (data: CreateContentResponse) => {
@@ -57,12 +54,12 @@ export function useAddVideo() {
 		onError: (err: Error) => {
 			console.error('[AddVideo] mutation failed:', err);
 			const message = err.message.toLowerCase();
-			if (message.includes('no user selected')) {
-				toast.error('Please select a user first');
-			} else if (message.includes('invalid youtube url') || message.includes('video not found')) {
+			if (message.includes('invalid youtube url') || message.includes('video not found')) {
 				toast.error('Invalid YouTube URL or video not found');
 			} else if (message.includes('load failed') || message.includes('failed to fetch')) {
 				toast.error('Cannot reach the server. Check your connection and try again.');
+			} else if (message.includes('access denied') || message.includes('authentication required')) {
+				toast.error('Please sign in to add a video');
 			} else {
 				toast.error('Failed to add video. Please try again.');
 			}
