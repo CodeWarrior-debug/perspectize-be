@@ -259,6 +259,9 @@ type Mutation {
 }
 
 type Query {
+  # Current authenticated user, derived from the Clerk session
+  me: User @auth
+
   # Get single content by ID
   contentByID(id: ID!): Content
 
