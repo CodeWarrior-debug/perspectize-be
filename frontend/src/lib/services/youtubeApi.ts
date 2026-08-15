@@ -158,6 +158,7 @@ export async function fetchYouTubeTrending(regionCode = 'US', pageToken?: string
 	url.searchParams.set('part', 'snippet,contentDetails');
 	url.searchParams.set('chart', 'mostPopular');
 	url.searchParams.set('regionCode', regionCode);
+	url.searchParams.set('maxResults', '25');
 	url.searchParams.set('key', YOUTUBE_API_KEY ?? '');
 	if (pageToken) url.searchParams.set('pageToken', pageToken);
 

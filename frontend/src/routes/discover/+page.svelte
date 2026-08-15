@@ -149,6 +149,13 @@
 	// Keyboard shortcuts: Cmd+K (Mac) / Ctrl+K (Win) focuses the search bar from
 	// anywhere on the page; Escape clears the query, which flips `view` back to
 	// 'trending' via the derived state above.
+	//
+	// Guard: FilterBar's bits-ui Select popovers also close on Escape. Bits-ui
+	// mounts the open listbox's content in the DOM only while it is open (see
+	// SelectContent's presence-based mount), so a `[role="listbox"]` element in
+	// the document is a reliable "a select dropdown is currently open" signal.
+	// When that's the case, treat Escape as "close the dropdown" only — don't
+	// also wipe the user's search/filters as a side effect.
 	$effect(() => {
 		function handleKeydown(event: KeyboardEvent) {
 			const isModK = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k';
@@ -156,6 +163,9 @@
 				event.preventDefault();
 				searchInputRef?.focus();
 			} else if (event.key === 'Escape') {
+				if (document.querySelector('[role="listbox"]')) {
+					return;
+				}
 				event.preventDefault();
 				searchQuery = '';
 				debouncedQuery = '';

@@ -239,6 +239,19 @@ describe('youtubeApi', () => {
 			expect(requestedUrl.searchParams.get('regionCode')).toBe('US');
 		});
 
+		it('defaults maxResults to 25 (YouTube defaults videos.list to 5 when omitted)', async () => {
+			const fetchMock = vi.fn().mockResolvedValue({
+				ok: true,
+				json: async () => ({ kind: 'youtube#videoListResponse', pageInfo: {}, items: [] }),
+			});
+			vi.stubGlobal('fetch', fetchMock);
+
+			await fetchYouTubeTrending();
+
+			const requestedUrl = new URL(fetchMock.mock.calls[0][0] as string | URL);
+			expect(requestedUrl.searchParams.get('maxResults')).toBe('25');
+		});
+
 		it('throws with the status code on a non-OK response', async () => {
 			vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
 
