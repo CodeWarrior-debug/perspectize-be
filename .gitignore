@@ -47,6 +47,9 @@ coverage/
 .claude/*.local.md
 .claude/*.local.json
 
+# Claude Code isolated worktrees (EnterWorktree tool, standardized location)
+.claude/worktrees/
+
 # Private bug tracking (not for public exposure)
 .planning/phases/bugs/
 .planning/codebase/CONCERNS.md
