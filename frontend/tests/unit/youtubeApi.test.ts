@@ -101,12 +101,10 @@ describe('youtubeApi', () => {
 
 		it('search() includes query and optional filters', () => {
 			expect(youtubeKeys.search('cats')).toEqual(['youtube', 'search', 'cats', undefined]);
-			expect(youtubeKeys.search('cats', { order: 'date' })).toEqual([
-				'youtube',
-				'search',
-				'cats',
-				{ order: 'date' },
-			]);
+			expect(youtubeKeys.search('cats', { order: 'date' })).toEqual(['youtube', 'search', 'cats', { order: 'date' }]);
+			expect(
+				youtubeKeys.search('cats', { order: 'date', videoDuration: 'short', publishedAfter: '2024-01-01' }),
+			).toEqual(['youtube', 'search', 'cats', { order: 'date', videoDuration: 'short', publishedAfter: '2024-01-01' }]);
 		});
 
 		it('trending() defaults regionCode to US', () => {
@@ -130,7 +128,14 @@ describe('youtubeApi', () => {
 			});
 			vi.stubGlobal('fetch', fetchMock);
 
-			await fetchYouTubeSearch({ query: 'svelte', maxResults: 10, pageToken: 'tok', order: 'date' });
+			await fetchYouTubeSearch({
+				query: 'svelte',
+				maxResults: 10,
+				pageToken: 'tok',
+				order: 'date',
+				videoDuration: 'short',
+				publishedAfter: '2024-01-01T00:00:00.000Z',
+			});
 
 			expect(fetchMock).toHaveBeenCalledTimes(1);
 			const requestedUrl = new URL(fetchMock.mock.calls[0][0] as string | URL);
@@ -141,6 +146,22 @@ describe('youtubeApi', () => {
 			expect(requestedUrl.searchParams.get('maxResults')).toBe('10');
 			expect(requestedUrl.searchParams.get('pageToken')).toBe('tok');
 			expect(requestedUrl.searchParams.get('order')).toBe('date');
+			expect(requestedUrl.searchParams.get('videoDuration')).toBe('short');
+			expect(requestedUrl.searchParams.get('publishedAfter')).toBe('2024-01-01T00:00:00.000Z');
+		});
+
+		it('omits videoDuration and publishedAfter when not provided', async () => {
+			const fetchMock = vi.fn().mockResolvedValue({
+				ok: true,
+				json: async () => ({ kind: 'youtube#searchListResponse', pageInfo: {}, items: [] }),
+			});
+			vi.stubGlobal('fetch', fetchMock);
+
+			await fetchYouTubeSearch({ query: 'svelte' });
+
+			const requestedUrl = new URL(fetchMock.mock.calls[0][0] as string | URL);
+			expect(requestedUrl.searchParams.has('videoDuration')).toBe(false);
+			expect(requestedUrl.searchParams.has('publishedAfter')).toBe(false);
 		});
 
 		it('defaults maxResults to 25', async () => {

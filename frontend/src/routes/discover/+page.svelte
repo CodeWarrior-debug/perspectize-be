@@ -2,6 +2,7 @@
 	import { createQuery } from '@tanstack/svelte-query';
 	import PageWrapper from '$lib/components/PageWrapper.svelte';
 	import SearchBar from '$lib/components/discover/SearchBar.svelte';
+	import FilterBar from '$lib/components/discover/FilterBar.svelte';
 	import VideoResultsGrid from '$lib/components/discover/VideoResultsGrid.svelte';
 	import { graphqlRequest } from '$lib/queries/client';
 	import { LIST_CONTENT, type ContentResponse } from '$lib/queries/content';
@@ -13,11 +14,16 @@
 		toVideoItem,
 		toWatchUrl,
 		youtubeKeys,
+		type SearchFilters,
 		type VideoItem,
 	} from '$lib/services/youtubeApi';
 
 	let searchQuery = $state('');
 	let debouncedQuery = $state('');
+
+	// Filters only apply to search (videos.list?chart=mostPopular, used for
+	// Trending, does not support duration/date/order params).
+	let filters = $state<SearchFilters>({ videoDuration: undefined, publishedAfter: undefined, order: 'relevance' });
 
 	// Internal view seam (not a visible toggle yet): a future Browse mode can
 	// extend this union ('search' | 'trending' | 'browse') and slot into the
@@ -25,8 +31,8 @@
 	const view = $derived<'search' | 'trending'>(debouncedQuery ? 'search' : 'trending');
 
 	const searchResult = createQuery(() => ({
-		queryKey: youtubeKeys.search(debouncedQuery),
-		queryFn: () => fetchYouTubeSearch({ query: debouncedQuery }),
+		queryKey: youtubeKeys.search(debouncedQuery, filters),
+		queryFn: () => fetchYouTubeSearch({ query: debouncedQuery, ...filters }),
 		enabled: view === 'search',
 		staleTime: 5 * 60 * 1000,
 	}));
@@ -60,23 +66,33 @@
 		loadMoreError = null;
 	});
 
+	function filtersEqual(a: SearchFilters, b: SearchFilters): boolean {
+		return a.videoDuration === b.videoDuration && a.publishedAfter === b.publishedAfter && a.order === b.order;
+	}
+
 	async function handleLoadMore() {
 		if (!nextPageToken || isLoadingMore) return;
-		// Capture the query/view this request is for. If the user changes the
-		// search query (or the view flips between search/trending) while this
-		// request is in flight, the $effect above will already have reset
-		// allResults/nextPageToken for the new query — the guard below stops
-		// this now-stale response from clobbering that newer state.
+		// Capture the query/view/filters this request is for. If the user changes
+		// the search query, the filters, or the view flips between
+		// search/trending while this request is in flight, the $effect above
+		// will already have reset allResults/nextPageToken for the new query —
+		// the guard below stops this now-stale response from clobbering that
+		// newer state.
 		const requestView = view;
 		const requestQuery = debouncedQuery;
+		const requestFilters = { ...filters };
 		const requestToken = nextPageToken;
 
 		isLoadingMore = true;
 		loadMoreError = null;
 		try {
 			if (requestView === 'search') {
-				const response = await fetchYouTubeSearch({ query: requestQuery, pageToken: requestToken });
-				if (view === requestView && debouncedQuery === requestQuery) {
+				const response = await fetchYouTubeSearch({
+					query: requestQuery,
+					pageToken: requestToken,
+					...requestFilters,
+				});
+				if (view === requestView && debouncedQuery === requestQuery && filtersEqual(filters, requestFilters)) {
 					allResults = [...allResults, ...response.items.map(toVideoItem)];
 					nextPageToken = response.nextPageToken;
 				}
@@ -88,7 +104,7 @@
 				}
 			}
 		} catch (err) {
-			if (view === requestView && debouncedQuery === requestQuery) {
+			if (view === requestView && debouncedQuery === requestQuery && filtersEqual(filters, requestFilters)) {
 				loadMoreError = err instanceof Error ? err.message : 'Failed to load more results';
 			}
 		} finally {
@@ -110,9 +126,7 @@
 
 	const libraryUrls = $derived(
 		new Set(
-			(libraryQuery.data?.content.items ?? [])
-				.map((item) => item.url)
-				.filter((url): url is string => Boolean(url)),
+			(libraryQuery.data?.content.items ?? []).map((item) => item.url).filter((url): url is string => Boolean(url)),
 		),
 	);
 
@@ -139,6 +153,10 @@
 		</div>
 
 		<SearchBar bind:value={searchQuery} bind:debouncedQuery />
+
+		{#if view === 'search'}
+			<FilterBar bind:filters />
+		{/if}
 
 		{#if activeQuery.isError}
 			<p class="text-sm text-destructive">

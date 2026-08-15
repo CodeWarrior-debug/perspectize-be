@@ -115,6 +115,9 @@ export function toWatchUrl(videoId: string): string {
 
 export interface SearchFilters {
 	order?: 'relevance' | 'date' | 'viewCount' | 'rating';
+	videoDuration?: 'short' | 'medium' | 'long';
+	/** ISO 8601 timestamp — only return videos published after this instant. */
+	publishedAfter?: string;
 }
 
 export interface SearchParams extends SearchFilters {
@@ -136,6 +139,8 @@ export async function fetchYouTubeSearch(params: SearchParams): Promise<SearchRe
 	url.searchParams.set('maxResults', String(params.maxResults ?? 25));
 	if (params.pageToken) url.searchParams.set('pageToken', params.pageToken);
 	if (params.order) url.searchParams.set('order', params.order);
+	if (params.videoDuration) url.searchParams.set('videoDuration', params.videoDuration);
+	if (params.publishedAfter) url.searchParams.set('publishedAfter', params.publishedAfter);
 
 	const response = await fetch(url);
 	if (!response.ok) {
