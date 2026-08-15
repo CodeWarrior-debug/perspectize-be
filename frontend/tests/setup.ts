@@ -86,6 +86,39 @@ class IntersectionObserverMock implements IntersectionObserver {
 
 vi.stubGlobal('IntersectionObserver', IntersectionObserverMock);
 
+// Mock localStorage. Node's own native (experimental) webstorage global
+// shadows jsdom's proper implementation in this environment and is
+// non-functional without a `--localstorage-file` path, so tests can't rely
+// on the real thing — sessionStorage is unaffected since Node's webstorage
+// feature only implements localStorage.
+class LocalStorageMock implements Storage {
+	private store = new Map<string, string>();
+
+	get length(): number {
+		return this.store.size;
+	}
+	getItem(key: string): string | null {
+		return this.store.has(key) ? this.store.get(key)! : null;
+	}
+	setItem(key: string, value: string): void {
+		this.store.set(key, String(value));
+	}
+	removeItem(key: string): void {
+		this.store.delete(key);
+	}
+	clear(): void {
+		this.store.clear();
+	}
+	key(index: number): string | null {
+		return Array.from(this.store.keys())[index] ?? null;
+	}
+}
+
+Object.defineProperty(window, 'localStorage', {
+	writable: true,
+	value: new LocalStorageMock(),
+});
+
 // Mock window.matchMedia for responsive components
 Object.defineProperty(window, 'matchMedia', {
 	writable: true,
