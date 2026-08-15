@@ -62,21 +62,40 @@
 
 	async function handleLoadMore() {
 		if (!nextPageToken || isLoadingMore) return;
+		// Capture the query/view this request is for. If the user changes the
+		// search query (or the view flips between search/trending) while this
+		// request is in flight, the $effect above will already have reset
+		// allResults/nextPageToken for the new query — the guard below stops
+		// this now-stale response from clobbering that newer state.
+		const requestView = view;
+		const requestQuery = debouncedQuery;
+		const requestToken = nextPageToken;
+
 		isLoadingMore = true;
 		loadMoreError = null;
 		try {
-			if (view === 'search') {
-				const response = await fetchYouTubeSearch({ query: debouncedQuery, pageToken: nextPageToken });
-				allResults = [...allResults, ...response.items.map(toVideoItem)];
-				nextPageToken = response.nextPageToken;
+			if (requestView === 'search') {
+				const response = await fetchYouTubeSearch({ query: requestQuery, pageToken: requestToken });
+				if (view === requestView && debouncedQuery === requestQuery) {
+					allResults = [...allResults, ...response.items.map(toVideoItem)];
+					nextPageToken = response.nextPageToken;
+				}
 			} else {
-				const response = await fetchYouTubeTrending('US', nextPageToken);
-				allResults = [...allResults, ...response.items.map(toVideoItem)];
-				nextPageToken = response.nextPageToken;
+				const response = await fetchYouTubeTrending('US', requestToken);
+				if (view === requestView && debouncedQuery === requestQuery) {
+					allResults = [...allResults, ...response.items.map(toVideoItem)];
+					nextPageToken = response.nextPageToken;
+				}
 			}
 		} catch (err) {
-			loadMoreError = err instanceof Error ? err.message : 'Failed to load more results';
+			if (view === requestView && debouncedQuery === requestQuery) {
+				loadMoreError = err instanceof Error ? err.message : 'Failed to load more results';
+			}
 		} finally {
+			// Always clear the in-flight flag (regardless of whether the query
+			// changed), otherwise a stale request would leave Load More stuck
+			// in its loading state for the new query, which owns its own
+			// nextPageToken via the $effect above.
 			isLoadingMore = false;
 		}
 	}
