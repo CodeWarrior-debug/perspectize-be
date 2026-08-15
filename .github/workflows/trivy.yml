@@ -22,7 +22,7 @@ jobs:
     name: Trivy vulnerability scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Gating scan: table format prints findings directly in the log AND
       # respects the severity filter for exit-code (HIGH,CRITICAL only).
