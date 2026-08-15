@@ -22,7 +22,17 @@ import (
 
 // CreateContentFromYouTube is the resolver for the createContentFromYouTube field.
 func (r *mutationResolver) CreateContentFromYouTube(ctx context.Context, input model.CreateContentFromYouTubeInput) (*model.CreateContentResult, error) {
-	content, err := r.ContentService.CreateFromYouTube(ctx, input.URL, input.UserID)
+	// Use authenticated user when userID is not provided or zero (mirrors CreatePerspective)
+	userID := input.UserID
+	if userID == 0 {
+		authUser, err := auth.RequireAuth(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("access denied: authentication required")
+		}
+		userID = authUser.ID
+	}
+
+	content, err := r.ContentService.CreateFromYouTube(ctx, input.URL, userID)
 
 	// Handle idempotent duplicate: service returns (content, ErrAlreadyExists)
 	if errors.Is(err, domain.ErrAlreadyExists) && content != nil {
