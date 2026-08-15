@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { createQuery } from '@tanstack/svelte-query';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import PageWrapper from '$lib/components/PageWrapper.svelte';
 	import SearchBar from '$lib/components/discover/SearchBar.svelte';
 	import FilterBar from '$lib/components/discover/FilterBar.svelte';
 	import VideoResultsGrid from '$lib/components/discover/VideoResultsGrid.svelte';
+	import { Button } from '$lib/components/shadcn';
 	import { graphqlRequest } from '$lib/queries/client';
 	import { LIST_CONTENT, type ContentResponse } from '$lib/queries/content';
 	import { queryKeys } from '$lib/queries/keys';
@@ -20,6 +21,7 @@
 
 	let searchQuery = $state('');
 	let debouncedQuery = $state('');
+	let searchInputRef: HTMLInputElement | null = $state(null);
 
 	// Filters only apply to search (videos.list?chart=mostPopular, used for
 	// Trending, does not support duration/date/order params).
@@ -143,6 +145,58 @@
 	}
 
 	const activeQuery = $derived(view === 'search' ? searchResult : trendingResult);
+
+	// Keyboard shortcuts: Cmd+K (Mac) / Ctrl+K (Win) focuses the search bar from
+	// anywhere on the page; Escape clears the query, which flips `view` back to
+	// 'trending' via the derived state above.
+	$effect(() => {
+		function handleKeydown(event: KeyboardEvent) {
+			const isModK = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k';
+			if (isModK) {
+				event.preventDefault();
+				searchInputRef?.focus();
+			} else if (event.key === 'Escape') {
+				event.preventDefault();
+				searchQuery = '';
+				debouncedQuery = '';
+			}
+		}
+		window.addEventListener('keydown', handleKeydown);
+		return () => window.removeEventListener('keydown', handleKeydown);
+	});
+
+	interface ErrorInfo {
+		message: string;
+		showRetry: boolean;
+	}
+
+	// Classifies a query error into the specific user-facing message the task
+	// calls for: quota exceeded (403) gets a targeted message with no retry
+	// (retrying immediately won't help), network failures and anything else
+	// get a generic message plus a retry button.
+	function classifyError(error: unknown): ErrorInfo {
+		if (error instanceof TypeError) {
+			return { message: 'Unable to reach YouTube. Check your connection.', showRetry: true };
+		}
+		const message = error instanceof Error ? error.message : '';
+		if (message.includes('403')) {
+			return {
+				message: 'YouTube API quota exceeded. Try again tomorrow or reduce search frequency.',
+				showRetry: false,
+			};
+		}
+		return { message: 'Something went wrong.', showRetry: true };
+	}
+
+	const queryClient = useQueryClient();
+
+	function handleRetry() {
+		if (view === 'search') {
+			queryClient.refetchQueries({ queryKey: youtubeKeys.searches() });
+		} else {
+			queryClient.refetchQueries({ queryKey: youtubeKeys.trending() });
+		}
+	}
 </script>
 
 <PageWrapper>
@@ -152,16 +206,20 @@
 			<p class="text-sm text-muted-foreground mt-1">Search YouTube and add videos to your library</p>
 		</div>
 
-		<SearchBar bind:value={searchQuery} bind:debouncedQuery />
+		<SearchBar bind:value={searchQuery} bind:debouncedQuery bind:inputRef={searchInputRef} />
 
 		{#if view === 'search'}
 			<FilterBar bind:filters />
 		{/if}
 
 		{#if activeQuery.isError}
-			<p class="text-sm text-destructive">
-				{activeQuery.error instanceof Error ? activeQuery.error.message : 'Failed to load videos. Please try again.'}
-			</p>
+			{@const errorInfo = classifyError(activeQuery.error)}
+			<div class="flex flex-col items-center gap-3 py-12 text-center">
+				<p class="text-sm text-destructive">{errorInfo.message}</p>
+				{#if errorInfo.showRetry}
+					<Button variant="outline" size="sm" onclick={handleRetry}>Retry</Button>
+				{/if}
+			</div>
 		{:else}
 			<VideoResultsGrid
 				items={allResults}
@@ -173,6 +231,7 @@
 				{pendingId}
 				isLoading={activeQuery.isLoading}
 				{isLoadingMore}
+				query={debouncedQuery}
 			/>
 			{#if loadMoreError}
 				<p class="text-sm text-destructive">{loadMoreError}</p>

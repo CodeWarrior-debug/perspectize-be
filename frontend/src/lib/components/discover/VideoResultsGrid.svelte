@@ -14,6 +14,7 @@
 		pendingId = null,
 		isLoading = false,
 		isLoadingMore = false,
+		query = '',
 	}: {
 		items: VideoItem[];
 		nextPageToken?: string;
@@ -24,8 +25,25 @@
 		pendingId?: string | null;
 		isLoading?: boolean;
 		isLoadingMore?: boolean;
+		/** The active search query, if any — used to tailor the empty-state message. */
+		query?: string;
 	} = $props();
 </script>
+
+<!-- SkeletonCard: animated pulse placeholder matching VideoCard's dimensions, used while a search/trending/load-more fetch is in flight. -->
+{#snippet skeletonCards(count: number)}
+	{#each Array(count) as _, i (i)}
+		<div class="flex flex-col sm:flex-row gap-4 p-3 border border-border rounded-lg bg-card animate-pulse">
+			<div class="w-full sm:w-80 h-45 sm:h-[180px] bg-muted rounded shrink-0"></div>
+			<div class="flex-1 space-y-2 py-1">
+				<div class="h-4 bg-muted rounded w-3/4"></div>
+				<div class="h-3 bg-muted rounded w-1/3"></div>
+				<div class="h-3 bg-muted rounded w-1/4"></div>
+				<div class="h-3 bg-muted rounded w-full"></div>
+			</div>
+		</div>
+	{/each}
+{/snippet}
 
 <!-- Named generically: renders both search results and trending results (and future Browse results). -->
 <div class="flex flex-col gap-4">
@@ -35,20 +53,17 @@
 
 	{#if isLoading}
 		<div class="flex flex-col gap-4" aria-busy="true" aria-label="Loading videos">
-			{#each Array(4) as _, i (i)}
-				<div class="flex gap-4 p-3 border border-border rounded-lg bg-card animate-pulse">
-					<div class="w-full sm:w-80 h-45 sm:h-[180px] bg-muted rounded shrink-0"></div>
-					<div class="flex-1 space-y-2 py-1">
-						<div class="h-4 bg-muted rounded w-3/4"></div>
-						<div class="h-3 bg-muted rounded w-1/3"></div>
-						<div class="h-3 bg-muted rounded w-1/4"></div>
-						<div class="h-3 bg-muted rounded w-full"></div>
-					</div>
-				</div>
-			{/each}
+			{@render skeletonCards(6)}
 		</div>
 	{:else if items.length === 0}
-		<p class="text-sm text-muted-foreground text-center py-12">No results found</p>
+		{#if query}
+			<div class="text-center py-12">
+				<p class="text-sm text-muted-foreground">No results found for '{query}'</p>
+				<p class="text-xs text-muted-foreground mt-1">Try different keywords or check your spelling</p>
+			</div>
+		{:else}
+			<p class="text-sm text-muted-foreground text-center py-12">No trending content available right now</p>
+		{/if}
 	{:else}
 		<div class="flex flex-col gap-4">
 			{#each items as video (video.id)}
@@ -59,6 +74,10 @@
 					{onAdd}
 				/>
 			{/each}
+
+			{#if isLoadingMore}
+				{@render skeletonCards(3)}
+			{/if}
 		</div>
 
 		{#if nextPageToken}

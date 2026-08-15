@@ -60,6 +60,32 @@ vi.mock('$lib/assets/favicon.svg', () => ({
 	default: '/favicon.svg',
 }));
 
+// Mock IntersectionObserver (jsdom doesn't implement it). Fires immediately
+// and synchronously with isIntersecting: true so components that lazy-load
+// on intersection (e.g. VideoCard's thumbnail) render their real content
+// right away in tests, instead of every test having to simulate a scroll.
+class IntersectionObserverMock implements IntersectionObserver {
+	readonly root: Element | Document | null = null;
+	readonly rootMargin: string = '';
+	readonly thresholds: ReadonlyArray<number> = [];
+	private callback: IntersectionObserverCallback;
+
+	constructor(callback: IntersectionObserverCallback) {
+		this.callback = callback;
+	}
+
+	observe(target: Element) {
+		this.callback([{ isIntersecting: true, target } as IntersectionObserverEntry], this);
+	}
+	unobserve() {}
+	disconnect() {}
+	takeRecords(): IntersectionObserverEntry[] {
+		return [];
+	}
+}
+
+vi.stubGlobal('IntersectionObserver', IntersectionObserverMock);
+
 // Mock window.matchMedia for responsive components
 Object.defineProperty(window, 'matchMedia', {
 	writable: true,

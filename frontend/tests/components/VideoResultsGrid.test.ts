@@ -43,12 +43,21 @@ describe('VideoResultsGrid', () => {
 		expect(screen.getByText('Video 2')).toBeInTheDocument();
 	});
 
-	it('shows the empty state when there are no items', () => {
+	it('shows the trending empty state when there are no items and no query', () => {
 		render(VideoResultsGrid, {
 			props: { items: [], onLoadMore: vi.fn(), libraryUrls: new Set<string>(), onAdd: vi.fn() },
 		});
 
-		expect(screen.getByText('No results found')).toBeInTheDocument();
+		expect(screen.getByText('No trending content available right now')).toBeInTheDocument();
+	});
+
+	it('shows a query-specific empty state when there are no items and a query is active', () => {
+		render(VideoResultsGrid, {
+			props: { items: [], onLoadMore: vi.fn(), libraryUrls: new Set<string>(), onAdd: vi.fn(), query: 'svelte' },
+		});
+
+		expect(screen.getByText("No results found for 'svelte'")).toBeInTheDocument();
+		expect(screen.getByText('Try different keywords or check your spelling')).toBeInTheDocument();
 	});
 
 	it('shows skeleton loading state instead of items/empty state when isLoading', () => {
@@ -62,8 +71,38 @@ describe('VideoResultsGrid', () => {
 			},
 		});
 
-		expect(screen.queryByText('No results found')).not.toBeInTheDocument();
+		expect(screen.queryByText('No trending content available right now')).not.toBeInTheDocument();
 		expect(screen.getByLabelText('Loading videos')).toBeInTheDocument();
+	});
+
+	it('shows 6 skeleton cards during the initial fetch', () => {
+		const { container } = render(VideoResultsGrid, {
+			props: {
+				items: [],
+				onLoadMore: vi.fn(),
+				libraryUrls: new Set<string>(),
+				onAdd: vi.fn(),
+				isLoading: true,
+			},
+		});
+
+		expect(container.querySelectorAll('.animate-pulse')).toHaveLength(6);
+	});
+
+	it('shows 3 skeleton cards below existing items during a Load More fetch', () => {
+		const { container } = render(VideoResultsGrid, {
+			props: {
+				items: [makeVideo('1'), makeVideo('2')],
+				onLoadMore: vi.fn(),
+				libraryUrls: new Set<string>(),
+				onAdd: vi.fn(),
+				isLoadingMore: true,
+			},
+		});
+
+		expect(container.querySelectorAll('.animate-pulse')).toHaveLength(3);
+		expect(screen.getByText('Video 1')).toBeInTheDocument();
+		expect(screen.getByText('Video 2')).toBeInTheDocument();
 	});
 
 	it('marks items whose watch URL is already in libraryUrls as in-library', () => {

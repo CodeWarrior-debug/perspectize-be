@@ -19,17 +19,37 @@
 	const thumbnailUrl = $derived(
 		video.thumbnails.medium?.url ?? video.thumbnails.high?.url ?? video.thumbnails.default?.url ?? '',
 	);
+
+	let thumbnailContainer: HTMLDivElement | null = $state(null);
+	let isVisible = $state(false);
+
+	// Lazy-load the thumbnail image: only fetch it once the card scrolls near
+	// the viewport, so a long results/trending list doesn't fire dozens of
+	// image requests up front.
+	$effect(() => {
+		if (!thumbnailContainer || isVisible) return;
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (entries[0]?.isIntersecting) {
+					isVisible = true;
+				}
+			},
+			{ rootMargin: '200px' },
+		);
+		observer.observe(thumbnailContainer);
+		return () => observer.disconnect();
+	});
 </script>
 
 <!-- Named generically: renders both search.list and videos.list (trending) items identically. -->
 <div class="flex flex-col sm:flex-row gap-4 p-3 border border-border rounded-lg bg-card text-card-foreground shadow-sm">
-	<img
-		src={thumbnailUrl}
-		alt={video.title}
-		width="320"
-		height="180"
-		class="w-full sm:w-80 h-45 sm:h-[180px] object-cover rounded shrink-0"
-	/>
+	<div bind:this={thumbnailContainer} class="w-full sm:w-80 h-45 sm:h-[180px] shrink-0">
+		{#if isVisible}
+			<img src={thumbnailUrl} alt={video.title} width="320" height="180" class="w-full h-full object-cover rounded" />
+		{:else}
+			<div class="w-full h-full bg-muted rounded"></div>
+		{/if}
+	</div>
 	<div class="flex-1 min-w-0">
 		<h3 class="font-medium line-clamp-2">{video.title}</h3>
 		<p class="text-sm text-muted-foreground mt-1">{video.channelTitle}</p>

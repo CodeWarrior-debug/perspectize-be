@@ -6,12 +6,13 @@
 	let {
 		value = $bindable(''),
 		debouncedQuery = $bindable(''),
+		inputRef = $bindable(null),
 	}: {
 		value?: string;
 		debouncedQuery?: string;
+		/** Exposes the underlying input element so callers can imperatively focus it (e.g. a Cmd+K shortcut). */
+		inputRef?: HTMLInputElement | null;
 	} = $props();
-
-	let inputRef: HTMLInputElement | null = $state(null);
 
 	// Debounce: only propagate to debouncedQuery 300ms after typing stops.
 	$effect(() => {

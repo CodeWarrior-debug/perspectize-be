@@ -182,6 +182,26 @@ describe('youtubeApi', () => {
 
 			await expect(fetchYouTubeSearch({ query: 'svelte' })).rejects.toThrow('403');
 		});
+
+		it('includes VITE_YOUTUBE_API_KEY as the "key" param', async () => {
+			vi.stubEnv('VITE_YOUTUBE_API_KEY', 'test-api-key-search');
+			vi.resetModules();
+			const { fetchYouTubeSearch: fetchYouTubeSearchWithKey } = await import('$lib/services/youtubeApi');
+
+			const fetchMock = vi.fn().mockResolvedValue({
+				ok: true,
+				json: async () => ({ kind: 'youtube#searchListResponse', pageInfo: {}, items: [] }),
+			});
+			vi.stubGlobal('fetch', fetchMock);
+
+			await fetchYouTubeSearchWithKey({ query: 'svelte' });
+
+			const requestedUrl = new URL(fetchMock.mock.calls[0][0] as string | URL);
+			expect(requestedUrl.searchParams.get('key')).toBe('test-api-key-search');
+
+			vi.unstubAllEnvs();
+			vi.resetModules();
+		});
 	});
 
 	describe('fetchYouTubeTrending', () => {
@@ -223,6 +243,26 @@ describe('youtubeApi', () => {
 			vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
 
 			await expect(fetchYouTubeTrending()).rejects.toThrow('500');
+		});
+
+		it('includes VITE_YOUTUBE_API_KEY as the "key" param', async () => {
+			vi.stubEnv('VITE_YOUTUBE_API_KEY', 'test-api-key-trending');
+			vi.resetModules();
+			const { fetchYouTubeTrending: fetchYouTubeTrendingWithKey } = await import('$lib/services/youtubeApi');
+
+			const fetchMock = vi.fn().mockResolvedValue({
+				ok: true,
+				json: async () => ({ kind: 'youtube#videoListResponse', pageInfo: {}, items: [] }),
+			});
+			vi.stubGlobal('fetch', fetchMock);
+
+			await fetchYouTubeTrendingWithKey();
+
+			const requestedUrl = new URL(fetchMock.mock.calls[0][0] as string | URL);
+			expect(requestedUrl.searchParams.get('key')).toBe('test-api-key-trending');
+
+			vi.unstubAllEnvs();
+			vi.resetModules();
 		});
 	});
 });
