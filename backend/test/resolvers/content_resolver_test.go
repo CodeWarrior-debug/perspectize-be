@@ -445,6 +445,44 @@ func TestCreateContentFromYouTube_Success(t *testing.T) {
 	assert.False(t, data.CreateContentFromYouTube.AlreadyExisted)
 }
 
+func TestCreateContentFromYouTube_DerivesUserIDFromSession_WhenZero(t *testing.T) {
+	metadata := &portservices.VideoMetadata{
+		Title:       "Amazing Video",
+		Description: "Description",
+		Duration:    600,
+		ChannelName: "Channel",
+		Response:    json.RawMessage(`{"items":[]}`),
+	}
+
+	var capturedUserID int
+	repo := &mockContentRepository{
+		getByURLFn: func(ctx context.Context, url string) (*domain.Content, error) {
+			return nil, domain.ErrNotFound
+		},
+		getOrCreateByURLFn: func(ctx context.Context, content *domain.Content) (*domain.Content, bool, error) {
+			capturedUserID = content.AddedByUserID
+			content.ID = 42
+			return content, false, nil
+		},
+	}
+
+	ytClient := &mockYouTubeClient{
+		getVideoMetadataFn: func(ctx context.Context, videoID string) (*portservices.VideoMetadata, error) {
+			return metadata, nil
+		},
+	}
+
+	server := setupTestServer(repo, ytClient)
+	defer server.Close()
+
+	// userId: 0 is the "derive from my session" sentinel. setupTestServer's
+	// injectAuthMiddleware authenticates as user ID 1.
+	result := executeGraphQL(t, server, `mutation { createContentFromYouTube(input: { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", userId: 0 }) { content { id } alreadyExisted } }`)
+
+	assert.Empty(t, result.Errors)
+	assert.Equal(t, 1, capturedUserID)
+}
+
 func TestCreateContentFromYouTube_AlreadyExists(t *testing.T) {
 	canonicalURL := "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 	existing := &domain.Content{ID: 1, Name: "Existing Video", URL: &canonicalURL, ContentType: domain.ContentTypeYouTube}

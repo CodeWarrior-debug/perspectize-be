@@ -75,31 +75,6 @@
       "mcp__chrome-devtools__get_network_request"
     ]
   },
-  "enabledPlugins": {
-    "backend-development@claude-code-workflows": true,
-    "database-design@claude-code-workflows": true,
-    "code-review-ai@claude-code-workflows": true,
-    "agent-orchestration@claude-code-workflows": true,
-    "api-scaffolding@claude-code-workflows": true,
-    "code-documentation@claude-code-workflows": true,
-    "conductor@claude-code-workflows": true,
-    "comprehensive-review@claude-code-workflows": true,
-    "database-migrations@claude-code-workflows": true,
-    "full-stack-orchestration@claude-code-workflows": true,
-    "developer-essentials@claude-code-workflows": true,
-    "documentation-generation@claude-code-workflows": true,
-    "unit-testing@claude-code-workflows": true,
-    "devops-tools@claudekit-skills": true,
-    "pr-review-toolkit@claude-plugins-official": true,
-    "feature-dev@claude-plugins-official": true,
-    "hookify@claude-plugins-official": true,
-    "claude-code-setup@claude-plugins-official": true,
-    "figma@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true,
-    "claude-md-management@claude-plugins-official": true,
-    "context7@claude-plugins-official": true,
-    "frontend-design@claude-plugins-official": true
-  },
   "hooks": {
     "SessionStart": [
       {
@@ -121,14 +96,14 @@
     ],
     "PostToolUse": [
       {
+        "matcher": "Bash|Edit|Write|MultiEdit|Agent|Task",
         "hooks": [
           {
             "type": "command",
             "command": "node .claude/hooks/gsd-context-monitor.js",
             "timeout": 10
           }
-        ],
-        "matcher": "Bash|Edit|Write|MultiEdit|Agent|Task"
+        ]
       },
       {
         "matcher": "Write|Edit",
@@ -187,5 +162,29 @@
   "statusLine": {
     "type": "command",
     "command": "node .claude/hooks/gsd-statusline.js"
+  },
+  "enabledPlugins": {
+    "backend-development@claude-code-workflows": true,
+    "database-design@claude-code-workflows": true,
+    "agent-orchestration@claude-code-workflows": true,
+    "api-scaffolding@claude-code-workflows": true,
+    "code-documentation@claude-code-workflows": true,
+    "conductor@claude-code-workflows": true,
+    "comprehensive-review@claude-code-workflows": true,
+    "database-migrations@claude-code-workflows": true,
+    "full-stack-orchestration@claude-code-workflows": true,
+    "developer-essentials@claude-code-workflows": true,
+    "documentation-generation@claude-code-workflows": true,
+    "unit-testing@claude-code-workflows": true,
+    "devops-tools@claudekit-skills": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "figma@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true
   }
 }

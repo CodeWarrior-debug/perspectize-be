@@ -4,6 +4,20 @@ Ideas and future enhancements captured during development. Not committed to any 
 
 ---
 
+## YouTube Search Proxy (Shared Quota Fix)
+
+Discovered 2026-08-15: the Discover page's search (`fetchYouTubeSearch` in `frontend/src/lib/services/youtubeApi.ts`) calls YouTube's `search.list` **directly from the browser** using a single build-time key (`VITE_YOUTUBE_API_KEY`). `search.list` costs a flat 100 units/call, and the default daily quota is 10,000 units — so the whole deployed app shares roughly **~100 searches/day total**, not per-user, since every browser uses the same key. Client-side caching (TanStack Query, 5 min staleTime for search / 1 hour for trending) helps within a session but doesn't share across users or browser tabs.
+
+**What to do:**
+- Move `fetchYouTubeSearch`/`fetchYouTubeTrending` behind a backend endpoint (GraphQL query or REST) that holds the API key server-side
+- Add a shared cache keyed on `query + filters` (Postgres or in-memory, TTL ~5-15 min) so identical searches across different users cost one YouTube API call, not N
+- `videos.list` (trending, pagination) is cheap (~1-7 units/call) and not the bottleneck — lower priority than fixing `search.list`
+- Separately, request a quota increase from Google Cloud Console (YouTube Data API v3 → Quotas) — independent of the code fix, worth doing regardless
+
+**Priority:** Should be addressed before the Discover page sees real multi-user traffic — the shared-key quota exhaustion is a hard outage (`quotaExceeded` error), not a degraded-performance issue.
+
+---
+
 ## Discover Page (New Page)
 
 The v1 home page is an **Activity** page — a data table of user activity on videos already in the system. This is the correct approach for v1.

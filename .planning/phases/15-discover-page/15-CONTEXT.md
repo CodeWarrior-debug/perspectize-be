@@ -41,42 +41,45 @@ See `.planning/v1.1-research/DISCOVER-PAGE.md` for full research.
 
 ## Page Structure
 
+**Scope note (2026-08-14):** Category Browse is deferred out of v1 — see `15-03-PLAN.md` (marked `status: skipped`). The default (no-query) view is now YouTube Trending (`videos.list?chart=mostPopular`) rather than a category grid. The page holds an internal `view: 'search' | 'trending'` state as a code seam so Browse can be added as a third view later without restructuring — no visible tab/toggle UI ships yet.
+
 ```
 /discover
-├── SearchBar (debounced input)
-├── FilterBar (duration, date, sort)
-├── CategoryGrid (YouTube categories, clickable)
-└── SearchResults (video cards, "Add to Library" button)
+├── SearchBar (debounced input, placeholder "Search Content Sources...")
+├── FilterBar (duration, date, sort — search view only)
+└── VideoResultsGrid (video cards, "Add to Library" button)
+    ├── trending view: label "Showing Trending Content" + mostPopular chart results
+    └── search view: search.list results
 ```
+
+`VideoResultsGrid`/`VideoCard` are generic (not search-specific) so the same components render both trending and search result sets, and can later render Browse results too. A small adapter in `youtubeApi.ts` normalizes `search.list` and `videos.list` snippet shapes into one common `VideoItem` type before either component sees them.
 
 ## Component Architecture
 
 ```svelte
 <!-- /discover/+page.svelte -->
 <script lang="ts">
-    import { SearchBar, FilterBar, CategoryGrid, SearchResults } from '$lib/components/discover';
+    import { SearchBar, FilterBar, VideoResultsGrid } from '$lib/components/discover';
 
     let searchQuery = $state('');
+    let debouncedQuery = $state('');
     let filters = $state({ duration: 'any', date: 'any', sort: 'relevance' });
-    let selectedCategory = $state<string | null>(null);
+    const view = $derived<'search' | 'trending'>(debouncedQuery ? 'search' : 'trending');
 </script>
 
 <PageWrapper>
     <h1 class="text-2xl font-bold mb-4">Discover</h1>
 
-    <SearchBar bind:value={searchQuery} />
+    <SearchBar bind:value={searchQuery} bind:debouncedQuery />
 
-    <FilterBar bind:filters />
-
-    {#if !searchQuery && !selectedCategory}
-        <CategoryGrid onSelect={(cat) => selectedCategory = cat} />
-    {:else}
-        <SearchResults
-            query={searchQuery}
-            {filters}
-            categoryId={selectedCategory}
-        />
+    {#if view === 'search'}
+        <FilterBar bind:filters />
     {/if}
+
+    <VideoResultsGrid
+        items={/* normalized VideoItem[] from active query */}
+        label={view === 'trending' ? 'Showing Trending Content' : undefined}
+    />
 </PageWrapper>
 ```
 
