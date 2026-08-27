@@ -14,7 +14,7 @@ longer than expected.
 | **Trivy** (`.github/workflows/trivy.yml`) | `backend/go.mod` + `frontend/pnpm-lock.yaml`, **production deps only** (dev deps suppressed) | CI gate on PRs touching lockfiles |
 | **`pnpm audit --prod`** | Frontend production dependency tree | Local, before pushing lockfile changes |
 | **`govulncheck`** | Go modules, **call-graph aware** (only reports vulns you actually reach) | Local, optional deeper check |
-| **Dependabot / Renovate** | Opens PRs for outdated/vulnerable deps | Automated |
+| **Dependabot** | Opens PRs for outdated/vulnerable deps (`gomod`, `npm`, `github-actions`, `gradle`, `docker`) | Automated |
 
 The Trivy workflow is the **CI gate**. It triggers only when
 `frontend/pnpm-lock.yaml`, `backend/go.sum`, or the workflow file itself
