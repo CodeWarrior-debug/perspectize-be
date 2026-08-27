@@ -207,7 +207,6 @@ See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow
 **Bug logging (MANDATORY):** When you discover a bug during development, review, or testing, log it in `.planning/phases/bugs/BACKLOG.md` with severity and location. Also create a GitHub issue using the bug report template — keep sensitive details (exact paths, line numbers, security specifics) in the backlog only. When a bug is fixed, move it to `.planning/phases/bugs/CLOSED.md` with the PR reference. These files are gitignored — never commit them.
 
 **Hookify rules (check `.claude/hookify.*.local.md` for all rules):**
-- **qmd first:** Spawning an Explore agent triggers a warning to use `qmd search`/`qmd get` first. Only spawn an Explore agent if qmd doesn't return what you need.
 - **Pre-PR:** `gh pr create` is blocked until `claude-md-management:revise-claude-md` has been run. The block can't detect completion, so use `gh api` to create the PR after running the skill. Example: `gh api repos/CodeWarrior-debug/perspectize/pulls -f title="..." -f body="..." -f head="branch" -f base="main"`
 - **Pre-commit tests:** `git commit` triggers a warning to verify test coverage for new/modified frontend `src/` files. Config, styles, docs, and test files are exempt.
 - **Pre-commit prettier:** `git commit` triggers a warning to run `pnpm exec prettier --write` on staged frontend files.
