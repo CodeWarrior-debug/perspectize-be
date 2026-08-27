@@ -12,6 +12,11 @@ Monorepo with two stacks:
 
 **CLAUDE.md structure:** Root file (this) contains shared concerns. Package-level files contain stack-specific instructions. Claude loads root + the relevant package file per session.
 
+## Context Lookup (qmd retired — graphify coming soon)
+
+**graphify coming soon.** qmd is no longer the mandated pre-search step — use Read/Glob/Grep directly for now. The section below is kept commented out for reference until graphify lands.
+
+<!--
 ## Context Lookup with qmd (MANDATORY — Use Before Reading Files)
 
 **ALWAYS use qmd bash commands** to search for code before using Read/Glob/Grep. This applies to ALL agents including GSD subagents.
@@ -56,6 +61,7 @@ qmd ls perspectize
 **Available collections:** `perspectize` (code), `planning` (GSD docs)
 
 **Update index after major changes:** `qmd update && qmd embed`
+-->
 
 ## GitHub & Repository Management
 
