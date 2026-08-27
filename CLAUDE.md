@@ -12,6 +12,11 @@ Monorepo with two stacks:
 
 **CLAUDE.md structure:** Root file (this) contains shared concerns. Package-level files contain stack-specific instructions. Claude loads root + the relevant package file per session.
 
+## Context Lookup (qmd retired — graphify coming soon)
+
+**graphify coming soon.** qmd is no longer the mandated pre-search step — use Read/Glob/Grep directly for now. The section below is kept commented out for reference until graphify lands.
+
+<!--
 ## Context Lookup with qmd (MANDATORY — Use Before Reading Files)
 
 **ALWAYS use qmd bash commands** to search for code before using Read/Glob/Grep. This applies to ALL agents including GSD subagents.
@@ -56,6 +61,7 @@ qmd ls perspectize
 **Available collections:** `perspectize` (code), `planning` (GSD docs)
 
 **Update index after major changes:** `qmd update && qmd embed`
+-->
 
 ## GitHub & Repository Management
 
@@ -120,9 +126,9 @@ gh pr merge 123 --squash --delete-branch --admin
 
 Example: `feature/INI-16-youtube-post-graphql`
 
-### GitHub Issues with GSD Plans
+### GitHub Issues with Plans
 
-Include: GSD Plan Reference (`.planning/phases/{phase}/{plan}-PLAN.md`), acceptance criteria from `must_haves.truths`, dependencies if present.
+Include a plan reference and dependencies if present: for new work, the superpowers plan/spec path (`docs/superpowers/plans/{name}-plan.md`); for legacy in-flight work, the GSD plan reference (`.planning/phases/{phase}/{plan}-PLAN.md`) and acceptance criteria from `must_haves.truths`.
 
 ## Agent Delegation Strategy
 
@@ -149,11 +155,11 @@ defer db.Close()
 
 **Commit messages:** Conventional commit format (`feat`, `fix`, `refactor`, `chore`, `docs`, `test`). One logical change per commit. GSD planning work (PLAN.md, CONTEXT.md, RESEARCH.md, ROADMAP.md) uses the `docs` tag — e.g., `docs(11,13): create execution plans`.
 
-## GSD Workflow
+## Planning & Execution Workflow
 
-**ALWAYS use the GSD workflow** for planning and execution in this project. Do NOT use superpowers:writing-plans or other planning skills — use GSD plan files in `.planning/phases/`.
+**Primary workflow: obra/superpowers** (plugin enabled in `.claude/settings.json`). Use `superpowers:writing-plans` (or its brainstorming/spec-writing counterparts) for planning, and `superpowers:executing-plans` / `superpowers:subagent-driven-development` for execution. Plans and specs live in `docs/superpowers/plans/` and `docs/superpowers/specs/` — see `docs/superpowers/plans/2026-08-15-clerk-derived-user-identity-plan.md` for the established format (plan header names the required execution sub-skill, links its spec, checkbox-tracked (`- [ ]`) tasks).
 
-Planning and execution artifacts in `.planning/`: `PROJECT.md`, `ROADMAP.md`, `STATE.md`, `phases/`. Branching: see [.docs/GSD_BRANCHING.md](.docs/GSD_BRANCHING.md).
+**GSD is legacy — do NOT start new work with it.** Some milestones still have unfinished work tracked under the old workflow in `.planning/phases/` (`PROJECT.md`, `ROADMAP.md`, `STATE.md`, phase `PLAN.md`/`must_haves.truths` files). Finish those specific in-flight phases using their existing GSD plan files/commands rather than replanning them from scratch under superpowers — don't discard partially-done GSD work. All new planning and execution goes through superpowers. Branching for legacy GSD phases: see [.docs/GSD_BRANCHING.md](.docs/GSD_BRANCHING.md).
 
 ## Self-Verification (MANDATORY)
 
@@ -201,7 +207,6 @@ See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow
 **Bug logging (MANDATORY):** When you discover a bug during development, review, or testing, log it in `.planning/phases/bugs/BACKLOG.md` with severity and location. Also create a GitHub issue using the bug report template — keep sensitive details (exact paths, line numbers, security specifics) in the backlog only. When a bug is fixed, move it to `.planning/phases/bugs/CLOSED.md` with the PR reference. These files are gitignored — never commit them.
 
 **Hookify rules (check `.claude/hookify.*.local.md` for all rules):**
-- **qmd first:** Spawning an Explore agent triggers a warning to use `qmd search`/`qmd get` first. Only spawn an Explore agent if qmd doesn't return what you need.
 - **Pre-PR:** `gh pr create` is blocked until `claude-md-management:revise-claude-md` has been run. The block can't detect completion, so use `gh api` to create the PR after running the skill. Example: `gh api repos/CodeWarrior-debug/perspectize/pulls -f title="..." -f body="..." -f head="branch" -f base="main"`
 - **Pre-commit tests:** `git commit` triggers a warning to verify test coverage for new/modified frontend `src/` files. Config, styles, docs, and test files are exempt.
 - **Pre-commit prettier:** `git commit` triggers a warning to run `pnpm exec prettier --write` on staged frontend files.
