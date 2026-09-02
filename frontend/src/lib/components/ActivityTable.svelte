@@ -269,7 +269,11 @@
 		selectedRowBackgroundColor: 'rgba(26, 54, 93, 0.08)',
 		columnHoverColor: 'rgba(26, 54, 93, 0.04)',
 		headerColumnResizeHandleColor: 'rgba(255, 255, 255, 0.5)',
-		rowHeight: 112,
+		// 64px comfortably fits a 32px thumbnail alongside a 2-line, 13px/1.5-leading title
+		// with margin to spare — a tighter value clips descenders (g/y/p/q/j) on the second
+		// line via the row's own overflow:hidden, even though line-clamp itself only ever
+		// cuts whole lines. See CLAUDE.md's AG Grid gotcha.
+		rowHeight: 64,
 		headerHeight: 40,
 		listItemHeight: 24,
 	});
@@ -296,10 +300,8 @@
 			{
 				colId: 'item',
 				headerName: 'Item',
-				width: 200,
+				flex: 2,
 				minWidth: 200,
-				maxWidth: 200,
-				flex: 0,
 
 				filter: 'agTextColumnFilter',
 				filterValueGetter: (params) => params.data?.name ?? '',
@@ -728,7 +730,7 @@
 				bind:this={gridContainer}
 				data-testid="ag-grid-container"
 				class="{isMobile ? 'overflow-y-auto' : 'flex-1'} min-h-0"
-				style="--ag-row-height: 112px; --ag-header-height: 40px;"
+				style="--ag-row-height: 64px; --ag-header-height: 40px;"
 			>
 				<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
 			</div>

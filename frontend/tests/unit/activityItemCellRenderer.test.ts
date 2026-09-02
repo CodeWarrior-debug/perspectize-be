@@ -15,11 +15,28 @@ describe('activityItemCellRenderer', () => {
 
 		const img = result.querySelector('img');
 		expect(img).toBeTruthy();
-		expect(img?.src).toBe('https://i.ytimg.com/vi/abc123/hqdefault.jpg');
+		expect(img?.src).toBe('https://i.ytimg.com/vi/abc123/default.jpg');
 
 		const title = result.querySelector('[data-testid="item-title"]');
 		expect(title?.textContent).toBe('My Video');
 		expect(title?.className).toContain('line-clamp-2');
+	});
+
+	it('lays the thumbnail and title out side-by-side (not stacked)', () => {
+		const result = activityItemCellRenderer({
+			data: { id: '1', name: 'My Video', url: 'https://youtube.com/watch?v=abc123' },
+		}) as HTMLElement;
+
+		expect(result.className).toContain('items-center');
+		expect(result.className).not.toContain('flex-col');
+
+		const thumbWrap = result.querySelector('[data-testid="item-thumb"]');
+		expect(thumbWrap?.className).toContain('h-8');
+		expect(thumbWrap?.className).toContain('w-10');
+
+		const title = result.querySelector('[data-testid="item-title"]');
+		expect(title?.className).toContain('text-left');
+		expect(title?.className).not.toContain('text-center');
 	});
 
 	it('omits the thumbnail image when the URL has no extractable video id', () => {
