@@ -11,8 +11,12 @@
 		component: Component;
 		props?: any;
 	}>();
+
+	// Svelte 5 only treats dotted-member tags (not bare lowercase identifiers) as dynamic
+	// components, so route through a wrapper object rather than `<component {...props} />`.
+	const wrapped = $derived({ Comp: component });
 </script>
 
 <QueryClientProvider client={queryClient}>
-	<component.default {...props} />
+	<wrapped.Comp {...props} />
 </QueryClientProvider>
