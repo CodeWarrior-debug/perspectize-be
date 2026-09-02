@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
@@ -106,6 +107,9 @@ func (m *mockContentRepoForUser) GetByURL(ctx context.Context, url string) (*dom
 }
 func (m *mockContentRepoForUser) GetOrCreateByURL(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error) {
 	return content, false, nil
+}
+func (m *mockContentRepoForUser) UpdateMetadata(ctx context.Context, id int, name string, response json.RawMessage, length *int) (*domain.Content, error) {
+	return nil, domain.ErrNotFound
 }
 func (m *mockContentRepoForUser) List(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
 	return &domain.PaginatedContent{Items: []*domain.Content{}}, nil

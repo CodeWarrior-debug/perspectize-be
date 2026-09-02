@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
 	import XIcon from '@lucide/svelte/icons/x';
+	import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
 	import { Dialog, DialogContent, DialogTitle, DialogClose } from '$lib/components/shadcn';
 	import {
 		formatCount,
@@ -9,6 +10,7 @@
 		formatTags,
 		extractVideoIdFromUrl,
 	} from '$lib/utils/formatting';
+	import { useUpdateSourceData } from '$lib/queries/hooks/useUpdateSourceData';
 
 	interface ModalContent {
 		id: string;
@@ -38,8 +40,15 @@
 	const thumbSrc = $derived(videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null);
 	const hasTags = $derived(!!content?.tags && content.tags.length > 0);
 
+	const updateSourceData = useUpdateSourceData();
+
 	function handleOpenChange(next: boolean) {
 		if (!next) onClose();
+	}
+
+	function handleUpdateSourceData() {
+		if (!content) return;
+		updateSourceData.mutate(content.id);
 	}
 </script>
 
@@ -163,9 +172,14 @@
 					</div>
 					<button
 						type="button"
-						class="rounded-md border border-primary px-3.5 py-2 text-[13px] font-semibold text-primary hover:bg-primary/5"
+						disabled={updateSourceData.isPending}
+						onclick={handleUpdateSourceData}
+						class="inline-flex items-center gap-1.5 rounded-md border border-primary px-3.5 py-2 text-[13px] font-semibold text-primary hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
 					>
-						Update metadata
+						{#if updateSourceData.isPending}
+							<LoaderCircleIcon class="size-3.5 animate-spin" />
+						{/if}
+						Update source data
 					</button>
 				</div>
 

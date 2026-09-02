@@ -39,6 +39,10 @@ export interface CreateContentResponse {
 	};
 }
 
+export interface UpdateContentSourceDataResponse {
+	updateContentSourceData: ContentItem;
+}
+
 export const LIST_CONTENT = gql`
 	query ListContent(
 		$first: Int
@@ -122,6 +126,27 @@ export const CREATE_CONTENT_FROM_YOUTUBE = gql`
 				updatedAt
 			}
 			alreadyExisted
+		}
+	}
+`;
+
+export const UPDATE_CONTENT_SOURCE_DATA = gql`
+	mutation UpdateContentSourceData($contentId: IntID!) {
+		updateContentSourceData(contentId: $contentId) {
+			id
+			name
+			url
+			contentType
+			length
+			lengthUnits
+			viewCount
+			likeCount
+			channelTitle
+			publishedAt
+			tags
+			description
+			createdAt
+			updatedAt
 		}
 	}
 `;

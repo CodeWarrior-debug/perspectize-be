@@ -27,6 +27,7 @@ type mockContentRepository struct {
 	getByIDFn          func(ctx context.Context, id int) (*domain.Content, error)
 	getByURLFn         func(ctx context.Context, url string) (*domain.Content, error)
 	getOrCreateByURLFn func(ctx context.Context, content *domain.Content) (*domain.Content, bool, error)
+	updateMetadataFn   func(ctx context.Context, id int, name string, response json.RawMessage, length *int) (*domain.Content, error)
 	listFn             func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
 }
 
@@ -56,6 +57,13 @@ func (m *mockContentRepository) GetOrCreateByURL(ctx context.Context, content *d
 		return m.getOrCreateByURLFn(ctx, content)
 	}
 	return content, false, nil
+}
+
+func (m *mockContentRepository) UpdateMetadata(ctx context.Context, id int, name string, response json.RawMessage, length *int) (*domain.Content, error) {
+	if m.updateMetadataFn != nil {
+		return m.updateMetadataFn(ctx, id, name, response, length)
+	}
+	return nil, domain.ErrNotFound
 }
 
 func (m *mockContentRepository) List(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
@@ -537,6 +545,96 @@ func TestCreateContentFromYouTube_InvalidURL(t *testing.T) {
 
 	require.NotEmpty(t, result.Errors)
 	assert.Contains(t, result.Errors[0].Message, "invalid YouTube URL")
+}
+
+// --- UpdateContentSourceData Tests ---
+
+func TestUpdateContentSourceData_Success(t *testing.T) {
+	url := "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+	existing := &domain.Content{ID: 5, Name: "Old Title", URL: &url, ContentType: domain.ContentTypeYouTube, AddedByUserID: 1}
+	metadata := &portservices.VideoMetadata{
+		Title:    "New Title",
+		Duration: 600,
+		Response: json.RawMessage(`{"items":[]}`),
+	}
+
+	var capturedID int
+	repo := &mockContentRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.Content, error) {
+			return existing, nil
+		},
+		updateMetadataFn: func(ctx context.Context, id int, name string, response json.RawMessage, length *int) (*domain.Content, error) {
+			capturedID = id
+			return &domain.Content{ID: id, Name: name, URL: &url, ContentType: domain.ContentTypeYouTube, AddedByUserID: 1}, nil
+		},
+	}
+
+	ytClient := &mockYouTubeClient{
+		getVideoMetadataFn: func(ctx context.Context, videoID string) (*portservices.VideoMetadata, error) {
+			return metadata, nil
+		},
+	}
+
+	server := setupTestServer(repo, ytClient)
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `mutation { updateContentSourceData(contentId: 5) { id name contentType } }`)
+
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		UpdateContentSourceData struct {
+			ID          string `json:"id"`
+			Name        string `json:"name"`
+			ContentType string `json:"contentType"`
+		} `json:"updateContentSourceData"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+
+	assert.Equal(t, "5", data.UpdateContentSourceData.ID)
+	assert.Equal(t, "New Title", data.UpdateContentSourceData.Name)
+	assert.Equal(t, 5, capturedID)
+}
+
+func TestUpdateContentSourceData_NotFound(t *testing.T) {
+	repo := &mockContentRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.Content, error) {
+			return nil, domain.ErrNotFound
+		},
+	}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `mutation { updateContentSourceData(contentId: 999) { id } }`)
+
+	require.NotEmpty(t, result.Errors)
+	assert.Contains(t, result.Errors[0].Message, "content not found")
+}
+
+func TestUpdateContentSourceData_YouTubeAPIError(t *testing.T) {
+	url := "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+	existing := &domain.Content{ID: 5, Name: "Old Title", URL: &url, ContentType: domain.ContentTypeYouTube}
+	repo := &mockContentRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.Content, error) {
+			return existing, nil
+		},
+	}
+
+	ytClient := &mockYouTubeClient{
+		getVideoMetadataFn: func(ctx context.Context, videoID string) (*portservices.VideoMetadata, error) {
+			return nil, fmt.Errorf("youtube api unavailable")
+		},
+	}
+
+	server := setupTestServer(repo, ytClient)
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `mutation { updateContentSourceData(contentId: 5) { id } }`)
+
+	require.NotEmpty(t, result.Errors)
+	assert.Contains(t, result.Errors[0].Message, "failed to update content source data")
 }
 
 // --- Paginated Content Query Tests ---
