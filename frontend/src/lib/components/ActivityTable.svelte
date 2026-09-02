@@ -32,7 +32,6 @@
 	} from '$lib/utils/gridUrlState';
 	import type { DataMode, GridParams } from '$lib/utils/gridUrlState';
 	import {
-		itemCellRenderer,
 		typeCellRenderer,
 		perspectiveCellRenderer,
 		PerspectiveHeaderRenderer,
@@ -63,12 +62,28 @@
 	import DataModeToggle from '$lib/components/DataModeToggle.svelte';
 	import FilterChips from '$lib/components/FilterChips.svelte';
 	import PerspectivePopover from '$lib/components/PerspectivePopover.svelte';
+	import ActivityDetailsModal from '$lib/components/ActivityDetailsModal.svelte';
+	import ActivityCardList from '$lib/components/ActivityCardList.svelte';
+	import { activityItemCellRenderer } from '$lib/utils/activityItemCellRenderer';
 
 	// Popover state for Perspectize column
 	let popoverOpen = $state(false);
 	let popoverContentId = $state<number | null>(null);
 	let popoverContentName = $state('');
 	let popoverExistingPerspective = $state<PerspectiveItem | null>(null);
+
+	// Details modal state (Item cell click -> metadata modal)
+	let detailsModalContentId = $state<string | null>(null);
+
+	function handleOpenDetails(contentId: string) {
+		detailsModalContentId = contentId;
+	}
+	function handleCloseDetails() {
+		detailsModalContentId = null;
+	}
+
+	// Mobile card-list breakpoint (< 860px) — replaces the AG Grid entirely, per design handoff.
+	let cardMode = $state(false);
 
 	// ---------------------------------------------------------------------------
 	// URL-derived state
@@ -187,6 +202,9 @@
 
 	// Derived values from query
 	const rowData = $derived(contentQuery.data?.content.items ?? []);
+	const detailsModalContent = $derived(
+		rowData.find((item) => String(item.id) === detailsModalContentId) ?? null,
+	);
 	const totalCount = $derived(contentQuery.data?.content.totalCount ?? 0);
 	const loading = $derived(contentQuery.isLoading || contentQuery.isPlaceholderData);
 	const hasActiveFilters = $derived(Object.keys(filters).length > 0 || searchText !== '');
@@ -251,7 +269,11 @@
 		selectedRowBackgroundColor: 'rgba(26, 54, 93, 0.08)',
 		columnHoverColor: 'rgba(26, 54, 93, 0.04)',
 		headerColumnResizeHandleColor: 'rgba(255, 255, 255, 0.5)',
-		rowHeight: 44,
+		// 64px comfortably fits a 32px thumbnail alongside a 2-line, 13px/1.5-leading title
+		// with margin to spare — a tighter value clips descenders (g/y/p/q/j) on the second
+		// line via the row's own overflow:hidden, even though line-clamp itself only ever
+		// cuts whole lines. See CLAUDE.md's AG Grid gotcha.
+		rowHeight: 64,
 		headerHeight: 40,
 		listItemHeight: 24,
 	});
@@ -283,7 +305,8 @@
 
 				filter: 'agTextColumnFilter',
 				filterValueGetter: (params) => params.data?.name ?? '',
-				cellRenderer: itemCellRenderer,
+				cellRenderer: activityItemCellRenderer,
+				cellStyle: { padding: 0 },
 				tooltipValueGetter: (params) => params.data?.name ?? '',
 				headerTooltip: 'Video title and thumbnail from YouTube API',
 			},
@@ -460,7 +483,7 @@
 		getRowId: contentRowId,
 		domLayout: 'normal',
 		suppressCellFocus: true,
-		context: { perspectivesByContentId: new Map() },
+		context: { perspectivesByContentId: new Map(), onOpenDetails: handleOpenDetails },
 		onCellClicked: (event: CellClickedEvent<ContentItem>) => {
 			if (event.colDef.colId !== 'perspectize') return;
 			if (!event.data) return;
@@ -587,6 +610,18 @@
 		};
 	});
 
+	// Card-mode breakpoint: below 860px, replace the grid with stacked cards entirely.
+	$effect(() => {
+		if (typeof window === 'undefined') return;
+		const mq = window.matchMedia('(max-width: 859px)');
+		const update = () => {
+			cardMode = mq.matches;
+		};
+		update();
+		mq.addEventListener('change', update);
+		return () => mq.removeEventListener('change', update);
+	});
+
 	// Null out gridApi on destroy to prevent $effect callbacks hitting a destroyed grid
 	$effect(() => {
 		return () => {
@@ -595,10 +630,23 @@
 		};
 	});
 
+	// cardMode unmounts AgGridSvelte5Component (destroying the grid) without the above
+	// teardown running — clear the stale reference so other $effects' `!gridApi` guards
+	// don't call methods on an already-destroyed grid instance.
+	$effect(() => {
+		if (cardMode) {
+			gridApi = null;
+			gridReady = false;
+		}
+	});
+
 	// Update AG Grid context reactively so perspectiveCellRenderer can access the map
 	$effect(() => {
 		if (gridApi) {
-			gridApi.setGridOption('context', { perspectivesByContentId });
+			gridApi.setGridOption('context', {
+				perspectivesByContentId,
+				onOpenDetails: handleOpenDetails,
+			});
 			gridApi.refreshCells({ columns: ['perspectize'], force: true });
 		}
 	});
@@ -672,14 +720,21 @@
 			</div>
 		</div>
 	{:else}
-		<!-- AG Grid -->
-		<div
-			bind:this={gridContainer}
-			class="{isMobile ? 'overflow-y-auto' : 'flex-1'} min-h-0"
-			style="--ag-row-height: 44px; --ag-header-height: 40px;"
-		>
-			<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
-		</div>
+		{#if cardMode}
+			<div class="flex-1 min-h-0 overflow-y-auto">
+				<ActivityCardList {rowData} onOpenDetails={handleOpenDetails} />
+			</div>
+		{:else}
+			<!-- AG Grid -->
+			<div
+				bind:this={gridContainer}
+				data-testid="ag-grid-container"
+				class="{isMobile ? 'overflow-y-auto' : 'flex-1'} min-h-0"
+				style="--ag-row-height: 64px; --ag-header-height: 40px;"
+			>
+				<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
+			</div>
+		{/if}
 	{/if}
 
 	<!-- Manual Pagination Controls -->
@@ -746,3 +801,10 @@
 		}}
 	/>
 {/if}
+
+<!-- Activity item details modal — rendered outside the grid for correct portal behavior -->
+<ActivityDetailsModal
+	content={detailsModalContent}
+	open={detailsModalContentId !== null}
+	onClose={handleCloseDetails}
+/>

@@ -140,4 +140,45 @@ describe('ActivityTable', () => {
 			expect(paginationButtons).toHaveLength(0);
 		});
 	});
+
+	it('shows the mobile card list below the 860px breakpoint', async () => {
+		mockRequest.mockResolvedValue(mockDataResponse);
+		// Plain reassignment (not vi.spyOn/mockRestore) — the setup.ts matchMedia mock is
+		// defined via Object.defineProperty without `configurable: true`, which breaks
+		// vi.spyOn's restore. Capture and put back the original function reference instead.
+		const originalMatchMedia = window.matchMedia;
+		window.matchMedia = vi.fn(
+			(query: string) =>
+				({
+					matches: query === '(max-width: 859px)',
+					media: query,
+					onchange: null,
+					addListener: vi.fn(),
+					removeListener: vi.fn(),
+					addEventListener: vi.fn(),
+					removeEventListener: vi.fn(),
+					dispatchEvent: vi.fn(),
+				}) as unknown as MediaQueryList,
+		);
+
+		const { container } = renderWithQuery();
+
+		await waitFor(() => {
+			expect(container.querySelector('[data-testid="activity-card-list"]')).toBeTruthy();
+			expect(container.querySelector('[data-testid="ag-grid-container"]')).toBeFalsy();
+		});
+
+		window.matchMedia = originalMatchMedia;
+	});
+
+	it('shows the AG Grid table at/above the 860px breakpoint', async () => {
+		mockRequest.mockResolvedValue(mockDataResponse);
+		// Default window.matchMedia mock from tests/setup.ts always returns matches: false.
+		const { container } = renderWithQuery();
+
+		await waitFor(() => {
+			expect(container.querySelector('[data-testid="ag-grid-container"]')).toBeTruthy();
+			expect(container.querySelector('[data-testid="activity-card-list"]')).toBeFalsy();
+		});
+	});
 });
