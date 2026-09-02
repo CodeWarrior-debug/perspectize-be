@@ -27,10 +27,12 @@ export function activityItemCellRenderer(
 	const { id, name, url } = params.data;
 	const onOpenDetails = params.context?.onOpenDetails;
 
+	// No native `title` attribute here (or on the thumbnail below) — the column's
+	// tooltipValueGetter already renders an AG Grid tooltip on cell hover, and a
+	// native title attribute on top of that shows two overlapping tooltip boxes.
 	const cell = document.createElement('div');
 	cell.className =
 		'group/cell flex h-full w-full items-center gap-2 px-2.5 py-2 cursor-pointer';
-	cell.title = 'View content data + details';
 	cell.addEventListener('click', () => {
 		onOpenDetails?.(String(id));
 	});
@@ -39,7 +41,6 @@ export function activityItemCellRenderer(
 	thumbWrap.dataset.testid = 'item-thumb';
 	thumbWrap.className =
 		'group/thumb relative h-8 w-10 flex-none overflow-hidden rounded bg-muted';
-	thumbWrap.title = 'Open original content in new tab';
 	thumbWrap.addEventListener('click', (e) => {
 		e.stopPropagation();
 		if (url) window.open(url, '_blank', 'noopener,noreferrer');

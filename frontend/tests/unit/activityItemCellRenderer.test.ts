@@ -83,14 +83,12 @@ describe('activityItemCellRenderer', () => {
 		expect(onOpenDetails).toHaveBeenCalledWith('42');
 	});
 
-	it('sets accessible titles for both click zones', () => {
+	it('does not set a native title attribute (avoids doubling up with the AG Grid cell tooltip)', () => {
 		const result = activityItemCellRenderer({
 			data: { id: '1', name: 'My Video', url: 'https://youtube.com/watch?v=abc123' },
 		}) as HTMLElement;
 
-		expect(result.title).toBe('View content data + details');
-		expect(result.querySelector('[data-testid="item-thumb"]')?.getAttribute('title')).toBe(
-			'Open original content in new tab',
-		);
+		expect(result.hasAttribute('title')).toBe(false);
+		expect(result.querySelector('[data-testid="item-thumb"]')?.hasAttribute('title')).toBe(false);
 	});
 });
