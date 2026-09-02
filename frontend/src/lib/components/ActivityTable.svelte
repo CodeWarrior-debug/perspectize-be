@@ -628,6 +628,16 @@
 		};
 	});
 
+	// cardMode unmounts AgGridSvelte5Component (destroying the grid) without the above
+	// teardown running — clear the stale reference so other $effects' `!gridApi` guards
+	// don't call methods on an already-destroyed grid instance.
+	$effect(() => {
+		if (cardMode) {
+			gridApi = null;
+			gridReady = false;
+		}
+	});
+
 	// Update AG Grid context reactively so perspectiveCellRenderer can access the map
 	$effect(() => {
 		if (gridApi) {

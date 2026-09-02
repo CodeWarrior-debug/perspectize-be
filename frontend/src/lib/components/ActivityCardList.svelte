@@ -43,7 +43,12 @@
 				onclick={(e) => handleThumbClick(row, e)}
 			>
 				{#if thumbSrc(row)}
-					<img src={thumbSrc(row)} alt="" class="h-full w-full object-cover" />
+					<img
+						src={thumbSrc(row)}
+						alt=""
+						class="h-full w-full object-cover"
+						onerror={(e) => e.currentTarget.remove()}
+					/>
 				{/if}
 				<span
 					class="absolute right-1 bottom-1 flex items-center justify-center rounded bg-[rgba(23,23,23,0.65)] p-1"

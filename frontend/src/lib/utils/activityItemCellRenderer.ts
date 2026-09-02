@@ -44,6 +44,7 @@ export function activityItemCellRenderer(
 		img.src = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 		img.alt = '';
 		img.className = 'h-full w-full object-cover';
+		img.onerror = () => img.remove(); // thumbnail unavailable — fall back to the plain bg-muted block
 		thumbWrap.appendChild(img);
 	}
 
@@ -60,7 +61,7 @@ export function activityItemCellRenderer(
 	const title = document.createElement('div');
 	title.dataset.testid = 'item-title';
 	title.className =
-		'mt-1 line-clamp-2 max-w-[184px] text-center font-[family-name:var(--font-family-serif)] text-[13px] leading-[1.4] text-foreground decoration-primary/30 group-hover/cell:underline';
+		'mt-1 line-clamp-2 max-w-[184px] whitespace-normal text-center font-[family-name:var(--font-family-serif)] text-[13px] leading-[1.4] text-foreground decoration-primary/30 group-hover/cell:underline';
 	title.textContent = name;
 
 	cell.appendChild(thumbWrap);

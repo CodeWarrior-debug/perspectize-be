@@ -65,7 +65,12 @@
 				<div class="flex items-start gap-3.5">
 					<div class="h-[68px] w-[120px] flex-none overflow-hidden rounded-md bg-muted">
 						{#if thumbSrc}
-							<img src={thumbSrc} alt="" class="h-full w-full object-cover" />
+							<img
+								src={thumbSrc}
+								alt=""
+								class="h-full w-full object-cover"
+								onerror={(e) => e.currentTarget.remove()}
+							/>
 						{/if}
 					</div>
 					<div class="min-w-0">
