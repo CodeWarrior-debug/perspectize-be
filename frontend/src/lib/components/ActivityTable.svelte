@@ -21,7 +21,6 @@
 		type PerspectiveItem,
 	} from '$lib/queries/perspectives';
 	import { queryKeys } from '$lib/queries/keys';
-	import { getSelectedUserId } from '$lib/stores/userSelection.svelte';
 	import {
 		parseGridParams,
 		serializeGridParams,
@@ -181,17 +180,21 @@
 	let responsiveTier = $state<'xs' | 'sm' | 'md' | 'lg'>('lg');
 	const isMobile = $derived(responsiveTier === 'xs' || responsiveTier === 'sm');
 
-	// Selected user for perspectives query
-	const selectedUserId = $derived(getSelectedUserId());
+	// Current user for the perspectives query — derived straight from the Clerk
+	// session (`me`), NOT the legacy `userSelection` store, which is only ever a
+	// lagging mirror of `me.id` maintained by AuthUserSync and is null during the
+	// ClerkLoaded → me-query → effect settle window. Reading `me` directly means
+	// the +/glasses affordance reflects the signed-in user as soon as `me` resolves.
+	const currentUserId = $derived(meCtx.me ? parseInt(meCtx.me.id, 10) : null);
 
 	// TanStack Query for user's perspectives — used to determine +/glasses icon per row
 	const perspectivesQuery = createQuery(() => ({
-		queryKey: queryKeys.perspectives.listByUser(selectedUserId ?? 0),
+		queryKey: queryKeys.perspectives.listByUser(currentUserId ?? 0),
 		queryFn: () =>
 			graphqlRequest<ListPerspectivesByUserResponse>(LIST_PERSPECTIVES_BY_USER, {
-				userID: selectedUserId,
+				userID: currentUserId,
 			}),
-		enabled: selectedUserId !== null,
+		enabled: currentUserId !== null,
 		staleTime: 60 * 1000,
 	}));
 
@@ -911,7 +914,7 @@
 		contentId={popoverContentId}
 		contentName={popoverContentName}
 		existingPerspective={popoverExistingPerspective}
-		userId={selectedUserId ?? 0}
+		userId={currentUserId ?? 0}
 		bind:open={popoverOpen}
 		onClose={() => {
 			popoverOpen = false;
