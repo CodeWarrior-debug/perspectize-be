@@ -8,6 +8,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	auth "github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/auth"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/directives"
+	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/model"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 	portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
 	"github.com/stretchr/testify/assert"
@@ -149,6 +150,45 @@ func TestOwner_PerspectiveNonOwnerDenied(t *testing.T) {
 	ctx := withUserID(context.Background(), 42)
 	ctx = withFieldContext(ctx, "updatePerspective", map[string]interface{}{
 		"input": map[string]interface{}{"id": 10},
+	})
+
+	_, err := d.Owner(ctx, nil, successResolver, "id")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "access denied: you can only modify your own perspectives")
+}
+
+// updatePerspective takes `input: UpdatePerspectiveInput!`; gqlgen binds that
+// to the typed struct, not a map. These two cover the real production shape.
+func TestOwner_PerspectiveOwnerAllowed_TypedInput(t *testing.T) {
+	mockPersp := &mockPerspectiveService{
+		getByIDFn: func(ctx context.Context, id int) (*domain.Perspective, error) {
+			assert.Equal(t, 10, id)
+			return &domain.Perspective{ID: 10, UserID: 42}, nil
+		},
+	}
+	d := directives.NewDirectiveRoot(nil, mockPersp)
+
+	ctx := withUserID(context.Background(), 42)
+	ctx = withFieldContext(ctx, "updatePerspective", map[string]interface{}{
+		"input": model.UpdatePerspectiveInput{ID: 10},
+	})
+
+	result, err := d.Owner(ctx, nil, successResolver, "id")
+	require.NoError(t, err)
+	assert.Equal(t, "success", result)
+}
+
+func TestOwner_PerspectiveNonOwnerDenied_TypedInput(t *testing.T) {
+	mockPersp := &mockPerspectiveService{
+		getByIDFn: func(ctx context.Context, id int) (*domain.Perspective, error) {
+			return &domain.Perspective{ID: 10, UserID: 99}, nil
+		},
+	}
+	d := directives.NewDirectiveRoot(nil, mockPersp)
+
+	ctx := withUserID(context.Background(), 42)
+	ctx = withFieldContext(ctx, "updatePerspective", map[string]interface{}{
+		"input": model.UpdatePerspectiveInput{ID: 10},
 	})
 
 	_, err := d.Owner(ctx, nil, successResolver, "id")

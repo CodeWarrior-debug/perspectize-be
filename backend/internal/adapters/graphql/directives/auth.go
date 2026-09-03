@@ -3,6 +3,7 @@ package directives
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -86,16 +87,55 @@ func (d *DirectiveRoot) extractResourceID(fc *graphql.FieldContext, idField stri
 		return coerceToInt(arg, idField)
 	}
 
-	// Try nested in "input" object (e.g., updatePerspective(input: { id: 5 }))
+	// Try nested in an "input" object (e.g., updatePerspective(input: { id: 5 })).
+	// gqlgen binds `input` to its typed struct (model.UpdatePerspectiveInput),
+	// not a map, so check the struct by json tag; the map branch keeps working
+	// for any caller/test that passes a raw map.
 	if inputArg, ok := fc.Args["input"]; ok {
 		if inputMap, ok := inputArg.(map[string]interface{}); ok {
 			if val, ok := inputMap[idField]; ok {
 				return coerceToInt(val, idField)
 			}
+		} else if val, ok := fieldByJSONTag(inputArg, idField); ok {
+			return coerceToInt(val, idField)
 		}
 	}
 
 	return 0, fmt.Errorf("missing %s argument for ownership check", idField)
+}
+
+// fieldByJSONTag returns the value of the struct field whose `json` tag name
+// matches tag, dereferencing pointers on both the struct and the field.
+func fieldByJSONTag(v interface{}, tag string) (interface{}, bool) {
+	rv := reflect.ValueOf(v)
+	for rv.Kind() == reflect.Ptr {
+		if rv.IsNil() {
+			return nil, false
+		}
+		rv = rv.Elem()
+	}
+	if rv.Kind() != reflect.Struct {
+		return nil, false
+	}
+	rt := rv.Type()
+	for i := 0; i < rt.NumField(); i++ {
+		name, _, _ := strings.Cut(rt.Field(i).Tag.Get("json"), ",")
+		if name != tag {
+			continue
+		}
+		fv := rv.Field(i)
+		for fv.Kind() == reflect.Ptr {
+			if fv.IsNil() {
+				return nil, false
+			}
+			fv = fv.Elem()
+		}
+		if !fv.CanInterface() {
+			return nil, false
+		}
+		return fv.Interface(), true
+	}
+	return nil, false
 }
 
 // coerceToInt converts various argument types to int.
