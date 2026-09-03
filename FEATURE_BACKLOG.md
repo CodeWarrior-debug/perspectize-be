@@ -499,17 +499,15 @@ The initial graphify knowledge-graph build (see CLAUDE.md's `## graphify` sectio
 
 ---
 
-## Verify TypeScript + Go LSPs Are Actually Working
+## ~~Verify TypeScript + Go LSPs Are Actually Working~~ (RESOLVED)
 
 **Type:** Dev × Feature Request
 
-Session start on this machine shows: `[vtsls] Installing vtsls... [vtsls] Failed to install. Please run manually: npm install -g @vtsls/language-server typescript`. The `gopls`, `vtsls`, and `typescript-lsp` plugins are enabled at the user level (`~/.claude/settings.json` → `enabledPlugins`), but the vtsls (TypeScript) LSP appears to be failing to auto-install, and Go's `gopls` status hasn't been separately confirmed.
+Session start on this machine showed: `[vtsls] Installing vtsls... [vtsls] Failed to install. Please run manually: npm install -g @vtsls/language-server typescript`. Root cause turned out to be two competing TypeScript LSP plugins enabled simultaneously at the user level, both registered for `.ts/.tsx/.js/.jsx`:
 
-**What to do:**
-- Run `npm install -g @vtsls/language-server typescript` manually and confirm vtsls comes up clean on next session start
-- Separately confirm `gopls` is actually installed and responding (`gopls version`) and wired into the `gopls@claude-code-lsps` plugin correctly
-- Once both are confirmed working, verify Claude Code sessions in this repo actually get real diagnostics/go-to-definition from both LSPs (Go in `backend/`, TypeScript/Svelte in `frontend/`) rather than silently falling back to grep-based navigation
+- `vtsls@claude-code-lsps` — wanted the `vtsls` binary, which was never installed (this was the one erroring at session start)
+- `typescript-lsp@claude-plugins-official` — wants `typescript-language-server`, which was already installed (v5.1.3, backed by `typescript` 5.9.3) and working
 
-**Priority:** Medium — accurate LSP diagnostics materially improve code-editing quality in a Go + TypeScript monorepo; currently unclear whether either is actually functioning.
+**Fix applied (2026-09-02):** Disabled `vtsls@claude-code-lsps` at user scope (`claude plugin disable vtsls@claude-code-lsps`) rather than installing a second redundant TS language server. `typescript-lsp@claude-plugins-official` remains enabled and confirmed working. `gopls@claude-code-lsps` was separately confirmed working (`gopls version` → v0.21.1 at `/Users/jamesjordan/go/bin/gopls`) — no fix needed there. Restart Claude Code to pick up the plugin change.
 
 **Source:** Dev request (2026-09-02), observed vtsls install failure at session start.
