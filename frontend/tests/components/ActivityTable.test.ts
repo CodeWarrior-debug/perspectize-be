@@ -177,6 +177,32 @@ describe('ActivityTable', () => {
 		window.matchMedia = originalMatchMedia;
 	});
 
+	it('wires an add-perspective trigger into each mobile card (no grid column exists there)', async () => {
+		mockRequest.mockResolvedValue(mockDataResponse);
+		const originalMatchMedia = window.matchMedia;
+		window.matchMedia = vi.fn(
+			(query: string) =>
+				({
+					matches: query === '(max-width: 859px)',
+					media: query,
+					onchange: null,
+					addListener: vi.fn(),
+					removeListener: vi.fn(),
+					addEventListener: vi.fn(),
+					removeEventListener: vi.fn(),
+					dispatchEvent: vi.fn(),
+				}) as unknown as MediaQueryList,
+		);
+
+		const { container } = renderWithQuery();
+
+		await waitFor(() => {
+			expect(container.querySelector('[data-testid="card-perspective-1"]')).toBeTruthy();
+		});
+
+		window.matchMedia = originalMatchMedia;
+	});
+
 	it('shows the AG Grid table at/above the 860px breakpoint', async () => {
 		mockRequest.mockResolvedValue(mockDataResponse);
 		// Default window.matchMedia mock from tests/setup.ts always returns matches: false.
