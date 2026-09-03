@@ -132,7 +132,7 @@ Run the relevant subset (e.g., backend-only changes skip step 3). Report results
 
 **GSD verification is not self-verification.** The GSD verifier checks must_haves against codebase structure. It does NOT run builds or tests. Always run the full checklist (build, backend tests, frontend tests) before creating a PR, even after GSD verification passes.
 
-See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow.
+See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow, and [.docs/PR_SCREENSHOTS.md](.docs/PR_SCREENSHOTS.md) for uploading `sv-` screenshots to a release and linking them in the PR.
 
 ## Resources
 

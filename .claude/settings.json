@@ -48,6 +48,7 @@
       "Bash(git status:*)",
       "Bash(git tag:*)",
       "Bash(gh api:*)",
+      "Bash(gh release:*)",
       "Bash(gh issue:*)",
       "Bash(gh pr:*)",
       "Bash(go build:*)",
