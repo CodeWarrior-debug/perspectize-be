@@ -5,6 +5,7 @@ import {
 	parseDurationInput,
 	formatDate,
 	formatDateCompact,
+	formatDateTime,
 	formatCount,
 	formatCountExact,
 	formatPublishDate,
@@ -19,6 +20,9 @@ import {
 	dateValueFormatter,
 	contentRowId,
 	headerMinWidth,
+	getSourceDataCooldown,
+	formatRemainingTime,
+	SOURCE_DATA_COOLDOWN_MS,
 } from '$lib/utils/formatting';
 
 describe('formatDuration', () => {
@@ -548,5 +552,77 @@ describe('headerMinWidth', () => {
 		const diff = w8 - w4;
 		expect(diff).toBeGreaterThanOrEqual(28);
 		expect(diff).toBeLessThanOrEqual(34);
+	});
+});
+
+describe('formatDateTime', () => {
+	it('returns dash for invalid date', () => {
+		expect(formatDateTime('not-a-date')).toBe('—');
+	});
+
+	it('includes both date and time-of-day', () => {
+		// Midday UTC to avoid local-timezone date shifting in CI (see CLAUDE.md gotcha)
+		const result = formatDateTime('2026-09-03T12:15:00Z');
+		expect(result).toMatch(/2026/);
+		expect(result).toMatch(/:\d{2}/); // has a time component, unlike formatDate
+	});
+});
+
+describe('getSourceDataCooldown', () => {
+	it('is active immediately after an update', () => {
+		const now = new Date('2026-09-03T12:00:00Z');
+		const result = getSourceDataCooldown('2026-09-03T12:00:00Z', now);
+		expect(result.active).toBe(true);
+		expect(result.remainingMs).toBe(SOURCE_DATA_COOLDOWN_MS);
+	});
+
+	it('is still active partway through the window', () => {
+		const now = new Date('2026-09-03T14:00:00Z'); // 2h after update
+		const result = getSourceDataCooldown('2026-09-03T12:00:00Z', now);
+		expect(result.active).toBe(true);
+		expect(result.remainingMs).toBe(SOURCE_DATA_COOLDOWN_MS - 2 * 60 * 60 * 1000);
+	});
+
+	it('is inactive exactly at the TTL boundary', () => {
+		const now = new Date('2026-09-03T18:00:00Z'); // exactly 6h after update
+		const result = getSourceDataCooldown('2026-09-03T12:00:00Z', now);
+		expect(result.active).toBe(false);
+		expect(result.remainingMs).toBe(0);
+	});
+
+	it('is inactive well past the window', () => {
+		const now = new Date('2026-09-04T12:00:00Z'); // 24h after update
+		const result = getSourceDataCooldown('2026-09-03T12:00:00Z', now);
+		expect(result.active).toBe(false);
+		expect(result.remainingMs).toBe(0);
+	});
+
+	it('returns inactive for an invalid updatedAt', () => {
+		const result = getSourceDataCooldown('not-a-date');
+		expect(result.active).toBe(false);
+		expect(result.remainingMs).toBe(0);
+	});
+});
+
+describe('formatRemainingTime', () => {
+	it('formats hours and minutes', () => {
+		expect(formatRemainingTime(5 * 60 * 60 * 1000 + 42 * 60 * 1000)).toBe('5h 42m');
+	});
+
+	it('formats whole hours with no minutes remainder', () => {
+		expect(formatRemainingTime(3 * 60 * 60 * 1000)).toBe('3h');
+	});
+
+	it('formats minutes only under an hour', () => {
+		expect(formatRemainingTime(42 * 60 * 1000)).toBe('42m');
+	});
+
+	it('rounds up so it never reads 0m while time remains', () => {
+		expect(formatRemainingTime(30_000)).toBe('1m'); // 30 seconds left
+	});
+
+	it('returns 0m for zero or negative durations', () => {
+		expect(formatRemainingTime(0)).toBe('0m');
+		expect(formatRemainingTime(-1000)).toBe('0m');
 	});
 });

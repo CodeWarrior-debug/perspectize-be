@@ -243,6 +243,7 @@ input CreateClaimInput {
 
 type Mutation {
   createContentFromYouTube(input: CreateContentFromYouTubeInput!): CreateContentResult! @auth
+  updateContentSourceData(contentId: IntID!): Content! @auth
 
   # User mutations
   createUser(input: CreateUserInput!): User! @auth
@@ -259,6 +260,9 @@ type Mutation {
 }
 
 type Query {
+  # Current authenticated user, derived from the Clerk session
+  me: User @auth
+
   # Get single content by ID
   contentByID(id: ID!): Content
 

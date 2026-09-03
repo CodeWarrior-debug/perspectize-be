@@ -12,50 +12,9 @@ Monorepo with two stacks:
 
 **CLAUDE.md structure:** Root file (this) contains shared concerns. Package-level files contain stack-specific instructions. Claude loads root + the relevant package file per session.
 
-## Context Lookup with qmd (MANDATORY — Use Before Reading Files)
+## Context Lookup (graphify)
 
-**ALWAYS use qmd bash commands** to search for code before using Read/Glob/Grep. This applies to ALL agents including GSD subagents.
-
-⚠️ **DO NOT use MCP qmd tools** — use Bash commands only. MCP is not available in all contexts.
-
-⚠️ **Cloud sessions (claude.ai/code web):** qmd is NOT available. Skip qmd entirely and use Read/Glob/Grep directly.
-
-**Allowed commands (pre-approved):**
-- `qmd search *` — keyword search
-- `qmd vsearch *` — semantic search
-- `qmd query *` — hybrid search with reranking
-- `qmd get *` — retrieve file content
-- `qmd ls *` — list files in collection
-- `qmd update` — refresh index after changes
-- `qmd status` — check index status
-- `qmd embed` — generate embeddings after update
-
-```bash
-# Quick keyword search (BM25) — use 80% of the time
-qmd search "auth middleware" -c perspectize
-
-# Semantic search — finds related code even without exact keywords
-qmd vsearch "how does error handling work" -c perspectize
-
-# Hybrid search with reranking — best quality for complex questions
-qmd query "checkout flow validation" -c perspectize
-
-# Get specific file (optionally from line N, max L lines)
-qmd get qmd://perspectize/backend/internal/domain/content.go
-qmd get qmd://perspectize/backend/internal/domain/content.go:45 -l 30
-
-# List files in collection
-qmd ls perspectize
-```
-
-**Workflow:**
-1. Use `qmd search` or `qmd query` first to find relevant code
-2. Use `qmd get` to retrieve targeted snippets (not full files)
-3. Fall back to Read/Glob only if qmd doesn't return enough results
-
-**Available collections:** `perspectize` (code), `planning` (GSD docs)
-
-**Update index after major changes:** `qmd update && qmd embed`
+qmd is fully retired — see the `## graphify` section near the bottom of this file for the current pre-search step.
 
 ## GitHub & Repository Management
 
@@ -120,9 +79,9 @@ gh pr merge 123 --squash --delete-branch --admin
 
 Example: `feature/INI-16-youtube-post-graphql`
 
-### GitHub Issues with GSD Plans
+### GitHub Issues with Plans
 
-Include: GSD Plan Reference (`.planning/phases/{phase}/{plan}-PLAN.md`), acceptance criteria from `must_haves.truths`, dependencies if present.
+Include a plan reference and dependencies if present: for new work, the superpowers plan/spec path (`docs/superpowers/plans/{name}-plan.md`); for legacy in-flight work, the GSD plan reference (`.planning/phases/{phase}/{plan}-PLAN.md`) and acceptance criteria from `must_haves.truths`.
 
 ## Agent Delegation Strategy
 
@@ -149,11 +108,13 @@ defer db.Close()
 
 **Commit messages:** Conventional commit format (`feat`, `fix`, `refactor`, `chore`, `docs`, `test`). One logical change per commit. GSD planning work (PLAN.md, CONTEXT.md, RESEARCH.md, ROADMAP.md) uses the `docs` tag — e.g., `docs(11,13): create execution plans`.
 
-## GSD Workflow
+## Planning & Execution Workflow
 
-**ALWAYS use the GSD workflow** for planning and execution in this project. Do NOT use superpowers:writing-plans or other planning skills — use GSD plan files in `.planning/phases/`.
+**Primary workflow: obra/superpowers** (plugin enabled in `.claude/settings.json`). Use `superpowers:writing-plans` (or its brainstorming/spec-writing counterparts) for planning, and `superpowers:executing-plans` / `superpowers:subagent-driven-development` for execution. Plans and specs live in `docs/superpowers/plans/` and `docs/superpowers/specs/` — see `docs/superpowers/plans/2026-08-15-clerk-derived-user-identity-plan.md` for the established format (plan header names the required execution sub-skill, links its spec, checkbox-tracked (`- [ ]`) tasks).
 
-Planning and execution artifacts in `.planning/`: `PROJECT.md`, `ROADMAP.md`, `STATE.md`, `phases/`. Branching: see [.docs/GSD_BRANCHING.md](.docs/GSD_BRANCHING.md).
+**GSD is legacy — do NOT start new work with it.** Some milestones still have unfinished work tracked under the old workflow in `.planning/phases/` (`PROJECT.md`, `ROADMAP.md`, `STATE.md`, phase `PLAN.md`/`must_haves.truths` files). Finish those specific in-flight phases using their existing GSD plan files/commands rather than replanning them from scratch under superpowers — don't discard partially-done GSD work. All new planning and execution goes through superpowers. Branching for legacy GSD phases: see [.docs/GSD_BRANCHING.md](.docs/GSD_BRANCHING.md).
+
+**Superpowers is the preferred planning + execution orchestrator.** Select GSD commands are kept only for codebase mapping (`gsd:map-codebase`) and roadmap/milestone management (`gsd:new-milestone`, `gsd:add-phase`/`gsd:remove-phase`/`gsd:insert-phase`, `gsd:analyze-dependencies`, `gsd:milestone-summary`, `gsd:complete-milestone`, `gsd:docs-update`).
 
 ## Self-Verification (MANDATORY)
 
@@ -171,7 +132,7 @@ Run the relevant subset (e.g., backend-only changes skip step 3). Report results
 
 **GSD verification is not self-verification.** The GSD verifier checks must_haves against codebase structure. It does NOT run builds or tests. Always run the full checklist (build, backend tests, frontend tests) before creating a PR, even after GSD verification passes.
 
-See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow.
+See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow, and [.docs/PR_SCREENSHOTS.md](.docs/PR_SCREENSHOTS.md) for uploading `sv-` screenshots to a release and linking them in the PR.
 
 ## Resources
 
@@ -182,6 +143,7 @@ See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow
 - [Domain Guide](.docs/DOMAIN_GUIDE.md) — Domain layer rules and patterns
 - [Go Patterns](.docs/GO_PATTERNS.md) — Error handling and DB query patterns
 - [Security](.docs/SECURITY.md) — Secret management, rotation procedures, incident response
+- [Dependency Security](.docs/DEPENDENCY_SECURITY.md) — Trivy/pnpm-audit scanning, CVE remediation workflow, CI gotchas
 
 **Frontend docs:**
 - [Frontend CLAUDE.md](frontend/CLAUDE.md) — SvelteKit, Svelte 5, TanStack Query patterns
@@ -200,7 +162,6 @@ See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow
 **Bug logging (MANDATORY):** When you discover a bug during development, review, or testing, log it in `.planning/phases/bugs/BACKLOG.md` with severity and location. Also create a GitHub issue using the bug report template — keep sensitive details (exact paths, line numbers, security specifics) in the backlog only. When a bug is fixed, move it to `.planning/phases/bugs/CLOSED.md` with the PR reference. These files are gitignored — never commit them.
 
 **Hookify rules (check `.claude/hookify.*.local.md` for all rules):**
-- **qmd first:** Spawning an Explore agent triggers a warning to use `qmd search`/`qmd get` first. Only spawn an Explore agent if qmd doesn't return what you need.
 - **Pre-PR:** `gh pr create` is blocked until `claude-md-management:revise-claude-md` has been run. The block can't detect completion, so use `gh api` to create the PR after running the skill. Example: `gh api repos/CodeWarrior-debug/perspectize/pulls -f title="..." -f body="..." -f head="branch" -f base="main"`
 - **Pre-commit tests:** `git commit` triggers a warning to verify test coverage for new/modified frontend `src/` files. Config, styles, docs, and test files are exempt.
 - **Pre-commit prettier:** `git commit` triggers a warning to run `pnpm exec prettier --write` on staged frontend files.
@@ -214,3 +175,13 @@ See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow
 
 **External references:**
 - [gqlgen](https://gqlgen.com/) | [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/) | [Effective Go](https://go.dev/doc/effective_go) | [PostgreSQL 17](https://www.postgresql.org/docs/17/)
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

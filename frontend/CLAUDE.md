@@ -128,6 +128,8 @@ Full setup and examples: [docs/AG_GRID.md](docs/AG_GRID.md)
 
 **Column visibility gotcha:** `ActivityTable.svelte` controls visibility in TWO places that must stay in sync: `hide: true` in colDef (initial default) and `$effect` with `setColumnsVisible()` (responsive override — runs on gridReady, always wins). When adding/changing columns, update BOTH. The responsive system uses 4 tiers: xs (<445px), sm (445-639px), md (640-899px), lg (900px+) — decide which tier(s) should show the new column. See [ADDING_AG_GRID_COLUMN.md](../.claude/docs/ADDING_AG_GRID_COLUMN.md) Decision 7.
 
+**Grid remount gotcha:** the `cardMode` breakpoint (<860px) and the error state unmount `AgGridSvelte5Component` entirely — a new Grid API is created on the way back, so any imperative column state (`setColumnsVisible`, `applyColumnState`, the session column-picker override) MUST be re-applied from an `$effect` that reruns on `gridReady`, not just at the moment the user changes it.
+
 ## Figma Design Workflow
 
 - **[docs/FIGMA.md](docs/FIGMA.md)** — Figma file reference (file keys, pages, variables, code↔Figma mapping)
@@ -154,6 +156,12 @@ Full setup and examples: [docs/AG_GRID.md](docs/AG_GRID.md)
 **Mobile screenshots:** Use `emulate` (NOT `resize_page`) for mobile/tablet. AG Grid and CSS media queries only respond to viewport changes when `isMobile: true` is set. `resize_page` alone doesn't trigger responsive column hiding. Example: `emulate({ viewport: { width: 375, height: 812, deviceScaleFactor: 3, isMobile: true, hasTouch: true } })`. Reset with `emulate({ viewport: null, userAgent: null })` after. Use `resize_page` for desktop breakpoint comparisons (768px+).
 
 ## Testing Gotchas
+
+**`tests/helpers/TestWrapper.svelte` dynamic-component syntax:** Pass the component as `<wrapped.Comp {...props} />` (a dotted member expression), not `<component {...props} />` or `<component.default {...props} />`. Svelte 5 only treats dotted-member tags as dynamic components — a bare lowercase identifier renders as a literal `<component>` HTML element, and `.default` is wrong because the `component` prop passed in is already the `.svelte` file's default export, not a module namespace object. Either mistake silently renders nothing (empty comment placeholders), which can make a whole test file's assertions pass vacuously (see `tests/components/ActivityTable.test.ts` history) without ever exercising real component output.
+
+**AG Grid custom cell renderers inherit `white-space: nowrap`:** AG Grid's `.ag-cell` sets `white-space: nowrap`, which is inherited by any child elements a custom `cellRenderer` builds. A `line-clamp-*`/wrapping title inside a cell renderer needs an explicit `whitespace-normal` (or equivalent) to override it, or the text silently stays on one line and overflows instead of wrapping/clamping.
+
+**AG Grid `rowHeight` too tight clips descenders on a `line-clamp-2` cell title, even though line-clamp itself only ever cuts whole lines, not glyphs.** The row's own `overflow: hidden` — not the title element's — clips letters like g/y/p/q/j on the last visible line when the vertically-centered content's natural height (line-count × line-height, plus the cell's own padding) is only marginally smaller than `rowHeight`. Give real margin: for a 2-line `text-[13px] leading-[1.5]` title that's roughly 39px of text, a 64px `rowHeight` (not something closer to 45-50px) leaves enough slack. Verify visually (zoom into a rendered row) after changing `rowHeight` or the title's font-size/line-height/line-clamp count — this doesn't show up from reading the CSS alone.
 
 **Date formatting timezone:** `formatDate`/`formatDateCompact` use `toLocaleDateString` (local timezone). In tests, use midday UTC times (`T12:00:00Z`) not midnight (`T00:00:00Z`) to avoid dates shifting to previous day in US timezones.
 

@@ -5,6 +5,7 @@
 	import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query';
 	import { Toaster } from 'svelte-sonner';
 	import favicon from '$lib/assets/favicon.svg';
+	import AuthUserSync from '$lib/components/AuthUserSync.svelte';
 	import Header from '$lib/components/Header.svelte';
 	import { reportWebVitals } from '$lib/vitals';
 	import { pwaInfo } from 'virtual:pwa-info';
@@ -47,6 +48,7 @@
 		</ClerkLoading>
 
 		<ClerkLoaded>
+			<AuthUserSync />
 			<div class="min-h-screen bg-background text-foreground">
 				<Header />
 				{@render children()}

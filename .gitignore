@@ -47,9 +47,19 @@ coverage/
 .claude/*.local.md
 .claude/*.local.json
 
+# Claude Code isolated worktrees (EnterWorktree tool, standardized location)
+.claude/worktrees/
+
 # Private bug tracking (not for public exposure)
 .planning/phases/bugs/
 .planning/codebase/CONCERNS.md
 
 # Figma Make reference artifacts (large generated code, not for commit)
 .planning/phases/*/figma-make-ref/
+
+# graphify knowledge-graph artifacts (regenerable, not for commit)
+graphify-out/
+
+# Self-verification screenshots — the Chrome DevTools MCP sandbox can only write
+# inside the repo, so captures land here instead of ~/Downloads/screenshots/
+.screenshots/

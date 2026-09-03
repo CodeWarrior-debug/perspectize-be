@@ -183,3 +183,42 @@ export const COLUMN_FILTERS: Record<string, string | false> = {
 	updatedAt: 'agDateColumnFilter',
 	createdAt: 'agDateColumnFilter',
 };
+
+/**
+ * Column-picker registry — the single source of truth for which columns the
+ * user can toggle in ColumnPickerDialog. Kept here (not in the Svelte file) so
+ * the dialog, the override-map builder in ActivityTable, and the tests all
+ * agree. `colId` values must match the `colId` on the corresponding ColDef in
+ * ActivityTable.svelte.
+ */
+export interface TogglableColumn {
+	colId: string;
+	label: string;
+}
+
+/** Data columns every user can show/hide. */
+export const DATA_COLUMNS: readonly TogglableColumn[] = [
+	{ colId: 'item', label: 'Item' },
+	{ colId: 'type', label: 'Type' },
+	{ colId: 'duration', label: 'Length' },
+	{ colId: 'views', label: 'Views' },
+	{ colId: 'likes', label: 'Likes' },
+	{ colId: 'publishDate', label: 'Published' },
+	{ colId: 'channel', label: 'Channel' },
+	{ colId: 'tags', label: 'Tags' },
+	{ colId: 'description', label: 'Description' },
+] as const;
+
+/** Internal columns, offered only to admins. All hidden by default. */
+export const INTERNAL_COLUMNS: readonly TogglableColumn[] = [
+	{ colId: 'id', label: 'Content ID' },
+	{ colId: 'addedByUserID', label: 'Submitter' },
+	{ colId: 'url', label: 'Source URL' },
+	{ colId: 'createdAt', label: 'Created at' },
+	{ colId: 'updatedAt', label: 'Updated at' },
+] as const;
+
+/** Every colId the user may toggle, given their admin status. */
+export function togglableColIds(isAdmin: boolean): string[] {
+	return [...DATA_COLUMNS.map((c) => c.colId), ...(isAdmin ? INTERNAL_COLUMNS.map((c) => c.colId) : [])];
+}

@@ -14,6 +14,7 @@ describe('GraphQL query definitions', () => {
 			const item: ContentItem = {
 				id: '1',
 				name: 'Test',
+				addedByUserID: '7',
 				url: 'https://example.com',
 				contentType: 'VIDEO',
 				length: 100,
@@ -52,6 +53,7 @@ describe('GraphQL query definitions', () => {
 					content: {
 						id: '1',
 						name: 'Test',
+						addedByUserID: '7',
 						url: 'https://youtube.com/watch?v=test',
 						contentType: 'VIDEO',
 						length: 100,
@@ -99,6 +101,7 @@ describe('GraphQL query definitions', () => {
 		it('requests expected content fields', () => {
 			expect(LIST_CONTENT).toContain('id');
 			expect(LIST_CONTENT).toContain('name');
+			expect(LIST_CONTENT).toContain('addedByUserID');
 			expect(LIST_CONTENT).toContain('url');
 			expect(LIST_CONTENT).toContain('contentType');
 			expect(LIST_CONTENT).toContain('createdAt');

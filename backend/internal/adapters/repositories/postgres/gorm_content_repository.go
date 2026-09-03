@@ -2,9 +2,11 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/repositories"
@@ -102,6 +104,34 @@ func (r *GormContentRepository) GetOrCreateByURL(ctx context.Context, content *d
 		return nil, false, fmt.Errorf("failed to fetch created content: %w", err)
 	}
 	return fresh, false, nil
+}
+
+// UpdateMetadata performs a direct UPDATE of an existing content row's refreshable
+// fields (name, response, length) plus updated_at. It never touches created_at or
+// added_by_user_id, and it does not insert — the row must already exist.
+func (r *GormContentRepository) UpdateMetadata(ctx context.Context, id int, name string, response json.RawMessage, length *int) (*domain.Content, error) {
+	result := r.db.WithContext(ctx).
+		Model(&ContentModel{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"name":       name,
+			"response":   response,
+			"length":     length,
+			"updated_at": time.Now(),
+		})
+
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to update content metadata: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return nil, domain.ErrNotFound
+	}
+
+	fresh, err := r.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch updated content: %w", err)
+	}
+	return fresh, nil
 }
 
 // List retrieves a paginated list of content using cursor-based pagination

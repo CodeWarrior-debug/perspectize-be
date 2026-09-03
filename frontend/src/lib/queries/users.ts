@@ -35,3 +35,25 @@ export const CREATE_USER = gql`
 		}
 	}
 `;
+
+export type UserRole = 'ADMIN' | 'SENTINEL' | 'DEFAULT';
+
+export interface Me {
+	id: string;
+	username: string;
+	role: UserRole;
+}
+
+export interface MeResponse {
+	me: Me | null;
+}
+
+export const ME = gql`
+	query Me {
+		me {
+			id
+			username
+			role
+		}
+	}
+`;

@@ -162,6 +162,8 @@ models:
 
 ## Self-Verification
 
+**Stale server check:** `go run ./cmd/server` does not hot-reload. Before manual browser verification, confirm the running process postdates your changes — check with `lsof -i :8080` + `ps -p <pid> -o command`, or just kill and restart. Use `make dev` (air) if you need actual hot-reload across a session.
+
 ```bash
 curl -s -X POST http://localhost:8080/graphql \
   -H "Content-Type: application/json" \

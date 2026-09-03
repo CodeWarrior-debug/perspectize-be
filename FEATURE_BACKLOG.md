@@ -4,6 +4,22 @@ Ideas and future enhancements captured during development. Not committed to any 
 
 ---
 
+## YouTube Search Proxy (Shared Quota Fix)
+
+Discovered 2026-08-15: the Discover page's search (`fetchYouTubeSearch` in `frontend/src/lib/services/youtubeApi.ts`) calls YouTube's `search.list` **directly from the browser** using a single build-time key (`VITE_YOUTUBE_API_KEY`). `search.list` costs a flat 100 units/call, and the default daily quota is 10,000 units — so the whole deployed app shares roughly **~100 searches/day total**, not per-user, since every browser uses the same key. Client-side caching (TanStack Query, 5 min staleTime for search / 1 hour for trending) helps within a session but doesn't share across users or browser tabs.
+
+**What to do:**
+- Move `fetchYouTubeSearch`/`fetchYouTubeTrending` behind a backend endpoint (GraphQL query or REST) that holds the API key server-side
+- Add a shared cache keyed on `query + filters` (Postgres or in-memory, TTL ~5-15 min) so identical searches across different users cost one YouTube API call, not N
+- `videos.list` (trending, pagination) is cheap (~1-7 units/call) and not the bottleneck — lower priority than fixing `search.list`
+- Separately, request a quota increase from Google Cloud Console (YouTube Data API v3 → Quotas) — independent of the code fix, worth doing regardless
+
+**Priority:** Should be addressed before the Discover page sees real multi-user traffic — the shared-key quota exhaustion is a hard outage (`quotaExceeded` error), not a degraded-performance issue.
+
+**Partial progress (2026-09-03):** The `GetVideoMetadata` path (add-video / refresh, called from `ContentService` in the Go backend — separate from `search.list`) now sits behind an in-memory TTL cache (`youtube.CachingClient`, `backend/internal/adapters/youtube/cache.go`), configurable via `YOUTUBE_API_CACHE_TTL_SECONDS` (default 6h). This does **not** touch `search.list` or the frontend proxy problem above — that's still outstanding.
+
+---
+
 ## Discover Page (New Page)
 
 The v1 home page is an **Activity** page — a data table of user activity on videos already in the system. This is the correct approach for v1.
@@ -56,7 +72,7 @@ Add a toolbar above `ActivityTable` with power-user grid controls. All features 
 - **Clear all filters** — `gridApi.setFilterModel(null)`
 - **Clear single column filter** — `gridApi.setColumnFilterModel('colId', null)`
 - **Multi-column sort** — `multiSortKey: 'ctrl'` in gridOptions (hold Ctrl+click headers)
-- **Column show/hide picker** — `gridApi.setColumnsVisible(['col1', 'col2'], true/false)`
+- ~~**Column show/hide picker**~~ — DONE (2026-09-02): gear-icon modal `ColumnPickerDialog`, session-only, admin-gated internal columns. Branch `feature/INI-ag-grid-column-picker`.
 - **Save/restore filter state** — `gridApi.getFilterModel()` / `gridApi.setFilterModel(saved)`
 - **Save/restore column state** — `gridApi.getColumnState()` / `gridApi.applyColumnState({state})`
 
@@ -64,6 +80,28 @@ Add a toolbar above `ActivityTable` with power-user grid controls. All features 
 - [AG Grid Filter API](https://www.ag-grid.com/javascript-data-grid/filter-api/)
 - [AG Grid Column State](https://www.ag-grid.com/javascript-data-grid/column-state/)
 - [AG Grid Multi-Sort](https://www.ag-grid.com/javascript-data-grid/row-sorting/#multi-column-sorting)
+
+---
+
+## Saved Views (Activity Table)
+
+Named, persisted presets that capture column visibility + filters + sort +
+page size for `ActivityTable`, so a user can switch between "My reading queue",
+"Admin audit", etc. without re-toggling each time.
+
+- Persist per user (localStorage first; backend `user_views` table later for
+  cross-device).
+- Builds directly on the session-only column picker shipped 2026-09-02
+  (`ColumnPickerDialog` + `userColumnOverride` in `ActivityTable.svelte`) —
+  promote that transient state into a saveable/loadable view object.
+- Serialize via `gridApi.getColumnState()` / `getFilterModel()` and restore via
+  `applyColumnState()` / `setFilterModel()`.
+- UI: a view dropdown next to the gear icon; "Save current as…", rename,
+  delete, set default.
+
+**Priority:** Medium — natural follow-up once users start customizing columns.
+
+**Source:** Column picker design discussion (2026-09-02)
 
 ---
 
@@ -463,3 +501,37 @@ This would give a full waterfall view: HTTP request → GraphQL operation → DB
 **Priority:** Medium — the env var setup is zero-effort; granular instrumentation is a follow-up.
 
 **Source:** Architecture discussion (2026-03-23)
+
+---
+
+## Re-run graphify with a Real LLM Backend Token
+
+**Type:** Dev × Feature Request
+
+The initial graphify knowledge-graph build (see CLAUDE.md's `## graphify` section) was run with `graphify extract . --code-only` because no `ANTHROPIC_API_KEY`/`GEMINI_API_KEY` was available in the shell — this skips semantic extraction entirely.
+
+**Current state:** `graphify-out/graph.json` has 2345 nodes / 6398 edges / 192 communities from local AST parsing only. Communities are unlabeled placeholders ("Community 0"–"191") since naming requires an LLM call. 475 doc files, papers, and images were skipped (`--code-only` only indexes code). 29 `.sql` files contributed nothing (missing `tree_sitter_sql` — `pip install "graphifyy[sql]"` fixes that separately).
+
+**What to do:**
+- Get an API key (Anthropic from console.anthropic.com — separate billing from the Claude subscription — or Gemini) and export it in a real terminal, not through an AI session
+- Re-run `graphify extract . --backend claude` (or `--backend gemini`) with `--force` to get semantic/INFERRED edges and doc/paper/image extraction
+- Run `graphify cluster-only .` (without `--no-label`) afterward to get real community names instead of "Community N" placeholders
+
+**Priority:** Low-Medium — the code-only graph is already usable for query/path/explain against code symbols; this upgrade mainly improves natural-language question matching and cross-doc community structure.
+
+**Source:** Dev request (2026-09-02), during graphify initialization.
+
+---
+
+## ~~Verify TypeScript + Go LSPs Are Actually Working~~ (RESOLVED)
+
+**Type:** Dev × Feature Request
+
+Session start on this machine showed: `[vtsls] Installing vtsls... [vtsls] Failed to install. Please run manually: npm install -g @vtsls/language-server typescript`. Root cause turned out to be two competing TypeScript LSP plugins enabled simultaneously at the user level, both registered for `.ts/.tsx/.js/.jsx`:
+
+- `vtsls@claude-code-lsps` — wanted the `vtsls` binary, which was never installed (this was the one erroring at session start)
+- `typescript-lsp@claude-plugins-official` — wants `typescript-language-server`, which was already installed (v5.1.3, backed by `typescript` 5.9.3) and working
+
+**Fix applied (2026-09-02):** Disabled `vtsls@claude-code-lsps` at user scope (`claude plugin disable vtsls@claude-code-lsps`) rather than installing a second redundant TS language server. `typescript-lsp@claude-plugins-official` remains enabled and confirmed working. `gopls@claude-code-lsps` was separately confirmed working (`gopls version` → v0.21.1 at `/Users/jamesjordan/go/bin/gopls`) — no fix needed there. Restart Claude Code to pick up the plugin change.
+
+**Source:** Dev request (2026-09-02), observed vtsls install failure at session start.

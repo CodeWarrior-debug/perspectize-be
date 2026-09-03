@@ -61,9 +61,9 @@ For each plan's `must_haves`:
 ## 5. Evidence Capture
 
 Save screenshots to `~/Downloads/screenshots/` with naming convention:
-- **Prefix:** `ccsv-` (Claude Code Self Verification)
-- **Format:** `ccsv-{plan}-{description}-{width}.png`
-- **Example:** `ccsv-01-02-mobile-375px.png`, `ccsv-01-04-ag-grid-desktop-1280px.png`
+- **Prefix:** `sv-` (Self-Verify) — supersedes the old `ccsv-` prefix; `ccsv-` may still appear in older screenshots but new captures use `sv-`
+- **Format:** `sv-{plan}-{description}-{width}.png`
+- **Example:** `sv-01-02-mobile-375px.png`, `sv-01-04-ag-grid-desktop-1280px.png`
 - Use `filePath` parameter on `take_screenshot` to save directly
 - Take full-page screenshots (`fullPage: true`) at mobile (375px), tablet (768px), desktop (1280px)
 
@@ -71,3 +71,4 @@ Before creating PR:
 - Screenshots at mobile (375px), tablet (768px), desktop (1280px)
 - Console output showing no errors
 - Verification commands output
+- Upload the `sv-*` screenshots and link them in the PR — see [PR Screenshots](PR_SCREENSHOTS.md)

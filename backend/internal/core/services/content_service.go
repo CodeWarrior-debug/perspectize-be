@@ -101,6 +101,48 @@ func (s *ContentService) GetByID(ctx context.Context, id int) (*domain.Content, 
 	return content, nil
 }
 
+// UpdateSourceData refreshes an existing content item's metadata by re-fetching it from
+// the source (YouTube) and performing a direct UPDATE of the stored row. Unlike
+// CreateFromYouTube's upsert path, this always operates on a known existing row by ID —
+// it never inserts, and it never touches created_at or added_by_user_id.
+func (s *ContentService) UpdateSourceData(ctx context.Context, contentID int) (*domain.Content, error) {
+	if contentID <= 0 {
+		return nil, fmt.Errorf("%w: content id must be a positive integer", domain.ErrInvalidInput)
+	}
+
+	existing, err := s.repo.GetByID(ctx, contentID)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("%w: content not found", domain.ErrNotFound)
+		}
+		return nil, fmt.Errorf("failed to get content: %w", err)
+	}
+	if existing.URL == nil {
+		return nil, fmt.Errorf("%w: content has no source URL to refresh", domain.ErrInvalidInput)
+	}
+
+	videoID, err := s.youtubeClient.ExtractVideoID(*existing.URL)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", domain.ErrInvalidURL, err)
+	}
+
+	metadata, err := s.youtubeClient.GetVideoMetadata(ctx, videoID)
+	if err != nil {
+		slog.Error("failed to fetch YouTube metadata for refresh",
+			"videoID", videoID,
+			"contentID", contentID,
+			"error", err)
+		return nil, fmt.Errorf("failed to fetch video metadata")
+	}
+
+	updated, err := s.repo.UpdateMetadata(ctx, contentID, metadata.Title, metadata.Response, &metadata.Duration)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update content metadata: %w", err)
+	}
+
+	return updated, nil
+}
+
 // CreateClaim creates a new claim content entry associated with a parent content item.
 // The claim text is stored raw (preserving @this/@here tokens for display-time resolution).
 // The parent content ID and raw text are stored in the response JSONB column.

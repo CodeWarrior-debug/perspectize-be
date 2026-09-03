@@ -129,4 +129,16 @@ describe('Header component', () => {
 		expect(rightContainer).toBeInTheDocument();
 		expect(rightContainer?.className).toContain('shrink-0');
 	});
+
+	it('renders a Discover navigation link pointing to /discover', () => {
+		render(Header);
+		const link = screen.getByRole('link', { name: 'Discover' });
+		expect(link).toHaveAttribute('href', '/discover');
+	});
+
+	it('renders an Activity navigation link pointing to /', () => {
+		render(Header);
+		const link = screen.getByRole('link', { name: 'Activity' });
+		expect(link).toHaveAttribute('href', '/');
+	});
 });
