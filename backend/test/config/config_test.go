@@ -13,7 +13,7 @@ import (
 // run against config file values only. t.Setenv restores originals on cleanup.
 func clearConfigEnvVars(t *testing.T) {
 	t.Helper()
-	for _, key := range []string{"DATABASE_URL", "DATABASE_PASSWORD", "YOUTUBE_API_KEY"} {
+	for _, key := range []string{"DATABASE_URL", "DATABASE_PASSWORD", "YOUTUBE_API_KEY", "YOUTUBE_API_CACHE_TTL_SECONDS"} {
 		t.Setenv(key, "")
 	}
 }
@@ -38,8 +38,41 @@ func TestLoad_RealConfigFile(t *testing.T) {
 	assert.Equal(t, "testuser", cfg.Database.User)
 	assert.Equal(t, "disable", cfg.Database.SSLMode)
 	assert.Equal(t, "", cfg.YouTube.APIKey, "API key should be empty in example config")
+	assert.Equal(t, config.DefaultYouTubeCacheTTLSeconds, cfg.YouTube.CacheTTLSeconds, "cache TTL should default to 6 hours when not set in config file")
 	assert.Equal(t, "info", cfg.Logging.Level)
 	assert.Equal(t, "json", cfg.Logging.Format)
+}
+
+// TestLoad_YouTubeCacheTTL_EnvOverride verifies the env var overrides the default.
+func TestLoad_YouTubeCacheTTL_EnvOverride(t *testing.T) {
+	clearConfigEnvVars(t)
+	t.Setenv("YOUTUBE_API_CACHE_TTL_SECONDS", "60")
+
+	cfg, err := config.Load("../../config/config.example.json")
+	assert.NoError(t, err)
+	assert.Equal(t, 60, cfg.YouTube.CacheTTLSeconds)
+}
+
+// TestLoad_YouTubeCacheTTL_ZeroDisablesCache verifies 0 is honored (not
+// treated as "unset") so operators can turn caching off entirely.
+func TestLoad_YouTubeCacheTTL_ZeroDisablesCache(t *testing.T) {
+	clearConfigEnvVars(t)
+	t.Setenv("YOUTUBE_API_CACHE_TTL_SECONDS", "0")
+
+	cfg, err := config.Load("../../config/config.example.json")
+	assert.NoError(t, err)
+	assert.Equal(t, 0, cfg.YouTube.CacheTTLSeconds)
+}
+
+// TestLoad_YouTubeCacheTTL_InvalidFallsBackToDefault verifies a garbage
+// value doesn't silently zero out the TTL or crash config loading.
+func TestLoad_YouTubeCacheTTL_InvalidFallsBackToDefault(t *testing.T) {
+	clearConfigEnvVars(t)
+	t.Setenv("YOUTUBE_API_CACHE_TTL_SECONDS", "not-a-number")
+
+	cfg, err := config.Load("../../config/config.example.json")
+	assert.NoError(t, err)
+	assert.Equal(t, config.DefaultYouTubeCacheTTLSeconds, cfg.YouTube.CacheTTLSeconds)
 }
 
 // TestLoad_RealConfigWithEnvOverrides tests that env vars override the real config

@@ -16,6 +16,8 @@ Discovered 2026-08-15: the Discover page's search (`fetchYouTubeSearch` in `fron
 
 **Priority:** Should be addressed before the Discover page sees real multi-user traffic — the shared-key quota exhaustion is a hard outage (`quotaExceeded` error), not a degraded-performance issue.
 
+**Partial progress (2026-09-03):** The `GetVideoMetadata` path (add-video / refresh, called from `ContentService` in the Go backend — separate from `search.list`) now sits behind an in-memory TTL cache (`youtube.CachingClient`, `backend/internal/adapters/youtube/cache.go`), configurable via `YOUTUBE_API_CACHE_TTL_SECONDS` (default 6h). This does **not** touch `search.list` or the frontend proxy problem above — that's still outstanding.
+
 ---
 
 ## Discover Page (New Page)
