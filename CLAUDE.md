@@ -12,56 +12,9 @@ Monorepo with two stacks:
 
 **CLAUDE.md structure:** Root file (this) contains shared concerns. Package-level files contain stack-specific instructions. Claude loads root + the relevant package file per session.
 
-## Context Lookup (qmd retired — graphify coming soon)
+## Context Lookup (graphify)
 
-**graphify coming soon.** qmd is no longer the mandated pre-search step — use Read/Glob/Grep directly for now. The section below is kept commented out for reference until graphify lands.
-
-<!--
-## Context Lookup with qmd (MANDATORY — Use Before Reading Files)
-
-**ALWAYS use qmd bash commands** to search for code before using Read/Glob/Grep. This applies to ALL agents including GSD subagents.
-
-⚠️ **DO NOT use MCP qmd tools** — use Bash commands only. MCP is not available in all contexts.
-
-⚠️ **Cloud sessions (claude.ai/code web):** qmd is NOT available. Skip qmd entirely and use Read/Glob/Grep directly.
-
-**Allowed commands (pre-approved):**
-- `qmd search *` — keyword search
-- `qmd vsearch *` — semantic search
-- `qmd query *` — hybrid search with reranking
-- `qmd get *` — retrieve file content
-- `qmd ls *` — list files in collection
-- `qmd update` — refresh index after changes
-- `qmd status` — check index status
-- `qmd embed` — generate embeddings after update
-
-```bash
-# Quick keyword search (BM25) — use 80% of the time
-qmd search "auth middleware" -c perspectize
-
-# Semantic search — finds related code even without exact keywords
-qmd vsearch "how does error handling work" -c perspectize
-
-# Hybrid search with reranking — best quality for complex questions
-qmd query "checkout flow validation" -c perspectize
-
-# Get specific file (optionally from line N, max L lines)
-qmd get qmd://perspectize/backend/internal/domain/content.go
-qmd get qmd://perspectize/backend/internal/domain/content.go:45 -l 30
-
-# List files in collection
-qmd ls perspectize
-```
-
-**Workflow:**
-1. Use `qmd search` or `qmd query` first to find relevant code
-2. Use `qmd get` to retrieve targeted snippets (not full files)
-3. Fall back to Read/Glob only if qmd doesn't return enough results
-
-**Available collections:** `perspectize` (code), `planning` (GSD docs)
-
-**Update index after major changes:** `qmd update && qmd embed`
--->
+qmd is fully retired — see the `## graphify` section near the bottom of this file for the current pre-search step.
 
 ## GitHub & Repository Management
 
@@ -220,3 +173,13 @@ See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow
 
 **External references:**
 - [gqlgen](https://gqlgen.com/) | [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/) | [Effective Go](https://go.dev/doc/effective_go) | [PostgreSQL 17](https://www.postgresql.org/docs/17/)
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
