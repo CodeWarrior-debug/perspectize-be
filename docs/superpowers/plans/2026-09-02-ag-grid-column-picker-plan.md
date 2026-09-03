@@ -43,51 +43,51 @@
 ## Tasks
 
 ### 1. Query + type changes
-- [ ] `content.ts`: add `addedByUserID` to the `LIST_CONTENT` `items { ... }` selection and to `interface ContentItem` (`addedByUserID: string`).
-- [ ] `users.ts`: add `export type UserRole = 'ADMIN' | 'SENTINEL' | 'DEFAULT';`, add `role: UserRole` to `interface Me`, add `role` to the `ME` query selection.
-- [ ] Update `frontend/tests/unit/queries-content.test.ts` to assert the query string contains `addedByUserID`.
-- [ ] Add/extend `frontend/tests/unit/queries-users.test.ts` to assert `ME` contains `role`.
-- [ ] `pnpm --dir frontend run test:run` (unit) green for these files. Commit: `feat(content,users): expose addedByUserID and me.role to the client`.
+- [x] `content.ts`: add `addedByUserID` to the `LIST_CONTENT` `items { ... }` selection and to `interface ContentItem` (`addedByUserID: string`).
+- [x] `users.ts`: add `export type UserRole = 'ADMIN' | 'SENTINEL' | 'DEFAULT';`, add `role: UserRole` to `interface Me`, add `role` to the `ME` query selection.
+- [x] Update `frontend/tests/unit/queries-content.test.ts` to assert the query string contains `addedByUserID`.
+- [x] Add/extend `frontend/tests/unit/queries-users.test.ts` to assert `ME` contains `role`.
+- [x] `pnpm --dir frontend run test:run` (unit) green for these files. Commit: `feat(content,users): expose addedByUserID and me.role to the client`.
 
 ### 2. Column registry in grid-config
-- [ ] Add `DATA_COLUMNS`, `INTERNAL_COLUMNS` (readonly arrays of `{ colId, label }`) and `togglableColIds(isAdmin: boolean): string[]` to `frontend/src/lib/utils/grid-config.ts` per the spec.
-- [ ] `frontend/tests/unit/grid-config.test.ts`: `togglableColIds(false)` has the 9 data colIds; `togglableColIds(true)` has 14; every `DATA_COLUMNS`/`INTERNAL_COLUMNS` colId is unique.
-- [ ] Test green. Commit: `feat(grid-config): add togglable column registry`.
+- [x] Add `DATA_COLUMNS`, `INTERNAL_COLUMNS` (readonly arrays of `{ colId, label }`) and `togglableColIds(isAdmin: boolean): string[]` to `frontend/src/lib/utils/grid-config.ts` per the spec.
+- [x] `frontend/tests/unit/grid-config.test.ts`: `togglableColIds(false)` has the 9 data colIds; `togglableColIds(true)` has 14; every `DATA_COLUMNS`/`INTERNAL_COLUMNS` colId is unique.
+- [x] Test green. Commit: `feat(grid-config): add togglable column registry`.
 
 ### 3. useMe hook
-- [ ] Create `frontend/src/lib/queries/hooks/useMe.svelte.ts`: `useClerkContext()` for `clerkUserId`, `createQuery(() => ({ queryKey: ['me', clerkUserId], queryFn: () => graphqlRequest<MeResponse>(ME), enabled: clerk.isLoaded && !!clerkUserId, staleTime: 5*60*1000 }))`. Return an object with getters `me` (`meQuery.data?.me ?? null`) and `isAdmin` (`me?.role === 'ADMIN'`).
-- [ ] No dedicated test (thin wrapper; exercised via ActivityTable/ColumnPickerDialog). Commit folded into task 5.
+- [x] Create `frontend/src/lib/queries/hooks/useMe.svelte.ts`: `useClerkContext()` for `clerkUserId`, `createQuery(() => ({ queryKey: ['me', clerkUserId], queryFn: () => graphqlRequest<MeResponse>(ME), enabled: clerk.isLoaded && !!clerkUserId, staleTime: 5*60*1000 }))`. Return an object with getters `me` (`meQuery.data?.me ?? null`) and `isAdmin` (`me?.role === 'ADMIN'`).
+- [x] No dedicated test (thin wrapper; exercised via ActivityTable/ColumnPickerDialog). Commit folded into task 5.
 
 ### 4. ColumnPickerDialog component
-- [ ] Create `frontend/src/lib/components/ColumnPickerDialog.svelte`. Props: `open: boolean`, `onOpenChange: (v: boolean) => void`, `isAdmin: boolean`, `visibility: Record<string, boolean>` (colId → currently visible), `overrideActive: boolean`, `onToggle: (colId: string, next: boolean) => void`.
-- [ ] Build on `$lib/components/shadcn/dialog` (follow `AddVideoDialog.svelte`). Title "Columns". Render a checkbox list for `DATA_COLUMNS`; when `isAdmin`, a second labelled group for `INTERNAL_COLUMNS`. Each checkbox `checked={visibility[colId] ?? false}`, `onchange` → `onToggle(colId, e.currentTarget.checked)`.
-- [ ] When `overrideActive`, show the notice text: "Columns are set manually for this session. Refresh the page to restore automatic responsive layout."
-- [ ] `frontend/tests/components/ColumnPickerDialog.test.ts`: data group renders; Internal group hidden when `isAdmin=false` and shown when `true`; toggling a checkbox calls `onToggle` with `(colId, boolean)`; notice shows only when `overrideActive`.
-- [ ] Prettier + `check` + component test green. Commit: `feat(ColumnPickerDialog): modal column show/hide picker`.
+- [x] Create `frontend/src/lib/components/ColumnPickerDialog.svelte`. Props: `open: boolean`, `onOpenChange: (v: boolean) => void`, `isAdmin: boolean`, `visibility: Record<string, boolean>` (colId → currently visible), `overrideActive: boolean`, `onToggle: (colId: string, next: boolean) => void`.
+- [x] Build on `$lib/components/shadcn/dialog` (follow `AddVideoDialog.svelte`). Title "Columns". Render a checkbox list for `DATA_COLUMNS`; when `isAdmin`, a second labelled group for `INTERNAL_COLUMNS`. Each checkbox `checked={visibility[colId] ?? false}`, `onchange` → `onToggle(colId, e.currentTarget.checked)`.
+- [x] When `overrideActive`, show the notice text: "Columns are set manually for this session. Refresh the page to restore automatic responsive layout."
+- [x] `frontend/tests/components/ColumnPickerDialog.test.ts`: data group renders; Internal group hidden when `isAdmin=false` and shown when `true`; toggling a checkbox calls `onToggle` with `(colId, boolean)`; notice shows only when `overrideActive`.
+- [x] Prettier + `check` + component test green. Commit: `feat(ColumnPickerDialog): modal column show/hide picker`.
 
 ### 5. Wire into ActivityTable
-- [ ] Add hidden colDefs to `columnDefs`: `{ colId: 'id', field: 'id', headerName: 'Content ID', hide: true, sortable: false, filter: false, minWidth: 260 }`; `{ colId: 'addedByUserID', field: 'addedByUserID', headerName: 'Submitter', hide: true, sortable: false, filter: false, minWidth: 120 }`; `{ colId: 'url', field: 'url', headerName: 'Source URL', hide: true, sortable: false, filter: false, minWidth: 240 }`. Place after `description`.
-- [ ] In the responsive `$effect`, remove `createdAt`/`updatedAt` from `alwaysHidden` (they remain `hide: true` in their colDefs, so they stay hidden until an admin enables them). Keep `description` in `alwaysHidden`.
-- [ ] Add `import { useMe } from '$lib/queries/hooks/useMe.svelte';` and `const meCtx = useMe();` — use `meCtx.isAdmin`.
-- [ ] Add `let userColumnOverride = $state<Record<string, boolean> | null>(null);` and `const overrideActive = $derived(userColumnOverride !== null);`
-- [ ] Guard the responsive `$effect`: `if (userColumnOverride) return;` immediately after the `if (!gridApi || !gridReady) return;` line.
-- [ ] `let columnPickerOpen = $state(false);`
-- [ ] `function currentVisibility(): Record<string, boolean>` — from `gridApi.getColumnState()`, map `colId → !state.hide`, restricted to `togglableColIds(meCtx.isAdmin)`.
-- [ ] `function handleColumnToggle(colId, next)`: guard `gridApi && gridReady`; if `userColumnOverride === null` seed it from `currentVisibility()`; `userColumnOverride = { ...userColumnOverride, [colId]: next }`; `gridApi.setColumnsVisible([colId], next)`.
-- [ ] In the bottom toolbar left cluster (near the page-size `<select>`), add a gear icon button (`@lucide/svelte/icons/sliders-horizontal`), `aria-label="Choose columns"`, `disabled={!gridReady}`, hidden when `cardMode` (`{#if !cardMode}`), `onclick={() => (columnPickerOpen = true)}`.
-- [ ] Render `<ColumnPickerDialog open={columnPickerOpen} onOpenChange={(v) => (columnPickerOpen = v)} isAdmin={meCtx.isAdmin} visibility={columnPickerOpen ? currentVisibility() : {}} overrideActive={overrideActive} onToggle={handleColumnToggle} />`.
-- [ ] `frontend/tests/components/ActivityTable.test.ts`: assert a `[aria-label="Choose columns"]` button renders (grid path, not card mode). Keep the rest of the suite passing.
-- [ ] Prettier + `check` + `test:run` (full) green. Commit: `feat(ActivityTable): session column picker with admin internal columns`.
+- [x] Add hidden colDefs to `columnDefs`: `{ colId: 'id', field: 'id', headerName: 'Content ID', hide: true, sortable: false, filter: false, minWidth: 260 }`; `{ colId: 'addedByUserID', field: 'addedByUserID', headerName: 'Submitter', hide: true, sortable: false, filter: false, minWidth: 120 }`; `{ colId: 'url', field: 'url', headerName: 'Source URL', hide: true, sortable: false, filter: false, minWidth: 240 }`. Place after `description`.
+- [x] In the responsive `$effect`, remove `createdAt`/`updatedAt` from `alwaysHidden` (they remain `hide: true` in their colDefs, so they stay hidden until an admin enables them). Keep `description` in `alwaysHidden`.
+- [x] Add `import { useMe } from '$lib/queries/hooks/useMe.svelte';` and `const meCtx = useMe();` — use `meCtx.isAdmin`.
+- [x] Add `let userColumnOverride = $state<Record<string, boolean> | null>(null);` and `const overrideActive = $derived(userColumnOverride !== null);`
+- [x] Guard the responsive `$effect`: `if (userColumnOverride) return;` immediately after the `if (!gridApi || !gridReady) return;` line.
+- [x] `let columnPickerOpen = $state(false);`
+- [x] `function currentVisibility(): Record<string, boolean>` — from `gridApi.getColumnState()`, map `colId → !state.hide`, restricted to `togglableColIds(meCtx.isAdmin)`.
+- [x] `function handleColumnToggle(colId, next)`: guard `gridApi && gridReady`; if `userColumnOverride === null` seed it from `currentVisibility()`; `userColumnOverride = { ...userColumnOverride, [colId]: next }`; `gridApi.setColumnsVisible([colId], next)`.
+- [x] In the bottom toolbar left cluster (near the page-size `<select>`), add a gear icon button (`@lucide/svelte/icons/sliders-horizontal`), `aria-label="Choose columns"`, `disabled={!gridReady}`, hidden when `cardMode` (`{#if !cardMode}`), `onclick={() => (columnPickerOpen = true)}`.
+- [x] Render `<ColumnPickerDialog open={columnPickerOpen} onOpenChange={(v) => (columnPickerOpen = v)} isAdmin={meCtx.isAdmin} visibility={columnPickerOpen ? currentVisibility() : {}} overrideActive={overrideActive} onToggle={handleColumnToggle} />`.
+- [x] `frontend/tests/components/ActivityTable.test.ts`: assert a `[aria-label="Choose columns"]` button renders (grid path, not card mode). Keep the rest of the suite passing.
+- [x] Prettier + `check` + `test:run` (full) green. Commit: `feat(ActivityTable): session column picker with admin internal columns`.
 
 ### 6. Backlog note
-- [ ] Append to `FEATURE_BACKLOG.md`: "**Saved views** — named, persisted presets of column visibility + filters + sort for the ActivityTable (localStorage or backend). Prompted by the session-only column picker (2026-09-02)."
-- [ ] Commit: `docs(backlog): add Saved views follow-up`.
+- [x] Append to `FEATURE_BACKLOG.md`: "**Saved views** — named, persisted presets of column visibility + filters + sort for the ActivityTable (localStorage or backend). Prompted by the session-only column picker (2026-09-02)."
+- [x] Commit: `docs(backlog): add Saved views follow-up`.
 
 ### 7. Full verification
-- [ ] `pnpm --dir frontend run check` — zero errors.
-- [ ] `pnpm --dir frontend run test:run` — all pass; report the summary counts.
-- [ ] No backend verification needed (no backend changes).
-- [ ] Grep the repo for any remaining `qmd` references introduced/missed; confirm none in tracked files outside `.planning/STATE.md` (historical) and `.claude/worktrees/*` (other checkouts).
+- [x] `pnpm --dir frontend run check` — zero errors.
+- [x] `pnpm --dir frontend run test:run` — all pass; report the summary counts.
+- [x] No backend verification needed (no backend changes).
+- [x] Grep the repo for any remaining `qmd` references introduced/missed; confirm none in tracked files outside `.planning/STATE.md` (historical) and `.claude/worktrees/*` (other checkouts).
 
 ---
 
