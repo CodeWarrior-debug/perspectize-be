@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/svelte';
 import ColumnPickerDialog from '$lib/components/ColumnPickerDialog.svelte';
 import { DATA_COLUMNS, INTERNAL_COLUMNS } from '$lib/utils/grid-config';
 
@@ -7,6 +7,14 @@ const noop = () => {};
 
 describe('ColumnPickerDialog', () => {
 	beforeEach(() => vi.clearAllMocks());
+
+	// bits-ui's Dialog schedules a body scroll-lock cleanup ~24ms after unmount.
+	// Unmount here and let that timer fire while `document` still exists, so it
+	// doesn't leak into a later test file's teardown as `document is not defined`.
+	afterEach(async () => {
+		cleanup();
+		await new Promise((r) => setTimeout(r, 50));
+	});
 
 	it('renders a checkbox row for every data column when open', () => {
 		render(ColumnPickerDialog, { props: { open: true, onToggle: noop } });
