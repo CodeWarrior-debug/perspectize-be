@@ -7,16 +7,17 @@ settings:
 overrides:
   postcss: '>=8.5.18'
   nanoid: '>=3.3.18 <5 || >=5.1.6 <6'
-  js-cookie: '>=3.0.7'
-  cookie: '>=0.7.0 <1'
-  serialize-javascript: '>=7.0.5'
-  brace-expansion: '>=5.0.9'
-  picomatch: '>=2.3.2'
-  vitest>picomatch: '>=4.0.4'
-  '@xmldom/xmldom': '>=0.8.13'
-  ws: '>=8.21.0'
-  esbuild: '>=0.28.1'
-  tar: '>=7.5.21'
+  js-cookie: ^3.0.8
+  cookie: ^0.7.2
+  serialize-javascript: ^7.1.0
+  brace-expansion: ^5.0.9
+  picomatch: ^4.0.4
+  vitest>picomatch: ^4.0.5
+  '@xmldom/xmldom': ^0.9.12
+  ws: ^8.21.3
+  esbuild: ^0.28.2
+  tar: ^7.5.22
+  prosemirror-transform: 1.12.0
 
 importers:
 
@@ -2193,7 +2194,7 @@ packages:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
-      picomatch: '>=2.3.2'
+      picomatch: ^4.0.4
     peerDependenciesMeta:
       picomatch:
         optional: true
@@ -2969,8 +2970,8 @@ packages:
   prosemirror-tables@1.8.5:
     resolution: {integrity: sha512-V/0cDCsHKHe/tfWkeCmthNUcEp1IVO3p6vwN8XtwE9PZQLAZJigbw3QoraAdfJPir4NKJtNvOB8oYGKRl+t0Dw==}
 
-  prosemirror-transform@1.12.1:
-    resolution: {integrity: sha512-t4F5615FycnCqsX7ShTUs8+jfnwcf46kuFRvSl/3qFx2QTZ4DjgowesLHQXcFP7G//TjesqZG3WtgL7vdyVJyA==}
+  prosemirror-transform@1.12.0:
+    resolution: {integrity: sha512-GxboyN4AMIsoHNtz5uf2r2Ru551i5hWeCMD6E2Ib4Eogqoub0NflniaBPVQ4MrGE5yZ8JV9tUHg9qcZTTrcN4w==}
 
   prosemirror-view@1.42.3:
     resolution: {integrity: sha512-oTN7EtH+CpwxU9NrwEYWd0UZ4JUx7l048l5A2Xppm4p/60isZYLnth9QVQmC3VRIvdrIWCxwZSd+Uz791G31/w==}
@@ -5322,7 +5323,7 @@ snapshots:
       prosemirror-schema-list: 1.5.1
       prosemirror-state: 1.4.4
       prosemirror-tables: 1.8.5
-      prosemirror-transform: 1.12.1
+      prosemirror-transform: 1.12.0
       prosemirror-view: 1.42.3
 
   '@tiptap/starter-kit@3.31.0':
@@ -6721,18 +6722,18 @@ snapshots:
 
   prosemirror-changeset@2.4.2:
     dependencies:
-      prosemirror-transform: 1.12.1
+      prosemirror-transform: 1.12.0
 
   prosemirror-commands@1.7.2:
     dependencies:
       prosemirror-model: 1.25.11
       prosemirror-state: 1.4.4
-      prosemirror-transform: 1.12.1
+      prosemirror-transform: 1.12.0
 
   prosemirror-dropcursor@1.8.3:
     dependencies:
       prosemirror-state: 1.4.4
-      prosemirror-transform: 1.12.1
+      prosemirror-transform: 1.12.0
       prosemirror-view: 1.42.3
 
   prosemirror-gapcursor@1.4.1:
@@ -6745,14 +6746,14 @@ snapshots:
   prosemirror-history@1.5.0:
     dependencies:
       prosemirror-state: 1.4.4
-      prosemirror-transform: 1.12.1
+      prosemirror-transform: 1.12.0
       prosemirror-view: 1.42.3
       rope-sequence: 1.3.4
 
   prosemirror-inputrules@1.5.1:
     dependencies:
       prosemirror-state: 1.4.4
-      prosemirror-transform: 1.12.1
+      prosemirror-transform: 1.12.0
 
   prosemirror-keymap@1.2.3:
     dependencies:
@@ -6767,12 +6768,12 @@ snapshots:
     dependencies:
       prosemirror-model: 1.25.11
       prosemirror-state: 1.4.4
-      prosemirror-transform: 1.12.1
+      prosemirror-transform: 1.12.0
 
   prosemirror-state@1.4.4:
     dependencies:
       prosemirror-model: 1.25.11
-      prosemirror-transform: 1.12.1
+      prosemirror-transform: 1.12.0
       prosemirror-view: 1.42.3
 
   prosemirror-tables@1.8.5:
@@ -6780,10 +6781,10 @@ snapshots:
       prosemirror-keymap: 1.2.3
       prosemirror-model: 1.25.11
       prosemirror-state: 1.4.4
-      prosemirror-transform: 1.12.1
+      prosemirror-transform: 1.12.0
       prosemirror-view: 1.42.3
 
-  prosemirror-transform@1.12.1:
+  prosemirror-transform@1.12.0:
     dependencies:
       prosemirror-model: 1.25.11
 
@@ -6791,7 +6792,7 @@ snapshots:
     dependencies:
       prosemirror-model: 1.25.11
       prosemirror-state: 1.4.4
-      prosemirror-transform: 1.12.1
+      prosemirror-transform: 1.12.0
 
   pug-attrs@3.0.0:
     dependencies:
