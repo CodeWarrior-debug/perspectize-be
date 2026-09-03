@@ -70,7 +70,7 @@ Add a toolbar above `ActivityTable` with power-user grid controls. All features 
 - **Clear all filters** — `gridApi.setFilterModel(null)`
 - **Clear single column filter** — `gridApi.setColumnFilterModel('colId', null)`
 - **Multi-column sort** — `multiSortKey: 'ctrl'` in gridOptions (hold Ctrl+click headers)
-- **Column show/hide picker** — `gridApi.setColumnsVisible(['col1', 'col2'], true/false)`
+- ~~**Column show/hide picker**~~ — DONE (2026-09-02): gear-icon modal `ColumnPickerDialog`, session-only, admin-gated internal columns. Branch `feature/INI-ag-grid-column-picker`.
 - **Save/restore filter state** — `gridApi.getFilterModel()` / `gridApi.setFilterModel(saved)`
 - **Save/restore column state** — `gridApi.getColumnState()` / `gridApi.applyColumnState({state})`
 
@@ -78,6 +78,28 @@ Add a toolbar above `ActivityTable` with power-user grid controls. All features 
 - [AG Grid Filter API](https://www.ag-grid.com/javascript-data-grid/filter-api/)
 - [AG Grid Column State](https://www.ag-grid.com/javascript-data-grid/column-state/)
 - [AG Grid Multi-Sort](https://www.ag-grid.com/javascript-data-grid/row-sorting/#multi-column-sorting)
+
+---
+
+## Saved Views (Activity Table)
+
+Named, persisted presets that capture column visibility + filters + sort +
+page size for `ActivityTable`, so a user can switch between "My reading queue",
+"Admin audit", etc. without re-toggling each time.
+
+- Persist per user (localStorage first; backend `user_views` table later for
+  cross-device).
+- Builds directly on the session-only column picker shipped 2026-09-02
+  (`ColumnPickerDialog` + `userColumnOverride` in `ActivityTable.svelte`) —
+  promote that transient state into a saveable/loadable view object.
+- Serialize via `gridApi.getColumnState()` / `getFilterModel()` and restore via
+  `applyColumnState()` / `setFilterModel()`.
+- UI: a view dropdown next to the gear icon; "Save current as…", rename,
+  delete, set default.
+
+**Priority:** Medium — natural follow-up once users start customizing columns.
+
+**Source:** Column picker design discussion (2026-09-02)
 
 ---
 
