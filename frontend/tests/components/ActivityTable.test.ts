@@ -32,6 +32,12 @@ vi.mock('$lib/queries/client', () => ({
 	graphqlRequest: mockRequest,
 }));
 
+// Mock Clerk context — useMe() calls useClerkContext(); no ClerkProvider in tests.
+// isLoaded: false keeps the `me` query disabled, so isAdmin resolves to false.
+vi.mock('svelte-clerk', () => ({
+	useClerkContext: () => ({ isLoaded: false, auth: { userId: null } }),
+}));
+
 // queryKeys is used directly, no need to mock since it's a simple object
 
 import ActivityTable from '$lib/components/ActivityTable.svelte';
@@ -179,6 +185,15 @@ describe('ActivityTable', () => {
 		await waitFor(() => {
 			expect(container.querySelector('[data-testid="ag-grid-container"]')).toBeTruthy();
 			expect(container.querySelector('[data-testid="activity-card-list"]')).toBeFalsy();
+		});
+	});
+
+	it('renders the column-picker trigger in grid mode', async () => {
+		mockRequest.mockResolvedValue(mockDataResponse);
+		const { container } = renderWithQuery();
+
+		await waitFor(() => {
+			expect(container.querySelector('button[aria-label="Choose columns"]')).toBeTruthy();
 		});
 	});
 });
