@@ -13,6 +13,7 @@ export interface CreatePerspectiveInput {
 	confidence?: number;
 	like?: string;
 	review?: string;
+	customFields?: Record<string, number>;
 }
 
 export function useCreatePerspective() {

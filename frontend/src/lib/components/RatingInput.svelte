@@ -14,10 +14,16 @@
 		label,
 		value = $bindable<number | null>(null),
 		name,
+		compact = false,
+		onRemove,
+		trackWidth,
 	}: {
 		label: string;
 		value: number | null;
 		name: string;
+		compact?: boolean;
+		onRemove?: () => void;
+		trackWidth?: number;
 	} = $props();
 
 	// Track whether the user has interacted with this input
@@ -85,7 +91,9 @@
 			clearInterval(intervalId);
 			intervalId = null;
 		}
-		setTimeout(() => { isTouching = false; }, 400);
+		setTimeout(() => {
+			isTouching = false;
+		}, 400);
 	}
 
 	function handleInputChange(e: Event) {
@@ -129,13 +137,11 @@
 
 	// Number display color
 	const numberColor = $derived(
-		hasInteracted
-			? 'var(--color-primary)'
-			: 'color-mix(in srgb, var(--color-muted-foreground) 35%, transparent)',
+		hasInteracted ? 'var(--color-primary)' : 'color-mix(in srgb, var(--color-muted-foreground) 35%, transparent)',
 	);
 </script>
 
-<div class="flex flex-col items-center space-y-1.5">
+<div class="flex flex-col items-center" class:space-y-1.5={!compact} class:space-y-1={compact}>
 	<!-- Label -->
 	<label for={name} class="text-xs font-medium text-center text-muted-foreground">
 		{label}
@@ -187,8 +193,8 @@
 			<ChevronUpIcon class="size-3.5" strokeWidth={2} />
 		</button>
 
-		<!-- Clear button (X) — shown only when hasInteracted -->
-		{#if hasInteracted}
+		<!-- Clear button (X) — shown only when hasInteracted and no onRemove handler -->
+		{#if !onRemove && hasInteracted}
 			<button
 				type="button"
 				onclick={clearRating}
@@ -206,7 +212,7 @@
 	<div
 		onclick={handleProgressBarClick}
 		class="h-1 rounded-full overflow-hidden mx-auto cursor-pointer"
-		style="background-color: var(--color-muted); width: 90px;"
+		style="background-color: var(--color-muted); width: {trackWidth ?? 90}px;"
 		role="presentation"
 	>
 		<div

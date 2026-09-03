@@ -1,31 +1,39 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
-	import ThumbsUpIcon from '@lucide/svelte/icons/thumbs-up';
-	import ThumbsDownIcon from '@lucide/svelte/icons/thumbs-down';
-	/* import PlusIcon from '@lucide/svelte/icons/plus'; */
+	import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
 	import InfoIcon from '@lucide/svelte/icons/info';
+	import XIcon from '@lucide/svelte/icons/x';
+	import { MediaQuery } from 'svelte/reactivity';
 	import {
 		Dialog,
 		DialogContent,
 		DialogHeader,
 		DialogTitle,
+		Drawer,
+		DrawerContent,
+		DrawerHeader,
+		DrawerTitle,
 		Button,
 	} from '$lib/components/shadcn';
 	import RatingInput from '$lib/components/RatingInput.svelte';
+	import Thumbs from '$lib/components/Thumbs.svelte';
+	import CommentEditor from '$lib/components/CommentEditor.svelte';
+	import CommentFullscreen from '$lib/components/CommentFullscreen.svelte';
+	import AddFieldSearch from '$lib/components/AddFieldSearch.svelte';
+	import { sanitizeHtml } from '$lib/utils/sanitize';
+	import type { FieldDef } from '$lib/components/AddFieldSearch.svelte';
 	import { useCreatePerspective } from '$lib/queries/hooks/useCreatePerspective';
 	import { useUpdatePerspective } from '$lib/queries/hooks/useUpdatePerspective';
-	/* import { useCreateClaim } from '$lib/queries/hooks/useCreateClaim'; */
 	import type { PerspectiveItem } from '$lib/queries/perspectives';
 
 	/**
 	 * PerspectivePopover — centered modal for creating or editing a perspective.
 	 *
-	 * Per CONTEXT.md (Figma Make decisions):
-	 * - Always rendered as a centered Dialog (not anchored to table cell)
-	 * - No text inputs (no Review textarea, no Title input) in Phase 4
-	 * - Like field = thumbs up/down toggle buttons (THUMBS_UP / THUMBS_DOWN)
-	 * - Ratings: 2x2 grid with hasInteracted tracking, submit null if not interacted
-	 * - "+ Add More..." expansion for claim creation (claim creation is Wave 3)
+	 * Redesigned layout (Variation A):
+	 * - Header with content title (single line, truncated)
+	 * - Overall (thumbs) + Comment row directly under header
+	 * - Scrollable body: 2x2 rating grid with dynamic field adding
+	 * - Equal-width Save/Cancel buttons at bottom
 	 */
 	let {
 		contentId,
@@ -45,8 +53,7 @@
 
 	const isEditMode = $derived(existingPerspective !== null);
 
-	// Rating state — null means unset (user has not interacted).
-	// Initialize from existingPerspective for edit mode; $effect resets when it changes.
+	// --- Core rating fields (backend-mapped) ---
 	let quality = $state<number | null>(null);
 	let agreement = $state<number | null>(null);
 	let importance = $state<number | null>(null);
@@ -54,18 +61,90 @@
 
 	// Like field — 'THUMBS_UP', 'THUMBS_DOWN', or null
 	type LikeValue = 'THUMBS_UP' | 'THUMBS_DOWN' | null;
-	function parseLike(l: string | null | undefined): LikeValue {
-		if (l === 'THUMBS_UP') return 'THUMBS_UP';
-		if (l === 'THUMBS_DOWN') return 'THUMBS_DOWN';
-		return null;
-	}
 	let likeValue = $state<LikeValue>(null);
 
-	/* "+ Add More..." expansion for claim creation — TODO: Re-enable in a future phase */
-	/* let showMore = $state(false); */
-	/* let claimText = $state(''); */
+	// Comment (rich text HTML)
+	// TODO: Backend integration — comment field not yet in GraphQL schema
+	let comment = $state('');
+	let commentFullscreenOpen = $state(false);
 
-	// Reset state when existingPerspective changes (e.g., when switching rows)
+	// Dynamic fields — tracks which rating fields are shown
+	const DEFAULT_FIELDS = ['quality', 'agreement', 'importance', 'confidence'];
+	let activeFields = $state<string[]>([...DEFAULT_FIELDS]);
+
+	// Dynamic field values for non-core fields
+	// TODO: Backend integration — custom/suggested fields not yet in schema
+	let dynamicValues = $state<Record<string, number | null>>({});
+
+	// Mapping from field key to bindable state getter/setter
+	function getFieldValue(key: string): number | null {
+		switch (key) {
+			case 'quality':
+				return quality;
+			case 'agreement':
+				return agreement;
+			case 'importance':
+				return importance;
+			case 'confidence':
+				return confidence;
+			default:
+				return dynamicValues[key] ?? null;
+		}
+	}
+
+	function setFieldValue(key: string, val: number | null) {
+		switch (key) {
+			case 'quality':
+				quality = val;
+				break;
+			case 'agreement':
+				agreement = val;
+				break;
+			case 'importance':
+				importance = val;
+				break;
+			case 'confidence':
+				confidence = val;
+				break;
+			default:
+				dynamicValues = { ...dynamicValues, [key]: val };
+				break;
+		}
+	}
+
+	function getFieldLabel(key: string): string {
+		const labels: Record<string, string> = {
+			quality: 'Quality',
+			agreement: 'Agreement',
+			importance: 'Importance',
+			confidence: 'Confidence',
+		};
+		return (
+			labels[key] ??
+			key
+				.replace(/^custom:/, '')
+				.replace(/-/g, ' ')
+				.replace(/\b\w/g, (c) => c.toUpperCase())
+		);
+	}
+
+	function addField(field: FieldDef) {
+		if (!activeFields.includes(field.key)) {
+			activeFields = [...activeFields, field.key];
+		}
+	}
+
+	function removeField(key: string) {
+		activeFields = activeFields.filter((k) => k !== key);
+		if (!DEFAULT_FIELDS.includes(key)) {
+			const { [key]: _, ...rest } = dynamicValues;
+			dynamicValues = rest;
+		} else {
+			setFieldValue(key, null);
+		}
+	}
+
+	// Reset state when existingPerspective changes
 	$effect(() => {
 		quality = existingPerspective?.quality ?? null;
 		agreement = existingPerspective?.agreement ?? null;
@@ -73,29 +152,52 @@
 		confidence = existingPerspective?.confidence ?? null;
 		const l = existingPerspective?.like;
 		likeValue = l === 'THUMBS_UP' ? 'THUMBS_UP' : l === 'THUMBS_DOWN' ? 'THUMBS_DOWN' : null;
-		/* showMore = false; */
-		/* claimText = ''; */
+		comment = existingPerspective?.review ?? '';
+		commentFullscreenOpen = false;
+		// Restore dynamic fields from customFields if editing
+		const cf = existingPerspective?.customFields as Record<string, number> | null;
+		if (cf && Object.keys(cf).length > 0) {
+			activeFields = [...DEFAULT_FIELDS, ...Object.keys(cf)];
+			dynamicValues = { ...cf };
+		} else {
+			activeFields = [...DEFAULT_FIELDS];
+			dynamicValues = {};
+		}
 	});
+
+	const isMobile = new MediaQuery('(max-width: 639px)');
 
 	const createMutation = useCreatePerspective();
 	const updateMutation = useUpdatePerspective();
-	/* const createClaimMutation = useCreateClaim(); */
-
 	const isPending = $derived(createMutation.isPending || updateMutation.isPending);
-	/* const isClaimPending = $derived(createClaimMutation.isPending); */
 
-	function toggleLike(val: 'THUMBS_UP' | 'THUMBS_DOWN') {
-		likeValue = likeValue === val ? null : val;
+	const hasComment = $derived(!!comment.replace(/<[^>]*>/g, '').trim());
+
+	function handleCommentChange(html: string) {
+		comment = html;
+	}
+
+	// Build customFields payload from dynamic (non-core) field values
+	function buildCustomFields(): Record<string, number> | undefined {
+		const entries = Object.entries(dynamicValues).filter(([, v]) => v !== null);
+		if (entries.length === 0) return undefined;
+		return Object.fromEntries(entries) as Record<string, number>;
+	}
+
+	// Get review text — sanitize HTML and only send if non-empty
+	function getReview(): string | undefined {
+		const stripped = comment.replace(/<[^>]*>/g, '').trim();
+		return stripped ? sanitizeHtml(comment) : undefined;
 	}
 
 	function handleSubmit(e: Event) {
 		e.preventDefault();
 
-		// Validate: at least one field must be non-empty
 		const hasAnyRating = quality !== null || agreement !== null || importance !== null || confidence !== null;
 		const hasLike = likeValue !== null;
+		const hasDynamic = Object.values(dynamicValues).some((v) => v !== null);
 
-		if (!hasAnyRating && !hasLike) {
+		if (!hasAnyRating && !hasLike && !hasComment && !hasDynamic) {
 			toast.error('Please fill in at least one field');
 			return;
 		}
@@ -109,6 +211,8 @@
 					importance: importance ?? undefined,
 					confidence: confidence ?? undefined,
 					like: likeValue ?? undefined,
+					review: getReview(),
+					customFields: buildCustomFields(),
 				},
 				{
 					onSuccess: () => {
@@ -126,6 +230,8 @@
 					importance: importance ?? undefined,
 					confidence: confidence ?? undefined,
 					like: likeValue ?? undefined,
+					review: getReview(),
+					customFields: buildCustomFields(),
 				},
 				{
 					onSuccess: () => {
@@ -135,183 +241,227 @@
 			);
 		}
 	}
-
-	/* function handleCreateClaim() {
-		const trimmed = claimText.trim();
-		if (!trimmed) {
-			toast.error('Please enter claim text');
-			return;
-		}
-
-		createClaimMutation.mutate(
-			{
-				text: trimmed,
-				userID: userId,
-				parentContentID: contentId,
-			},
-			{
-				onSuccess: () => {
-					// Clear the claim textarea; popover stays open so user can continue their perspective
-					claimText = '';
-				},
-			},
-		);
-	} */
-
-	function handleCancel() {
-		onClose();
-	}
 </script>
 
-<Dialog
-	bind:open
-	onOpenChange={(isOpen) => {
-		if (!isOpen) onClose();
-	}}
->
-	<DialogContent
-		class="sm:max-w-sm w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto overflow-x-hidden p-0"
-		overlayClass="bg-transparent"
-	>
-		<!-- Header -->
-		<div class="px-6 py-4 border-b border-border">
-			<DialogHeader>
-				<div class="flex items-center justify-center gap-2 mb-2">
-					<DialogTitle class="text-xl font-semibold text-center">
-						{isEditMode ? 'Edit Perspective' : 'Add Perspective'}
-					</DialogTitle>
-					<div class="relative group">
-						<button
-							type="button"
-							class="p-1 rounded-full text-muted-foreground hover:opacity-70 transition-opacity"
-							aria-label="About perspectives"
-						>
-							<InfoIcon class="size-4" />
-						</button>
-						<div
-							class="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-2 rounded-lg shadow-xl text-xs w-56 text-center z-[100] bg-foreground text-background opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"
-						>
-							Add as much or as little as you like
-							<div class="absolute left-1/2 -translate-x-1/2 -top-1 w-2 h-2 rotate-45 bg-foreground"></div>
-						</div>
-					</div>
-				</div>
-				<p class="text-sm text-muted-foreground text-center text-wrap line-clamp-2 max-w-full">
-					{contentName}
-				</p>
-			</DialogHeader>
-		</div>
-
-		<!-- Form -->
-		<form onsubmit={handleSubmit} class="px-6 py-4 space-y-4">
-			<!-- Ratings 2x2 grid -->
-			<div class="px-2">
-				<div class="grid grid-cols-2 gap-4">
-					<RatingInput label="Quality" name="quality" bind:value={quality} />
-					<RatingInput label="Agreement" name="agreement" bind:value={agreement} />
-					<RatingInput label="Importance" name="importance" bind:value={importance} />
-					<RatingInput label="Confidence" name="confidence" bind:value={confidence} />
-				</div>
+{#snippet modalBody(mobile: boolean)}
+	<!-- Header -->
+	<div class="px-5 pt-4 pb-3 border-b border-border relative">
+		{#if mobile}
+			<!-- Grabber handle -->
+			<div class="flex justify-center pb-2">
+				<div class="w-9 h-1 rounded-full bg-black/[0.18]"></div>
 			</div>
-
-			<div class="border-t border-border"></div>
-
-			<!-- Like — thumbs up/down toggle -->
-			<div class="flex flex-col items-center gap-2">
-				<span class="text-xs font-medium text-muted-foreground">Like</span>
-				<div class="flex items-center justify-center gap-4">
-					<button
-						type="button"
-						onclick={() => toggleLike('THUMBS_UP')}
-						class="p-3 rounded-lg transition-all border-2"
-						class:bg-green-500={likeValue === 'THUMBS_UP'}
-						class:text-white={likeValue === 'THUMBS_UP'}
-						class:border-green-500={likeValue === 'THUMBS_UP'}
-						class:bg-muted={likeValue !== 'THUMBS_UP'}
-						class:text-muted-foreground={likeValue !== 'THUMBS_UP'}
-						class:border-transparent={likeValue !== 'THUMBS_UP'}
-						aria-label="Thumbs up"
-						aria-pressed={likeValue === 'THUMBS_UP'}
-					>
-						<ThumbsUpIcon class="size-6" strokeWidth={2} />
-					</button>
-					<button
-						type="button"
-						onclick={() => toggleLike('THUMBS_DOWN')}
-						class="p-3 rounded-lg transition-all border-2"
-						class:bg-red-500={likeValue === 'THUMBS_DOWN'}
-						class:text-white={likeValue === 'THUMBS_DOWN'}
-						class:border-red-500={likeValue === 'THUMBS_DOWN'}
-						class:bg-muted={likeValue !== 'THUMBS_DOWN'}
-						class:text-muted-foreground={likeValue !== 'THUMBS_DOWN'}
-						class:border-transparent={likeValue !== 'THUMBS_DOWN'}
-						aria-label="Thumbs down"
-						aria-pressed={likeValue === 'THUMBS_DOWN'}
-					>
-						<ThumbsDownIcon class="size-6" strokeWidth={2} />
-					</button>
-				</div>
-			</div>
-
-			<!-- TODO: Re-enable Add More / Claim creation in a future phase -->
-			<!-- <div class="flex justify-center pt-1">
+		{/if}
+		<div class="flex items-center justify-center gap-2">
+			<h2 class="text-lg font-semibold text-center tracking-tight">
+				{isEditMode ? 'Edit perspective' : 'Add perspective'}
+			</h2>
+			<div class="relative group">
 				<button
 					type="button"
-					onclick={() => (showMore = !showMore)}
-					class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium hover:opacity-80 transition-all border border-border text-primary"
+					class="p-1 rounded-full text-muted-foreground hover:opacity-70 transition-opacity"
+					aria-label="About perspectives"
 				>
-					<PlusIcon class="size-4" />
-					Add More...
+					<InfoIcon class="size-4" />
 				</button>
-			</div>
-
-			{#if showMore}
-				<div class="rounded-lg border border-border bg-muted/30 p-4 space-y-3 animate-in fade-in-0 slide-in-from-top-2">
-					<label for="claim-text" class="text-sm font-semibold text-foreground">Add a Claim</label>
-					<textarea
-						id="claim-text"
-						bind:value={claimText}
-						placeholder="e.g., @this ran 22.3 mph in the 1987 game"
-						rows={2}
-						disabled={isClaimPending}
-						class="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-					></textarea>
-					<p class="text-xs text-muted-foreground">
-						Use <code class="font-mono bg-muted px-1 rounded">@this</code> to reference the current content
-					</p>
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						onclick={handleCreateClaim}
-						disabled={isClaimPending || !claimText.trim()}
-						class="w-full"
-					>
-						{isClaimPending ? 'Creating...' : 'Create Claim'}
-					</Button>
-				</div>
-			{/if} -->
-
-			<!-- Action buttons -->
-			<div class="flex items-center justify-center gap-3 pt-1">
-				<Button
-					type="button"
-					variant="outline"
-					size="default"
-					onclick={handleCancel}
-					disabled={isPending}
-					class="px-6"
+				<div
+					class="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-2 rounded-lg shadow-xl text-xs w-56 text-center z-[100] bg-foreground text-background opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"
 				>
-					Cancel
-				</Button>
-				<Button type="submit" size="default" disabled={isPending} class="px-6">
-					{#if isPending}
-						{isEditMode ? 'Saving...' : 'Adding...'}
-					{:else}
-						{isEditMode ? 'Save Changes' : 'Add Perspective'}
-					{/if}
-				</Button>
+					Add as much or as little as you like
+					<div class="absolute left-1/2 -translate-x-1/2 -top-1 w-2 h-2 rotate-45 bg-foreground"></div>
+				</div>
 			</div>
-		</form>
-	</DialogContent>
-</Dialog>
+		</div>
+		<p class="text-[13px] font-serif text-muted-foreground text-center mt-0.5 line-clamp-1 max-w-full">
+			{contentName}
+		</p>
+	</div>
+
+	<!-- Overall + Comment row -->
+	<div class="flex items-center gap-3.5 px-5 py-3.5 border-b border-border">
+		<div class="flex flex-col items-center gap-1.5 flex-shrink-0">
+			<span class="font-sans text-[11px] font-medium text-muted-foreground uppercase tracking-[0.06em]"> Overall </span>
+			<Thumbs
+				value={likeValue}
+				onChange={(val) => {
+					likeValue = val;
+				}}
+				size="md"
+			/>
+		</div>
+
+		{#if mobile}
+			<button
+				type="button"
+				onclick={() => {
+					commentFullscreenOpen = true;
+				}}
+				aria-label="Add comment"
+				class="flex flex-1 items-center justify-between gap-2 h-14 px-3 rounded-lg border border-border bg-white cursor-pointer text-left"
+			>
+				<span
+					class="font-serif text-[13px] line-clamp-2 flex-1"
+					class:text-foreground={hasComment}
+					class:text-muted-foreground={!hasComment}
+				>
+					{#if hasComment}
+						{comment.replace(/<[^>]*>/g, '')}
+					{:else}
+						Add a comment
+					{/if}
+				</span>
+				<span class="text-muted-foreground flex-shrink-0">
+					<ExternalLinkIcon class="size-4" />
+				</span>
+			</button>
+		{:else}
+			<div class="flex-1 min-w-0 relative">
+				<CommentEditor
+					value={comment}
+					onChange={handleCommentChange}
+					minHeight={68}
+					showPopout={true}
+					onPopout={() => {
+						commentFullscreenOpen = true;
+					}}
+				/>
+			</div>
+		{/if}
+	</div>
+
+	<!-- Scrollable body — ratings + add field -->
+	<form onsubmit={handleSubmit} class="flex flex-col flex-1 overflow-hidden">
+		<div class="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3.5">
+			<div class="grid grid-cols-2 gap-3">
+				{#each activeFields as fieldKey, idx (fieldKey)}
+					{@const isLeftCol = idx % 2 === 0}
+					<div class="relative">
+						{#if fieldKey === 'quality'}
+							<RatingInput
+								label="Quality"
+								name="quality"
+								bind:value={quality}
+								compact
+								trackWidth={110}
+								onRemove={() => removeField('quality')}
+							/>
+						{:else if fieldKey === 'agreement'}
+							<RatingInput
+								label="Agreement"
+								name="agreement"
+								bind:value={agreement}
+								compact
+								trackWidth={110}
+								onRemove={() => removeField('agreement')}
+							/>
+						{:else if fieldKey === 'importance'}
+							<RatingInput
+								label="Importance"
+								name="importance"
+								bind:value={importance}
+								compact
+								trackWidth={110}
+								onRemove={() => removeField('importance')}
+							/>
+						{:else if fieldKey === 'confidence'}
+							<RatingInput
+								label="Confidence"
+								name="confidence"
+								bind:value={confidence}
+								compact
+								trackWidth={110}
+								onRemove={() => removeField('confidence')}
+							/>
+						{:else}
+							<RatingInput
+								label={getFieldLabel(fieldKey)}
+								name={fieldKey}
+								value={dynamicValues[fieldKey] ?? null}
+								compact
+								trackWidth={110}
+								onRemove={() => removeField(fieldKey)}
+							/>
+						{/if}
+						<button
+							type="button"
+							onclick={() => removeField(fieldKey)}
+							class="absolute top-1/2 -translate-y-1/2 flex items-center justify-center bg-white border border-border rounded-full shadow-sm text-muted-foreground hover:opacity-70 transition-opacity z-10"
+							style="width: 16px; height: 16px; {isLeftCol
+								? `right: ${mobile ? '4px' : '12px'};`
+								: `left: ${mobile ? '4px' : '12px'};`}"
+							aria-label="Remove {getFieldLabel(fieldKey)}"
+							title="Remove {getFieldLabel(fieldKey)}"
+						>
+							<XIcon class="size-2" strokeWidth={3} />
+						</button>
+					</div>
+				{/each}
+			</div>
+
+			<AddFieldSearch addedKeys={activeFields} onAdd={addField} placeholder="Add a field — e.g. clarity" dense />
+		</div>
+
+		<!-- Action buttons — extra bottom padding on mobile for home indicator -->
+		<div
+			class="flex gap-2.5 px-5 border-t border-border bg-background"
+			style="padding-top: 14px; padding-bottom: {mobile ? 'calc(22px + env(safe-area-inset-bottom))' : '14px'};"
+		>
+			<Button
+				type="button"
+				variant="outline"
+				size="default"
+				onclick={() => onClose()}
+				disabled={isPending}
+				class="flex-1"
+			>
+				Cancel
+			</Button>
+			<Button type="submit" size="default" disabled={isPending} class="flex-1">
+				{#if isPending}
+					{isEditMode ? 'Saving...' : 'Adding...'}
+				{:else}
+					Save perspective
+				{/if}
+			</Button>
+		</div>
+	</form>
+{/snippet}
+
+<!-- Desktop: centered dialog -->
+{#if !isMobile.current}
+	<Dialog
+		bind:open
+		onOpenChange={(isOpen) => {
+			if (!isOpen) onClose();
+		}}
+	>
+		<DialogContent
+			class="sm:max-w-[460px] w-[calc(100vw-2rem)] max-h-[90vh] overflow-hidden p-0 flex flex-col"
+			overlayClass="bg-black/45"
+		>
+			{@render modalBody(false)}
+		</DialogContent>
+	</Dialog>
+{:else}
+	<!-- Mobile: bottom sheet drawer -->
+	<Drawer
+		bind:open
+		onOpenChange={(isOpen) => {
+			if (!isOpen) onClose();
+		}}
+	>
+		<DrawerContent class="max-h-[88vh] flex flex-col p-0">
+			{@render modalBody(true)}
+		</DrawerContent>
+	</Drawer>
+{/if}
+
+{#if commentFullscreenOpen}
+	<CommentFullscreen
+		value={comment}
+		onChange={handleCommentChange}
+		onClose={() => {
+			commentFullscreenOpen = false;
+		}}
+	/>
+{/if}

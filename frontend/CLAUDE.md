@@ -25,6 +25,17 @@ frontend/src/
 └── app.html             # HTML shell
 ```
 
+## shadcn-svelte Components
+
+Components live in `src/lib/components/shadcn/` (not `ui/`). The `components.json` alias is configured correctly, but the CLI sometimes ignores it. After installing a new component, verify it landed in `shadcn/` — if it went to `ui/`, move it and remove the empty `ui/` directory. Always add new components to the barrel export in `shadcn/index.ts`.
+
+```bash
+# Install from frontend/ directory
+npx shadcn-svelte@latest add <component> --yes
+# Verify location
+ls src/lib/components/shadcn/<component>/
+```
+
 ## Tailwind v4
 
 Tailwind v4 uses `--color-*` prefix for theme variables (e.g., `--color-primary`), not bare `--primary` from v3/shadcn conventions.
