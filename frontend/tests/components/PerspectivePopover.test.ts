@@ -409,17 +409,17 @@ describe('PerspectivePopover component', () => {
 	});
 
 	describe('custom fields', () => {
-		it('adds a custom field control and sends its value under the bare key in customFields', async () => {
+		it('shows the field title-cased but submits customFields with a fully lowercased key', async () => {
 			renderPopover({ existingPerspective: null });
 			await tick();
 
-			// Type a freeform field name and create it.
+			// Type it with a capital — the viewer should title-case, GraphQL should lowercase.
 			const search = screen.getByPlaceholderText('Add a field — e.g. clarity');
-			await fireEvent.input(search, { target: { value: 'humor' } });
-			await fireEvent.click(screen.getByRole('button', { name: 'Create "humor"' }));
+			await fireEvent.input(search, { target: { value: 'Humor' } });
+			await fireEvent.click(screen.getByRole('button', { name: 'Create "Humor"' }));
 			await tick();
 
-			// A "Humor" rating control now exists in the grid above.
+			// Viewer: title-cased label.
 			expect(screen.getByText('Humor')).toBeInTheDocument();
 
 			// Adjust it — the write must flow back to the popover, not stay in RatingInput.
@@ -434,6 +434,7 @@ describe('PerspectivePopover component', () => {
 			expect(payload.customFields).toBeDefined();
 			expect(typeof payload.customFields.humor).toBe('number');
 			expect(payload.customFields.humor).toBeGreaterThan(0);
+			// Lowercase key only — no "Humor", no "custom:humor".
 			expect(Object.keys(payload.customFields)).toEqual(['humor']);
 		});
 
