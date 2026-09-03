@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 )
@@ -16,6 +17,10 @@ type ContentRepository interface {
 	// When refreshOnConflict is false, does nothing on conflict (preserves original data).
 	// Returns (*Content, true, nil) if content already existed, (*Content, false, nil) if newly created.
 	GetOrCreateByURL(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error)
+	// UpdateMetadata performs a direct UPDATE of an existing content row's refreshable
+	// fields (name, response, length) plus updated_at. It never touches created_at or
+	// added_by_user_id, and it does not insert — the row must already exist.
+	UpdateMetadata(ctx context.Context, id int, name string, response json.RawMessage, length *int) (*domain.Content, error)
 	List(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
 	ReassignByUser(ctx context.Context, fromUserID, toUserID int) error
 }

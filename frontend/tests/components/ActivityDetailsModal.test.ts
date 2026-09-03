@@ -1,6 +1,39 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import ActivityDetailsModal from '$lib/components/ActivityDetailsModal.svelte';
+
+// Hoisted mocks — shared pattern for useUpdateSourceData components (see AddVideoPopover.test.ts)
+const mocks = vi.hoisted(() => ({
+	mockMutate: vi.fn(),
+	mockInvalidateQueries: vi.fn(),
+	mockSetQueriesData: vi.fn(),
+	mockToastSuccess: vi.fn(),
+	mockToastError: vi.fn(),
+	mockMutationState: { mutate: null as any, isPending: false },
+}));
+
+vi.mock('@tanstack/svelte-query', () => ({
+	createMutation: vi.fn((optionsFn: () => any) => {
+		optionsFn();
+		mocks.mockMutationState.mutate = mocks.mockMutate;
+		return mocks.mockMutationState;
+	}),
+	useQueryClient: vi.fn(() => ({
+		invalidateQueries: mocks.mockInvalidateQueries,
+		setQueriesData: mocks.mockSetQueriesData,
+	})),
+}));
+
+vi.mock('svelte-sonner', () => ({
+	toast: { success: mocks.mockToastSuccess, error: mocks.mockToastError },
+}));
+
+vi.mock('$lib/queries/client', () => ({ graphqlRequest: vi.fn() }));
+
+function reset() {
+	vi.clearAllMocks();
+	mocks.mockMutationState.isPending = false;
+}
 
 const content = {
 	id: '42',
@@ -17,6 +50,8 @@ const content = {
 };
 
 describe('ActivityDetailsModal', () => {
+	beforeEach(reset);
+
 	it('renders nothing when closed', () => {
 		render(ActivityDetailsModal, { props: { content, open: false, onClose: vi.fn() } });
 		expect(screen.queryByText(content.name)).not.toBeInTheDocument();
@@ -53,11 +88,22 @@ describe('ActivityDetailsModal', () => {
 		expect(screen.queryByText('Tags')).not.toBeInTheDocument();
 	});
 
-	it('has a non-functional Update metadata button', async () => {
+	it('renders an "Update source data" button that triggers the update mutation for this item', async () => {
 		render(ActivityDetailsModal, { props: { content, open: true, onClose: vi.fn() } });
-		const button = screen.getByRole('button', { name: 'Update metadata' });
+		const button = screen.getByRole('button', { name: 'Update source data' });
 		expect(button).toBeInTheDocument();
-		await fireEvent.click(button); // should not throw
+
+		await fireEvent.click(button);
+
+		expect(mocks.mockMutate).toHaveBeenCalledWith(content.id);
+	});
+
+	it('disables the Update source data button while the mutation is pending', () => {
+		mocks.mockMutationState.isPending = true;
+		render(ActivityDetailsModal, { props: { content, open: true, onClose: vi.fn() } });
+
+		const button = screen.getByRole('button', { name: /update source data/i });
+		expect(button).toBeDisabled();
 	});
 
 	it('calls onClose when the close button is clicked', async () => {

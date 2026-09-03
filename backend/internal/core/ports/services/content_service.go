@@ -26,4 +26,7 @@ type ContentService interface {
 
 	// CreateClaim creates a new claim content entry associated with a parent content item
 	CreateClaim(ctx context.Context, input CreateClaimInput) (*domain.Content, error)
+
+	// UpdateSourceData refreshes an existing content item's metadata from its source
+	UpdateSourceData(ctx context.Context, contentID int) (*domain.Content, error)
 }

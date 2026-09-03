@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 	portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
@@ -20,6 +21,7 @@ type mockContentRepository struct {
 	getByIDFn          func(ctx context.Context, id int) (*domain.Content, error)
 	getByURLFn         func(ctx context.Context, url string) (*domain.Content, error)
 	getOrCreateByURLFn func(ctx context.Context, content *domain.Content, refreshOnConflict bool) (*domain.Content, bool, error)
+	updateMetadataFn   func(ctx context.Context, id int, name string, response json.RawMessage, length *int) (*domain.Content, error)
 	listFn             func(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error)
 }
 
@@ -49,6 +51,13 @@ func (m *mockContentRepository) GetOrCreateByURL(ctx context.Context, content *d
 		return m.getOrCreateByURLFn(ctx, content, refreshOnConflict)
 	}
 	return content, false, nil
+}
+
+func (m *mockContentRepository) UpdateMetadata(ctx context.Context, id int, name string, response json.RawMessage, length *int) (*domain.Content, error) {
+	if m.updateMetadataFn != nil {
+		return m.updateMetadataFn(ctx, id, name, response, length)
+	}
+	return nil, domain.ErrNotFound
 }
 
 func (m *mockContentRepository) List(ctx context.Context, params domain.ContentListParams) (*domain.PaginatedContent, error) {
@@ -389,4 +398,169 @@ func TestNewContentService(t *testing.T) {
 	svc := services.NewContentService(repo, ytClient)
 
 	assert.NotNil(t, svc)
+}
+
+// --- UpdateSourceData Tests ---
+
+func TestUpdateSourceData_Success(t *testing.T) {
+	url := "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+	createdAt := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	existing := &domain.Content{
+		ID:            1,
+		Name:          "Old Title",
+		URL:           &url,
+		ContentType:   domain.ContentTypeYouTube,
+		AddedByUserID: 7,
+		CreatedAt:     createdAt,
+	}
+	freshResponse := json.RawMessage(`{"items":[{"snippet":{"title":"New Title"}}]}`)
+	updated := &domain.Content{
+		ID:            1,
+		Name:          "New Title",
+		URL:           &url,
+		ContentType:   domain.ContentTypeYouTube,
+		AddedByUserID: 7,
+		CreatedAt:     createdAt, // unchanged
+	}
+
+	var capturedID int
+	var capturedName string
+	var capturedLength *int
+
+	repo := &mockContentRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.Content, error) {
+			assert.Equal(t, 1, id)
+			return existing, nil
+		},
+		updateMetadataFn: func(ctx context.Context, id int, name string, response json.RawMessage, length *int) (*domain.Content, error) {
+			capturedID = id
+			capturedName = name
+			capturedLength = length
+			return updated, nil
+		},
+	}
+
+	ytClient := &mockYouTubeClient{
+		extractVideoIDFn: func(u string) (string, error) {
+			assert.Equal(t, url, u)
+			return "dQw4w9WgXcQ", nil
+		},
+		getVideoMetadataFn: func(ctx context.Context, videoID string) (*portservices.VideoMetadata, error) {
+			assert.Equal(t, "dQw4w9WgXcQ", videoID)
+			return &portservices.VideoMetadata{
+				Title:    "New Title",
+				Duration: 400,
+				Response: freshResponse,
+			}, nil
+		},
+	}
+
+	svc := services.NewContentService(repo, ytClient)
+	result, err := svc.UpdateSourceData(context.Background(), 1)
+
+	require.NoError(t, err)
+	assert.Equal(t, "New Title", result.Name)
+	assert.Equal(t, createdAt, result.CreatedAt) // created_at preserved
+	assert.Equal(t, 7, result.AddedByUserID)     // added_by_user_id preserved
+
+	// Repo called with the freshly fetched metadata, scoped to the known ID
+	assert.Equal(t, 1, capturedID)
+	assert.Equal(t, "New Title", capturedName)
+	require.NotNil(t, capturedLength)
+	assert.Equal(t, 400, *capturedLength)
+}
+
+func TestUpdateSourceData_InvalidID_Zero(t *testing.T) {
+	repo := &mockContentRepository{}
+	svc := services.NewContentService(repo, &mockYouTubeClient{})
+
+	result, err := svc.UpdateSourceData(context.Background(), 0)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
+}
+
+func TestUpdateSourceData_ContentNotFound(t *testing.T) {
+	repo := &mockContentRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.Content, error) {
+			return nil, domain.ErrNotFound
+		},
+	}
+	svc := services.NewContentService(repo, &mockYouTubeClient{})
+
+	result, err := svc.UpdateSourceData(context.Background(), 999)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrNotFound))
+}
+
+func TestUpdateSourceData_NoSourceURL(t *testing.T) {
+	existing := &domain.Content{ID: 1, Name: "Claim", ContentType: domain.ContentTypeClaim, URL: nil}
+	repo := &mockContentRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.Content, error) {
+			return existing, nil
+		},
+	}
+	svc := services.NewContentService(repo, &mockYouTubeClient{})
+
+	result, err := svc.UpdateSourceData(context.Background(), 1)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
+}
+
+func TestUpdateSourceData_YouTubeAPIError(t *testing.T) {
+	url := "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+	existing := &domain.Content{ID: 1, Name: "Old", URL: &url}
+	repo := &mockContentRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.Content, error) {
+			return existing, nil
+		},
+	}
+	ytClient := &mockYouTubeClient{
+		extractVideoIDFn: func(u string) (string, error) {
+			return "dQw4w9WgXcQ", nil
+		},
+		getVideoMetadataFn: func(ctx context.Context, videoID string) (*portservices.VideoMetadata, error) {
+			return nil, fmt.Errorf("youtube api unavailable")
+		},
+	}
+	svc := services.NewContentService(repo, ytClient)
+
+	result, err := svc.UpdateSourceData(context.Background(), 1)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to fetch video metadata")
+}
+
+func TestUpdateSourceData_RepositoryUpdateError(t *testing.T) {
+	url := "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+	existing := &domain.Content{ID: 1, Name: "Old", URL: &url}
+	repo := &mockContentRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.Content, error) {
+			return existing, nil
+		},
+		updateMetadataFn: func(ctx context.Context, id int, name string, response json.RawMessage, length *int) (*domain.Content, error) {
+			return nil, fmt.Errorf("db write failed")
+		},
+	}
+	ytClient := &mockYouTubeClient{
+		extractVideoIDFn: func(u string) (string, error) {
+			return "dQw4w9WgXcQ", nil
+		},
+		getVideoMetadataFn: func(ctx context.Context, videoID string) (*portservices.VideoMetadata, error) {
+			return &portservices.VideoMetadata{Title: "New", Duration: 1, Response: json.RawMessage(`{}`)}, nil
+		},
+	}
+	svc := services.NewContentService(repo, ytClient)
+
+	result, err := svc.UpdateSourceData(context.Background(), 1)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to update content metadata")
 }
