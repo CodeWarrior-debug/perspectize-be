@@ -132,8 +132,10 @@
 		// AddFieldSearch prefixes freeform entries with "custom:"; the UI label and
 		// the customFields payload both use the bare name ("humor"), so strip it —
 		// unless the bare name collides with a built-in rating key, in which case
-		// keep the prefix so the two stay distinct.
-		const bare = field.key.replace(/^custom:/, '');
+		// keep the prefix so the two stay distinct. The key is always stored
+		// lowercase; getFieldLabel() is the only thing that title-cases it for
+		// display, so the GraphQL payload is guaranteed lowercase.
+		const bare = field.key.replace(/^custom:/, '').toLowerCase();
 		const key = DEFAULT_FIELDS.includes(bare) ? field.key : bare;
 		if (!activeFields.includes(key)) {
 			activeFields = [...activeFields, key];
@@ -183,11 +185,13 @@
 		comment = html;
 	}
 
-	// Build customFields payload from dynamic (non-core) field values
+	// Build customFields payload from dynamic (non-core) field values.
+	// Keys are lowercased here as a final guard — the viewer shows the
+	// title-cased label via getFieldLabel(), GraphQL always gets the bare key.
 	function buildCustomFields(): Record<string, number> | undefined {
 		const entries = Object.entries(dynamicValues).filter(([, v]) => v !== null);
 		if (entries.length === 0) return undefined;
-		return Object.fromEntries(entries) as Record<string, number>;
+		return Object.fromEntries(entries.map(([k, v]) => [k.toLowerCase(), v])) as Record<string, number>;
 	}
 
 	// Get review text — sanitize HTML and only send if non-empty

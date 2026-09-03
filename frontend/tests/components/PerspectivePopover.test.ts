@@ -409,17 +409,17 @@ describe('PerspectivePopover component', () => {
 	});
 
 	describe('custom fields', () => {
-		it('adds a custom field control and sends its value under the bare key in customFields', async () => {
+		it('shows the field title-cased but submits customFields with a fully lowercased key', async () => {
 			renderPopover({ existingPerspective: null });
 			await tick();
 
-			// Type a freeform field name and create it.
+			// Type it with a capital — the viewer should title-case, GraphQL should lowercase.
 			const search = screen.getByPlaceholderText('Add a field — e.g. clarity');
-			await fireEvent.input(search, { target: { value: 'humor' } });
-			await fireEvent.click(screen.getByRole('button', { name: 'Create "humor"' }));
+			await fireEvent.input(search, { target: { value: 'Humor' } });
+			await fireEvent.click(screen.getByRole('button', { name: 'Create "Humor"' }));
 			await tick();
 
-			// A "Humor" rating control now exists in the grid above.
+			// Viewer: title-cased label.
 			expect(screen.getByText('Humor')).toBeInTheDocument();
 
 			// Adjust it — the write must flow back to the popover, not stay in RatingInput.
@@ -434,7 +434,49 @@ describe('PerspectivePopover component', () => {
 			expect(payload.customFields).toBeDefined();
 			expect(typeof payload.customFields.humor).toBe('number');
 			expect(payload.customFields.humor).toBeGreaterThan(0);
+			// Lowercase key only — no "Humor", no "custom:humor".
 			expect(Object.keys(payload.customFields)).toEqual(['humor']);
+		});
+
+		it('preserves every custom field added before submit', async () => {
+			renderPopover({ existingPerspective: null });
+			await tick();
+
+			const search = screen.getByPlaceholderText('Add a field — e.g. clarity');
+
+			// Add three custom fields, one after another, WITHOUT submitting.
+			for (const name of ['humor', 'wit', 'depthx']) {
+				await fireEvent.input(search, { target: { value: name } });
+				await fireEvent.click(screen.getByRole('button', { name: `Create "${name}"` }));
+				await tick();
+			}
+
+			// All three controls are present.
+			for (const label of ['Humor', 'Wit', 'Depthx']) {
+				expect(screen.getByText(label)).toBeInTheDocument();
+			}
+
+			// Give each a distinct value.
+			for (const [label, taps] of [
+				['Humor', 1],
+				['Wit', 2],
+				['Depthx', 3],
+			] as const) {
+				const bump = screen.getByRole('button', { name: `Increase ${label}` });
+				for (let i = 0; i < taps; i++) {
+					await fireEvent.mouseDown(bump);
+					await fireEvent.mouseUp(bump);
+				}
+			}
+
+			await fireEvent.click(screen.getByRole('button', { name: 'Save perspective' }));
+
+			expect(mocks.mockCreateMutate).toHaveBeenCalled();
+			const payload = mocks.mockCreateMutate.mock.calls.at(-1)![0];
+			expect(Object.keys(payload.customFields ?? {}).sort()).toEqual(['depthx', 'humor', 'wit']);
+			// distinct values, in tap order
+			expect(payload.customFields.humor).toBeLessThan(payload.customFields.wit);
+			expect(payload.customFields.wit).toBeLessThan(payload.customFields.depthx);
 		});
 
 		it('restores a custom field from an existing perspective in edit mode', async () => {
