@@ -43,11 +43,7 @@ describe('ActivityCardList', () => {
 		render(ActivityCardList, { props: { rowData, onOpenDetails } });
 		fireEvent.click(screen.getByTestId('card-thumb-1'));
 
-		expect(openSpy).toHaveBeenCalledWith(
-			'https://youtube.com/watch?v=abc123',
-			'_blank',
-			'noopener,noreferrer',
-		);
+		expect(openSpy).toHaveBeenCalledWith('https://youtube.com/watch?v=abc123', '_blank', 'noopener,noreferrer');
 		expect(onOpenDetails).not.toHaveBeenCalled();
 		openSpy.mockRestore();
 	});
@@ -58,5 +54,32 @@ describe('ActivityCardList', () => {
 
 		await fireEvent.click(screen.getByText(rowData[0].name));
 		expect(onOpenDetails).toHaveBeenCalledWith('1');
+	});
+
+	it('renders an add-perspective button per card and calls onAddPerspective with the row id, without opening details', async () => {
+		const onOpenDetails = vi.fn();
+		const onAddPerspective = vi.fn();
+		render(ActivityCardList, { props: { rowData, onOpenDetails, onAddPerspective } });
+
+		const buttons = screen.getAllByRole('button', { name: 'Add a perspective' });
+		expect(buttons).toHaveLength(rowData.length);
+
+		await fireEvent.click(screen.getByTestId('card-perspective-2'));
+		expect(onAddPerspective).toHaveBeenCalledWith('2');
+		expect(onOpenDetails).not.toHaveBeenCalled();
+	});
+
+	it('shows the "Edit your perspective" affordance for rows the user already has a perspective on', () => {
+		render(ActivityCardList, {
+			props: {
+				rowData,
+				onOpenDetails: vi.fn(),
+				onAddPerspective: vi.fn(),
+				perspectiveContentIds: new Set(['1']),
+			},
+		});
+
+		expect(screen.getByRole('button', { name: 'Edit your perspective' })).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Add a perspective' })).toBeInTheDocument();
 	});
 });

@@ -13,8 +13,11 @@ import { render, waitFor } from '@testing-library/svelte';
 import { QueryClient } from '@tanstack/svelte-query';
 import TestWrapper from '../helpers/TestWrapper.svelte';
 
-const { mockRequest } = vi.hoisted(() => ({
+const { mockRequest, clerkState } = vi.hoisted(() => ({
 	mockRequest: vi.fn(),
+	// Mutable so individual tests can simulate a signed-in Clerk session.
+	// Reset in beforeEach.
+	clerkState: { isLoaded: false, auth: { userId: null as string | null } },
 }));
 
 // Mock AG Grid component
@@ -33,9 +36,10 @@ vi.mock('$lib/queries/client', () => ({
 }));
 
 // Mock Clerk context — useMe() calls useClerkContext(); no ClerkProvider in tests.
-// isLoaded: false keeps the `me` query disabled, so isAdmin resolves to false.
+// Defaults to signed-out (clerkState reset in beforeEach), which keeps the `me`
+// query disabled so isAdmin resolves to false.
 vi.mock('svelte-clerk', () => ({
-	useClerkContext: () => ({ isLoaded: false, auth: { userId: null } }),
+	useClerkContext: () => clerkState,
 }));
 
 // queryKeys is used directly, no need to mock since it's a simple object
@@ -108,6 +112,8 @@ function renderWithQuery() {
 describe('ActivityTable', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		clerkState.isLoaded = false;
+		clerkState.auth.userId = null;
 		mockRequest.mockResolvedValue(mockEmptyResponse);
 	});
 
@@ -177,6 +183,32 @@ describe('ActivityTable', () => {
 		window.matchMedia = originalMatchMedia;
 	});
 
+	it('wires an add-perspective trigger into each mobile card (no grid column exists there)', async () => {
+		mockRequest.mockResolvedValue(mockDataResponse);
+		const originalMatchMedia = window.matchMedia;
+		window.matchMedia = vi.fn(
+			(query: string) =>
+				({
+					matches: query === '(max-width: 859px)',
+					media: query,
+					onchange: null,
+					addListener: vi.fn(),
+					removeListener: vi.fn(),
+					addEventListener: vi.fn(),
+					removeEventListener: vi.fn(),
+					dispatchEvent: vi.fn(),
+				}) as unknown as MediaQueryList,
+		);
+
+		const { container } = renderWithQuery();
+
+		await waitFor(() => {
+			expect(container.querySelector('[data-testid="card-perspective-1"]')).toBeTruthy();
+		});
+
+		window.matchMedia = originalMatchMedia;
+	});
+
 	it('shows the AG Grid table at/above the 860px breakpoint', async () => {
 		mockRequest.mockResolvedValue(mockDataResponse);
 		// Default window.matchMedia mock from tests/setup.ts always returns matches: false.
@@ -195,5 +227,47 @@ describe('ActivityTable', () => {
 		await waitFor(() => {
 			expect(container.querySelector('button[aria-label="Choose columns"]')).toBeTruthy();
 		});
+	});
+
+	// Regression: the +/glasses affordance is driven by a per-user perspectives
+	// query. It must key off the Clerk-derived `me` id, not the legacy
+	// `userSelection` store (which lags and left the query permanently disabled,
+	// so the glasses icon never appeared even after a perspective was saved).
+	it('queries the current user’s perspectives using the Clerk-derived me id', async () => {
+		clerkState.isLoaded = true;
+		clerkState.auth.userId = 'user_clerk_abc';
+
+		mockRequest.mockImplementation((query: string) => {
+			if (query.includes('me {')) {
+				return Promise.resolve({ me: { id: '7', username: 'tester', role: 'DEFAULT' } });
+			}
+			if (query.includes('ListPerspectivesByUser')) {
+				return Promise.resolve({ perspectives: { items: [] } });
+			}
+			return Promise.resolve(mockDataResponse);
+		});
+
+		renderWithQuery();
+
+		await waitFor(() => {
+			const perspectiveCall = mockRequest.mock.calls.find(
+				([q]) => typeof q === 'string' && q.includes('ListPerspectivesByUser'),
+			);
+			expect(perspectiveCall).toBeTruthy();
+			expect(perspectiveCall?.[1]).toEqual({ userID: 7 });
+		});
+	});
+
+	it('does not query perspectives while the Clerk session is still loading', async () => {
+		// clerkState stays signed-out (beforeEach default)
+		mockRequest.mockResolvedValue(mockDataResponse);
+		renderWithQuery();
+
+		await waitFor(() => {
+			expect(mockRequest).toHaveBeenCalled();
+		});
+		expect(mockRequest.mock.calls.some(([q]) => typeof q === 'string' && q.includes('ListPerspectivesByUser'))).toBe(
+			false,
+		);
 	});
 });

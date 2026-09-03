@@ -136,11 +136,11 @@ describe('Perspective GraphQL query definitions', () => {
 			expect(CREATE_PERSPECTIVE).toContain('createPerspective(input: $input)');
 		});
 
-		it('requests only id in mutation response (full data comes from list refetch)', () => {
-			expect(CREATE_PERSPECTIVE).toContain('id');
-			// Mutation response is minimal — ListPerspectivesByUser refetch provides full data
-			expect(CREATE_PERSPECTIVE).not.toContain('userID');
-			expect(CREATE_PERSPECTIVE).not.toContain('primaryPerspectiveID');
+		it('returns the full perspective row so the cache can be patched without a list refetch', () => {
+			expect(CREATE_PERSPECTIVE).toContain('...PerspectiveFields');
+			expect(CREATE_PERSPECTIVE).toContain('fragment PerspectiveFields on Perspective');
+			expect(CREATE_PERSPECTIVE).toContain('userID');
+			expect(CREATE_PERSPECTIVE).toContain('primaryPerspectiveID');
 		});
 	});
 
@@ -165,6 +165,11 @@ describe('Perspective GraphQL query definitions', () => {
 
 		it('calls updatePerspective mutation', () => {
 			expect(UPDATE_PERSPECTIVE).toContain('updatePerspective(input: $input)');
+		});
+
+		it('returns the full perspective row so the cache can be patched without a list refetch', () => {
+			expect(UPDATE_PERSPECTIVE).toContain('...PerspectiveFields');
+			expect(UPDATE_PERSPECTIVE).toContain('fragment PerspectiveFields on Perspective');
 		});
 	});
 

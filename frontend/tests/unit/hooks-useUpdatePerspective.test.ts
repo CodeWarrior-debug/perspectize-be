@@ -1,8 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockMutate, mockInvalidateQueries, mockToastSuccess, mockToastError } = vi.hoisted(() => ({
+const {
+	mockMutate,
+	mockInvalidateQueries,
+	mockSetQueriesData,
+	mockGetQueriesData,
+	mockCancelQueries,
+	mockSetQueryData,
+	mockToastSuccess,
+	mockToastError,
+} = vi.hoisted(() => ({
 	mockMutate: vi.fn(),
 	mockInvalidateQueries: vi.fn(),
+	mockSetQueriesData: vi.fn(),
+	mockGetQueriesData: vi.fn(() => [] as unknown[]),
+	mockCancelQueries: vi.fn(() => Promise.resolve()),
+	mockSetQueryData: vi.fn(),
 	mockToastSuccess: vi.fn(),
 	mockToastError: vi.fn(),
 }));
@@ -19,6 +32,10 @@ vi.mock('@tanstack/svelte-query', () => ({
 	}),
 	useQueryClient: vi.fn(() => ({
 		invalidateQueries: mockInvalidateQueries,
+		setQueriesData: mockSetQueriesData,
+		getQueriesData: mockGetQueriesData,
+		cancelQueries: mockCancelQueries,
+		setQueryData: mockSetQueryData,
 	})),
 }));
 
@@ -84,7 +101,14 @@ describe('useUpdatePerspective hook', () => {
 		it('supports partial update with only like', async () => {
 			const { graphqlRequest } = await import('$lib/queries/client');
 			(graphqlRequest as any).mockResolvedValue({
-				updatePerspective: { id: '3', userID: '42', like: 'THUMBS_UP', privacy: 'PUBLIC', createdAt: '', updatedAt: '' },
+				updatePerspective: {
+					id: '3',
+					userID: '42',
+					like: 'THUMBS_UP',
+					privacy: 'PUBLIC',
+					createdAt: '',
+					updatedAt: '',
+				},
 			});
 
 			const input = { id: 3, like: 'THUMBS_UP' };
@@ -94,25 +118,82 @@ describe('useUpdatePerspective hook', () => {
 		});
 	});
 
+	const updatedRow = {
+		id: '5',
+		userID: '42',
+		contentID: '10',
+		quality: 6000,
+		agreement: null,
+		importance: null,
+		confidence: null,
+		like: null,
+		review: null,
+		privacy: 'public',
+		description: null,
+		primaryPerspectiveID: null,
+		relatedPerspectiveIDs: null,
+		customFields: null,
+		createdAt: '2026-01-01T00:00:00Z',
+		updatedAt: '2026-01-02T00:00:00Z',
+	};
+
+	describe('onMutate — optimistic edit', () => {
+		it('patches the matching cached row in place and returns a rollback snapshot', async () => {
+			const existing = {
+				perspectives: { items: [{ id: '5', quality: 1000, importance: 2000, updatedAt: 'old' }] },
+			};
+			mockGetQueriesData.mockReturnValueOnce([[['app', 'perspectives', 'list', { userId: 42 }], existing]]);
+
+			const ctx = await capturedMutationOptions.onMutate({ id: 5, quality: 6000 });
+
+			expect(mockCancelQueries).toHaveBeenCalled();
+			const updater = mockSetQueriesData.mock.calls[0][1];
+			const next = updater(existing);
+			expect(next.perspectives.items[0]).toMatchObject({ id: '5', quality: 6000, importance: 2000 });
+			expect(next.perspectives.items[0].updatedAt).not.toBe('old');
+			expect(ctx.previous).toHaveLength(1);
+		});
+	});
+
 	describe('onSuccess callback', () => {
 		it('shows success toast "Perspective updated"', () => {
 			capturedMutationOptions.onSuccess();
 			expect(mockToastSuccess).toHaveBeenCalledWith('Perspective updated');
 		});
 
-		it('invalidates perspectives lists cache', () => {
-			capturedMutationOptions.onSuccess();
+		it('falls back to a full list invalidation when the response has no row', () => {
+			capturedMutationOptions.onSuccess(undefined);
 			expect(mockInvalidateQueries).toHaveBeenCalledWith(
-				expect.objectContaining({ queryKey: expect.arrayContaining(['perspectives', 'list']) })
+				expect.objectContaining({ queryKey: expect.arrayContaining(['perspectives', 'list']) }),
+			);
+		});
+
+		it('replaces the cached row with the server row and marks the list stale without refetching', () => {
+			const cached = {
+				perspectives: {
+					items: [
+						{ id: '5', quality: 1 },
+						{ id: '9', quality: 2 },
+					],
+				},
+			};
+			capturedMutationOptions.onSuccess({ updatePerspective: updatedRow });
+
+			const updater = mockSetQueriesData.mock.calls.at(-1)![1];
+			const next = updater(cached);
+			expect(next.perspectives.items).toEqual([updatedRow, { id: '9', quality: 2 }]);
+			expect(mockInvalidateQueries).toHaveBeenCalledWith(
+				expect.objectContaining({
+					queryKey: expect.arrayContaining(['perspectives', 'list']),
+					refetchType: 'none',
+				}),
 			);
 		});
 
 		it('does not invalidate content cache on update', () => {
-			capturedMutationOptions.onSuccess();
-			// Update only needs to invalidate perspectives, not content
-			const calls = mockInvalidateQueries.mock.calls;
-			const contentCall = calls.find((call: any[]) =>
-				call[0]?.queryKey?.includes('content')
+			capturedMutationOptions.onSuccess({ updatePerspective: updatedRow });
+			const contentCall = mockInvalidateQueries.mock.calls.find((call: any[]) =>
+				call[0]?.queryKey?.includes('content'),
 			);
 			expect(contentCall).toBeUndefined();
 		});
@@ -137,6 +218,13 @@ describe('useUpdatePerspective hook', () => {
 		it('shows "No user selected" for user-related errors', () => {
 			capturedMutationOptions.onError(new Error('user not found'));
 			expect(mockToastError).toHaveBeenCalledWith('No user selected');
+		});
+
+		it('rolls the optimistic edit back from the snapshot', () => {
+			const key = ['app', 'perspectives', 'list', { userId: 42 }];
+			const snapshot = { perspectives: { items: [{ id: '5', quality: 1000 }] } };
+			capturedMutationOptions.onError(new Error('network failure'), { id: 5 }, { previous: [[key, snapshot]] });
+			expect(mockSetQueryData).toHaveBeenCalledWith(key, snapshot);
 		});
 	});
 });

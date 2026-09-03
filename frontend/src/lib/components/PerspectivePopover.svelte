@@ -129,8 +129,14 @@
 	}
 
 	function addField(field: FieldDef) {
-		if (!activeFields.includes(field.key)) {
-			activeFields = [...activeFields, field.key];
+		// AddFieldSearch prefixes freeform entries with "custom:"; the UI label and
+		// the customFields payload both use the bare name ("humor"), so strip it —
+		// unless the bare name collides with a built-in rating key, in which case
+		// keep the prefix so the two stay distinct.
+		const bare = field.key.replace(/^custom:/, '');
+		const key = DEFAULT_FIELDS.includes(bare) ? field.key : bare;
+		if (!activeFields.includes(key)) {
+			activeFields = [...activeFields, key];
 		}
 	}
 
@@ -245,7 +251,7 @@
 
 {#snippet modalBody(mobile: boolean)}
 	<!-- Header -->
-	<div class="px-5 pt-4 pb-3 border-b border-border relative">
+	<div class="shrink-0 px-5 pt-4 pb-3 border-b border-border relative">
 		{#if mobile}
 			<!-- Grabber handle -->
 			<div class="flex justify-center pb-2">
@@ -278,7 +284,7 @@
 	</div>
 
 	<!-- Overall + Comment row -->
-	<div class="flex items-center gap-3.5 px-5 py-3.5 border-b border-border">
+	<div class="shrink-0 flex items-center gap-3.5 px-5 py-3.5 border-b border-border">
 		<div class="flex flex-col items-center gap-1.5 flex-shrink-0">
 			<span class="font-sans text-[11px] font-medium text-muted-foreground uppercase tracking-[0.06em]"> Overall </span>
 			<Thumbs
@@ -330,8 +336,8 @@
 	</div>
 
 	<!-- Scrollable body — ratings + add field -->
-	<form onsubmit={handleSubmit} class="flex flex-col flex-1 overflow-hidden">
-		<div class="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3.5">
+	<form onsubmit={handleSubmit} class="flex flex-col flex-1 min-h-0 overflow-hidden">
+		<div class="flex-1 min-h-0 overflow-y-auto px-5 py-4 flex flex-col gap-3.5">
 			<div class="grid grid-cols-2 gap-3">
 				{#each activeFields as fieldKey, idx (fieldKey)}
 					{@const isLeftCol = idx % 2 === 0}
@@ -376,7 +382,7 @@
 							<RatingInput
 								label={getFieldLabel(fieldKey)}
 								name={fieldKey}
-								value={dynamicValues[fieldKey] ?? null}
+								bind:value={() => dynamicValues[fieldKey] ?? null, (v) => setFieldValue(fieldKey, v)}
 								compact
 								trackWidth={110}
 								onRemove={() => removeField(fieldKey)}
@@ -403,7 +409,7 @@
 
 		<!-- Action buttons — extra bottom padding on mobile for home indicator -->
 		<div
-			class="flex gap-2.5 px-5 border-t border-border bg-background"
+			class="shrink-0 flex gap-2.5 px-5 border-t border-border bg-background"
 			style="padding-top: 14px; padding-bottom: {mobile ? 'calc(22px + env(safe-area-inset-bottom))' : '14px'};"
 		>
 			<Button

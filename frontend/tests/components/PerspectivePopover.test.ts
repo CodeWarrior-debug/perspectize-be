@@ -408,6 +408,53 @@ describe('PerspectivePopover component', () => {
 		});
 	});
 
+	describe('custom fields', () => {
+		it('adds a custom field control and sends its value under the bare key in customFields', async () => {
+			renderPopover({ existingPerspective: null });
+			await tick();
+
+			// Type a freeform field name and create it.
+			const search = screen.getByPlaceholderText('Add a field — e.g. clarity');
+			await fireEvent.input(search, { target: { value: 'humor' } });
+			await fireEvent.click(screen.getByRole('button', { name: 'Create "humor"' }));
+			await tick();
+
+			// A "Humor" rating control now exists in the grid above.
+			expect(screen.getByText('Humor')).toBeInTheDocument();
+
+			// Adjust it — the write must flow back to the popover, not stay in RatingInput.
+			const bump = screen.getByRole('button', { name: 'Increase Humor' });
+			await fireEvent.mouseDown(bump);
+			await fireEvent.mouseUp(bump);
+
+			await fireEvent.click(screen.getByRole('button', { name: 'Save perspective' }));
+
+			expect(mocks.mockCreateMutate).toHaveBeenCalled();
+			const payload = mocks.mockCreateMutate.mock.calls.at(-1)![0];
+			expect(payload.customFields).toBeDefined();
+			expect(typeof payload.customFields.humor).toBe('number');
+			expect(payload.customFields.humor).toBeGreaterThan(0);
+			expect(Object.keys(payload.customFields)).toEqual(['humor']);
+		});
+
+		it('restores a custom field from an existing perspective in edit mode', async () => {
+			renderPopover({
+				existingPerspective: {
+					id: '3',
+					quality: null,
+					agreement: null,
+					importance: null,
+					confidence: null,
+					like: null,
+					customFields: { humor: 8500 },
+				},
+			});
+			await tick();
+			expect(screen.getByText('Humor')).toBeInTheDocument();
+			expect(screen.getByDisplayValue('8.500')).toBeInTheDocument();
+		});
+	});
+
 	describe('accessibility', () => {
 		it('dialog is accessible with proper roles', async () => {
 			renderPopover();

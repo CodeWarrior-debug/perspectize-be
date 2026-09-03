@@ -21,7 +21,6 @@
 		type PerspectiveItem,
 	} from '$lib/queries/perspectives';
 	import { queryKeys } from '$lib/queries/keys';
-	import { getSelectedUserId } from '$lib/stores/userSelection.svelte';
 	import {
 		parseGridParams,
 		serializeGridParams,
@@ -84,6 +83,22 @@
 	}
 	function handleCloseDetails() {
 		detailsModalContentId = null;
+	}
+
+	/**
+	 * Opens the perspective create/edit sheet for a content row. Shared by the AG Grid
+	 * Perspectize column (desktop) and the mobile card list, which has no grid column.
+	 */
+	function openPerspective(contentId: string, name: string) {
+		popoverContentId = parseInt(contentId, 10);
+		popoverContentName = name;
+		popoverExistingPerspective = perspectivesByContentId.get(contentId) ?? null;
+		popoverOpen = true;
+	}
+
+	function handleAddPerspectiveFromCard(contentId: string) {
+		const row = rowData.find((item) => String(item.id) === contentId);
+		openPerspective(contentId, row?.name ?? '');
 	}
 
 	// Mobile card-list breakpoint (< 860px) — replaces the AG Grid entirely, per design handoff.
@@ -165,17 +180,21 @@
 	let responsiveTier = $state<'xs' | 'sm' | 'md' | 'lg'>('lg');
 	const isMobile = $derived(responsiveTier === 'xs' || responsiveTier === 'sm');
 
-	// Selected user for perspectives query
-	const selectedUserId = $derived(getSelectedUserId());
+	// Current user for the perspectives query — derived straight from the Clerk
+	// session (`me`), NOT the legacy `userSelection` store, which is only ever a
+	// lagging mirror of `me.id` maintained by AuthUserSync and is null during the
+	// ClerkLoaded → me-query → effect settle window. Reading `me` directly means
+	// the +/glasses affordance reflects the signed-in user as soon as `me` resolves.
+	const currentUserId = $derived(meCtx.me ? parseInt(meCtx.me.id, 10) : null);
 
 	// TanStack Query for user's perspectives — used to determine +/glasses icon per row
 	const perspectivesQuery = createQuery(() => ({
-		queryKey: queryKeys.perspectives.listByUser(selectedUserId ?? 0),
+		queryKey: queryKeys.perspectives.listByUser(currentUserId ?? 0),
 		queryFn: () =>
 			graphqlRequest<ListPerspectivesByUserResponse>(LIST_PERSPECTIVES_BY_USER, {
-				userID: selectedUserId,
+				userID: currentUserId,
 			}),
-		enabled: selectedUserId !== null,
+		enabled: currentUserId !== null,
 		staleTime: 60 * 1000,
 	}));
 
@@ -190,6 +209,10 @@
 			return map;
 		})(),
 	);
+
+	// Set of content ids the user has a perspective on — passed to the mobile card
+	// list so it can show the glasses (edit) vs "+" (add) affordance, matching the grid.
+	const perspectiveContentIds = $derived(new Set(perspectivesByContentId.keys()));
 
 	// Cursor stack for cursor-based pagination
 	// Index = page number (1-indexed: cursors[0] = null for page 1, cursors[1] = cursor for page 2, etc.)
@@ -560,13 +583,7 @@
 			if (event.colDef.colId !== 'perspectize') return;
 			if (!event.data) return;
 
-			const contentId = parseInt(String(event.data.id), 10);
-			const existing = perspectivesByContentId.get(String(event.data.id)) ?? null;
-
-			popoverContentId = contentId;
-			popoverContentName = event.data.name;
-			popoverExistingPerspective = existing;
-			popoverOpen = true;
+			openPerspective(String(event.data.id), event.data.name);
 		},
 		onGridReady: (params) => {
 			gridApi = params.api;
@@ -809,7 +826,12 @@
 		</div>
 	{:else if cardMode}
 		<div class="flex-1 min-h-0 overflow-y-auto">
-			<ActivityCardList {rowData} onOpenDetails={handleOpenDetails} />
+			<ActivityCardList
+				{rowData}
+				{perspectiveContentIds}
+				onOpenDetails={handleOpenDetails}
+				onAddPerspective={handleAddPerspectiveFromCard}
+			/>
 		</div>
 	{:else}
 		<!-- AG Grid -->
@@ -892,7 +914,7 @@
 		contentId={popoverContentId}
 		contentName={popoverContentName}
 		existingPerspective={popoverExistingPerspective}
-		userId={selectedUserId ?? 0}
+		userId={currentUserId ?? 0}
 		bind:open={popoverOpen}
 		onClose={() => {
 			popoverOpen = false;
