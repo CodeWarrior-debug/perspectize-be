@@ -32,6 +32,7 @@
 	import type { DataMode, GridParams } from '$lib/utils/gridUrlState';
 	import {
 		typeCellRenderer,
+		categoryCellRenderer,
 		perspectiveCellRenderer,
 		PerspectiveHeaderRenderer,
 		durationValueGetter,
@@ -68,12 +69,36 @@
 	import ActivityDetailsModal from '$lib/components/ActivityDetailsModal.svelte';
 	import ActivityCardList from '$lib/components/ActivityCardList.svelte';
 	import { activityItemCellRenderer } from '$lib/utils/activityItemCellRenderer';
+	import CategoryTypeahead from '$lib/components/CategoryTypeahead.svelte';
+	import { useSetPrimaryCategory } from '$lib/queries/hooks/useSetPrimaryCategory';
+	import type { WikidataSearchResult } from '$lib/queries/categories';
 
 	// Popover state for Perspectize column
 	let popoverOpen = $state(false);
 	let popoverContentId = $state<number | null>(null);
 	let popoverContentName = $state('');
 	let popoverExistingPerspective = $state<PerspectiveItem | null>(null);
+
+	// Popover state for Category column
+	let categoryPopoverOpen = $state(false);
+	let categoryPopoverContentId = $state<number | null>(null);
+	let categoryPopoverCurrentCategory = $state<{ label: string; wikidataQid: string } | null>(null);
+	let categoryPopoverPosition = $state({ x: 0, y: 0 });
+
+	// Category mutation hook
+	const setPrimaryCategoryMutation = useSetPrimaryCategory();
+
+	function handleCategorySelect(result: WikidataSearchResult) {
+		if (categoryPopoverContentId == null) return;
+		setPrimaryCategoryMutation.mutate({
+			contentId: categoryPopoverContentId,
+			qid: result.qid,
+			label: result.label,
+			description: result.description ?? undefined,
+			entityType: result.entityType ?? undefined,
+		});
+		categoryPopoverOpen = false;
+	}
 
 	// Details modal state (Item cell click -> metadata modal)
 	let detailsModalContentId = $state<string | null>(null);
@@ -389,6 +414,16 @@
 				headerTooltip: 'Content type',
 			},
 			{
+				colId: 'category',
+				headerName: 'Category',
+				headerTooltip: 'Wikidata category',
+				width: 150,
+				sortable: false,
+				filter: false,
+				cellRenderer: categoryCellRenderer,
+				hide: true,
+			},
+			{
 				colId: 'duration',
 				headerName: 'Length',
 				flex: 0.7,
@@ -580,10 +615,25 @@
 		suppressCellFocus: true,
 		context: { perspectivesByContentId: new Map(), onOpenDetails: handleOpenDetails },
 		onCellClicked: (event: CellClickedEvent<ContentItem>) => {
-			if (event.colDef.colId !== 'perspectize') return;
 			if (!event.data) return;
 
-			openPerspective(String(event.data.id), event.data.name);
+			if (event.colDef.colId === 'perspectize') {
+				openPerspective(String(event.data.id), event.data.name);
+			} else if (event.colDef.colId === 'category') {
+				const rect =
+					event.event?.target instanceof HTMLElement
+						? event.event.target.getBoundingClientRect()
+						: { left: 0, bottom: 0, x: 0, y: 0 };
+				categoryPopoverContentId = parseInt(String(event.data.id), 10);
+				categoryPopoverCurrentCategory = event.data.primaryCategory
+					? {
+							label: event.data.primaryCategory.label,
+							wikidataQid: event.data.primaryCategory.wikidataQid,
+						}
+					: null;
+				categoryPopoverPosition = { x: rect.left ?? rect.x, y: (rect.bottom ?? rect.y) + 4 };
+				categoryPopoverOpen = true;
+			}
 		},
 		onGridReady: (params) => {
 			gridApi = params.api;
@@ -742,9 +792,9 @@
 
 	// Responsive column visibility — progressive reveal by tier
 	// xs (<445px):  Perspectize, Item, Type
-	// sm (445-639): Perspectize, Item, Type, Channel
-	// md (640-899): Perspectize, Item, Type, Channel, Duration, Date
-	// lg (900+):    Perspectize, Item, Type, Channel, Duration, Date, Views, Likes, Tags
+	// sm (445-639): Perspectize, Item, Type, Category, Channel
+	// md (640-899): Perspectize, Item, Type, Category, Channel, Duration, Date
+	// lg (900+):    Perspectize, Item, Type, Category, Channel, Duration, Date, Views, Likes, Tags
 	$effect(() => {
 		if (!gridApi || !gridReady) return;
 		const api = gridApi;
@@ -766,7 +816,7 @@
 		requestAnimationFrame(() => {
 			if (!gridApi) return; // Grid may have been destroyed before rAF fires
 			const alwaysVisible = ['item', 'type', 'perspectize'];
-			const smCols = ['channel'];
+			const smCols = ['category', 'channel'];
 			const mdCols = ['duration', 'publishDate'];
 			const lgCols = ['views', 'likes', 'tags'];
 			// createdAt/updatedAt/id/addedByUserID/url stay hidden via their colDef
@@ -940,4 +990,29 @@
 		{overrideActive}
 		onToggle={handleColumnToggle}
 	/>
+{/if}
+
+<!-- Category typeahead popover — rendered outside the grid for correct portal positioning -->
+{#if categoryPopoverOpen}
+	<button
+		type="button"
+		class="fixed inset-0 z-40"
+		onclick={() => {
+			categoryPopoverOpen = false;
+		}}
+		aria-label="Close category search"
+	></button>
+	<div
+		class="fixed z-50 rounded-md border bg-popover shadow-md"
+		style="left: {categoryPopoverPosition.x}px; top: {categoryPopoverPosition.y}px;"
+	>
+		<CategoryTypeahead
+			contentId={categoryPopoverContentId ?? 0}
+			currentCategory={categoryPopoverCurrentCategory}
+			onSelect={handleCategorySelect}
+			onClose={() => {
+				categoryPopoverOpen = false;
+			}}
+		/>
+	</div>
 {/if}

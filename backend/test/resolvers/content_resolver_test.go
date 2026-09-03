@@ -77,6 +77,10 @@ func (m *mockContentRepository) ReassignByUser(ctx context.Context, fromUserID, 
 	return nil
 }
 
+func (m *mockContentRepository) UpdatePrimaryCategoryID(ctx context.Context, contentID int, categoryID *int) error {
+	return nil
+}
+
 // mockYouTubeClient implements services.YouTubeClient for testing
 type mockYouTubeClient struct {
 	getVideoMetadataFn func(ctx context.Context, videoID string) (*portservices.VideoMetadata, error)
@@ -216,6 +220,25 @@ func (m *mockPerspectiveRepository) ReassignByUser(ctx context.Context, fromUser
 	return nil
 }
 
+// mockCategoryRepository implements repositories.CategoryRepository for testing
+type mockCategoryRepository struct{}
+
+func (m *mockCategoryRepository) Upsert(ctx context.Context, category *domain.Category) (*domain.Category, error) {
+	category.ID = 1
+	return category, nil
+}
+
+func (m *mockCategoryRepository) GetByID(ctx context.Context, id int) (*domain.Category, error) {
+	return nil, domain.ErrNotFound
+}
+
+// mockWikidataClient implements services.WikidataClient for testing
+type mockWikidataClient struct{}
+
+func (m *mockWikidataClient) Search(ctx context.Context, query string, language string, limit int) ([]domain.WikidataSearchResult, error) {
+	return []domain.WikidataSearchResult{}, nil
+}
+
 // graphqlResponse represents a generic GraphQL JSON response
 type graphqlResponse struct {
 	Data   json.RawMessage `json:"data"`
@@ -246,10 +269,13 @@ func injectAuthMiddleware(next http.Handler) http.Handler {
 func setupTestServer(repo *mockContentRepository, ytClient *mockYouTubeClient) *httptest.Server {
 	userRepo := &mockUserRepository{}
 	perspectiveRepo := &mockPerspectiveRepository{}
+	categoryRepo := &mockCategoryRepository{}
+	wikidataClient := &mockWikidataClient{}
 	contentService := services.NewContentService(repo, ytClient)
 	userService := services.NewUserService(userRepo, repo, perspectiveRepo)
 	perspectiveService := services.NewPerspectiveService(perspectiveRepo, userRepo)
-	resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
+	categoryService := services.NewCategoryService(categoryRepo, repo, wikidataClient)
+	resolver := resolvers.NewResolver(contentService, userService, perspectiveService, categoryService)
 	directiveRoot := directives.NewDirectiveRoot(contentService, perspectiveService)
 	gqlConfig := generated.Config{
 		Resolvers: resolver,
@@ -1112,6 +1138,101 @@ func TestPaginatedContentQuery_WithMinMaxLengthFilter(t *testing.T) {
 	assert.Len(t, data.Content.Items, 1)
 }
 
+// --- SetPrimaryCategory Mutation Tests ---
+
+func TestSetPrimaryCategory_Success(t *testing.T) {
+	catID := 42
+	repo := &mockContentRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.Content, error) {
+			return &domain.Content{
+				ID:                id,
+				Name:              "Test Video",
+				ContentType:       domain.ContentTypeYouTube,
+				PrimaryCategoryID: &catID,
+			}, nil
+		},
+	}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `mutation { setPrimaryCategory(input: { contentId: 1, qid: "Q12345", label: "Science", description: "Natural science", entityType: "item" }) { id name } }`)
+
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		SetPrimaryCategory struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+		} `json:"setPrimaryCategory"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+
+	assert.Equal(t, "1", data.SetPrimaryCategory.ID)
+	assert.Equal(t, "Test Video", data.SetPrimaryCategory.Name)
+}
+
+func TestSetPrimaryCategory_ContentNotFound(t *testing.T) {
+	repo := &mockContentRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.Content, error) {
+			return nil, domain.ErrNotFound
+		},
+	}
+
+	server := setupTestServer(repo, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `mutation { setPrimaryCategory(input: { contentId: 999, qid: "Q12345", label: "Science" }) { id } }`)
+
+	require.NotEmpty(t, result.Errors)
+	assert.Contains(t, result.Errors[0].Message, "content not found")
+}
+
+// --- WikidataSearch Query Tests ---
+
+func TestWikidataSearch_Success(t *testing.T) {
+	server := setupTestServer(&mockContentRepository{}, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `{ wikidataSearch(query: "science", language: "en", limit: 5) { qid label description entityType } }`)
+
+	// With mock returning empty results, should succeed with empty array
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		WikidataSearch []struct {
+			Qid         string  `json:"qid"`
+			Label       string  `json:"label"`
+			Description *string `json:"description"`
+			EntityType  *string `json:"entityType"`
+		} `json:"wikidataSearch"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+	assert.NotNil(t, data.WikidataSearch)
+}
+
+func TestWikidataSearch_DefaultParams(t *testing.T) {
+	// Query with only required param (query), optional language and limit omitted
+	server := setupTestServer(&mockContentRepository{}, &mockYouTubeClient{})
+	defer server.Close()
+
+	result := executeGraphQL(t, server, `{ wikidataSearch(query: "test") { qid label } }`)
+
+	assert.Empty(t, result.Errors)
+
+	var data struct {
+		WikidataSearch []struct {
+			Qid   string `json:"qid"`
+			Label string `json:"label"`
+		} `json:"wikidataSearch"`
+	}
+	err := json.Unmarshal(result.Data, &data)
+	require.NoError(t, err)
+	assert.NotNil(t, data.WikidataSearch)
+}
+
 // --- NewResolver Tests ---
 
 func TestNewResolver(t *testing.T) {
@@ -1119,14 +1240,18 @@ func TestNewResolver(t *testing.T) {
 	ytClient := &mockYouTubeClient{}
 	userRepo := &mockUserRepository{}
 	perspectiveRepo := &mockPerspectiveRepository{}
+	categoryRepo := &mockCategoryRepository{}
+	wikidataClient := &mockWikidataClient{}
 	contentService := services.NewContentService(repo, ytClient)
 	userService := services.NewUserService(userRepo, repo, perspectiveRepo)
 	perspectiveService := services.NewPerspectiveService(perspectiveRepo, userRepo)
+	categoryService := services.NewCategoryService(categoryRepo, repo, wikidataClient)
 
-	resolver := resolvers.NewResolver(contentService, userService, perspectiveService)
+	resolver := resolvers.NewResolver(contentService, userService, perspectiveService, categoryService)
 
 	assert.NotNil(t, resolver)
 	assert.Equal(t, contentService, resolver.ContentService)
 	assert.Equal(t, userService, resolver.UserService)
 	assert.Equal(t, perspectiveService, resolver.PerspectiveService)
+	assert.Equal(t, categoryService, resolver.CategoryService)
 }

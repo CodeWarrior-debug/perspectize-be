@@ -1,3 +1,29 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: Feature Phases
+status: unknown
+last_updated: "2026-02-28T16:57:58.437Z"
+progress:
+  total_phases: 34
+  completed_phases: 15
+  total_plans: 101
+  completed_plans: 47
+---
+
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: Feature Phases
+status: in-progress
+last_updated: "2026-02-28T16:20:29.819Z"
+progress:
+  total_phases: 34
+  completed_phases: 14
+  total_plans: 101
+  completed_plans: 47
+---
+
 # Project State
 
 ## Project Reference
@@ -6,6 +32,8 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Users can easily submit their perspective on a YouTube video and browse others' perspectives in a way that keeps them in control.
 **Current focus:** Phase 09 complete (6/6 plans) — Security Hardening (Authorization & Data Protection)
+
+Also complete: Phase 03.5.1 (4/4 plans) — Wikidata Integration and Universal Content Types. Full category flow: Wikidata client -> backend service/resolvers -> frontend queries/Typeahead -> AG Grid integration.
 
 ## Current Position
 
@@ -52,6 +80,10 @@ Progress: [████████████████████] ~100% (
 | Phase 09-security-hardening P06 | 2 | 4 tasks | 3 files |
 | Phase 09 P05 | 4 | 5 tasks | 5 files |
 | Phase 09 P04 | 4 | 6 tasks | 7 files |
+| Phase 03.5.1 P01 | 4 | 2 tasks | 9 files |
+| Phase 03.5.1 P02 | 15 | 5 tasks | 20 files |
+| Phase 03.5.1 P03 | 7 | 2 tasks | 7 files |
+| Phase 03.5.1 P04 | 5 | 1 task | 3 files |
 
 ## Accumulated Context
 
@@ -204,6 +236,20 @@ Recent decisions affecting current work:
 - [09-06]: 90-day rotation cadence for JWT and DB credentials, annual for YouTube API keys
 - [Phase 09]: sanitizeYouTubeError is unexported helper — keeps sanitization logic internal to YouTube adapter
 - [Phase 09]: SSLProxyHeaders for Sevalla: Added X-Forwarded-Proto detection so HSTS works behind Sevalla/Cloudflare reverse proxy
+- [Phase 03.5.1]: Wikidata client uses flat label/description fields from wbsearchentities (not display object)
+- [Phase 03.5.1]: Simple for-loop retry with exponential backoff (1s, 2s) for 429/5xx errors, no external library
+- [Phase 03.5.1]: Custom APIError type for retryable HTTP status code check (429, 5xx)
+- [Phase 03.5.1-02]: GORM clause.OnConflict for atomic category upsert by wikidata_qid
+- [Phase 03.5.1-02]: Content.primaryCategory uses gqlgen field resolver (lazy loading) to avoid N+1 on list queries
+- [Phase 03.5.1-02]: CategoryService applies defaults for empty language (en) and zero limit (10) in SearchWikidata
+- [Phase 03.5.1-03]: CategoryTypeahead is a dumb search component (onSelect callback, does not call mutation) for reusability
+- [Phase 03.5.1-03]: 300ms debounce with 2-char minimum prevents excessive Wikidata API calls
+- [Phase 03.5.1-03]: keepPreviousData from TanStack Query prevents flicker during typeahead typing
+- [Phase 03.5.1-03]: 5-minute staleTime caches repeated Wikidata searches
+- [Phase 03.5.1-04]: Category column after Type, before Duration (position 4 in columnDefs)
+- [Phase 03.5.1-04]: Popover uses fixed positioning with backdrop button for outside-click dismissal
+- [Phase 03.5.1-04]: Category not sortable/filterable per CONTEXT.md deferral decision
+- [Phase 03.5.1-04]: Category visible on sm+ tiers (445px+), hidden on xs (mobile)
 
 ### Roadmap Evolution
 
@@ -223,6 +269,7 @@ Recent decisions affecting current work:
 - Phase 4.1 inserted after Phase 4: GraphQL Dataloaders for N+1 Query Prevention (URGENT) — Implement dataloadgen-based batching for 3 N+1-vulnerable nested relationships (Perspective→User, Perspective→Content, Content→User). Add batch repository methods (GetByIDs), field resolvers, per-request middleware. Related to Phase 8.1 M-08.
 - Phase 18.1 inserted after Phase 18: Mobile Activity Page Redesign (URGENT) — Redesign mobile activity page with 3-column layout (Item, Summary info-grid, Perspective glasses icon). Rethink mobile data display away from hidden AG Grid columns toward summary-based approach.
 - Phase 19 added: Content Familiarity Tracking — Backend system for users to record familiarity level (1-16 scale) with content and set target levels. Migrations, models, repository, service, and API endpoints. Open design questions on level count, table structure, and API style to resolve during planning.
+- Phase 03.5.1 inserted after Phase 3.5: Wikidata Integration and Universal Content Types (URGENT) — Build Go client for Wikidata APIs (Entity Search, REST, SPARQL), expand domain model beyond YouTube with Q-ID entity resolution, create enrichment layer. Extends Phase 3.5 research spike into production code.
 
 ### Project-Level Plan Requirements
 
@@ -401,6 +448,45 @@ None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bu
 - `113bed7` feat(03.5-01): generate Postman collection JSON for Google NL taxonomy exploration
 
 **Duration:** 11 min
+
+### 2026-02-28 — Phase 03.5.1: Wikidata Integration — Plan 01
+
+**Branch:** `claude/plan-attribution-phase-8fUmf`
+
+**Work completed:**
+1. **Category domain model** — Category struct (WikidataQID, Label, Description, EntityType) and WikidataSearchResult struct
+2. **Port interfaces** — CategoryRepository (Upsert, GetByID), CategoryService (SetPrimaryCategory, SearchWikidata), WikidataClient (Search)
+3. **Content domain update** — PrimaryCategoryID *int field added to Content struct
+4. **Wikidata HTTP client** — wbsearchentities adapter with User-Agent header, retry logic (429/5xx), 10s timeout
+5. **Unit tests** — 10 table-driven tests with httptest mock server
+6. **Migration 000014** — categories table with wikidata_qid unique index, primary_category_id FK on content
+
+**Commits:**
+- `d4dda54` feat(03.5.1-01): add Category domain model and port interfaces
+- `6313e42` feat(03.5.1-01): add Wikidata HTTP client adapter and categories migration
+
+**Duration:** 4 min
+
+### 2026-02-28 — Phase 03.5.1: Wikidata Integration — Plan 02
+
+**Branch:** `claude/plan-attribution-phase-8fUmf`
+
+**Work completed:**
+1. **GormCategoryRepository** — atomic Upsert (clause.OnConflict on wikidata_qid), GetByID
+2. **CategoryServiceImpl** — SetPrimaryCategory (upsert + FK update), SearchWikidata (proxy with defaults), GetCategoryByID
+3. **GraphQL schema** — Category type, WikidataSearchResult type, setPrimaryCategory mutation, wikidataSearch query, Content.primaryCategory field
+4. **Resolvers** — PrimaryCategory field resolver (lazy), SetPrimaryCategory mutation, WikidataSearch query
+5. **main.go wiring** — WikidataClient, CategoryRepo, CategoryService, resolver updated
+6. **Unit tests** — 13 new tests (10 service + 3 resolver)
+7. **Mock updates** — All ContentRepository mocks updated for new UpdatePrimaryCategoryID method
+
+**Commits:**
+- `ac74d15` feat(03.5.1-02): add GORM CategoryRepository with atomic upsert and GetByID
+- `d70652e` feat(03.5.1-02): add CategoryService, GraphQL schema, resolvers, and main.go wiring
+- `4bf49ec` test(03.5.1-02): add CategoryService unit tests
+- `64829af` test(03.5.1-02): add resolver tests for setPrimaryCategory and wikidataSearch
+
+**Duration:** 15 min
 
 ## Session Continuity
 

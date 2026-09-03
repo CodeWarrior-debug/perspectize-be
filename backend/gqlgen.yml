@@ -68,3 +68,7 @@ models:
     fields:
       email:
         resolver: true
+  Content:
+    fields:
+      primaryCategory:
+        resolver: true

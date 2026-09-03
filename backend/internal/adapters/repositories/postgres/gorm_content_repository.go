@@ -267,3 +267,18 @@ func (r *GormContentRepository) ReassignByUser(ctx context.Context, fromUserID, 
 		Where("added_by_user_id = ?", fromUserID).
 		Update("added_by_user_id", toUserID).Error
 }
+
+// UpdatePrimaryCategoryID sets the primary_category_id FK on a content record
+func (r *GormContentRepository) UpdatePrimaryCategoryID(ctx context.Context, contentID int, categoryID *int) error {
+	result := r.db.WithContext(ctx).
+		Model(&ContentModel{}).
+		Where("id = ?", contentID).
+		Update("primary_category_id", categoryID)
+	if result.Error != nil {
+		return fmt.Errorf("failed to update primary category: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
