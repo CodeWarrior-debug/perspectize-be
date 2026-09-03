@@ -56,3 +56,6 @@ coverage/
 
 # Figma Make reference artifacts (large generated code, not for commit)
 .planning/phases/*/figma-make-ref/
+
+# graphify knowledge-graph artifacts (regenerable, not for commit)
+graphify-out/
