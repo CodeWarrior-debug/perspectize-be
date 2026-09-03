@@ -2,7 +2,14 @@
 name: context7-docs
 description: Library/framework documentation researcher. Use when you need current API docs, config syntax, or version-specific behavior for a library, framework, SDK, or CLI tool (e.g. gqlgen, SvelteKit, TanStack Query, GORM, Neon/Postgres client libraries) rather than relying on training-data memory. Delegates the token-heavy doc lookup and reading to keep the main session's context lean — it returns a distilled answer, not raw doc dumps.
 model: sonnet
-tools: Read, Grep, Glob, mcp__plugin_context7_context7__*
+tools:
+  - Read
+  - Grep
+  - Glob
+mcpServers:
+  - context7:
+      type: http
+      url: https://mcp.context7.com/mcp
 ---
 
 # Context7 Documentation Researcher
