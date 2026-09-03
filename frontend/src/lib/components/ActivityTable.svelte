@@ -730,11 +730,21 @@
 	// lg (900+):    Perspectize, Item, Type, Channel, Duration, Date, Views, Likes, Tags
 	$effect(() => {
 		if (!gridApi || !gridReady) return;
-		// Once the user takes manual control via the column picker, stop driving
-		// visibility from breakpoints for the rest of the session (a page refresh
-		// clears userColumnOverride and restores this behaviour).
-		if (userColumnOverride) return;
 		const api = gridApi;
+		// Once the user takes manual control via the column picker, that map is the
+		// source of truth for the rest of the session — re-applied here so it also
+		// survives a grid remount (cardMode toggle, error recovery). A page refresh
+		// clears userColumnOverride and restores breakpoint-driven visibility.
+		if (userColumnOverride) {
+			const override = userColumnOverride;
+			requestAnimationFrame(() => {
+				if (!gridApi) return;
+				for (const [colId, visible] of Object.entries(override)) {
+					api.setColumnsVisible([colId], visible);
+				}
+			});
+			return;
+		}
 		const tier = responsiveTier;
 		requestAnimationFrame(() => {
 			if (!gridApi) return; // Grid may have been destroyed before rAF fires
