@@ -133,7 +133,14 @@ func main() {
 	}
 
 	// Initialize adapters
-	youtubeClient := youtube.NewClient(cfg.YouTube.APIKey)
+	// Wrap the raw YouTube client with an in-memory TTL cache to avoid
+	// re-spending API quota on repeat lookups of the same video. TTL is
+	// configurable via YOUTUBE_API_CACHE_TTL_SECONDS (default 6 hours).
+	youtubeClient := youtube.NewCachingClient(
+		youtube.NewClient(cfg.YouTube.APIKey),
+		time.Duration(cfg.YouTube.CacheTTLSeconds)*time.Second,
+	)
+	slog.Info("YouTube API cache configured", "ttlSeconds", cfg.YouTube.CacheTTLSeconds)
 	contentRepo := postgres.NewGormContentRepository(db)
 	userRepo := postgres.NewGormUserRepository(db)
 	perspectiveRepo := postgres.NewGormPerspectiveRepository(db)

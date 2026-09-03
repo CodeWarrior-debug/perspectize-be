@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 )
 
 // Config represents the application configuration
@@ -33,7 +34,15 @@ type DatabaseConfig struct {
 // YouTubeConfig holds YouTube API configuration
 type YouTubeConfig struct {
 	APIKey string `json:"api_key"` // Will be overridden by env var
+
+	// CacheTTLSeconds controls how long a fetched video's metadata is kept in
+	// the in-memory YouTube response cache before it's re-fetched from the
+	// API. Default is 6 hours — see YOUTUBE_API_CACHE_TTL_SECONDS in .env.example.
+	CacheTTLSeconds int `json:"cache_ttl_seconds"`
 }
+
+// DefaultYouTubeCacheTTLSeconds is 6 hours, expressed in seconds.
+const DefaultYouTubeCacheTTLSeconds = 6 * 60 * 60
 
 // LoggingConfig holds logging configuration
 type LoggingConfig struct {
@@ -45,7 +54,8 @@ type LoggingConfig struct {
 // If the config file is missing, returns sensible defaults (production uses env vars).
 func Load(configPath string) (*Config, error) {
 	cfg := Config{
-		Server: ServerConfig{Port: 8080, Host: ""},
+		Server:  ServerConfig{Port: 8080, Host: ""},
+		YouTube: YouTubeConfig{CacheTTLSeconds: DefaultYouTubeCacheTTLSeconds},
 	}
 
 	// Read config file (optional in production where env vars provide all config)
@@ -71,6 +81,17 @@ func Load(configPath string) (*Config, error) {
 
 	if ytAPIKey := os.Getenv("YOUTUBE_API_KEY"); ytAPIKey != "" {
 		cfg.YouTube.APIKey = ytAPIKey
+	}
+
+	// Unlike getEnvInt (security.go), 0 is a valid value here — it disables
+	// the YouTube response cache entirely — so parse directly rather than
+	// treating 0 as "unset". An unset or invalid value falls back to
+	// whatever's already in cfg.YouTube.CacheTTLSeconds (config file value,
+	// or DefaultYouTubeCacheTTLSeconds set above).
+	if ttlStr := os.Getenv("YOUTUBE_API_CACHE_TTL_SECONDS"); ttlStr != "" {
+		if v, err := strconv.Atoi(ttlStr); err == nil && v >= 0 {
+			cfg.YouTube.CacheTTLSeconds = v
+		}
 	}
 
 	return &cfg, nil

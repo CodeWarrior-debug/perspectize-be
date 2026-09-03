@@ -27,6 +27,67 @@ export function formatDate(isoString: string): string {
 }
 
 /**
+ * Format ISO date string to locale date + time, for hover tooltips where the
+ * exact moment matters (not just the day). No `timeZone` option is passed,
+ * so `toLocaleString` uses the browser's local timezone automatically —
+ * that's what "translated to browser time" means here, no manual offset math.
+ */
+export function formatDateTime(isoString: string): string {
+	const date = new Date(isoString);
+	if (isNaN(date.getTime())) return '—';
+	return date.toLocaleString('en-US', {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric',
+		hour: 'numeric',
+		minute: '2-digit',
+	});
+}
+
+/**
+ * Client-side mirror of the backend's YouTube metadata cache window
+ * (YOUTUBE_API_CACHE_TTL_SECONDS, default 6h — see backend/.env.example and
+ * backend/internal/adapters/youtube/cache.go). This is a UX-only estimate
+ * used to skip a pointless "Update source data" round trip and explain why
+ * the numbers won't change yet; the backend cache is the actual source of
+ * truth and enforces the real TTL independently (a stale or bypassed
+ * client-side value here just means an occasional wasted round trip, not a
+ * quota risk). Keep this in sync if the backend default ever changes.
+ */
+export const SOURCE_DATA_COOLDOWN_MS = 6 * 60 * 60 * 1000;
+
+export interface SourceDataCooldown {
+	active: boolean;
+	remainingMs: number;
+}
+
+/**
+ * Whether a content item was updated recently enough that refreshing it
+ * again would just re-serve the backend's cached YouTube response.
+ */
+export function getSourceDataCooldown(updatedAtIso: string, now: Date = new Date()): SourceDataCooldown {
+	const updatedAt = new Date(updatedAtIso);
+	if (isNaN(updatedAt.getTime())) return { active: false, remainingMs: 0 };
+
+	const remainingMs = SOURCE_DATA_COOLDOWN_MS - (now.getTime() - updatedAt.getTime());
+	return { active: remainingMs > 0, remainingMs: Math.max(0, remainingMs) };
+}
+
+/**
+ * Format a millisecond duration as a short "5h 42m" / "42m" string, for
+ * cooldown messaging. Rounds up so it never reads "0m" while time remains.
+ */
+export function formatRemainingTime(ms: number): string {
+	if (ms <= 0) return '0m';
+	const totalMinutes = Math.ceil(ms / 60_000);
+	const hours = Math.floor(totalMinutes / 60);
+	const minutes = totalMinutes % 60;
+	if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`;
+	if (hours > 0) return `${hours}h`;
+	return `${minutes}m`;
+}
+
+/**
  * AG Grid value getter for duration column.
  */
 export function durationValueGetter(params: { data?: { length: number | null; lengthUnits: string | null } }): string {
@@ -171,8 +232,7 @@ export function headerMinWidth(name: string, hasFilter = true): number {
 	const sortIconEm = 1.2; // sort indicator
 	const filterIconEm = hasFilter ? 1.5 : 0;
 	const separatorEm = 0.5; // column border/handle
-	const totalEm =
-		name.length * charWidthEm + paddingEm + sortIconEm + filterIconEm + separatorEm;
+	const totalEm = name.length * charWidthEm + paddingEm + sortIconEm + filterIconEm + separatorEm;
 	return Math.ceil(totalEm * GRID_FONT_SIZE);
 }
 
