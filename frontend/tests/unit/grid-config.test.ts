@@ -13,6 +13,9 @@ import {
 	COLUMN_IDS,
 	NON_SORTABLE_COLUMNS,
 	COLUMN_FILTERS,
+	DATA_COLUMNS,
+	INTERNAL_COLUMNS,
+	togglableColIds,
 } from '$lib/utils/grid-config';
 
 // ---------------------------------------------------------------------------
@@ -395,5 +398,53 @@ describe('COLUMN_FILTERS', () => {
 		for (const colId of COLUMN_IDS) {
 			expect(COLUMN_FILTERS).toHaveProperty(colId);
 		}
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Column-picker registry
+// ---------------------------------------------------------------------------
+describe('column-picker registry', () => {
+	it('DATA_COLUMNS holds the 9 user-togglable data columns', () => {
+		expect(DATA_COLUMNS.map((c) => c.colId)).toEqual([
+			'item',
+			'type',
+			'duration',
+			'views',
+			'likes',
+			'publishDate',
+			'channel',
+			'tags',
+			'description',
+		]);
+	});
+
+	it('INTERNAL_COLUMNS holds the 5 admin-only columns', () => {
+		expect(INTERNAL_COLUMNS.map((c) => c.colId)).toEqual(['id', 'addedByUserID', 'url', 'createdAt', 'updatedAt']);
+	});
+
+	it('every registry colId is unique across both groups', () => {
+		const all = [...DATA_COLUMNS, ...INTERNAL_COLUMNS].map((c) => c.colId);
+		expect(new Set(all).size).toBe(all.length);
+	});
+
+	it('every registry column has a non-empty label', () => {
+		for (const col of [...DATA_COLUMNS, ...INTERNAL_COLUMNS]) {
+			expect(col.label.length).toBeGreaterThan(0);
+		}
+	});
+
+	it('togglableColIds(false) returns only the 9 data columns', () => {
+		expect(togglableColIds(false)).toEqual(DATA_COLUMNS.map((c) => c.colId));
+	});
+
+	it('togglableColIds(true) returns all 14 columns', () => {
+		const ids = togglableColIds(true);
+		expect(ids).toHaveLength(14);
+		expect(ids).toEqual([...DATA_COLUMNS.map((c) => c.colId), ...INTERNAL_COLUMNS.map((c) => c.colId)]);
+	});
+
+	it('does not list the perspectize action column', () => {
+		expect(togglableColIds(true)).not.toContain('perspectize');
 	});
 });

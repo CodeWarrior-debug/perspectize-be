@@ -2,10 +2,12 @@ import { describe, it, expect } from 'vitest';
 import {
 	LIST_USERS,
 	CREATE_USER,
+	ME,
 	type User,
 	type UsersResponse,
 	type CreateUserInput,
 	type CreateUserResponse,
+	type Me,
 } from '$lib/queries/users';
 
 describe('User Queries', () => {
@@ -35,6 +37,24 @@ describe('User Queries', () => {
 				createUser: { id: '1', username: 'newuser' },
 			};
 			expect(response).toBeDefined();
+		});
+
+		it('exports Me interface with a role', () => {
+			const me: Me = { id: '1', username: 'admin', role: 'ADMIN' };
+			expect(me.role).toBe('ADMIN');
+		});
+	});
+
+	describe('ME', () => {
+		it('is exported as a string containing the Me query', () => {
+			expect(typeof ME).toBe('string');
+			expect(ME).toContain('query Me');
+		});
+
+		it('requests id, username, and role fields', () => {
+			expect(ME).toContain('id');
+			expect(ME).toContain('username');
+			expect(ME).toContain('role');
 		});
 	});
 

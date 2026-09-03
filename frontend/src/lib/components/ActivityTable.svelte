@@ -56,7 +56,11 @@
 		durationComparator,
 		computeNextPage,
 		computePrevPage,
+		togglableColIds,
 	} from '$lib/utils/grid-config';
+	import { useMe } from '$lib/queries/hooks/useMe.svelte';
+	import ColumnPickerDialog from '$lib/components/ColumnPickerDialog.svelte';
+	import SlidersHorizontalIcon from '@lucide/svelte/icons/sliders-horizontal';
 	import { TagsTooltip } from '$lib/components/TagsTooltip';
 	import { DescriptionTooltip } from '$lib/components/DescriptionTooltip';
 	import DataModeToggle from '$lib/components/DataModeToggle.svelte';
@@ -84,6 +88,42 @@
 
 	// Mobile card-list breakpoint (< 860px) — replaces the AG Grid entirely, per design handoff.
 	let cardMode = $state(false);
+
+	// Signed-in user — drives the admin-only "Internal" group in the column picker.
+	const meCtx = useMe();
+
+	// Column picker (session-only). Once the user makes a manual choice,
+	// `userColumnOverride` is non-null and the responsive $effect below stops
+	// touching column visibility for the rest of the session. A page refresh
+	// clears it and automatic responsive layout resumes.
+	let columnPickerOpen = $state(false);
+	let userColumnOverride = $state<Record<string, boolean> | null>(null);
+	const overrideActive = $derived(userColumnOverride !== null);
+
+	function currentVisibility(): Record<string, boolean> {
+		const out: Record<string, boolean> = {};
+		if (!gridApi) return out;
+		const allowed = new Set(togglableColIds(meCtx.isAdmin));
+		for (const colState of gridApi.getColumnState()) {
+			if (colState.colId && allowed.has(colState.colId)) out[colState.colId] = !colState.hide;
+		}
+		return out;
+	}
+
+	function handleColumnToggle(colId: string, next: boolean) {
+		if (!gridApi || !gridReady) return;
+		if (userColumnOverride === null) userColumnOverride = currentVisibility();
+		userColumnOverride = { ...userColumnOverride, [colId]: next };
+		gridApi.setColumnsVisible([colId], next);
+	}
+
+	// Checkbox state for the dialog — recomputed when it opens and after every
+	// toggle so the checkboxes track the live grid.
+	const pickerVisibility = $derived.by(() => {
+		void columnPickerOpen;
+		void userColumnOverride;
+		return columnPickerOpen ? currentVisibility() : {};
+	});
 
 	// ---------------------------------------------------------------------------
 	// URL-derived state
@@ -115,7 +155,6 @@
 	// ---------------------------------------------------------------------------
 	// Grid state
 	// ---------------------------------------------------------------------------
-
 
 	let gridApi = $state<GridApi | null>(null);
 	let gridReady = $state(false);
@@ -202,9 +241,7 @@
 
 	// Derived values from query
 	const rowData = $derived(contentQuery.data?.content.items ?? []);
-	const detailsModalContent = $derived(
-		rowData.find((item) => String(item.id) === detailsModalContentId) ?? null,
-	);
+	const detailsModalContent = $derived(rowData.find((item) => String(item.id) === detailsModalContentId) ?? null);
 	const totalCount = $derived(contentQuery.data?.content.totalCount ?? 0);
 	const loading = $derived(contentQuery.isLoading || contentQuery.isPlaceholderData);
 	const hasActiveFilters = $derived(Object.keys(filters).length > 0 || searchText !== '');
@@ -458,6 +495,41 @@
 				headerTooltip: 'Date added to Perspectize',
 				hide: true,
 			},
+			// Internal columns — hidden by default; only offered in the column
+			// picker to admins (see ColumnPickerDialog / INTERNAL_COLUMNS).
+			{
+				colId: 'id',
+				field: 'id',
+				headerName: 'Content ID',
+				flex: 1,
+				minWidth: 260,
+				sortable: false,
+				filter: false,
+				headerTooltip: 'Internal content record ID',
+				hide: true,
+			},
+			{
+				colId: 'addedByUserID',
+				field: 'addedByUserID',
+				headerName: 'Submitter',
+				flex: 0.7,
+				minWidth: 120,
+				sortable: false,
+				filter: false,
+				headerTooltip: 'ID of the user who added this item',
+				hide: true,
+			},
+			{
+				colId: 'url',
+				field: 'url',
+				headerName: 'Source URL',
+				flex: 2,
+				minWidth: 240,
+				sortable: false,
+				filter: false,
+				headerTooltip: 'Canonical source URL',
+				hide: true,
+			},
 		] as ColDef<ContentItem>[]
 	).map((col) => ({
 		...col,
@@ -659,6 +731,20 @@
 	$effect(() => {
 		if (!gridApi || !gridReady) return;
 		const api = gridApi;
+		// Once the user takes manual control via the column picker, that map is the
+		// source of truth for the rest of the session — re-applied here so it also
+		// survives a grid remount (cardMode toggle, error recovery). A page refresh
+		// clears userColumnOverride and restores breakpoint-driven visibility.
+		if (userColumnOverride) {
+			const override = userColumnOverride;
+			requestAnimationFrame(() => {
+				if (!gridApi) return;
+				for (const [colId, visible] of Object.entries(override)) {
+					api.setColumnsVisible([colId], visible);
+				}
+			});
+			return;
+		}
 		const tier = responsiveTier;
 		requestAnimationFrame(() => {
 			if (!gridApi) return; // Grid may have been destroyed before rAF fires
@@ -666,7 +752,9 @@
 			const smCols = ['channel'];
 			const mdCols = ['duration', 'publishDate'];
 			const lgCols = ['views', 'likes', 'tags'];
-			const alwaysHidden = ['description', 'updatedAt', 'createdAt'];
+			// createdAt/updatedAt/id/addedByUserID/url stay hidden via their colDef
+			// `hide: true` until an admin enables them in the column picker.
+			const alwaysHidden = ['description'];
 
 			api.setColumnsVisible(alwaysVisible, true);
 			api.setColumnsVisible(alwaysHidden, false);
@@ -719,22 +807,20 @@
 				</button>
 			</div>
 		</div>
+	{:else if cardMode}
+		<div class="flex-1 min-h-0 overflow-y-auto">
+			<ActivityCardList {rowData} onOpenDetails={handleOpenDetails} />
+		</div>
 	{:else}
-		{#if cardMode}
-			<div class="flex-1 min-h-0 overflow-y-auto">
-				<ActivityCardList {rowData} onOpenDetails={handleOpenDetails} />
-			</div>
-		{:else}
-			<!-- AG Grid -->
-			<div
-				bind:this={gridContainer}
-				data-testid="ag-grid-container"
-				class="{isMobile ? 'overflow-y-auto' : 'flex-1'} min-h-0"
-				style="--ag-row-height: 64px; --ag-header-height: 40px;"
-			>
-				<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
-			</div>
-		{/if}
+		<!-- AG Grid -->
+		<div
+			bind:this={gridContainer}
+			data-testid="ag-grid-container"
+			class="{isMobile ? 'overflow-y-auto' : 'flex-1'} min-h-0"
+			style="--ag-row-height: 64px; --ag-header-height: 40px;"
+		>
+			<AgGridSvelte5Component {gridOptions} {rowData} {theme} {modules} />
+		</div>
 	{/if}
 
 	<!-- Manual Pagination Controls -->
@@ -747,6 +833,18 @@
 			</div>
 			<!-- Data Mode Toggle -->
 			<DataModeToggle {mode} loadedCount={rowData.length} onToggle={handleModeToggle} />
+			{#if !cardMode}
+				<button
+					type="button"
+					aria-label="Choose columns"
+					onclick={() => (columnPickerOpen = true)}
+					disabled={!gridReady}
+					class="inline-flex items-center gap-1.5 px-2 py-1 text-sm border border-input rounded-md bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+				>
+					<SlidersHorizontalIcon class="size-4" />
+					<span class="hidden md:inline">Columns</span>
+				</button>
+			{/if}
 			{#if mode === 'all'}
 				<div class="hidden md:flex items-center gap-2">
 					<label for="pageSize" class="text-muted-foreground">Page size:</label>
@@ -808,3 +906,16 @@
 	open={detailsModalContentId !== null}
 	onClose={handleCloseDetails}
 />
+
+<!-- Column picker — session-only show/hide, admin-gated internal columns.
+     Mounted only while open (matches PerspectivePopover) so bits-ui's body
+     scroll-lock never lingers. -->
+{#if columnPickerOpen}
+	<ColumnPickerDialog
+		bind:open={columnPickerOpen}
+		isAdmin={meCtx.isAdmin}
+		visibility={pickerVisibility}
+		{overrideActive}
+		onToggle={handleColumnToggle}
+	/>
+{/if}

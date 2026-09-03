@@ -2,6 +2,8 @@
 
 Screenshots captured during self-verification (see [VERIFICATION.md](VERIFICATION.md), `sv-` prefix) live locally in `~/Downloads/screenshots/` — they aren't committed to the repo. To reference them in a PR, upload them as assets on a dedicated GitHub Release that acts as a permanent asset bucket, then link the resulting URLs in the PR body.
 
+> **Chrome DevTools MCP note:** the MCP's `take_screenshot` sandbox only permits paths **inside the repo** (`~/Downloads/...` is rejected). When capturing via MCP, save to the gitignored `.screenshots/` dir at the repo root and `gh release upload` from there instead.
+
 ## One-time setup
 
 Check whether the bucket release already exists before creating it:

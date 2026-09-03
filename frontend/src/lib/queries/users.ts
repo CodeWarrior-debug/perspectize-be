@@ -36,9 +36,12 @@ export const CREATE_USER = gql`
 	}
 `;
 
+export type UserRole = 'ADMIN' | 'SENTINEL' | 'DEFAULT';
+
 export interface Me {
 	id: string;
 	username: string;
+	role: UserRole;
 }
 
 export interface MeResponse {
@@ -50,6 +53,7 @@ export const ME = gql`
 		me {
 			id
 			username
+			role
 		}
 	}
 `;
