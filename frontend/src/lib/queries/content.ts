@@ -5,6 +5,7 @@ export type { ContentFilterInput } from '$lib/utils/gridUrlState';
 export interface ContentItem {
 	id: string;
 	name: string;
+	addedByUserID: string;
 	url: string | null;
 	contentType: string;
 	length: number | null;
@@ -63,6 +64,7 @@ export const LIST_CONTENT = gql`
 			items {
 				id
 				name
+				addedByUserID
 				url
 				contentType
 				length
