@@ -1,0 +1,18 @@
+# Gitignored files to copy into every new worktree (EnterWorktree / --worktree / isolation:
+# worktree). Uses .gitignore pattern syntax; only files that are both gitignored AND matched
+# here get copied — tracked files are never duplicated.
+#
+# Without this, a fresh worktree has no .env (DATABASE_URL, secrets) and no machine-local
+# Claude Code settings, since those are gitignored and worktrees start clean from the branch.
+
+# Backend/frontend local env files (DATABASE_URL, API keys, etc.)
+.env
+.env.local
+backend/.env
+backend/.env.local
+frontend/.env
+frontend/.env.local
+
+# Machine-local Claude Code settings/hooks
+.claude/*.local.md
+.claude/*.local.json
