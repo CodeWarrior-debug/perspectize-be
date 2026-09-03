@@ -52,13 +52,18 @@ describe('ColumnPickerDialog', () => {
 		expect(onToggle).toHaveBeenCalledWith('tags', false);
 	});
 
-	it('shows the manual-mode notice only when overrideActive', () => {
+	it('always shows the "refresh to return to standard columns" hint', () => {
+		render(ColumnPickerDialog, { props: { open: true, overrideActive: false, onToggle: noop } });
+		const hint = screen.getByTestId('session-hint');
+		expect(hint.textContent).toMatch(/refresh the page to return to the standard columns/i);
+	});
+
+	it('escalates the hint wording once overrideActive', async () => {
 		const { rerender } = render(ColumnPickerDialog, {
 			props: { open: true, overrideActive: false, onToggle: noop },
 		});
-		expect(screen.queryByTestId('manual-mode-notice')).toBeNull();
-		return rerender({ open: true, overrideActive: true, onToggle: noop }).then(() => {
-			expect(screen.getByTestId('manual-mode-notice')).toBeTruthy();
-		});
+		expect(screen.getByTestId('session-hint').textContent).toMatch(/apply for this session only/i);
+		await rerender({ open: true, overrideActive: true, onToggle: noop });
+		expect(screen.getByTestId('session-hint').textContent).toMatch(/set manually for this session/i);
 	});
 });

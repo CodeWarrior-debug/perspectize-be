@@ -69,13 +69,20 @@
 					{/each}
 				</fieldset>
 			{/if}
-
-			{#if overrideActive}
-				<p class="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground" data-testid="manual-mode-notice">
-					Columns are set manually for this session. Refresh the page to restore automatic responsive layout.
-				</p>
-			{/if}
 		</div>
+
+		<p
+			class="rounded-md px-3 py-2 text-xs {overrideActive
+				? 'bg-muted font-medium text-foreground'
+				: 'text-muted-foreground'}"
+			data-testid="session-hint"
+		>
+			{#if overrideActive}
+				Columns are set manually for this session — refresh the page to return to the standard columns.
+			{:else}
+				Column choices apply for this session only. Refresh the page to return to the standard columns.
+			{/if}
+		</p>
 
 		<DialogFooter>
 			<Button type="button" onclick={() => (open = false)}>Done</Button>
