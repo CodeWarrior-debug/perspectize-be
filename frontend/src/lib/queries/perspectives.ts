@@ -54,18 +54,23 @@ const PERSPECTIVE_FIELDS = gql`
 	}
 `;
 
+// Both mutations return the full row so the caller can patch the cached
+// ListPerspectivesByUser result in place (optimistic insert/edit reconciled
+// with the server id + timestamps) instead of refetching the whole list.
 export const CREATE_PERSPECTIVE = gql`
+	${PERSPECTIVE_FIELDS}
 	mutation CreatePerspective($input: CreatePerspectiveInput!) {
 		createPerspective(input: $input) {
-			id
+			...PerspectiveFields
 		}
 	}
 `;
 
 export const UPDATE_PERSPECTIVE = gql`
+	${PERSPECTIVE_FIELDS}
 	mutation UpdatePerspective($input: UpdatePerspectiveInput!) {
 		updatePerspective(input: $input) {
-			id
+			...PerspectiveFields
 		}
 	}
 `;
