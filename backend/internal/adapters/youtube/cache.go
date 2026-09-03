@@ -2,6 +2,7 @@ package youtube
 
 import (
 	"context"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -44,8 +45,16 @@ func NewCachingClient(inner services.YouTubeClient, ttl time.Duration) *CachingC
 
 // GetVideoMetadata returns cached metadata for videoID if present and not
 // expired; otherwise it fetches from the wrapped client and caches the result.
+//
+// Every outcome is logged at Info level with a stable "event" field
+// (cache_disabled/cache_hit/cache_miss/cache_store) precisely so this can be
+// verified directly in logs, not just inferred from a drop in quota errors —
+// e.g. `grep 'youtube cache' server.log` or the equivalent query in your log
+// viewer (Sevalla's log tab in production; this app isn't on Kubernetes, so
+// there's no kubectl to exec into — logs are the direct signal here).
 func (c *CachingClient) GetVideoMetadata(ctx context.Context, videoID string) (*services.VideoMetadata, error) {
 	if c.ttl <= 0 {
+		slog.Info("youtube cache", "event", "cache_disabled", "videoID", videoID)
 		return c.inner.GetVideoMetadata(ctx, videoID)
 	}
 
@@ -54,8 +63,11 @@ func (c *CachingClient) GetVideoMetadata(ctx context.Context, videoID string) (*
 	c.mu.Unlock()
 
 	if ok && time.Now().Before(entry.expiresAt) {
+		slog.Info("youtube cache", "event", "cache_hit", "videoID", videoID, "expiresIn", time.Until(entry.expiresAt).String())
 		return entry.metadata, nil
 	}
+
+	slog.Info("youtube cache", "event", "cache_miss", "videoID", videoID)
 
 	metadata, err := c.inner.GetVideoMetadata(ctx, videoID)
 	if err != nil {
@@ -67,7 +79,10 @@ func (c *CachingClient) GetVideoMetadata(ctx context.Context, videoID string) (*
 		metadata:  metadata,
 		expiresAt: time.Now().Add(c.ttl),
 	}
+	size := len(c.cache)
 	c.mu.Unlock()
+
+	slog.Info("youtube cache", "event", "cache_store", "videoID", videoID, "ttl", c.ttl.String(), "cacheSize", size)
 
 	return metadata, nil
 }
