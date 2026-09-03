@@ -59,3 +59,7 @@ coverage/
 
 # graphify knowledge-graph artifacts (regenerable, not for commit)
 graphify-out/
+
+# Self-verification screenshots — the Chrome DevTools MCP sandbox can only write
+# inside the repo, so captures land here instead of ~/Downloads/screenshots/
+.screenshots/
