@@ -127,6 +127,24 @@ When overriding a package only on a specific path, scope it:
 `"tinyglobby>picomatch": "^4.0.4"`. (Note: an override version must actually
 exist — e.g. there is no `picomatch@2.3.2`; the v2 line tops out at `2.3.1`.)
 
+**Exception — pin exact when a specific version must be excluded.** Caret only
+bounds the *major* (or, below `1.0.0`, the *minor*) — it doesn't exclude a
+single bad version within that range. If the override exists to keep a
+*specific* published version out (blocked by `minimumReleaseAge`, see #7
+below; or a known regression), use an exact pin instead:
+
+```jsonc
+"prosemirror-transform": "1.12.0"   // exact: 1.12.1 satisfies ^1.12.0 too,
+                                     // so caret wouldn't exclude it
+```
+
+**Exception — compound OR ranges for a skipped vulnerable band.** `nanoid`'s
+override (`>=3.3.18 <5 || >=5.1.6 <6`) intentionally spans two major versions
+to support both v3 and v5 consumers while excluding an all-vulnerable v4 —
+don't collapse this to a single caret (`^5.1.6` would drop the v3 band
+entirely and could break dependents pinned to it; see `de712a4` for the CI
+compat break from over-narrowing this once already).
+
 ### 6. A path-filtered workflow won't re-run on workflow-only edits
 
 If a workflow has a `paths:` filter, editing **only** the workflow file does not
@@ -141,6 +159,30 @@ on:
       - "backend/go.sum"
       - ".github/workflows/trivy.yml"   # re-run when the scan config changes
 ```
+
+### 7. pnpm's `minimumReleaseAge` blocks freshly-published transitive deps
+
+pnpm (10.16+) refuses to install a lockfile entry published within a rolling
+age window (default 24h) as a supply-chain guard against just-published
+(potentially compromised) packages. This isn't a CVE — it's a **timing**
+check — and it fires on transitive deps you never touched directly:
+
+```
+✗ Lockfile failed supply-chain policy check
+[ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION] prosemirror-transform@1.12.1 was
+published within the minimumReleaseAge cutoff
+```
+
+`prosemirror-transform@1.12.1` came in transitively via `@tiptap/*` (no
+direct pin) and got resolved to the newest release, which happened to be
+hours old. Same failure mode as `8939867` (`@sveltejs/kit` pinned to `~2.63.1`
+for this exact reason).
+
+**Fix:** add an exact-pin override (see the exception under #5) to the last
+version that's already past the age window — check publish dates with
+`npm view <pkg> time --json`. Don't disable or loosen the policy itself; it's
+doing its job. The pin can usually be relaxed (or removed) once a newer,
+now-aged release exists and there's a reason to move off the pinned version.
 
 ## Known unfixable findings
 
