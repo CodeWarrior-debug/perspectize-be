@@ -477,3 +477,39 @@ This would give a full waterfall view: HTTP request → GraphQL operation → DB
 **Priority:** Medium — the env var setup is zero-effort; granular instrumentation is a follow-up.
 
 **Source:** Architecture discussion (2026-03-23)
+
+---
+
+## Re-run graphify with a Real LLM Backend Token
+
+**Type:** Dev × Feature Request
+
+The initial graphify knowledge-graph build (see CLAUDE.md's `## graphify` section) was run with `graphify extract . --code-only` because no `ANTHROPIC_API_KEY`/`GEMINI_API_KEY` was available in the shell — this skips semantic extraction entirely.
+
+**Current state:** `graphify-out/graph.json` has 2345 nodes / 6398 edges / 192 communities from local AST parsing only. Communities are unlabeled placeholders ("Community 0"–"191") since naming requires an LLM call. 475 doc files, papers, and images were skipped (`--code-only` only indexes code). 29 `.sql` files contributed nothing (missing `tree_sitter_sql` — `pip install "graphifyy[sql]"` fixes that separately).
+
+**What to do:**
+- Get an API key (Anthropic from console.anthropic.com — separate billing from the Claude subscription — or Gemini) and export it in a real terminal, not through an AI session
+- Re-run `graphify extract . --backend claude` (or `--backend gemini`) with `--force` to get semantic/INFERRED edges and doc/paper/image extraction
+- Run `graphify cluster-only .` (without `--no-label`) afterward to get real community names instead of "Community N" placeholders
+
+**Priority:** Low-Medium — the code-only graph is already usable for query/path/explain against code symbols; this upgrade mainly improves natural-language question matching and cross-doc community structure.
+
+**Source:** Dev request (2026-09-02), during graphify initialization.
+
+---
+
+## Verify TypeScript + Go LSPs Are Actually Working
+
+**Type:** Dev × Feature Request
+
+Session start on this machine shows: `[vtsls] Installing vtsls... [vtsls] Failed to install. Please run manually: npm install -g @vtsls/language-server typescript`. The `gopls`, `vtsls`, and `typescript-lsp` plugins are enabled at the user level (`~/.claude/settings.json` → `enabledPlugins`), but the vtsls (TypeScript) LSP appears to be failing to auto-install, and Go's `gopls` status hasn't been separately confirmed.
+
+**What to do:**
+- Run `npm install -g @vtsls/language-server typescript` manually and confirm vtsls comes up clean on next session start
+- Separately confirm `gopls` is actually installed and responding (`gopls version`) and wired into the `gopls@claude-code-lsps` plugin correctly
+- Once both are confirmed working, verify Claude Code sessions in this repo actually get real diagnostics/go-to-definition from both LSPs (Go in `backend/`, TypeScript/Svelte in `frontend/`) rather than silently falling back to grep-based navigation
+
+**Priority:** Medium — accurate LSP diagnostics materially improve code-editing quality in a Go + TypeScript monorepo; currently unclear whether either is actually functioning.
+
+**Source:** Dev request (2026-09-02), observed vtsls install failure at session start.
