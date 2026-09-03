@@ -32,6 +32,24 @@ This is distinct from the Activity page's local search/filter. Discover reaches 
 
 ---
 
+## Unpopulated Nested GraphQL Fields — N+1 Guardrail Needed Before Implementing
+
+Discovered 2026-09-02 while investigating whether the Activity page has N+1 issues fetching user perspectives. It doesn't — `content` and `perspectives` are each single batched queries today. But three schema fields are declared and never populated, always resolving to `null`:
+
+- `Content.addedBy: User` (`backend/schema.graphql:91`)
+- `Perspective.user: User` (`backend/schema.graphql:51`)
+- `Perspective.content: Content` (`backend/schema.graphql:53`)
+
+`helpers.go`'s `domainToModel()`/`perspectiveDomainToModel()` set the scalar ID fields (`AddedByUserID`, `UserID`, `ContentID`) but never hydrate the nested object fields, and no resolver functions exist for them (`gqlgen.yml` only marks `User.email` as `resolver: true`). The frontend also never requests these nested fields today, so there's no live bug — just dead schema.
+
+**What to do when implementing these fields for real:** `perspectives` and `content` are the app's two paginated, potentially-large list queries. A naive per-row resolver (e.g. `UserRepository.GetByID` called once per `Perspective.user` in a list) would be a classic N+1. Implement via batching instead — either a DataLoader (none exists in this codebase yet — would need to be built from scratch) or a single `WHERE id IN (...)` query keyed off the parent list's IDs.
+
+**Priority:** Not urgent — nothing is broken. Address when there's an actual product need for `addedBy`/`user`/`content` to be populated (e.g. showing "added by" attribution or the perspective author inline in the Activity table).
+
+**Acceptance criteria to include when this is implemented:** a resolver/integration test that asserts SQL query count — seed a list (e.g. 20 perspectives, each with a different user), request the nested field (`user { username }`), wrap the DB with a query counter (GORM logger callback or driver-level counter), and assert the query count stays constant (e.g. 1-2) regardless of list size rather than scaling with N. This is the regression guardrail against reintroducing an N+1 — a repository-level unit test won't catch it, since the risk lives in how the resolver hydrates nested fields, not in the existing single-query `List` methods.
+
+---
+
 ## gorm-cursor-paginator Integration (HIGH PRIORITY)
 
 Phase 7.1 research recommended [gorm-cursor-paginator](https://github.com/pilagod/gorm-cursor-paginator) (226 stars) to replace hand-rolled cursor encoding in GORM repositories. The executor kept the existing `encodeCursor`/`decodeCursor` helpers from the sqlx migration instead of adding the library.
