@@ -49,9 +49,20 @@ gh api repos/CodeWarrior-debug/perspectize/pulls/123/comments
 
 **Always use the repository templates** in `.github/` when creating PRs and issues.
 
-**Pull Requests** — follow `.github/pull_request_template.md` (Summary, Problem, Solution, Technical Changes, Testing, Checklist, Related Issues).
+**Pull Requests** — per-type templates in `.github/PULL_REQUEST_TEMPLATE/`, picked by the PR's conventional-commit type:
+
+| Commit type | Template | Sections |
+|---|---|---|
+| `feat` | `feature.md` | Feature Description, Technical Changes, Demo (before/after screenshots), Test Plan |
+| `fix` | `bugfix.md` | Root Cause, Fix, Demo (before/after screenshots), Regression Test |
+| `chore`/`build`/`ci` | `chore.md` | Summary, Changes, Verification |
+| `docs` | `docs.md` | Summary, Files Changed, Verification |
+
+Because PRs are created via `gh api` (not `gh pr create`), GitHub's template picker never runs — read the matching template file yourself and shape the `-F body=@<file>` content to its sections before creating the PR. Any UI-visible change should fill in the Demo screenshot table (see [.docs/PR_SCREENSHOTS.md](.docs/PR_SCREENSHOTS.md) for the `sv-` upload workflow) rather than leaving it blank.
 
 **Issues** — use templates from `.github/ISSUE_TEMPLATE/` (feature_request.md or bug_report.md).
+
+**Never create a GitHub issue just to have something for a PR to close.** Only put `Closes #N`/link an issue in a PR when that issue already existed before the PR work started (the user filed it, or it was already tracked). If no issue exists, don't manufacture one — just omit the issue reference and drop the `issueNumber` segment from the branch name (see Branch Naming below).
 
 GitHub Projects v2: See [.docs/GITHUB_PROJECTS.md](.docs/GITHUB_PROJECTS.md).
 
@@ -74,10 +85,10 @@ gh pr merge 123 --squash --delete-branch --admin
 | Component | Values |
 |-----------|--------|
 | **type** | `feature`, `bugfix`, `chore` |
-| **initiativePrefix** | `INI` (Initialization Phase) |
-| **issueNumber** | GitHub issue number |
+| **initiativePrefix** | `INI` (Initialization Phase) — **omit along with issueNumber if no issue already exists** (initiativePrefix and issueNumber are a pair; both or neither) |
+| **issueNumber** | GitHub issue number — **omit this segment entirely if no issue already exists.** Do not create one just to fill it in (see GitHub Templates above). |
 
-Example: `feature/INI-16-youtube-post-graphql`
+Example: `feature/INI-16-youtube-post-graphql` (with a pre-existing issue) or `feature/youtube-post-graphql` (no issue — both `INI` and the number drop)
 
 ### GitHub Issues with Plans
 

@@ -14,6 +14,7 @@ export const SORT_FIELD_MAP: Record<string, string> = {
 	duration: 'NAME', // duration not sortable, fallback to NAME
 	views: 'VIEW_COUNT',
 	likes: 'LIKE_COUNT',
+	percentLiked: 'NAME', // computed client-side, not sortable in backend, fallback to NAME
 	publishDate: 'PUBLISHED_AT',
 	channel: 'NAME', // channel not sortable, fallback
 	createdAt: 'CREATED_AT',
@@ -109,7 +110,7 @@ export function getColumnVisibility(tier: ResponsiveTier): {
 	const alwaysHidden = ['description', 'updatedAt', 'createdAt'];
 	const smCols = ['channel'];
 	const mdCols = ['duration', 'publishDate'];
-	const lgCols = ['views', 'likes', 'tags'];
+	const lgCols = ['views', 'likes', 'percentLiked', 'tags'];
 
 	const visible = [...alwaysVisible];
 	const hidden = [...alwaysHidden];
@@ -152,6 +153,7 @@ export const COLUMN_IDS = [
 	'duration',
 	'views',
 	'likes',
+	'percentLiked',
 	'publishDate',
 	'channel',
 	'tags',
@@ -176,6 +178,7 @@ export const COLUMN_FILTERS: Record<string, string | false> = {
 	duration: 'agNumberColumnFilter',
 	views: 'agNumberColumnFilter',
 	likes: 'agNumberColumnFilter',
+	percentLiked: false, // computed client-side; a real filter needs a backend field (see PR notes)
 	publishDate: 'agDateColumnFilter',
 	channel: 'agTextColumnFilter',
 	tags: 'agTextColumnFilter',
@@ -203,6 +206,7 @@ export const DATA_COLUMNS: readonly TogglableColumn[] = [
 	{ colId: 'duration', label: 'Length' },
 	{ colId: 'views', label: 'Views' },
 	{ colId: 'likes', label: 'Likes' },
+	{ colId: 'percentLiked', label: '% Liked' },
 	{ colId: 'publishDate', label: 'Published' },
 	{ colId: 'channel', label: 'Channel' },
 	{ colId: 'tags', label: 'Tags' },
