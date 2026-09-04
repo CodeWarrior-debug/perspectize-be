@@ -85,10 +85,10 @@ gh pr merge 123 --squash --delete-branch --admin
 | Component | Values |
 |-----------|--------|
 | **type** | `feature`, `bugfix`, `chore` |
-| **initiativePrefix** | `INI` (Initialization Phase) |
+| **initiativePrefix** | `INI` (Initialization Phase) — **omit along with issueNumber if no issue already exists** (initiativePrefix and issueNumber are a pair; both or neither) |
 | **issueNumber** | GitHub issue number — **omit this segment entirely if no issue already exists.** Do not create one just to fill it in (see GitHub Templates above). |
 
-Example: `feature/INI-16-youtube-post-graphql` (with a pre-existing issue) or `feature/INI-youtube-post-graphql` (no issue)
+Example: `feature/INI-16-youtube-post-graphql` (with a pre-existing issue) or `feature/youtube-post-graphql` (no issue — both `INI` and the number drop)
 
 ### GitHub Issues with Plans
 
