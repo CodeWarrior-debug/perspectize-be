@@ -49,7 +49,16 @@ gh api repos/CodeWarrior-debug/perspectize/pulls/123/comments
 
 **Always use the repository templates** in `.github/` when creating PRs and issues.
 
-**Pull Requests** — follow `.github/pull_request_template.md` (Summary, Problem, Solution, Technical Changes, Testing, Checklist, Related Issues).
+**Pull Requests** — per-type templates in `.github/PULL_REQUEST_TEMPLATE/`, picked by the PR's conventional-commit type:
+
+| Commit type | Template | Sections |
+|---|---|---|
+| `feat` | `feature.md` | Feature Description, Technical Changes, Demo (before/after screenshots), Test Plan |
+| `fix` | `bugfix.md` | Root Cause, Fix, Demo (before/after screenshots), Regression Test |
+| `chore`/`build`/`ci` | `chore.md` | Summary, Changes, Verification |
+| `docs` | `docs.md` | Summary, Files Changed, Verification |
+
+Because PRs are created via `gh api` (not `gh pr create`), GitHub's template picker never runs — read the matching template file yourself and shape the `-F body=@<file>` content to its sections before creating the PR. Any UI-visible change should fill in the Demo screenshot table (see [.docs/PR_SCREENSHOTS.md](.docs/PR_SCREENSHOTS.md) for the `sv-` upload workflow) rather than leaving it blank.
 
 **Issues** — use templates from `.github/ISSUE_TEMPLATE/` (feature_request.md or bug_report.md).
 
