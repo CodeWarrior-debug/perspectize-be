@@ -60,7 +60,7 @@ For each plan's `must_haves`:
 
 ## 5. Evidence Capture
 
-Save screenshots to `~/Downloads/screenshots/` with naming convention:
+Save screenshots to `/Users/jamesjordan/Downloads/screenshots/` with naming convention:
 - **Prefix:** `sv-` (Self-Verify) — supersedes the old `ccsv-` prefix; `ccsv-` may still appear in older screenshots but new captures use `sv-`
 - **Format:** `sv-{plan}-{description}-{width}.png`
 - **Example:** `sv-01-02-mobile-375px.png`, `sv-01-04-ag-grid-desktop-1280px.png`

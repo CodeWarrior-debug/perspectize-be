@@ -1,8 +1,6 @@
 # PR Screenshots (Release-Hosted)
 
-Screenshots captured during self-verification (see [VERIFICATION.md](VERIFICATION.md), `sv-` prefix) live locally in `~/Downloads/screenshots/` — they aren't committed to the repo. To reference them in a PR, upload them as assets on a dedicated GitHub Release that acts as a permanent asset bucket, then link the resulting URLs in the PR body.
-
-> **Chrome DevTools MCP note:** the MCP's `take_screenshot` sandbox only permits paths **inside the repo** (`~/Downloads/...` is rejected). When capturing via MCP, save to the gitignored `.screenshots/` dir at the repo root and `gh release upload` from there instead.
+Screenshots captured during self-verification (see [VERIFICATION.md](VERIFICATION.md), `sv-` prefix) live locally in `/Users/jamesjordan/Downloads/screenshots/` — they aren't committed to the repo. To reference them in a PR, upload them as assets on a dedicated GitHub Release that acts as a permanent asset bucket, then link the resulting URLs in the PR body.
 
 ## One-time setup
 
@@ -25,7 +23,7 @@ gh release create screenshots \
 
 1. **Upload this PR's screenshots** (`--clobber` overwrites same-named assets safely on re-runs):
    ```bash
-   gh release upload screenshots ~/Downloads/screenshots/sv-<plan>-*.png --clobber
+   gh release upload screenshots /Users/jamesjordan/Downloads/screenshots/sv-<plan>-*.png --clobber
    ```
 
 2. **Get shareable URLs** for just the files you uploaded:
