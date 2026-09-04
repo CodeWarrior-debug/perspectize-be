@@ -62,6 +62,8 @@ Because PRs are created via `gh api` (not `gh pr create`), GitHub's template pic
 
 **Issues** — use templates from `.github/ISSUE_TEMPLATE/` (feature_request.md or bug_report.md).
 
+**Never create a GitHub issue just to have something for a PR to close.** Only put `Closes #N`/link an issue in a PR when that issue already existed before the PR work started (the user filed it, or it was already tracked). If no issue exists, don't manufacture one — just omit the issue reference and drop the `issueNumber` segment from the branch name (see Branch Naming below).
+
 GitHub Projects v2: See [.docs/GITHUB_PROJECTS.md](.docs/GITHUB_PROJECTS.md).
 
 ### PR Merge Preferences
@@ -84,9 +86,9 @@ gh pr merge 123 --squash --delete-branch --admin
 |-----------|--------|
 | **type** | `feature`, `bugfix`, `chore` |
 | **initiativePrefix** | `INI` (Initialization Phase) |
-| **issueNumber** | GitHub issue number |
+| **issueNumber** | GitHub issue number — **omit this segment entirely if no issue already exists.** Do not create one just to fill it in (see GitHub Templates above). |
 
-Example: `feature/INI-16-youtube-post-graphql`
+Example: `feature/INI-16-youtube-post-graphql` (with a pre-existing issue) or `feature/INI-youtube-post-graphql` (no issue)
 
 ### GitHub Issues with Plans
 
