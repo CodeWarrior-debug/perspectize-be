@@ -11,6 +11,13 @@ export default defineConfig({
 			registerType: 'autoUpdate',
 			workbox: {
 				globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+				// registerType: 'autoUpdate' alone doesn't make a new service worker take
+				// over immediately — without these, a newly-deployed SW installs but sits
+				// in the "waiting" state until every old tab closes, so a page loaded
+				// right around a deploy can straddle old/new asset versions with no way
+				// out but a manual refresh (issue #311).
+				skipWaiting: true,
+				clientsClaim: true,
 			},
 			manifest: {
 				name: 'Perspectize',
