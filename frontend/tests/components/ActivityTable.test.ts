@@ -12,6 +12,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, waitFor } from '@testing-library/svelte';
 import { QueryClient } from '@tanstack/svelte-query';
 import TestWrapper from '../helpers/TestWrapper.svelte';
+import { mockPageState } from '../setup';
 
 const { mockRequest, clerkState } = vi.hoisted(() => ({
 	mockRequest: vi.fn(),
@@ -89,20 +90,22 @@ const mockDataResponse = {
 	},
 };
 
-function renderWithQuery() {
-	const queryClient = new QueryClient({
-		defaultOptions: {
-			queries: {
-				retry: false,
-				gcTime: 0,
-				staleTime: 0,
+function renderWithQuery(queryClient?: QueryClient) {
+	const client =
+		queryClient ??
+		new QueryClient({
+			defaultOptions: {
+				queries: {
+					retry: false,
+					gcTime: 0,
+					staleTime: 0,
+				},
+				mutations: { retry: false },
 			},
-			mutations: { retry: false },
-		},
-	});
+		});
 	return render(TestWrapper, {
 		props: {
-			queryClient,
+			queryClient: client,
 			component: ActivityTable,
 			props: {},
 		},
@@ -115,6 +118,7 @@ describe('ActivityTable', () => {
 		clerkState.isLoaded = false;
 		clerkState.auth.userId = null;
 		mockRequest.mockResolvedValue(mockEmptyResponse);
+		mockPageState.url = new URL('http://localhost/');
 	});
 
 	it('renders without errors', () => {
@@ -137,6 +141,35 @@ describe('ActivityTable', () => {
 		// - No manual fetchData() function
 		// - Query invalidation for cache updates (no custom events)
 		expect(true).toBe(true);
+	});
+
+	it('refetches in Loaded mode when the search text changes (and again when cleared)', async () => {
+		// Regression test for the search bar not clearing/filtering: the query cache key must
+		// track the actual search text in "Loaded" mode, or TanStack Query never refetches when
+		// the box is typed into or cleared and the grid keeps showing stale results.
+		const queryClient = new QueryClient({
+			defaultOptions: {
+				queries: { retry: false, gcTime: 0, staleTime: 0 },
+				mutations: { retry: false },
+			},
+		});
+
+		mockPageState.url = new URL('http://localhost/?q=sowell');
+		const { unmount } = renderWithQuery(queryClient);
+		await waitFor(() => {
+			expect(mockRequest).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.objectContaining({ filter: { search: 'sowell' } }),
+			);
+		});
+		unmount();
+
+		mockRequest.mockClear();
+		mockPageState.url = new URL('http://localhost/');
+		renderWithQuery(queryClient);
+		await waitFor(() => {
+			expect(mockRequest).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ filter: undefined }));
+		});
 	});
 
 	it('hides pagination controls in loaded mode (default)', async () => {
