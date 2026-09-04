@@ -92,6 +92,14 @@
             "command": "bash .claude/hooks/gsd-session-state.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/monthly-routine-check.sh 2>/dev/null || true"
+          }
+        ]
       }
     ],
     "PostToolUse": [
