@@ -1,236 +1,91 @@
 # Technology Stack
 
-**Analysis Date:** 2026-02-16
+**Analysis Date:** 2026-09-04
 
 ## Languages
 
 **Primary:**
-- Go 1.25.0 - Backend GraphQL API, server, database adapters, business logic
-- TypeScript 5.9.3 - Frontend SvelteKit application, type-safe components and utilities
-- SQL - PostgreSQL database migrations and queries
-- GraphQL - API schema definition and code generation
+- Go 1.25 (min), `toolchain go1.26.0` — backend, `backend/`
+- TypeScript ~5.9 — frontend, `frontend/src/`
 
-**Supporting:**
-- CSS - Tailwind v4 styling framework with global theme tokens
-- HTML - SvelteKit template structure
+**Secondary:**
+- Svelte 5 (`.svelte` files, runes-only) — UI components, `frontend/src/lib/components/`
+- SQL — migrations, `backend/migrations/*.sql`
+- GraphQL SDL — API schema, `backend/schema.graphql`
 
 ## Runtime
 
 **Environment:**
-- Go 1.25.0 - Backend compiled binary execution
-- Node.js (unspecified minor version) - Frontend development and build tooling
-- PostgreSQL 18 - Primary data store (via Docker or external managed service)
+- Go 1.25/1.26 (`backend/go.mod`, pinned base image `golang:1.26-alpine` in `backend/Dockerfile`)
+- Node.js (version not pinned via `.nvmrc`; managed via `frontend/package.json` `type: module`)
 
 **Package Manager:**
-- `go mod` for backend dependencies
-- `pnpm` for frontend dependencies (lockfile: `pnpm-lock.yaml`)
+- Go modules — `backend/go.mod` / `backend/go.sum` (lockfile present)
+- pnpm — `frontend/package.json` / `frontend/pnpm-lock.yaml` (lockfile present, `frontend/pnpm-workspace.yaml`)
 
 ## Frameworks
 
-**Backend:**
-- gqlgen 0.17.86 - Schema-first GraphQL code generation and server
-- chi/v5 5.2.5 - HTTP router and middleware
-- pgx/v5 5.7.6 - PostgreSQL driver with connection pooling
-- GORM 1.31.1 - Object-relational mapping (ORM migration in progress from sqlx)
-  - gorm.io/gorm 1.31.1 - ORM core
-  - gorm.io/driver/postgres 1.6.0 - PostgreSQL GORM driver
-
-**Frontend:**
-- SvelteKit 2.50.1 - Full-stack web framework with file-based routing
-- Svelte 5.48.2 - Reactive UI components (Svelte 5 runes only, no Svelte 4 patterns)
-- TanStack Query (SvelteKit) 6.0.18 - Server state management and data fetching
-- Vite 6.4.1 - Build tool and dev server
-- Tailwind CSS 4.1.18 - Utility-first CSS framework with `--color-*` theme variables
-
-**UI Components:**
-- shadcn-svelte - Headless component primitives (via bits-ui 2.15.5)
-- AG Grid 32.2.x (pinned to v32, via ag-grid-svelte5 1.0.3 wrapper)
-  - @ag-grid-community/core 32.2.1
-  - @ag-grid-community/client-side-row-model 32.2.1
-  - @ag-grid-community/theming 32.2.0
+**Core:**
+- gqlgen v0.17.91 (schema-first GraphQL server) — `backend/gqlgen.yml`, `backend/schema.graphql`, generated code in `backend/internal/adapters/graphql/generated/`
+- go-chi/chi v5 (HTTP router) + go-chi/cors + go-chi/httprate (rate limiting) — `backend/cmd/server/main.go`
+- GORM v1.31 with `gorm.io/driver/postgres` over `jackc/pgx/v5` — `backend/internal/adapters/repositories/postgres/`
+- SvelteKit `~2.70.2` + Svelte `^5.56.3` (runes-only, per `frontend/CLAUDE.md`) — `frontend/src/routes/`
+- Vite `^7.3.6` — frontend build/dev server, `frontend/vite.config.ts`
 
 **Testing:**
-- Vitest 4.0.18 - Frontend test runner with jsdom environment
-- @testing-library/svelte 5.3.1 - Component testing utilities
-- @testing-library/jest-dom 6.9.1 - DOM assertions
+- testify v1.12.1 (Go unit/integration assertions) — `backend/test/`
+- Vitest `^4.1.11` (unit project `unit`, browser project `browser` via `@vitest/browser` + Playwright provider) — `frontend/vitest.config.browser.ts`, `frontend/tests/`
+- `@testing-library/svelte`, `@testing-library/jest-dom` — component testing
+- jscpd — code duplication detection (`pnpm run test:duplication`)
 
-**Icons:**
-- @lucide/svelte 0.561.0 - Icon library (per-icon imports for tree-shaking)
-
-**Forms:**
-- @tanstack/svelte-form 1.28.0 - Form state management
-
-**Utilities:**
-- graphql 16.12.0 - GraphQL client utilities
-- graphql-request 7.4.0 - Minimal GraphQL client for TanStack Query integration
-- clsx 2.1.1 - Conditional className utility
-- tailwind-merge 3.4.0 - Tailwind CSS class merging
-- svelte-sonner 1.0.7 - Toast notifications
-- @internationalized/date 3.11.0 - Date handling utilities
+**Build/Dev:**
+- air v1.61.7 (Go hot-reload, `make dev`) — `backend/Makefile`
+- golang-migrate (DB migrations, invoked via Makefile targets `migrate-up`/`migrate-down`)
+- svelte-check + TypeScript — type checking, `frontend/tsconfig.json`
+- Tailwind CSS v4 (`@tailwindcss/vite`) — `frontend/tailwind.config.ts`
+- Capacitor 7/8 (`@capacitor/core`, `@capacitor/ios`, `@capacitor/android`) — mobile shell, `frontend/capacitor.config.ts`, `frontend/ios/`, `frontend/android/`
 
 ## Key Dependencies
 
-**Critical Backend:**
-- gqlgen 0.17.86 - Schema-first GraphQL code generation with type binding and resolver generation
-- pgx/v5 5.7.6 - PostgreSQL wire protocol driver with connection pooling and prepared statements
-- GORM 1.31.1 - ORM for query building, dynamic filtering, and migration support (current migration from sqlx)
-- chi/v5 5.2.5 - HTTP router and middleware stack
-- testify 1.11.1 - Testing assertions and mocking utilities
+**Critical:**
+- `github.com/clerk/clerk-sdk-go/v2` v2.7.0 — auth verification, `backend/internal/adapters/auth/clerk_middleware.go`
+- `github.com/svix/svix-webhooks` v1.99.1 — Clerk webhook signature verification, `backend/internal/adapters/auth/webhook_handler.go`
+- `github.com/golang-jwt/jwt/v5` v5.3.1 — JWT handling
+- `github.com/pilagod/gorm-cursor-paginator/v2` — cursor pagination (installed but hand-rolled cursor helpers in `helpers.go` currently used instead; full integration planned per `backend/CLAUDE.md`)
+- `github.com/unrolled/secure` v1.17.0 — HTTP security headers middleware
+- `graphql-request` `^7.4.0` + `graphql` `^16.13.1` — frontend GraphQL client, `frontend/src/lib/queries/client.ts`
+- `@tanstack/svelte-query` `^6.1.8` — server-state/data-fetching, `frontend/src/lib/queries/`
+- `svelte-clerk` `^1.1.9` — Clerk auth integration in SvelteKit
+- `@ag-grid-community/*` v32.3.9 + `ag-grid-svelte5` — data grid (`ActivityTable`), `frontend/src/lib/components/`
+- `@tiptap/*` v3.22.5 — rich text editor
+- `dompurify` `^3.4.1` — HTML sanitization (used with Tiptap content)
 
-**Critical Frontend:**
-- graphql 16.12.0 - GraphQL client utilities and language support
-- graphql-request 7.4.0 - Lightweight GraphQL client for TanStack Query
-- @tanstack/svelte-query 6.0.18 - Server state management with caching and synchronization
-- @tanstack/svelte-form 1.28.0 - Form state management
-- @ag-grid-community/core 32.2.1 - AG Grid core functionality (pinned v32 for stability)
-
-**Development/Build:**
-- air 1.64.4 - Hot reload for backend development (watches `.go` and `.graphql` files)
-- golangci-lint - Backend linting (invoked via `make lint`)
-- golang-migrate - Schema migration tool (invoked via `make migrate-*` commands)
-- svelte-check 4.3.5 - Svelte static type checking
-- @sveltejs/adapter-static 3.0.10 - SvelteKit static site adapter
-- @tailwindcss/vite 4.1.18 - Tailwind CSS Vite plugin integration
+**Infrastructure:**
+- `go.opentelemetry.io/otel` + `otlptracehttp` + `otel/sdk` v1.46.0 — distributed tracing, `backend/cmd/server/main.go` (`initTracer`)
+- `github.com/joho/godotenv` v1.5.1 — `.env` loading in local dev
 
 ## Configuration
 
-**Environment Variables:**
-- `DATABASE_URL` - PostgreSQL connection string (required, format: `postgres://user:pass@host:5432/db`)
-- `YOUTUBE_API_KEY` - Optional YouTube API v3 credentials
-- `SEVALLA_BACKEND_URL` - Reference URL for Sevalla deployments
-- `VITE_GRAPHQL_URL` - Frontend GraphQL endpoint (defaults to `http://localhost:8080/graphql`)
+**Environment:**
+- Backend: `.env` (gitignored) loaded via godotenv; template at `backend/.env.example`. Config precedence: env vars > `backend/config/config.example.json` (see `backend/internal/config/config.go` `Load()`).
+- Frontend: `.env` (gitignored); template at `frontend/.env.example`. Vite-exposed vars must be prefixed `VITE_`.
+- Config loader: `backend/internal/config/config.go`, `backend/internal/config/security.go`, `backend/internal/config/validation.go`.
 
-**Config Files:**
-- `backend/gqlgen.yml` - GraphQL code generation mappings, scalar definitions, enum bindings
-- `backend/.air.toml` - Air hot-reload watcher configuration (watches `.go`, `.graphql` files)
-- `backend/.env` and `backend/.env.example` - Environment variable templates
-- `frontend/vite.config.ts` - Vite build configuration with SvelteKit plugin, Tailwind integration, Vitest setup
-- `frontend/tsconfig.json` - TypeScript strict mode configuration with bundler module resolution
-- `frontend/svelte.config.js` - SvelteKit configuration with static adapter
-- `backend/Makefile` - Build, test, migration, and development commands
-
-**Configuration Source Priority:**
-1. Environment variables (highest priority, overrides all)
-2. `.env` file (if present)
-3. Config JSON file defaults
+**Build:**
+- Backend: `backend/Dockerfile`, `backend/Makefile`, `backend/gqlgen.yml`
+- Frontend: `frontend/vite.config.ts`, `frontend/svelte.config.js`, `frontend/tailwind.config.ts`, `frontend/tsconfig.json`, `frontend/components.json` (shadcn-svelte)
 
 ## Platform Requirements
 
 **Development:**
-- Go 1.25.0 (or compatible)
-- PostgreSQL 18 (via Docker Compose or local installation)
-- Docker and Docker Compose
-- Node.js (any recent version) with pnpm package manager
-- migrate CLI (golang-migrate) for schema management
-- golangci-lint for code linting
-- GNU Make for build commands
+- Go toolchain 1.25+ (see `backend/CLAUDE.md` Go Version Management section)
+- pnpm, run from `frontend/` directory (not repo root)
+- No local Docker Postgres required for day-to-day dev — database is remote (Sevalla); `backend/docker-compose.yml` exists for local Postgres 18 fallback, CI uses Postgres 17 service container.
 
-**Build:**
-- `go build` for backend binary compilation
-- `vite build` for frontend static asset generation
-- `go run github.com/99designs/gqlgen generate` for GraphQL code generation
-
-**Production Deployment:**
-- PostgreSQL 18 (external managed service or self-hosted)
-- Go compiled binary execution environment
-- Node.js (optional, if using Node.js hosting for frontend)
-- SvelteKit-compatible hosting (Vercel, Netlify, static file server, or Node.js server)
-- Environment variables for `DATABASE_URL`, `YOUTUBE_API_KEY`, `VITE_GRAPHQL_URL`
-
-**Special Deployment Notes:**
-- Sevalla/Fly.io: PostgreSQL connections may require `?sslmode=disable` and may succeed on second attempt
-- Cold starts: ~10-50ms for Go binary
-- Binary size: Typically 10-20MB when compiled
-- Memory footprint: ~20-50MB (lean compared to Node.js ~100-300MB)
-
-## Database
-
-**Engine:** PostgreSQL 18 (Docker image: `postgres:18`)
-
-**Drivers:**
-- pgx/v5 5.7.6 (native PostgreSQL wire protocol, high-performance)
-- GORM 1.31.1 ORM layer
-
-**Connection Details:**
-- Uses `DATABASE_URL` environment variable for connection string
-- Docker service: `perspectize-postgres-go` on port 5432
-- Local development defaults: user `testuser`, password `testpass`, database `testdb`
-- Connection pooling: Max open 25, max idle 5, max lifetime 5 minutes
-
-**Migrations:**
-- Tool: golang-migrate (via `make migrate-*` commands)
-- Location: `backend/migrations/`
-- Commands: `make migrate-up`, `make migrate-down`, `make migrate-create`, `make migrate-version`, `make migrate-force`
-
-## Build & Development Tools
-
-**Backend:**
-- Makefile targets: `build`, `run`, `dev` (hot-reload), `test`, `test-coverage`, `graphql-gen`, `fmt`, `lint`, `docker-up`, `docker-down`, `clean`
-- Docker Compose for local PostgreSQL
-- Air v1.64.4 hot-reload (watches `go` and `graphql` files, excludes `_test.go`)
-- golang-migrate for versioned SQL migrations
-
-**Frontend:**
-- Vite dev server (`pnpm run dev` on http://localhost:5173)
-- Vitest test runner with jsdom environment, globals enabled
-- TypeScript strict checking (`pnpm run check`)
-- Code duplication detection (`pnpm run test:duplication`)
-- Coverage: v8 provider with thresholds (lines 80%, functions 80%, branches 75%, statements 80%)
-
-## Docker & Containerization
-
-**Docker Compose (`backend/docker-compose.yml`):**
-- Service: PostgreSQL 18
-- Container name: `perspectize-postgres-go`
-- Port: 5432
-- Health check: `pg_isready` with 10s interval, 5s timeout, 5 retries
-- Volume: Named volume `postgres_data` for persistence
-
-**Commands:**
-- `make docker-up` - Start PostgreSQL container (with 3s wait)
-- `make docker-down` - Stop container
-- `make docker-logs` - View PostgreSQL logs
-
-## Testing Infrastructure
-
-**Frontend (Vitest 4.0.18):**
-- Environment: jsdom (browser DOM simulation)
-- Globals: true (no need to import `describe`, `it`, `expect`)
-- Test patterns: `src/**/*.{test,spec}.{js,ts}` and `tests/**/*.{test,spec}.{js,ts}`
-- Setup files: `tests/setup.ts` (Vitest configuration)
-- Coverage provider: v8
-- Coverage thresholds: 80% lines/functions/statements, 75% branches
-- Coverage exclusions: `node_modules`, `.svelte-kit`, `*.d.ts`, `*.config.*`, `src/lib/components/shadcn/**`, `src/routes/**`
-
-**Backend:**
-- Runner: `go test ./...`
-- Coverage command: `make test-coverage` (outputs `coverage.html`)
-- Integration tests: Auto-skip when database unavailable (`t.Skip()`)
-- Mocking: testify with custom mock implementations in `test/` directory
-
-## GraphQL
-
-**Schema:** Schema-first approach in `backend/schema.graphql`
-
-**Code Generation:**
-- Tool: gqlgen 0.17.86
-- Command: `make graphql-gen`
-- Configuration: `backend/gqlgen.yml` defines:
-  - Schema files
-  - Output paths for generated code
-  - Model bindings (custom scalars like `IntID`, domain enums)
-  - Resolver layout and naming conventions
-  - Type mappings (e.g., `JSON` → `graphql.Map`)
-
-**Generated Code Locations:**
-- Executable schema: `internal/adapters/graphql/generated/generated.go`
-- Models: `internal/adapters/graphql/model/models_gen.go`
-- Resolver stubs: `internal/adapters/graphql/resolvers/{name}.resolvers.go`
-
-**GraphQL Endpoints:**
-- Query/Mutation: `POST /graphql`
-- Playground (dev only): `GET /` (interactive IDE)
+**Production:**
+- Sevalla hosting (Dockerfile-based backend build, TLS termination + SSL via Cloudflare integration; see `backend/.env.example` and `SEVALLA_BACKEND_URL`)
+- PostgreSQL 17 (`.docs/ARCHITECTURE.md`), connected via `DATABASE_URL` (Sevalla external endpoint, `?sslmode=disable`)
 
 ---
 
-*Stack analysis: 2026-02-16*
+*Stack analysis: 2026-09-04*
