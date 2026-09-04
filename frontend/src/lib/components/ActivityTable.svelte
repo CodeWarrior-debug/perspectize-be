@@ -236,10 +236,14 @@
 		queryKey: queryKeys.content.list({
 			sortBy: mode === 'all' ? sortBy : 'UPDATED_AT',
 			sortOrder: mode === 'all' ? sortOrder : 'DESC',
-			search: mode === 'all' ? searchText : '',
+			// Search/filter must always reflect what queryFn actually sends (graphqlFilter is used
+			// unconditionally below, regardless of mode) — hardcoding these to '' / undefined for
+			// 'loaded' mode desyncs the cache key from the real request, so typing or clearing the
+			// search box never invalidates the cache and the grid keeps showing stale results.
+			search: searchText,
 			first: pageSize,
 			after: currentCursor,
-			filter: mode === 'all' ? (graphqlFilter as Record<string, unknown>) : undefined,
+			filter: graphqlFilter as Record<string, unknown> | undefined,
 			mode,
 		}),
 		queryFn: async () => {
