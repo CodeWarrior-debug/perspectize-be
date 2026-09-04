@@ -35,6 +35,7 @@ describe('SORT_FIELD_MAP', () => {
 		expect(SORT_FIELD_MAP['type']).toBe('NAME');
 		expect(SORT_FIELD_MAP['duration']).toBe('NAME');
 		expect(SORT_FIELD_MAP['channel']).toBe('NAME');
+		expect(SORT_FIELD_MAP['percentLiked']).toBe('NAME');
 	});
 
 	it('returns undefined for unknown column IDs', () => {
@@ -284,6 +285,7 @@ describe('getColumnVisibility', () => {
 		const { visible, hidden } = getColumnVisibility('lg');
 		expect(visible).toContain('views');
 		expect(visible).toContain('likes');
+		expect(visible).toContain('percentLiked');
 		expect(visible).toContain('tags');
 		expect(visible).toContain('channel');
 		expect(visible).toContain('duration');
@@ -304,7 +306,7 @@ describe('getColumnVisibility', () => {
 	});
 
 	it('visible + hidden covers all responsive columns for each tier', () => {
-		const responsiveCols = ['channel', 'duration', 'publishDate', 'views', 'likes', 'tags'];
+		const responsiveCols = ['channel', 'duration', 'publishDate', 'views', 'likes', 'percentLiked', 'tags'];
 		for (const tier of ['xs', 'sm', 'md', 'lg'] as const) {
 			const { visible, hidden } = getColumnVisibility(tier);
 			for (const col of responsiveCols) {
@@ -335,8 +337,8 @@ describe('isMobileTier', () => {
 // COLUMN_IDS
 // ---------------------------------------------------------------------------
 describe('COLUMN_IDS', () => {
-	it('contains all 12 columns in expected order', () => {
-		expect(COLUMN_IDS).toHaveLength(12);
+	it('contains all 13 columns in expected order', () => {
+		expect(COLUMN_IDS).toHaveLength(13);
 		expect(COLUMN_IDS[0]).toBe('perspectize');
 		expect(COLUMN_IDS[1]).toBe('item');
 		expect(COLUMN_IDS[COLUMN_IDS.length - 1]).toBe('createdAt');
@@ -362,6 +364,7 @@ describe('NON_SORTABLE_COLUMNS', () => {
 		const nonSortable = [...NON_SORTABLE_COLUMNS];
 		expect(nonSortable).not.toContain('views');
 		expect(nonSortable).not.toContain('likes');
+		expect(nonSortable).not.toContain('percentLiked');
 		expect(nonSortable).not.toContain('publishDate');
 	});
 });
@@ -388,6 +391,11 @@ describe('COLUMN_FILTERS', () => {
 		expect(COLUMN_FILTERS['likes']).toBe('agNumberColumnFilter');
 	});
 
+	it('disables the filter on the computed percentLiked column', () => {
+		// No backend field to filter against yet — see PR notes on server-side options.
+		expect(COLUMN_FILTERS['percentLiked']).toBe(false);
+	});
+
 	it('uses date filter for date columns', () => {
 		expect(COLUMN_FILTERS['publishDate']).toBe('agDateColumnFilter');
 		expect(COLUMN_FILTERS['updatedAt']).toBe('agDateColumnFilter');
@@ -405,13 +413,14 @@ describe('COLUMN_FILTERS', () => {
 // Column-picker registry
 // ---------------------------------------------------------------------------
 describe('column-picker registry', () => {
-	it('DATA_COLUMNS holds the 9 user-togglable data columns', () => {
+	it('DATA_COLUMNS holds the 10 user-togglable data columns', () => {
 		expect(DATA_COLUMNS.map((c) => c.colId)).toEqual([
 			'item',
 			'type',
 			'duration',
 			'views',
 			'likes',
+			'percentLiked',
 			'publishDate',
 			'channel',
 			'tags',
@@ -434,13 +443,13 @@ describe('column-picker registry', () => {
 		}
 	});
 
-	it('togglableColIds(false) returns only the 9 data columns', () => {
+	it('togglableColIds(false) returns only the 10 data columns', () => {
 		expect(togglableColIds(false)).toEqual(DATA_COLUMNS.map((c) => c.colId));
 	});
 
-	it('togglableColIds(true) returns all 14 columns', () => {
+	it('togglableColIds(true) returns all 15 columns', () => {
 		const ids = togglableColIds(true);
-		expect(ids).toHaveLength(14);
+		expect(ids).toHaveLength(15);
 		expect(ids).toEqual([...DATA_COLUMNS.map((c) => c.colId), ...INTERNAL_COLUMNS.map((c) => c.colId)]);
 	});
 

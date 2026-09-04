@@ -41,6 +41,9 @@
 		dateValueFormatter,
 		formatCount,
 		formatCountExact,
+		percentLikedValueGetter,
+		formatPercentLiked,
+		percentLikedTooltip,
 		formatPublishDate,
 		formatTags,
 		truncateDescription,
@@ -434,6 +437,23 @@
 				headerTooltip: 'Like count from YouTube API',
 			},
 			{
+				colId: 'percentLiked',
+				headerName: '% Liked',
+				flex: 0.8,
+				maxWidth: 130,
+
+				filter: false,
+				valueGetter: percentLikedValueGetter,
+				valueFormatter: (params) => formatPercentLiked(params.value),
+				tooltipValueGetter: percentLikedTooltip,
+				comparator: (_valueA, _valueB, nodeA, nodeB) => {
+					const a = percentLikedValueGetter({ data: nodeA?.data }) ?? -1;
+					const b = percentLikedValueGetter({ data: nodeB?.data }) ?? -1;
+					return a - b;
+				},
+				headerTooltip: 'Likes as a percentage of views',
+			},
+			{
 				colId: 'publishDate',
 				field: 'publishedAt',
 				headerName: 'Date',
@@ -768,7 +788,7 @@
 			const alwaysVisible = ['item', 'type', 'perspectize'];
 			const smCols = ['channel'];
 			const mdCols = ['duration', 'publishDate'];
-			const lgCols = ['views', 'likes', 'tags'];
+			const lgCols = ['views', 'likes', 'percentLiked', 'tags'];
 			// createdAt/updatedAt/id/addedByUserID/url stay hidden via their colDef
 			// `hide: true` until an admin enables them in the column picker.
 			const alwaysHidden = ['description'];
