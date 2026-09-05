@@ -81,36 +81,38 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/hooks/gsd-check-update.js"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/gsd-session-state.sh"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
             "command": "bash .claude/hooks/monthly-routine-check.sh 2>/dev/null || true"
           }
         ]
       }
     ],
     "PostToolUse": [],
-    "PreToolUse": []
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/prettier-precommit.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/require-tests.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/require-session-reflection-before-pr.sh"
+          }
+        ]
+      }
+    ]
   },
   "statusLine": {
     "type": "command",
     "command": "node .claude/hooks/gsd-statusline.js"
   },
   "enabledPlugins": {
-    "hookify@claude-plugins-official": true,
+    "hookify@claude-plugins-official": false,
     "claude-md-management@claude-plugins-official": true,
     "context7@claude-plugins-official": false,
     "frontend-design@claude-plugins-official": true
