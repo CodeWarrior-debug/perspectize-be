@@ -4,6 +4,7 @@
 	import { useAddVideo } from '$lib/queries/hooks/useAddVideo';
 	import { validateYouTubeUrl } from '$lib/utils/youtube';
 	import PlusIcon from '@lucide/svelte/icons/plus';
+	import ClipboardPasteIcon from '@lucide/svelte/icons/clipboard-paste';
 
 	let {
 		triggerVariant = 'default',
@@ -44,6 +45,16 @@
 		error = '';
 		mutation.mutate(url);
 	}
+
+	// Paste URL from clipboard
+	async function handlePaste() {
+		try {
+			url = await navigator.clipboard.readText();
+			error = '';
+		} catch {
+			error = 'Could not read clipboard — paste manually.';
+		}
+	}
 </script>
 
 <FormPopover
@@ -64,14 +75,27 @@
 	{#snippet formFields()}
 		<div class="space-y-2">
 			<Label for="url">YouTube URL</Label>
-			<Input
-				id="url"
-				type="text"
-				placeholder="https://www.youtube.com/watch?v=..."
-				bind:value={url}
-				disabled={mutation.isPending}
-				autocomplete="off"
-			/>
+			<div class="relative">
+				<Input
+					id="url"
+					type="text"
+					placeholder="https://www.youtube.com/watch?v=..."
+					bind:value={url}
+					disabled={mutation.isPending}
+					autocomplete="off"
+					class="pr-9"
+				/>
+				<button
+					type="button"
+					onclick={handlePaste}
+					disabled={mutation.isPending}
+					aria-label="Paste from clipboard"
+					title="Paste from clipboard"
+					class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:pointer-events-none disabled:opacity-50"
+				>
+					<ClipboardPasteIcon class="size-4" />
+				</button>
+			</div>
 			{#if error}
 				<p class="text-sm text-red-600">{error}</p>
 			{/if}

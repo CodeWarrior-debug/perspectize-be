@@ -71,6 +71,44 @@ describe('AddVideoPopover component', () => {
 	});
 });
 
+describe('AddVideoPopover paste button', () => {
+	beforeEach(reset);
+
+	async function openPopover() {
+		render(AddVideoPopover);
+		await fireEvent.click(screen.getByRole('button', { name: /add video/i }));
+		await tick();
+	}
+
+	it('renders a paste from clipboard button', async () => {
+		await openPopover();
+		expect(screen.getByRole('button', { name: /paste from clipboard/i })).toBeInTheDocument();
+	});
+
+	it('populates the URL field from clipboard on click', async () => {
+		const readText = vi.fn().mockResolvedValue('https://youtube.com/watch?v=abc123');
+		Object.assign(navigator, { clipboard: { readText } });
+
+		await openPopover();
+		await fireEvent.click(screen.getByRole('button', { name: /paste from clipboard/i }));
+		await tick();
+
+		expect(readText).toHaveBeenCalled();
+		expect(screen.getByPlaceholderText(/youtube.com\/watch/i)).toHaveValue('https://youtube.com/watch?v=abc123');
+	});
+
+	it('shows an error message when clipboard read fails', async () => {
+		const readText = vi.fn().mockRejectedValue(new Error('permission denied'));
+		Object.assign(navigator, { clipboard: { readText } });
+
+		await openPopover();
+		await fireEvent.click(screen.getByRole('button', { name: /paste from clipboard/i }));
+		await tick();
+
+		expect(screen.getByText(/could not read clipboard/i)).toBeInTheDocument();
+	});
+});
+
 describe('AddVideoPopover $effect behaviors', () => {
 	beforeEach(reset);
 
@@ -95,7 +133,9 @@ describe('AddVideoPopover mutation setup', () => {
 
 	it('mutationFn calls graphqlRequest with correct args', async () => {
 		const { graphqlRequest } = await import('$lib/queries/client');
-		(graphqlRequest as any).mockResolvedValue({ createContentFromYouTube: { content: { name: 'Test' }, alreadyExisted: false } });
+		(graphqlRequest as any).mockResolvedValue({
+			createContentFromYouTube: { content: { name: 'Test' }, alreadyExisted: false },
+		});
 		await mocks.capturedMutationOptions.mutationFn('https://youtube.com/watch?v=abc123');
 		expect(graphqlRequest).toHaveBeenCalledWith(expect.anything(), {
 			input: { url: 'https://youtube.com/watch?v=abc123', userId: 0 },
