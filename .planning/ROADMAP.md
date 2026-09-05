@@ -1,8 +1,17 @@
-# Roadmap: Perspectize v1.0 Frontend MVP
+# Roadmap: Perspectize
 
-## Overview
+## Milestones
 
-This roadmap delivers a functional SvelteKit frontend for Perspectize, enabling users to discover YouTube videos, add new videos via URL paste, and submit perspectives with ratings. The journey starts with project scaffolding and design system setup, progresses through the Activity page with AG Grid, then adds video and perspective creation flows, culminating in testing and deployment.
+- ✅ **v1.0 Frontend MVP** — Phases 1–9, 17 (Shipped 2026-02-16, formalized 2026-09-04)
+- 🚧 **v1.1 Platform Expansion** — Phases 4, 4.1, 6, 8.1, 10, 11–16 (Planned)
+
+## v1.0 Overview (ARCHIVED)
+
+**Status:** ✅ COMPLETE & SHIPPED
+
+v1.0 delivered a functional SvelteKit frontend for discovering YouTube videos, adding new videos via URL paste, and viewing content in AG Grid. Included post-MVP concerns remediation (architecture cleanup, security hardening, caching fixes).
+
+**See:** `.planning/milestones/v1.0-ROADMAP.md` for full phase details
 
 ## Phases
 

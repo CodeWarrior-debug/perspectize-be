@@ -9,12 +9,20 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 
 ## Current Position
 
-Phase: 09 (Security Hardening) — Complete
-Plan: 6/6 complete
-Status: Complete — All plans executed. Security documentation finalized.
-Last activity: 2026-03-03 — Completed 09-06-PLAN.md (Secret Management Documentation)
+**Milestone:** v1.0 Frontend MVP (COMPLETE & FORMALIZED)
+**Status:** Shipped 2026-02-16 (formalized 2026-09-04)
+**Current Phase:** Planning v1.1 transition
+**Last activity:** 2026-09-04 — Milestone v1.0 formalization + planning sync
 
-Progress: [████████████████████] ~100% (39 plans complete)
+Progress: [████████████████████] 100% (43+ plans complete, v1.0 milestone closed)
+
+**Phases executed:**
+- Phase 1–5: Frontend MVP (2026-02-05 → 2026-02-16)
+- Phase 7–9: Post-MVP concerns (2026-02-13 → 2026-03-03)
+- Phase 17: URL normalization (2026-02-22, parallel)
+
+**Total git commits since v1.0 start:** 426 (2026-02-05 → 2026-09-04)
+**Post-formalization PRs:** 16 (#300–#315, continuing development)
 
 ## Performance Metrics
 

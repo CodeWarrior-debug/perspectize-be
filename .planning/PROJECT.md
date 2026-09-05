@@ -94,16 +94,38 @@ Users can easily submit their perspective on a YouTube video and browse others' 
 - **Deployment**: SvelteKit with static adapter (no SSR) to enable cheap/free static hosting
 - **Tests Required**: Every plan that adds or modifies backend/frontend logic MUST include unit test tasks. Backend: Go table-driven tests with testify. Frontend: Vitest + Testing Library. Plans without test tasks are incomplete — the planner must include them or explicitly justify why tests are not applicable (e.g., pure config, styling-only changes)
 
-## Current Milestone: v1.0 Frontend MVP
+## Current State: v1.0 Complete ✅
 
-**Goal:** Build a functional SvelteKit frontend that lets users discover videos, add new videos, and submit perspectives.
+**Shipped:** 2026-02-16 (formalized 2026-09-04 after post-MVP work)  
+**Phases:** 1–9, 17 (16 phases, 43+ plans)
 
-**Target features:**
-- Discover page with AG Grid data table (search, filter, sort)
-- Add Video flow (paste YouTube URL → auto-fetch metadata)
-- Add Perspective flow (multi-step form with dynamic fields)
-- User selector dropdown (no auth for v1)
-- shadcn-svelte design system matching Figma tokens
+**Delivered Features:**
+- ✅ Activity page with AG Grid (server-side sort/filter/pagination)
+- ✅ Add Video flow with URL validation, duplicate detection, clipboard paste
+- ✅ ✓ User selector dropdown with session persistence & create user flow
+- ✅ shadcn-svelte design system (navy #1a365d, Geist + Charter fonts)
+- ✅ Mobile-responsive design (375px–4K with flexible breakpoints)
+- ✅ Production security hardening (JWT auth, @owner directives, rate limiting, CSP)
+
+**Deferred to v1.1:**
+- Add Perspective form (modal redesigned, form implementation pending)
+- Phase 6: Comprehensive error handling audit
+- Phase 8.1: Schema quality (DateTime scalars, nested resolvers, validation)
+- Phase 10: Frontend quality (graphql-codegen, error boundaries, dead code cleanup)
+
+---
+
+## Next Milestone: v1.1 Platform Expansion
+
+**Goal:** Build on v1.0 foundation to add authentication, perspective creation, and performance improvements.
+
+**Planned features:**
+- Phase 4: Complete Add Perspective flow (form + claim mutations)
+- Phase 4.1: GraphQL dataloaders for N+1 prevention
+- Phase 6: Error handling and data integrity audit
+- Phase 8.1: API & schema quality improvements
+- Phase 10: Frontend quality & test coverage
+- Phase 11–16: Database optimization, Clerk auth, content categories, AG Grid power features, discover page, mobile app strategy
 
 ## Key Decisions
 
