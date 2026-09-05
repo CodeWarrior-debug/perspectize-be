@@ -5,7 +5,7 @@ const YES = 'yes';
 const NO = 'no';
 
 function esc(v: string): string {
-  return v.replace(/\|/g, '\\|').replace(/\n+/g, ' ').trim();
+  return v.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\n+/g, ' ').trim();
 }
 
 function table(headers: string[], rows: string[][]): string {
