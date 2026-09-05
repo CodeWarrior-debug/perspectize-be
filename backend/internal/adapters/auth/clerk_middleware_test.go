@@ -99,6 +99,9 @@ func (s *stubUserRepo) DeactivateByClerkID(ctx context.Context, clerkID string) 
 	}
 	return errors.New("DeactivateByClerkID not stubbed")
 }
+func (s *stubUserRepo) UpdateOnboarding(ctx context.Context, userID int, onboarding domain.UserOnboarding) (*domain.User, error) {
+	return nil, errors.New("UpdateOnboarding not stubbed")
+}
 
 // setClerkAPIResponse points the package-level Clerk backend at a canned HTTP
 // response so clerkuser.Get can be driven without network access. The previous

@@ -41,8 +41,11 @@ func TestUserModelToDomain(t *testing.T) {
 			Email:       "alice@example.com",
 			Role:        domain.UserRoleAdmin,
 			Active:      true,
-			CreatedAt:   mapperFixedTime,
-			UpdatedAt:   mapperFixedTime,
+			// Zero-value UserModel.Onboarding (no row data) maps to new-user
+			// defaults — displayNextSession true — not the Go zero value.
+			Onboarding: domain.UserOnboarding{Version: 0, DisplayNextSession: true, CompletedAt: nil},
+			CreatedAt:  mapperFixedTime,
+			UpdatedAt:  mapperFixedTime,
 		}, got)
 	})
 
