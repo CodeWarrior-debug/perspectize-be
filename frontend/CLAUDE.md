@@ -152,6 +152,8 @@ Full setup and examples: [docs/AG_GRID.md](docs/AG_GRID.md)
 
 Symptom in the browser: `Failed to load module script: Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of "text/html"` on the deployed site (not reproducible locally, since there's no CDN layer). **This is a caching/hosting-config issue, not a service worker issue** — check for it (`curl -I` the failing chunk URL, or a live `fetch()` from the deployed page) before assuming a PWA/SW root cause; a registered SW isn't even required to hit it. Verify after touching either file: `pnpm run build` then confirm both `build/_headers` and `build/_redirects` exist.
 
+**`_headers` block overlap MERGES `Cache-Control`, it doesn't override.** Cloudflare Pages/Sevalla applies every `_headers` block whose path pattern matches a request — if two blocks both match (e.g. `/_app/immutable/*` and a `/*` catch-all, for any chunk that currently exists), their `Cache-Control` values are concatenated with a comma into one nonsensical header, not resolved by specificity. Confirmed live against the deployed site. Only one splat (`*`) is allowed per rule and there's no exclusion/negation syntax, so a broad catch-all can never be scoped to exclude a narrower pattern underneath it. Design around this by making the catch-all's value safe to merge: include a bare `no-cache` token (forces revalidation unconditionally, regardless of what other directives — like a long `max-age` — end up concatenated alongside it) rather than relying on directive order or assuming the more specific rule wins.
+
 ## Self-Verification (Chrome DevTools MCP)
 
 | Step       | Tool                                          | Purpose                        |

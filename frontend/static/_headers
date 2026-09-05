@@ -1,17 +1,34 @@
 # Hashed, content-addressed build output — the filename changes whenever the
-# content does, so it's always safe to cache indefinitely at every layer
-# (browser + Sevalla's Cloudflare edge).
+# content does, so it's safe to cache long-term. NOTE: this pattern overlaps
+# the catch-all /* rule below for any chunk that actually exists in the
+# current build. Cloudflare Pages/Sevalla merges (concatenates) Cache-Control
+# values from every matching _headers block instead of letting the more
+# specific rule win — confirmed live: a real chunk came back with BOTH this
+# rule's and the catch-all's Cache-Control values joined by a comma. The
+# catch-all deliberately includes a bare `no-cache` token for exactly this
+# reason (see below), so the merge stays safe rather than producing an
+# ambiguous "two different max-age values" header — real immutable chunks
+# just cost one extra (cheap, conditional/304) revalidation per session
+# instead of being served untouched from a year-long cache.
 /_app/immutable/*
   Cache-Control: public, max-age=31536000, immutable
 
-# Everything else — index.html, the SPA fallback _redirects resolves to, the
-# PWA service worker/manifest — must always be revalidated against origin.
-# Without this, Cloudflare's default shared-cache lifetime (s-maxage) lets the
-# edge keep serving a deploy-old index.html for up to 30 days after a new
-# deploy ships. That stale HTML references the *previous* deploy's hashed
-# script filenames, which no longer exist once the new build replaces them —
-# and the _redirects catch-all then serves those missing paths back as a 200
-# text/html response (the SPA fallback) instead of a 404, which is what shows
-# up in the browser as "Failed to load module script: ... MIME type text/html".
+# Everything else — index.html, the SPA fallback _redirects resolves any
+# unmatched/missing path to (client routes, or a previous deploy's now-
+# deleted chunk path), the PWA service worker/manifest, static assets.
+# `no-cache` (which still permits storage, it just forces revalidation
+# before reuse) is what actually matters here, not the max-age numbers: on
+# its own it always revalidates a path that only matches this rule, and if a
+# path also matches the immutable rule above and Cloudflare merges the two
+# values, `no-cache`'s revalidation requirement isn't something the other
+# rule's max-age can silently override — the merged result still revalidates
+# rather than being served stale for up to 30 days.
+#
+# That 30-day figure is Sevalla's/Cloudflare's own default shared-cache
+# lifetime (s-maxage) for a static host response with no _headers override —
+# it's what let the CDN edge keep serving a deploy-old index.html (with
+# script tags pointing at chunk filenames the new deploy had already
+# deleted) long after a new deploy shipped, which is what surfaced as
+# "Failed to load module script ... MIME type text/html" in the browser.
 /*
-  Cache-Control: public, max-age=0, s-maxage=0, must-revalidate
+  Cache-Control: no-cache, must-revalidate
