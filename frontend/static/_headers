@@ -1,0 +1,17 @@
+# Hashed, content-addressed build output — the filename changes whenever the
+# content does, so it's always safe to cache indefinitely at every layer
+# (browser + Sevalla's Cloudflare edge).
+/_app/immutable/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Everything else — index.html, the SPA fallback _redirects resolves to, the
+# PWA service worker/manifest — must always be revalidated against origin.
+# Without this, Cloudflare's default shared-cache lifetime (s-maxage) lets the
+# edge keep serving a deploy-old index.html for up to 30 days after a new
+# deploy ships. That stale HTML references the *previous* deploy's hashed
+# script filenames, which no longer exist once the new build replaces them —
+# and the _redirects catch-all then serves those missing paths back as a 200
+# text/html response (the SPA fallback) instead of a 404, which is what shows
+# up in the browser as "Failed to load module script: ... MIME type text/html".
+/*
+  Cache-Control: public, max-age=0, s-maxage=0, must-revalidate
