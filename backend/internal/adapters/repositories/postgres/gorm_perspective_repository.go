@@ -129,9 +129,12 @@ func (r *GormPerspectiveRepository) List(ctx context.Context, params domain.Pers
 
 	// Execute pagination
 	var models []PerspectiveModel
-	_, cursor, err := p.Paginate(query, &models)
+	pageResult, cursor, err := p.Paginate(query, &models)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list perspectives: %w", err)
+	}
+	if pageResult.Error != nil {
+		return nil, fmt.Errorf("failed to list perspectives: %w", pageResult.Error)
 	}
 
 	// Map results to domain
