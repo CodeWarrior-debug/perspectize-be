@@ -1,0 +1,13 @@
+{
+  "name": "work-describer",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Deterministic HTML + TypeScript tool for building structured Claude Code work-request prompts.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Work Describer / Prompt Builder</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f7f7f8;
+        --panel: #ffffff;
+        --border: #d9d9de;
+        --text: #1c1c1f;
+        --muted: #6b6b74;
+        --accent: #4f46e5;
+        --accent-text: #ffffff;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #17171a;
+          --panel: #212126;
+          --border: #34343b;
+          --text: #eaeaee;
+          --muted: #9a9aa4;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+      }
+      header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+      }
+      header h1 {
+        margin: 0 0 0.25rem;
+        font-size: 1.25rem;
+      }
+      header p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      main {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 1.25rem;
+        padding: 1.25rem 1.5rem 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      @media (max-width: 900px) {
+        main {
+          grid-template-columns: 1fr;
+        }
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1rem 1.25rem 1.25rem;
+      }
+      .panel h2 {
+        margin: 0 0 0.75rem;
+        font-size: 1rem;
+      }
+      .field {
+        margin-bottom: 0.9rem;
+      }
+      .field label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 0.3rem;
+        color: var(--muted);
+      }
+      .field-row {
+        display: flex;
+        gap: 0.4rem;
+        align-items: center;
+      }
+      .field-row input,
+      .field-row select {
+        flex: 1;
+      }
+      input[type="text"],
+      select,
+      textarea {
+        width: 100%;
+        padding: 0.5rem 0.6rem;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--text);
+        font-size: 0.9rem;
+        font-family: inherit;
+      }
+      textarea {
+        resize: vertical;
+        min-height: 4.5rem;
+      }
+      .small-btn {
+        padding: 0.4rem 0.6rem;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        color: var(--text);
+        cursor: pointer;
+        font-size: 0.8rem;
+        white-space: nowrap;
+      }
+      .small-btn:hover {
+        border-color: var(--accent);
+      }
+      fieldset {
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.6rem 0.8rem;
+        margin: 0;
+      }
+      legend {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--muted);
+        padding: 0 0.3rem;
+      }
+      .radio-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        margin-bottom: 0.4rem;
+        font-size: 0.85rem;
+      }
+      .radio-row input {
+        margin-top: 0.2rem;
+      }
+      .actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.75rem;
+      }
+      .actions button {
+        padding: 0.5rem 0.9rem;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        color: var(--text);
+        cursor: pointer;
+        font-size: 0.85rem;
+      }
+      .actions button.primary {
+        background: var(--accent);
+        color: var(--accent-text);
+        border-color: var(--accent);
+      }
+      .actions button:hover {
+        opacity: 0.9;
+      }
+      .tabs {
+        display: flex;
+        gap: 0.3rem;
+        margin-bottom: 0.75rem;
+      }
+      .tabs button {
+        padding: 0.35rem 0.7rem;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 0.8rem;
+      }
+      .tabs button.active {
+        background: var(--accent);
+        color: var(--accent-text);
+        border-color: var(--accent);
+      }
+      #richPreview {
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.8rem 1rem;
+        background: var(--bg);
+        min-height: 20rem;
+        overflow: auto;
+      }
+      #richPreview h1 {
+        font-size: 1.2rem;
+        margin: 0 0 0.5rem;
+      }
+      #richPreview h2 {
+        font-size: 1rem;
+        margin: 1rem 0 0.4rem;
+        color: var(--accent);
+      }
+      #richPreview p {
+        margin: 0.3rem 0;
+        font-size: 0.9rem;
+        line-height: 1.4;
+      }
+      #richPreview ul {
+        margin: 0.2rem 0;
+        padding-left: 1.2rem;
+      }
+      #richPreview li {
+        font-size: 0.9rem;
+        line-height: 1.4;
+      }
+      #rawOutput {
+        width: 100%;
+        min-height: 20rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.82rem;
+        line-height: 1.45;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .hint {
+        color: var(--muted);
+        font-size: 0.75rem;
+        margin-top: 0.2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Work Describer / Prompt Builder</h1>
+      <p>
+        Fills in a structured work request deterministically — no AI calls. Copy or download the
+        result and paste it into a Claude Code session.
+      </p>
+    </header>
+    <main>
+      <section class="panel">
+        <h2>Task details</h2>
+        <form id="describerForm">
+          <div class="field">
+            <label for="taskName">Task name</label>
+            <input type="text" id="taskName" name="taskName" placeholder="e.g. Add YouTube post GraphQL mutation" />
+          </div>
+
+          <div class="field">
+            <label for="taskType">Task type</label>
+            <select id="taskType" name="taskType">
+              <option value="feature">Feature</option>
+              <option value="bugfix">Bugfix</option>
+              <option value="chore">Chore</option>
+              <option value="docs">Docs</option>
+              <option value="refactor">Refactor</option>
+              <option value="test">Test</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="intent">Intent (can include links and notes about attachments)</label>
+            <textarea id="intent" name="intent" placeholder="Describe what you want done and why..."></textarea>
+          </div>
+
+          <div class="field">
+            <label for="links">Links &amp; attachments (one per line)</label>
+            <textarea id="links" name="links" placeholder="https://... or filename references"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="repo">Repo</label>
+            <div class="field-row">
+              <input type="text" id="repo" name="repo" list="repoList" placeholder="perspectize" />
+              <button type="button" id="rememberRepoBtn" class="small-btn" title="Set as default repo">
+                Set default
+              </button>
+            </div>
+            <datalist id="repoList"></datalist>
+          </div>
+
+          <div class="field">
+            <label for="startingBranch">Starting branch</label>
+            <div class="field-row">
+              <input type="text" id="startingBranch" name="startingBranch" list="branchList" placeholder="main" />
+              <button
+                type="button"
+                id="rememberBranchBtn"
+                class="small-btn"
+                title="Set as default branch"
+              >
+                Set default
+              </button>
+            </div>
+            <datalist id="branchList"></datalist>
+          </div>
+
+          <div class="field">
+            <label for="workingLocation">Working location</label>
+            <select id="workingLocation" name="workingLocation">
+              <option value="main-worktree">Main worktree</option>
+              <option value="available-worktree">Available non-main worktree</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="prTargetBranch">PR target branch</label>
+            <input type="text" id="prTargetBranch" name="prTargetBranch" list="branchList" placeholder="main" />
+          </div>
+
+          <div class="field">
+            <fieldset>
+              <legend>Testing approach</legend>
+              <div class="radio-row">
+                <input
+                  type="radio"
+                  id="testingCodebase"
+                  name="testingApproach"
+                  value="codebase-then-judgment"
+                  checked
+                />
+                <label for="testingCodebase" style="margin: 0; font-weight: 400; color: var(--text)">
+                  Follow codebase instructions, then patterns, then judgment. Stop and ask if really
+                  unsure.
+                </label>
+              </div>
+              <div class="radio-row">
+                <input type="radio" id="testingStop" name="testingApproach" value="stop-and-ask" />
+                <label for="testingStop" style="margin: 0; font-weight: 400; color: var(--text)">
+                  Stop and ask if really unsure (don't guess at all).
+                </label>
+              </div>
+            </fieldset>
+            <textarea
+              id="testingNotes"
+              name="testingNotes"
+              style="margin-top: 0.5rem"
+              placeholder="Optional additional testing notes..."
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label for="ignoreInstructions"
+              >Codebase instructions/approaches to IGNORE (this session only, one per line)</label
+            >
+            <textarea
+              id="ignoreInstructions"
+              name="ignoreInstructions"
+              placeholder="e.g. Ignore the require-tests hook reminder for this task"
+            ></textarea>
+          </div>
+        </form>
+
+        <div class="actions">
+          <button type="button" id="resetBtn">Reset</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Preview</h2>
+        <div class="tabs">
+          <button type="button" class="active" id="tabRich" data-tab="rich">Rich preview</button>
+          <button type="button" id="tabRaw" data-tab="raw">Markdown source</button>
+        </div>
+        <div class="actions">
+          <button type="button" id="copyBtn" class="primary">Copy to clipboard</button>
+          <button type="button" id="downloadBtn">Download .md</button>
+        </div>
+        <div id="richPreview"></div>
+        <textarea id="rawOutput" hidden readonly></textarea>
+        <p class="hint">Output is generated entirely from your inputs by template — deterministic, no AI/tokens used.</p>
+      </section>
+    </main>
+    <script>
+      // Tiny tab-switch, kept inline since it's presentation-only (not part of
+      // the deterministic prompt-building logic in main.ts).
+      document.addEventListener("DOMContentLoaded", () => {
+        const rich = document.getElementById("richPreview");
+        const raw = document.getElementById("rawOutput");
+        const tabRich = document.getElementById("tabRich");
+        const tabRaw = document.getElementById("tabRaw");
+        tabRich.addEventListener("click", () => {
+          rich.hidden = false;
+          raw.hidden = true;
+          tabRich.classList.add("active");
+          tabRaw.classList.remove("active");
+        });
+        tabRaw.addEventListener("click", () => {
+          rich.hidden = true;
+          raw.hidden = false;
+          tabRaw.classList.add("active");
+          tabRich.classList.remove("active");
+        });
+      });
+    </script>
+    <script type="module" src="./dist/main.js"></script>
+  </body>
+</html>
