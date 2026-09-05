@@ -128,6 +128,13 @@
 		);
 	}
 
+	// Tracks the most recently added field so its newly-rendered row can be
+	// scrolled into view — the ratings grid grows downward inside a scroll
+	// container whose search box sits below it, so an added field can land
+	// off-screen with no visual cue that it was added at all.
+	let lastAddedKey = $state<string | null>(null);
+	let fieldRefs: Record<string, HTMLDivElement> = {};
+
 	function addField(field: FieldDef) {
 		// AddFieldSearch prefixes freeform entries with "custom:"; the UI label and
 		// the customFields payload both use the bare name ("humor"), so strip it —
@@ -139,8 +146,16 @@
 		const key = DEFAULT_FIELDS.includes(bare) ? field.key : bare;
 		if (!activeFields.includes(key)) {
 			activeFields = [...activeFields, key];
+			lastAddedKey = key;
 		}
 	}
+
+	$effect(() => {
+		if (!lastAddedKey) return;
+		const el = fieldRefs[lastAddedKey];
+		el?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+		lastAddedKey = null;
+	});
 
 	function removeField(key: string) {
 		activeFields = activeFields.filter((k) => k !== key);
@@ -345,7 +360,7 @@
 			<div class="grid grid-cols-2 gap-3">
 				{#each activeFields as fieldKey, idx (fieldKey)}
 					{@const isLeftCol = idx % 2 === 0}
-					<div class="relative">
+					<div class="relative" bind:this={fieldRefs[fieldKey]}>
 						{#if fieldKey === 'quality'}
 							<RatingInput
 								label="Quality"
