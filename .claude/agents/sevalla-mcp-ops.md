@@ -1,6 +1,6 @@
 ---
 name: sevalla-mcp-ops
-description: Sevalla infrastructure specialist. Use when the user asks about Sevalla deployments, deployment SHAs, app/static-site/database status, env vars, domains, logs, or metrics for this project's hosting. Has its own scoped connection to the Sevalla MCP server, so the main session never loads Sevalla's tool set.
+description: Sevalla infrastructure specialist. Use when the user asks about Sevalla deployments, deployment SHAs, app/static-site/database status, env vars, domains, logs, or metrics for this project's hosting. Has its own scoped connection to the Sevalla MCP server, so the main session never loads Sevalla's tool set. IMPORTANT: Before spawning a new agent, check if there is already a running or recently completed sevalla-mcp-ops agent that you can continue via SendMessage — this keeps the Sevalla MCP connection and any already-fetched resource context alive across a multi-part task instead of re-establishing it per message.
 model: sonnet
 tools:
   - Read
