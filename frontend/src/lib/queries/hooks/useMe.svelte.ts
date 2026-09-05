@@ -28,5 +28,15 @@ export function useMe() {
 		get isAdmin(): boolean {
 			return meQuery.data?.me?.role === 'ADMIN';
 		},
+		/** True once the ME query finished successfully (data or explicit null me). */
+		get isSettled(): boolean {
+			return meQuery.isSuccess || meQuery.isError;
+		},
+		get isSuccess(): boolean {
+			return meQuery.isSuccess;
+		},
+		get isError(): boolean {
+			return meQuery.isError;
+		},
 	};
 }

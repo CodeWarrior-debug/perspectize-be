@@ -10,4 +10,15 @@ declare global {
 	}
 }
 
+interface ImportMetaEnv {
+	readonly VITE_CLERK_PUBLISHABLE_KEY?: string;
+	readonly VITE_ONBOARDING_VIDEO_GUEST_PRODUCT?: string;
+	readonly VITE_ONBOARDING_VIDEO_HOW_ADD_VIDEO?: string;
+	readonly VITE_ONBOARDING_VIDEO_HOW_PERSPECTIVE?: string;
+}
+
+interface ImportMeta {
+	readonly env: ImportMetaEnv;
+}
+
 export {};

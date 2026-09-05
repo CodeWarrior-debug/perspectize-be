@@ -14,7 +14,14 @@
 	import { validateYouTubeUrl } from '$lib/utils/youtube';
 
 	// Props
-	let { open = $bindable(false) } = $props();
+	let {
+		open = $bindable(false),
+		onSuccess,
+	}: {
+		open?: boolean;
+		/** Fired after a successful add (new or already-existed). */
+		onSuccess?: () => void;
+	} = $props();
 
 	// Reactive state
 	let url = $state('');
@@ -31,13 +38,6 @@
 	// Shared mutation hook
 	const mutation = useAddVideo();
 
-	// Close dialog on success
-	$effect(() => {
-		if (mutation.isSuccess) {
-			open = false;
-		}
-	});
-
 	// Form submission handler
 	function handleSubmit(e: Event) {
 		e.preventDefault();
@@ -48,7 +48,12 @@
 		}
 
 		error = '';
-		mutation.mutate(url);
+		mutation.mutate(url, {
+			onSuccess: () => {
+				open = false;
+				onSuccess?.();
+			},
+		});
 	}
 </script>
 
