@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -142,11 +143,16 @@ func TestWebhookHandler_RejectsBadSignatures(t *testing.T) {
 
 	t.Run("body tampered after signing yields 401", func(t *testing.T) {
 		req := signedWebhookRequest(t, body)
-		req.Body = http.NoBody
-		req = httptest.NewRequest(http.MethodPost, "/webhooks/clerk", strings.NewReader(`{"type":"user.deleted","data":{"id":"evil"}}`))
-		req.Header.Set("svix-id", "msg_test_1")
-		req.Header.Set("svix-timestamp", strconv.FormatInt(time.Now().Unix(), 10))
-		req.Header.Set("svix-signature", "v1,AAAA")
+
+		// Swap in a different body after the signature (computed for the
+		// original `body`) has already been attached to the request headers.
+		// The svix-id/svix-timestamp/svix-signature headers are left as-is,
+		// so this proves the handler actually verifies the signature against
+		// the body it reads, rather than trusting the headers alone.
+		tamperedBody := `{"type":"user.deleted","data":{"id":"evil"}}`
+		req.Body = io.NopCloser(strings.NewReader(tamperedBody))
+		req.ContentLength = int64(len(tamperedBody))
+
 		rec := serveWebhook(t, &stubUserRepo{}, testWebhookSecret, req)
 		assert.Equal(t, http.StatusUnauthorized, rec.Code)
 	})
