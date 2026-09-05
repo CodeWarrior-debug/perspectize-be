@@ -54,13 +54,13 @@ describe('useCreatePerspective hook', () => {
 	beforeEach(async () => {
 		vi.clearAllMocks();
 		capturedMutationOptions = undefined;
-		const { useCreatePerspective } = await import('$lib/queries/hooks/useCreatePerspective');
+		const { useCreatePerspective } = await import('$lib/queries/perspectives/useCreatePerspective');
 		useCreatePerspective();
 	});
 
 	describe('hook initialization', () => {
 		it('returns a mutation object with mutate method', async () => {
-			const { useCreatePerspective } = await import('$lib/queries/hooks/useCreatePerspective');
+			const { useCreatePerspective } = await import('$lib/queries/perspectives/useCreatePerspective');
 			const mutation = useCreatePerspective();
 			expect(mutation).toBeDefined();
 			expect(mutation.mutate).toBeDefined();

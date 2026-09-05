@@ -1,7 +1,7 @@
 import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 import { toast } from 'svelte-sonner';
 import { graphqlRequest } from '../client';
-import { SET_PRIMARY_CATEGORY, type SetPrimaryCategoryResponse } from '../categories';
+import { SET_PRIMARY_CATEGORY, type SetPrimaryCategoryResponse } from './index';
 import { queryKeys } from '../keys';
 
 export interface SetPrimaryCategoryInput {

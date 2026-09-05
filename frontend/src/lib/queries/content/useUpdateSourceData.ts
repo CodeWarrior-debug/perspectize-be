@@ -5,7 +5,7 @@ import {
 	UPDATE_CONTENT_SOURCE_DATA,
 	type UpdateContentSourceDataResponse,
 	type ContentResponse,
-} from '../content';
+} from './index';
 import { queryKeys } from '../keys';
 
 export function useUpdateSourceData() {

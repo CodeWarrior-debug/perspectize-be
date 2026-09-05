@@ -25,7 +25,7 @@
 		coachStepBody,
 		type CoachStep,
 	} from '$lib/onboarding/steps';
-	import { useMarkOnboardingSeen } from '$lib/queries/hooks/useMarkOnboardingSeen';
+	import { useMarkOnboardingSeen } from '$lib/queries/users/useMarkOnboardingSeen';
 	import { graphqlRequest } from '$lib/queries/client';
 	import { LIST_CONTENT, type ContentItem, type ContentResponse } from '$lib/queries/content';
 	import {

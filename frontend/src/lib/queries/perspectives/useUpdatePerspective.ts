@@ -6,7 +6,7 @@ import {
 	type UpdatePerspectiveResponse,
 	type ListPerspectivesByUserResponse,
 	type PerspectiveItem,
-} from '../perspectives';
+} from './index';
 import { queryKeys } from '../keys';
 
 export interface UpdatePerspectiveInput {

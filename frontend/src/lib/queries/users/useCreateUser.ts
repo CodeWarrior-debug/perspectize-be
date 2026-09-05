@@ -1,7 +1,7 @@
 import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 import { toast } from 'svelte-sonner';
 import { graphqlRequest } from '../client';
-import { CREATE_USER, type CreateUserInput, type CreateUserResponse } from '../users';
+import { CREATE_USER, type CreateUserInput, type CreateUserResponse } from './index';
 import { queryKeys } from '../keys';
 
 export function useCreateUser() {

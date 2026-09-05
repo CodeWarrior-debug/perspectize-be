@@ -1,5 +1,5 @@
 import { gql } from 'graphql-request';
-import type { ContentItem } from './content';
+import type { ContentItem } from '../content';
 
 export interface WikidataSearchResult {
 	qid: string;
