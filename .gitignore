@@ -46,6 +46,7 @@ coverage/
 # Local Claude Code settings and hooks (machine-specific)
 .claude/*.local.md
 .claude/*.local.json
+CLAUDE.local.md
 
 # Claude Code isolated worktrees (EnterWorktree tool, standardized location)
 .claude/worktrees/
