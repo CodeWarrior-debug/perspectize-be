@@ -26,6 +26,7 @@
 		lengthUnits: string | null;
 		publishedAt: string | null;
 		updatedAt: string;
+		description: string | null;
 		tags: string[] | null;
 	}
 
@@ -42,6 +43,7 @@
 	const videoId = $derived(content ? extractVideoIdFromUrl(content.url) : null);
 	const thumbSrc = $derived(videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null);
 	const hasTags = $derived(!!content?.tags && content.tags.length > 0);
+	const hasDescription = $derived(!!content?.description && content.description.trim().length > 0);
 
 	// Source data (title/description/stats) is cache-served by the backend for
 	// up to 6h after the last update — refreshing again inside that window
@@ -144,8 +146,8 @@
 					<div>
 						<div class="text-[11px] tracking-wide text-muted-foreground uppercase">Last updated in Perspectize</div>
 						<div
-							class="mt-0.5 font-[family-name:var(--font-family-serif)] text-sm text-foreground"
-							title={formatDateTime(content.updatedAt)}
+							class="hover-tooltip mt-0.5 font-[family-name:var(--font-family-serif)] text-sm text-foreground"
+							data-tooltip={formatDateTime(content.updatedAt)}
 						>
 							{formatDate(content.updatedAt)}
 						</div>
@@ -169,6 +171,15 @@
 						{/if}
 					</div>
 				</div>
+
+				{#if hasDescription}
+					<div class="mt-3.5 border-t border-border pt-3.5">
+						<div class="mb-1.5 text-[11px] tracking-wide text-muted-foreground uppercase">Description</div>
+						<div class="font-serif text-[13px] whitespace-pre-wrap text-foreground">
+							{content.description}
+						</div>
+					</div>
+				{/if}
 
 				{#if hasTags}
 					<div class="mt-3.5">

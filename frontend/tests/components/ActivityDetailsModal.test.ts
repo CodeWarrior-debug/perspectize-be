@@ -46,6 +46,7 @@ const content = {
 	lengthUnits: 'seconds',
 	publishedAt: '2026-02-24T00:00:00Z',
 	updatedAt: '2026-03-01T00:00:00Z',
+	description: 'A record-setting rep, filmed ringside.',
 	tags: ['tom brady', 'tom brady goat'],
 };
 
@@ -79,6 +80,19 @@ describe('ActivityDetailsModal', () => {
 	it('renders tags when present', () => {
 		render(ActivityDetailsModal, { props: { content, open: true, onClose: vi.fn() } });
 		expect(screen.getByText('tom brady, tom brady goat')).toBeInTheDocument();
+	});
+
+	it('renders the description above the tags when present', () => {
+		render(ActivityDetailsModal, { props: { content, open: true, onClose: vi.fn() } });
+		expect(screen.getByText('Description')).toBeInTheDocument();
+		expect(screen.getByText(content.description)).toBeInTheDocument();
+	});
+
+	it('omits the description section when there is none', () => {
+		render(ActivityDetailsModal, {
+			props: { content: { ...content, description: null }, open: true, onClose: vi.fn() },
+		});
+		expect(screen.queryByText('Description')).not.toBeInTheDocument();
 	});
 
 	it('omits the tags section when there are none', () => {
