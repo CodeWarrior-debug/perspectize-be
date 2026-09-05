@@ -272,7 +272,14 @@ describe('ActivityTable', () => {
 
 		mockRequest.mockImplementation((query: string) => {
 			if (query.includes('me {')) {
-				return Promise.resolve({ me: { id: '7', username: 'tester', role: 'DEFAULT' } });
+				return Promise.resolve({
+					me: {
+						id: '7',
+						username: 'tester',
+						role: 'DEFAULT',
+						onboarding: { version: 1, displayNextSession: false, completedAt: null },
+					},
+				});
 			}
 			if (query.includes('ListPerspectivesByUser')) {
 				return Promise.resolve({ perspectives: { items: [] } });

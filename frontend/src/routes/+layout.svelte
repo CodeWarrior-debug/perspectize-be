@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
-	import { ClerkProvider, ClerkLoaded, ClerkLoading } from 'svelte-clerk';
+	import { ClerkProvider, ClerkLoaded, ClerkLoading, Show } from 'svelte-clerk';
 	import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query';
 	import { Toaster } from 'svelte-sonner';
 	import favicon from '$lib/assets/favicon.svg';
 	import AuthUserSync from '$lib/components/AuthUserSync.svelte';
 	import Header from '$lib/components/Header.svelte';
+	import GuestLanding from '$lib/components/onboarding/GuestLanding.svelte';
+	import OnboardingShell from '$lib/components/onboarding/OnboardingShell.svelte';
 	import { reportWebVitals } from '$lib/vitals';
 	import { pwaInfo } from 'virtual:pwa-info';
 	import '../app.css';
@@ -51,7 +53,13 @@
 			<AuthUserSync />
 			<div class="min-h-screen bg-background text-foreground">
 				<Header />
-				{@render children()}
+				<Show when="signed-out">
+					<GuestLanding />
+				</Show>
+				<Show when="signed-in">
+					<OnboardingShell />
+					{@render children()}
+				</Show>
 			</div>
 		</ClerkLoaded>
 	</QueryClientProvider>

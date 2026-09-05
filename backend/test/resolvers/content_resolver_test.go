@@ -171,6 +171,10 @@ func (m *mockUserRepository) DeactivateByClerkID(ctx context.Context, clerkID st
 	return domain.ErrNotFound
 }
 
+func (m *mockUserRepository) UpdateOnboarding(ctx context.Context, userID int, onboarding domain.UserOnboarding) (*domain.User, error) {
+	return &domain.User{ID: userID, Onboarding: onboarding}, nil
+}
+
 // mockPerspectiveRepository implements repositories.PerspectiveRepository for testing
 type mockPerspectiveRepository struct {
 	createFn  func(ctx context.Context, p *domain.Perspective) (*domain.Perspective, error)

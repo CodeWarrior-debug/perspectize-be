@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/repositories"
@@ -78,10 +79,11 @@ func (s *UserService) Create(ctx context.Context, username, email string) (*doma
 	}
 
 	user := &domain.User{
-		Username: username,
-		Email:    email,
-		Role:     domain.UserRoleDefault,
-		Active:   true,
+		Username:   username,
+		Email:      email,
+		Role:       domain.UserRoleDefault,
+		Active:     true,
+		Onboarding: domain.DefaultUserOnboarding(),
 	}
 
 	created, err := s.repo.Create(ctx, user)
@@ -238,4 +240,59 @@ func (s *UserService) Delete(ctx context.Context, id int) error {
 	}
 
 	return nil
+}
+
+// MarkOnboardingSeen records that the user finished or dismissed the intro coach.
+func (s *UserService) MarkOnboardingSeen(ctx context.Context, userID int, version int) (*domain.UserOnboarding, error) {
+	if userID <= 0 {
+		return nil, fmt.Errorf("%w: user id must be a positive integer", domain.ErrInvalidInput)
+	}
+	if version < 0 {
+		return nil, fmt.Errorf("%w: version must be non-negative", domain.ErrInvalidInput)
+	}
+
+	user, err := s.repo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+	if user.IsSentinel() {
+		return nil, fmt.Errorf("%w", domain.ErrSentinelUser)
+	}
+
+	now := time.Now().UTC().Format(time.RFC3339)
+	onboarding := domain.UserOnboarding{
+		Version:            version,
+		DisplayNextSession: false,
+		CompletedAt:        &now,
+	}
+
+	updated, err := s.repo.UpdateOnboarding(ctx, userID, onboarding)
+	if err != nil {
+		return nil, fmt.Errorf("failed to mark onboarding seen: %w", err)
+	}
+	return &updated.Onboarding, nil
+}
+
+// SetOnboardingDisplayNextSession toggles soft coach display (Help replay).
+func (s *UserService) SetOnboardingDisplayNextSession(ctx context.Context, userID int, displayNextSession bool) (*domain.UserOnboarding, error) {
+	if userID <= 0 {
+		return nil, fmt.Errorf("%w: user id must be a positive integer", domain.ErrInvalidInput)
+	}
+
+	user, err := s.repo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+	if user.IsSentinel() {
+		return nil, fmt.Errorf("%w", domain.ErrSentinelUser)
+	}
+
+	onboarding := user.Onboarding
+	onboarding.DisplayNextSession = displayNextSession
+
+	updated, err := s.repo.UpdateOnboarding(ctx, userID, onboarding)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set onboarding display flag: %w", err)
+	}
+	return &updated.Onboarding, nil
 }

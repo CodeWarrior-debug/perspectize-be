@@ -16,13 +16,14 @@ import (
 
 // mockUserRepository implements repositories.UserRepository for testing
 type mockUserRepository struct {
-	createFn        func(ctx context.Context, user *domain.User) (*domain.User, error)
-	getByIDFn       func(ctx context.Context, id int) (*domain.User, error)
-	getByUsernameFn func(ctx context.Context, username string) (*domain.User, error)
-	getByEmailFn    func(ctx context.Context, email string) (*domain.User, error)
-	listAllFn       func(ctx context.Context) ([]*domain.User, error)
-	updateFn        func(ctx context.Context, user *domain.User) (*domain.User, error)
-	deleteFn        func(ctx context.Context, id int) error
+	createFn           func(ctx context.Context, user *domain.User) (*domain.User, error)
+	getByIDFn          func(ctx context.Context, id int) (*domain.User, error)
+	getByUsernameFn    func(ctx context.Context, username string) (*domain.User, error)
+	getByEmailFn       func(ctx context.Context, email string) (*domain.User, error)
+	listAllFn          func(ctx context.Context) ([]*domain.User, error)
+	updateFn           func(ctx context.Context, user *domain.User) (*domain.User, error)
+	deleteFn           func(ctx context.Context, id int) error
+	updateOnboardingFn func(ctx context.Context, userID int, onboarding domain.UserOnboarding) (*domain.User, error)
 }
 
 func (m *mockUserRepository) Create(ctx context.Context, user *domain.User) (*domain.User, error) {
@@ -89,6 +90,13 @@ func (m *mockUserRepository) UpdateByClerkID(ctx context.Context, clerkID string
 
 func (m *mockUserRepository) DeactivateByClerkID(ctx context.Context, clerkID string) error {
 	return domain.ErrNotFound
+}
+
+func (m *mockUserRepository) UpdateOnboarding(ctx context.Context, userID int, onboarding domain.UserOnboarding) (*domain.User, error) {
+	if m.updateOnboardingFn != nil {
+		return m.updateOnboardingFn(ctx, userID, onboarding)
+	}
+	return &domain.User{ID: userID, Onboarding: onboarding}, nil
 }
 
 // mockContentRepoForUser implements repositories.ContentRepository for user tests
@@ -789,4 +797,158 @@ func TestDelete_SystemSentinelBlocked(t *testing.T) {
 
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, domain.ErrDeleteSentinel))
+}
+
+// --- Onboarding Tests ---
+
+func TestDefaultUserOnboarding(t *testing.T) {
+	o := domain.DefaultUserOnboarding()
+	assert.Equal(t, 0, o.Version)
+	assert.True(t, o.DisplayNextSession)
+	assert.Nil(t, o.CompletedAt)
+	assert.Equal(t, 1, domain.CurrentIntroVersion)
+}
+
+func TestCreate_SetsDefaultOnboarding(t *testing.T) {
+	var captured *domain.User
+	repo := &mockUserRepository{
+		createFn: func(ctx context.Context, user *domain.User) (*domain.User, error) {
+			captured = user
+			user.ID = 10
+			return user, nil
+		},
+	}
+	svc := newTestUserService(repo)
+
+	result, err := svc.Create(context.Background(), "newbie", "n@example.com")
+	require.NoError(t, err)
+	require.NotNil(t, captured)
+	assert.Equal(t, domain.DefaultUserOnboarding(), captured.Onboarding)
+	assert.Equal(t, domain.DefaultUserOnboarding(), result.Onboarding)
+}
+
+func TestMarkOnboardingSeen_Success(t *testing.T) {
+	repo := &mockUserRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
+			return &domain.User{
+				ID:         id,
+				Username:   "u",
+				Role:       domain.UserRoleDefault,
+				Onboarding: domain.DefaultUserOnboarding(),
+			}, nil
+		},
+		updateOnboardingFn: func(ctx context.Context, userID int, onboarding domain.UserOnboarding) (*domain.User, error) {
+			assert.Equal(t, 5, userID)
+			assert.Equal(t, domain.CurrentIntroVersion, onboarding.Version)
+			assert.False(t, onboarding.DisplayNextSession)
+			require.NotNil(t, onboarding.CompletedAt)
+			assert.NotEmpty(t, *onboarding.CompletedAt)
+			return &domain.User{ID: userID, Onboarding: onboarding}, nil
+		},
+	}
+	svc := newTestUserService(repo)
+
+	o, err := svc.MarkOnboardingSeen(context.Background(), 5, domain.CurrentIntroVersion)
+	require.NoError(t, err)
+	require.NotNil(t, o)
+	assert.Equal(t, domain.CurrentIntroVersion, o.Version)
+	assert.False(t, o.DisplayNextSession)
+	require.NotNil(t, o.CompletedAt)
+}
+
+func TestMarkOnboardingSeen_InvalidUserID(t *testing.T) {
+	svc := newTestUserService(&mockUserRepository{})
+	o, err := svc.MarkOnboardingSeen(context.Background(), 0, 1)
+	assert.Nil(t, o)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
+}
+
+func TestMarkOnboardingSeen_NegativeVersion(t *testing.T) {
+	svc := newTestUserService(&mockUserRepository{})
+	o, err := svc.MarkOnboardingSeen(context.Background(), 1, -1)
+	assert.Nil(t, o)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrInvalidInput))
+}
+
+func TestMarkOnboardingSeen_SentinelBlocked(t *testing.T) {
+	repo := &mockUserRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
+			return &domain.User{ID: 1, Role: domain.UserRoleSentinel, Username: domain.SystemUserUsername}, nil
+		},
+	}
+	svc := newTestUserService(repo)
+	o, err := svc.MarkOnboardingSeen(context.Background(), 1, 1)
+	assert.Nil(t, o)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrSentinelUser))
+}
+
+func TestMarkOnboardingSeen_NotFound(t *testing.T) {
+	repo := &mockUserRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
+			return nil, domain.ErrNotFound
+		},
+	}
+	svc := newTestUserService(repo)
+	o, err := svc.MarkOnboardingSeen(context.Background(), 99, 1)
+	assert.Nil(t, o)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to get user")
+}
+
+func TestSetOnboardingDisplayNextSession_Replay(t *testing.T) {
+	completed := "2026-01-01T00:00:00Z"
+	existing := domain.UserOnboarding{
+		Version:            domain.CurrentIntroVersion,
+		DisplayNextSession: false,
+		CompletedAt:        &completed,
+	}
+	repo := &mockUserRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
+			return &domain.User{ID: id, Role: domain.UserRoleDefault, Onboarding: existing}, nil
+		},
+		updateOnboardingFn: func(ctx context.Context, userID int, onboarding domain.UserOnboarding) (*domain.User, error) {
+			assert.True(t, onboarding.DisplayNextSession)
+			assert.Equal(t, domain.CurrentIntroVersion, onboarding.Version)
+			require.NotNil(t, onboarding.CompletedAt)
+			assert.Equal(t, completed, *onboarding.CompletedAt)
+			return &domain.User{ID: userID, Onboarding: onboarding}, nil
+		},
+	}
+	svc := newTestUserService(repo)
+
+	o, err := svc.SetOnboardingDisplayNextSession(context.Background(), 3, true)
+	require.NoError(t, err)
+	assert.True(t, o.DisplayNextSession)
+	assert.Equal(t, domain.CurrentIntroVersion, o.Version)
+	require.NotNil(t, o.CompletedAt)
+	assert.Equal(t, completed, *o.CompletedAt)
+}
+
+func TestSetOnboardingDisplayNextSession_SentinelBlocked(t *testing.T) {
+	repo := &mockUserRepository{
+		getByIDFn: func(ctx context.Context, id int) (*domain.User, error) {
+			return &domain.User{ID: 1, Role: domain.UserRoleSentinel}, nil
+		},
+	}
+	svc := newTestUserService(repo)
+	o, err := svc.SetOnboardingDisplayNextSession(context.Background(), 1, true)
+	assert.Nil(t, o)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, domain.ErrSentinelUser))
+}
+
+func TestBackfillSemantics_SeenAtCurrentVersion(t *testing.T) {
+	// Documents migration backfill shape used by eligibility:
+	// displayNextSession=false, version=CURRENT, completedAt set → coach hidden.
+	completed := "2026-09-05T00:00:00Z"
+	backfilled := domain.UserOnboarding{
+		Version:            domain.CurrentIntroVersion,
+		DisplayNextSession: false,
+		CompletedAt:        &completed,
+	}
+	showCoach := backfilled.DisplayNextSession || backfilled.Version < domain.CurrentIntroVersion
+	assert.False(t, showCoach)
 }

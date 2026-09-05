@@ -7,14 +7,15 @@ import (
 
 // UserModel is the GORM persistence model for users table
 type UserModel struct {
-	ID          int       `gorm:"primaryKey;autoIncrement"`
-	ClerkUserID *string   `gorm:"column:clerk_user_id;type:text;uniqueIndex"`
-	Username    string    `gorm:"not null"`
-	Email       *string   `gorm:"uniqueIndex"`
-	Role        string    `gorm:"not null;default:default"`
-	Active      bool      `gorm:"not null;default:true"`
-	CreatedAt   time.Time `gorm:"autoCreateTime"`
-	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
+	ID          int             `gorm:"primaryKey;autoIncrement"`
+	ClerkUserID *string         `gorm:"column:clerk_user_id;type:text;uniqueIndex"`
+	Username    string          `gorm:"not null"`
+	Email       *string         `gorm:"uniqueIndex"`
+	Role        string          `gorm:"not null;default:default"`
+	Active      bool            `gorm:"not null;default:true"`
+	Onboarding  json.RawMessage `gorm:"type:jsonb;column:onboarding;default:'{\"version\":0,\"displayNextSession\":true,\"completedAt\":null}'"`
+	CreatedAt   time.Time       `gorm:"autoCreateTime"`
+	UpdatedAt   time.Time       `gorm:"autoUpdateTime"`
 }
 
 // TableName returns the table name for UserModel

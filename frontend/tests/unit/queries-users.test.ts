@@ -39,9 +39,15 @@ describe('User Queries', () => {
 			expect(response).toBeDefined();
 		});
 
-		it('exports Me interface with a role', () => {
-			const me: Me = { id: '1', username: 'admin', role: 'ADMIN' };
+		it('exports Me interface with a role and onboarding', () => {
+			const me: Me = {
+				id: '1',
+				username: 'admin',
+				role: 'ADMIN',
+				onboarding: { version: 0, displayNextSession: true, completedAt: null },
+			};
 			expect(me.role).toBe('ADMIN');
+			expect(me.onboarding.displayNextSession).toBe(true);
 		});
 	});
 
@@ -51,10 +57,13 @@ describe('User Queries', () => {
 			expect(ME).toContain('query Me');
 		});
 
-		it('requests id, username, and role fields', () => {
+		it('requests id, username, role, and onboarding fields', () => {
 			expect(ME).toContain('id');
 			expect(ME).toContain('username');
 			expect(ME).toContain('role');
+			expect(ME).toContain('onboarding');
+			expect(ME).toContain('displayNextSession');
+			expect(ME).toContain('completedAt');
 		});
 	});
 

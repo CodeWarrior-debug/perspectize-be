@@ -10,6 +10,10 @@ const DeletedUserUsername = "[deleted]"
 // created before user tracking was added. Seeded by migration 000007.
 const SystemUserUsername = "[system]"
 
+// CurrentIntroVersion is the checklist-coach intro version shipped with this build.
+// Bump only when a material onboarding flow change should force a re-intro.
+const CurrentIntroVersion = 1
+
 // UserRole represents the role of a user in the system.
 type UserRole string
 
@@ -19,6 +23,23 @@ const (
 	UserRoleDefault  UserRole = "DEFAULT"
 )
 
+// UserOnboarding is thin persistence for the first-run checklist coach.
+// CompletedAt is an ISO-8601 UTC timestamp string when set.
+type UserOnboarding struct {
+	Version            int     `json:"version"`
+	DisplayNextSession bool    `json:"displayNextSession"`
+	CompletedAt        *string `json:"completedAt"`
+}
+
+// DefaultUserOnboarding returns new-user coach defaults (show intro).
+func DefaultUserOnboarding() UserOnboarding {
+	return UserOnboarding{
+		Version:            0,
+		DisplayNextSession: true,
+		CompletedAt:        nil,
+	}
+}
+
 // User represents a user who can create perspectives
 type User struct {
 	ID          int
@@ -27,6 +48,7 @@ type User struct {
 	Email       string
 	Role        UserRole
 	Active      bool
+	Onboarding  UserOnboarding
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

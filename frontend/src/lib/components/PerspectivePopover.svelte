@@ -42,6 +42,7 @@
 		userId,
 		open = $bindable(true),
 		onClose,
+		onSuccess,
 	}: {
 		contentId: number;
 		contentName: string;
@@ -49,6 +50,8 @@
 		userId: number;
 		open?: boolean;
 		onClose: () => void;
+		/** Fired after create/update succeeds (before onClose). */
+		onSuccess?: () => void;
 	} = $props();
 
 	const isEditMode = $derived(existingPerspective !== null);
@@ -241,6 +244,7 @@
 				},
 				{
 					onSuccess: () => {
+						onSuccess?.();
 						onClose();
 					},
 				},
@@ -260,6 +264,7 @@
 				},
 				{
 					onSuccess: () => {
+						onSuccess?.();
 						onClose();
 					},
 				},
