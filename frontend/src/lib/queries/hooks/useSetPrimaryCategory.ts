@@ -1,6 +1,6 @@
 import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 import { toast } from 'svelte-sonner';
-import { graphqlClient } from '../client';
+import { graphqlRequest } from '../client';
 import { SET_PRIMARY_CATEGORY, type SetPrimaryCategoryResponse } from '../categories';
 import { queryKeys } from '../keys';
 
@@ -17,7 +17,7 @@ export function useSetPrimaryCategory() {
 
 	return createMutation(() => ({
 		mutationFn: async (input: SetPrimaryCategoryInput) => {
-			return graphqlClient.request<SetPrimaryCategoryResponse>(SET_PRIMARY_CATEGORY, {
+			return graphqlRequest<SetPrimaryCategoryResponse>(SET_PRIMARY_CATEGORY, {
 				input: {
 					contentId: input.contentId,
 					qid: input.qid,
