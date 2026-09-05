@@ -143,6 +143,15 @@ Full setup and examples: [docs/AG_GRID.md](docs/AG_GRID.md)
 - AG Grid canvas-rendered cells (thumbnails) don't serialize into Figma captures
 - SPA hash navigation may not re-trigger auto-capture — reload or click "Send to Figma" manually
 
+## Deployment (Sevalla / Cloudflare edge)
+
+**`static/_headers` and `static/_redirects` are load-bearing, not cosmetic.** adapter-static builds a pure static site with content-hashed `_app/immutable/*` chunks; Sevalla serves it behind Cloudflare. Two gotchas compound if either file is missing or edited carelessly:
+
+- **`_redirects`** (`/* /index.html 200`) makes client-side routing survive a hard refresh — but it also means *any* missing path, including a previous deploy's now-deleted hashed chunk, resolves to a 200 `text/html` response instead of a 404.
+- **`_headers`** caps `index.html`/the SPA fallback at `Cache-Control: ... s-maxage=0` (always revalidate), while `_app/immutable/*` keeps a long, immutable cache. Without the `s-maxage=0` override, Cloudflare's edge can keep serving a deploy-old `index.html` for up to 30 days — that stale HTML references the *previous* deploy's chunk filenames, which the new deploy no longer has, and the missing-chunk request then hits the `_redirects` catch-all and comes back as `text/html` instead of JS.
+
+Symptom in the browser: `Failed to load module script: Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of "text/html"` on the deployed site (not reproducible locally, since there's no CDN layer). **This is a caching/hosting-config issue, not a service worker issue** — check for it (`curl -I` the failing chunk URL, or a live `fetch()` from the deployed page) before assuming a PWA/SW root cause; a registered SW isn't even required to hit it. Verify after touching either file: `pnpm run build` then confirm both `build/_headers` and `build/_redirects` exist.
+
 ## Self-Verification (Chrome DevTools MCP)
 
 | Step       | Tool                                          | Purpose                        |
