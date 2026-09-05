@@ -1,0 +1,13 @@
+{
+  "name": "content-type-designer",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Deterministic decision form for adding a new Perspectize content type",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

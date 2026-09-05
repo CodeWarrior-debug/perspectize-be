@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Perspectize — Content Type Designer</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f6f7f9;
+        --panel: #ffffff;
+        --ink: #16191d;
+        --muted: #646c78;
+        --line: #dfe3e8;
+        --accent: #3b6fd4;
+        --warn: #b26a00;
+        --err: #b3261e;
+        --ok: #1f7a4d;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #14171b;
+          --panel: #1c2026;
+          --ink: #e8eaed;
+          --muted: #98a1ad;
+          --line: #2c333c;
+          --accent: #7aa2f7;
+          --warn: #e0a341;
+          --err: #f2807a;
+          --ok: #6bcf9a;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      header {
+        padding: 20px 28px;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel);
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      header h1 { font-size: 17px; margin: 0; }
+      header p { margin: 0; color: var(--muted); max-width: 70ch; }
+      main { max-width: 1100px; margin: 0 auto; padding: 24px 28px 80px; }
+      section {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 18px 20px;
+        margin-bottom: 20px;
+      }
+      h2 { font-size: 15px; margin: 0 0 4px; }
+      h3.group {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin: 22px 0 8px;
+      }
+      .blurb { margin: 0 0 14px; color: var(--muted); max-width: 80ch; }
+      .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+      .field { display: flex; flex-direction: column; gap: 4px; }
+      .field-label { font-size: 12px; color: var(--muted); }
+      input, select, textarea {
+        font: inherit;
+        color: inherit;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 6px 8px;
+        width: 100%;
+      }
+      textarea { resize: vertical; }
+      .hint, .muted { color: var(--muted); }
+      .small { font-size: 12px; }
+      .checkline { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+      .checkline input { width: auto; }
+      select.seed { margin-bottom: 14px; max-width: 340px; }
+      .col-row {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px 14px;
+        margin-bottom: 10px;
+      }
+      .col-row.off { opacity: 0.7; padding: 8px 14px; }
+      .col-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
+      .flags { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
+      .badge { font-size: 11px; border-radius: 999px; padding: 2px 8px; border: 1px solid var(--line); }
+      .badge-required { color: var(--err); }
+      .badge-typical { color: var(--accent); }
+      .badge-optional { color: var(--muted); }
+      .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+      .chip, .tab, button {
+        font: inherit;
+        cursor: pointer;
+        background: var(--bg);
+        color: inherit;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 5px 11px;
+      }
+      .chip.on, .tab.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+      button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .row { display: flex; gap: 8px; margin: 12px 0; }
+      .tabs { display: flex; gap: 6px; }
+      .grid-preview {
+        display: flex;
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        margin: 14px 0 8px;
+      }
+      .gcell {
+        min-width: 120px;
+        flex: 1 0 auto;
+        padding: 8px 10px;
+        border-right: 1px solid var(--line);
+      }
+      .gcell:last-child { border-right: 0; }
+      .gcell.sparse { background: color-mix(in srgb, var(--warn) 12%, transparent); }
+      .gh { display: block; font-weight: 600; }
+      .gm { display: block; font-size: 11px; color: var(--muted); }
+      ul.warnings { margin: 10px 0 0; padding-left: 18px; }
+      ul.warnings li { margin-bottom: 5px; }
+      .w-error { color: var(--err); }
+      .w-warn { color: var(--warn); }
+      .w-info { color: var(--muted); }
+      .w-ok { color: var(--ok); }
+      pre.output {
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+        max-height: 460px;
+        overflow: auto;
+        white-space: pre-wrap;
+        font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Content Type Designer</h1>
+      <p>
+        Answer the decisions below for a new content type, then check the grid preview with other types selected.
+        Output is fully deterministic — no model call, no tokens.
+      </p>
+      <button id="reset" type="button">Reset form</button>
+    </header>
+    <main id="app"></main>
+    <script type="module" src="./dist/main.js"></script>
+  </body>
+</html>
