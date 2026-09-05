@@ -146,8 +146,8 @@
 					<div>
 						<div class="text-[11px] tracking-wide text-muted-foreground uppercase">Last updated in Perspectize</div>
 						<div
-							class="mt-0.5 font-[family-name:var(--font-family-serif)] text-sm text-foreground"
-							title={formatDateTime(content.updatedAt)}
+							class="hover-tooltip mt-0.5 font-[family-name:var(--font-family-serif)] text-sm text-foreground"
+							data-tooltip={formatDateTime(content.updatedAt)}
 						>
 							{formatDate(content.updatedAt)}
 						</div>

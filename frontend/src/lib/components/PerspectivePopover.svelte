@@ -410,12 +410,12 @@
 						<button
 							type="button"
 							onclick={() => removeField(fieldKey)}
-							class="absolute top-1/2 -translate-y-1/2 flex items-center justify-center bg-white border border-border rounded-full shadow-sm text-muted-foreground hover:opacity-70 transition-opacity z-10"
+							class="hover-tooltip absolute top-1/2 -translate-y-1/2 flex items-center justify-center bg-white border border-border rounded-full shadow-sm text-muted-foreground hover:opacity-70 transition-opacity z-10"
 							style="width: 16px; height: 16px; {isLeftCol
 								? `right: ${mobile ? '4px' : '12px'};`
 								: `left: ${mobile ? '4px' : '12px'};`}"
 							aria-label="Remove {getFieldLabel(fieldKey)}"
-							title="Remove {getFieldLabel(fieldKey)}"
+							data-tooltip="Remove {getFieldLabel(fieldKey)}"
 						>
 							<XIcon class="size-2" strokeWidth={3} />
 						</button>
