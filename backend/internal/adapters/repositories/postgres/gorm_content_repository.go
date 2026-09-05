@@ -235,9 +235,12 @@ func (r *GormContentRepository) List(ctx context.Context, params domain.ContentL
 
 	// Execute pagination
 	var models []ContentModel
-	_, cursor, err := p.Paginate(query, &models)
+	pageResult, cursor, err := p.Paginate(query, &models)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list content: %w", err)
+	}
+	if pageResult.Error != nil {
+		return nil, fmt.Errorf("failed to list content: %w", pageResult.Error)
 	}
 
 	// Map results to domain

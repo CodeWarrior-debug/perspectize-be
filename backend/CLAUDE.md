@@ -41,7 +41,7 @@ Go 1.25+ (pinned via `toolchain` in go.mod + Dockerfile) · gqlgen (schema-first
 - **Mappers** (`gorm_mappers.go`) — bidirectional domain ↔ GORM conversion
 - **Repositories** (`gorm_*_repository.go`) — GORM chaining for dynamic queries
 - **Shared helpers** (`helpers.go`) — cursor encoding, sort mapping, enum converters
-- **Pagination** — hand-rolled cursor encoding (`encodeCursor`/`decodeCursor`). `gorm-cursor-paginator` integration planned (see FEATURE_BACKLOG.md)
+- **Pagination** — `gorm-cursor-paginator` (`Paginate()`, used by `GormContentRepository`/`GormPerspectiveRepository`). **Gotcha (v2.7.0):** `Paginate()`'s named `err` return stays nil on a `Find()` failure — it only sets `.Error` on the returned `*gorm.DB`. Always check both: `if err != nil {...}; if pageResult.Error != nil {...}` (see issue #327). `GormUserRepository`/`GormCategoryRepository` still use hand-rolled `encodeCursor`/`decodeCursor`.
 
 ## Commands
 
