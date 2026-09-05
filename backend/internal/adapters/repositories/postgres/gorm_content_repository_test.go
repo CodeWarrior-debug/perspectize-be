@@ -409,6 +409,9 @@ func TestGormContentRepository_List(t *testing.T) {
 		filter    *domain.ContentFilter
 		wantSQLRe string
 	}{
+		// Only the WHERE-clause shape is matched here, not the bound argument value
+		// — contentTypeToDBValue's lowercasing is asserted directly in
+		// helpers_test.go; this case only proves the filter is wired into the query.
 		{"content type", &domain.ContentFilter{ContentType: func() *domain.ContentType { ct := domain.ContentTypeYouTube; return &ct }()}, `content_type = `},
 		{"min length", &domain.ContentFilter{MinLengthSeconds: cInt(60)}, `length >= `},
 		{"max length", &domain.ContentFilter{MaxLengthSeconds: cInt(600)}, `length <= `},

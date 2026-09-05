@@ -293,7 +293,11 @@ func TestGormPerspectiveRepository_List(t *testing.T) {
 	}{
 		{"user id", &domain.PerspectiveFilter{UserID: pInt(2)}, `user_id = `},
 		{"content id", &domain.PerspectiveFilter{ContentID: pInt(11)}, `content_id = `},
-		{"privacy is lowercased for storage", &domain.PerspectiveFilter{Privacy: &privacy}, `privacy = `},
+		// Name intentionally doesn't claim the lowercasing is verified here — the
+		// mock only matches the WHERE-clause shape (`privacy = `), not the bound
+		// argument value. privacyToDBValue's lowercasing is asserted directly in
+		// helpers_test.go; this case only proves the filter is wired into the query.
+		{"privacy filter", &domain.PerspectiveFilter{Privacy: &privacy}, `privacy = `},
 	}
 
 	for _, fc := range filterCases {
