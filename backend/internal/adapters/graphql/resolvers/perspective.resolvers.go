@@ -3,10 +3,14 @@ package resolvers
 // Perspective domain resolvers: create/update/delete/list perspectives.
 // Split out of the single gqlgen-generated schema.resolvers.go for
 // navigability — see resolver.go for why this survives `make graphql-gen`.
+//
+// Field-by-field mapping from the GraphQL input to the service-layer input
+// lives in modelToCreatePerspectiveInput / modelToUpdatePerspectiveInput
+// (helpers.go), not inline here — adding a perspective field only touches
+// the schema, the domain model, the service input struct, and that mapper.
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -15,7 +19,6 @@ import (
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/auth"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/model"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
-	portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
 )
 
 // CreatePerspective is the resolver for the createPerspective field.
@@ -30,47 +33,7 @@ func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.Cr
 		userID = authUser.ID
 	}
 
-	serviceInput := portservices.CreatePerspectiveInput{
-		UserID:                userID,
-		Quality:               input.Quality,
-		Agreement:             input.Agreement,
-		Importance:            input.Importance,
-		Confidence:            input.Confidence,
-		Like:                  input.Like,
-		Privacy:               input.Privacy,
-		Description:           input.Description,
-		Category:              input.Category,
-		Parts:                 input.Parts,
-		Labels:                input.Labels,
-		PrimaryPerspectiveID:  input.PrimaryPerspectiveID,
-		RelatedPerspectiveIDs: input.RelatedPerspectiveIDs,
-		Review:                input.Review,
-	}
-
-	if input.ContentID != nil {
-		serviceInput.ContentID = input.ContentID
-	}
-
-	// Convert customFields map to JSON
-	if input.CustomFields != nil {
-		data, err := json.Marshal(input.CustomFields)
-		if err == nil {
-			serviceInput.CustomFields = data
-		}
-	}
-
-	// Convert categorized ratings
-	if len(input.CategorizedRatings) > 0 {
-		serviceInput.CategorizedRatings = make([]domain.CategorizedRating, len(input.CategorizedRatings))
-		for i, cr := range input.CategorizedRatings {
-			serviceInput.CategorizedRatings[i] = domain.CategorizedRating{
-				Category: cr.Category,
-				Rating:   cr.Rating,
-			}
-		}
-	}
-
-	perspective, err := r.PerspectiveService.Create(ctx, serviceInput)
+	perspective, err := r.PerspectiveService.Create(ctx, modelToCreatePerspectiveInput(userID, input))
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidRating) {
 			return nil, fmt.Errorf("invalid rating: %w", err)
@@ -90,48 +53,7 @@ func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.Cr
 
 // UpdatePerspective is the resolver for the updatePerspective field.
 func (r *mutationResolver) UpdatePerspective(ctx context.Context, input model.UpdatePerspectiveInput) (*model.Perspective, error) {
-	serviceInput := portservices.UpdatePerspectiveInput{
-		ID:                    input.ID,
-		Quality:               input.Quality,
-		Agreement:             input.Agreement,
-		Importance:            input.Importance,
-		Confidence:            input.Confidence,
-		Like:                  input.Like,
-		Privacy:               input.Privacy,
-		Description:           input.Description,
-		Category:              input.Category,
-		ReviewStatus:          input.ReviewStatus,
-		Parts:                 input.Parts,
-		Labels:                input.Labels,
-		PrimaryPerspectiveID:  input.PrimaryPerspectiveID,
-		RelatedPerspectiveIDs: input.RelatedPerspectiveIDs,
-		Review:                input.Review,
-	}
-
-	if input.ContentID != nil {
-		serviceInput.ContentID = input.ContentID
-	}
-
-	// Convert customFields map to JSON
-	if input.CustomFields != nil {
-		data, err := json.Marshal(input.CustomFields)
-		if err == nil {
-			serviceInput.CustomFields = data
-		}
-	}
-
-	// Convert categorized ratings
-	if len(input.CategorizedRatings) > 0 {
-		serviceInput.CategorizedRatings = make([]domain.CategorizedRating, len(input.CategorizedRatings))
-		for i, cr := range input.CategorizedRatings {
-			serviceInput.CategorizedRatings[i] = domain.CategorizedRating{
-				Category: cr.Category,
-				Rating:   cr.Rating,
-			}
-		}
-	}
-
-	perspective, err := r.PerspectiveService.Update(ctx, serviceInput)
+	perspective, err := r.PerspectiveService.Update(ctx, modelToUpdatePerspectiveInput(input))
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
 			return nil, fmt.Errorf("perspective not found")
