@@ -4,6 +4,19 @@ Ideas and future enhancements captured during development. Not committed to any 
 
 ---
 
+## Perspective Count + Avg Rating in Content Details Modal
+
+`ActivityDetailsModal.svelte`'s "Perspectives" and "Avg. Rating" stat tiles currently render a hardcoded `—` placeholder — there's no backend support yet. `Content` in `backend/schema.graphql` has no `perspectiveCount`/`averageRating` fields, and no resolver aggregates `Perspective` rows per content item.
+
+**What to do:**
+- Add `perspectiveCount: Int!` and `averageRating: Float` to the `Content` type, backed by a resolver that aggregates `Perspective` rows (likely an "overall" rating average — needs a product decision on which field(s) count toward it, given quality/agreement/importance/confidence/like/custom fields).
+- Decide eagerness: computing this per row for a large `content` list could be expensive — consider a DataLoader-batched aggregate query, or lazy-loading the two values only when the details modal opens (a small dedicated query keyed on `contentId`) rather than fetching them for every row in the activity table.
+- Frontend: replace the two `—` placeholders in `ActivityDetailsModal.svelte` with the real values once available; if lazy-loaded, show a loading state in the tiles while the dedicated query is in flight.
+
+**Priority:** Deferred — flagged during a UI pass (2026-09-05) as more involved than a UI tweak; needs the product decision on rating aggregation before backend work starts.
+
+---
+
 ## YouTube Search Proxy (Shared Quota Fix)
 
 Discovered 2026-08-15: the Discover page's search (`fetchYouTubeSearch` in `frontend/src/lib/services/youtubeApi.ts`) calls YouTube's `search.list` **directly from the browser** using a single build-time key (`VITE_YOUTUBE_API_KEY`). `search.list` costs a flat 100 units/call, and the default daily quota is 10,000 units — so the whole deployed app shares roughly **~100 searches/day total**, not per-user, since every browser uses the same key. Client-side caching (TanStack Query, 5 min staleTime for search / 1 hour for trending) helps within a session but doesn't share across users or browser tabs.
