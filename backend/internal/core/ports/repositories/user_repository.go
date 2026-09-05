@@ -19,4 +19,6 @@ type UserRepository interface {
 	CreateFromClerk(ctx context.Context, clerkID string, username string, email string) (*domain.User, error)
 	UpdateByClerkID(ctx context.Context, clerkID string, username string, email string) error
 	DeactivateByClerkID(ctx context.Context, clerkID string) error
+	// UpdateOnboarding replaces the onboarding JSON for the given user ID.
+	UpdateOnboarding(ctx context.Context, userID int, onboarding domain.UserOnboarding) (*domain.User, error)
 }

@@ -114,6 +114,10 @@ func (m *mockUserRepoForPerspective) DeactivateByClerkID(ctx context.Context, cl
 	return domain.ErrNotFound
 }
 
+func (m *mockUserRepoForPerspective) UpdateOnboarding(ctx context.Context, userID int, onboarding domain.UserOnboarding) (*domain.User, error) {
+	return &domain.User{ID: userID, Onboarding: onboarding}, nil
+}
+
 // --- Create Tests ---
 
 func TestPerspectiveCreate_Success(t *testing.T) {

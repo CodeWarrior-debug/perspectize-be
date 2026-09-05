@@ -202,13 +202,20 @@ type UpdateUserInput struct {
 }
 
 type User struct {
-	ID        string          `json:"id"`
-	Username  string          `json:"username"`
-	Email     *string         `json:"email,omitempty"`
-	Active    bool            `json:"active"`
-	Role      domain.UserRole `json:"role"`
-	CreatedAt string          `json:"createdAt"`
-	UpdatedAt string          `json:"updatedAt"`
+	ID         string          `json:"id"`
+	Username   string          `json:"username"`
+	Email      *string         `json:"email,omitempty"`
+	Active     bool            `json:"active"`
+	Role       domain.UserRole `json:"role"`
+	Onboarding *UserOnboarding `json:"onboarding"`
+	CreatedAt  string          `json:"createdAt"`
+	UpdatedAt  string          `json:"updatedAt"`
+}
+
+type UserOnboarding struct {
+	Version            int     `json:"version"`
+	DisplayNextSession bool    `json:"displayNextSession"`
+	CompletedAt        *string `json:"completedAt,omitempty"`
 }
 
 type WikidataSearchResult struct {

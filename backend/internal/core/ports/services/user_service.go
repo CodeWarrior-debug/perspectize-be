@@ -33,4 +33,11 @@ type UserService interface {
 	// Delete reassigns the user's content and perspectives to the sentinel
 	// "[deleted]" user, then removes the user row.
 	Delete(ctx context.Context, id int) error
+
+	// MarkOnboardingSeen sets displayNextSession=false, completedAt=now, and version.
+	// Operates on the given user ID (caller must pass authenticated user only).
+	MarkOnboardingSeen(ctx context.Context, userID int, version int) (*domain.UserOnboarding, error)
+
+	// SetOnboardingDisplayNextSession updates only displayNextSession (Help replay).
+	SetOnboardingDisplayNextSession(ctx context.Context, userID int, displayNextSession bool) (*domain.UserOnboarding, error)
 }

@@ -14,13 +14,30 @@ func userDomainToModel(u *domain.User) *model.User {
 	// Email stored on model for field resolver access (auth-gated by userResolver.Email)
 	email := u.Email
 	return &model.User{
-		ID:        strconv.Itoa(u.ID),
-		Username:  u.Username,
-		Email:     &email,
-		Active:    u.Active,
-		Role:      u.Role,
-		CreatedAt: u.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt: u.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		ID:         strconv.Itoa(u.ID),
+		Username:   u.Username,
+		Email:      &email,
+		Active:     u.Active,
+		Role:       u.Role,
+		Onboarding: onboardingDomainToModel(&u.Onboarding),
+		CreatedAt:  u.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:  u.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+}
+
+func onboardingDomainToModel(o *domain.UserOnboarding) *model.UserOnboarding {
+	if o == nil {
+		d := domain.DefaultUserOnboarding()
+		return &model.UserOnboarding{
+			Version:            d.Version,
+			DisplayNextSession: d.DisplayNextSession,
+			CompletedAt:        d.CompletedAt,
+		}
+	}
+	return &model.UserOnboarding{
+		Version:            o.Version,
+		DisplayNextSession: o.DisplayNextSession,
+		CompletedAt:        o.CompletedAt,
 	}
 }
 

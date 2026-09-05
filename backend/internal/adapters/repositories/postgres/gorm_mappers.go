@@ -27,6 +27,7 @@ func userModelToDomain(m *UserModel) *domain.User {
 		Email:       email,
 		Role:        domain.UserRole(strings.ToUpper(m.Role)),
 		Active:      m.Active,
+		Onboarding:  onboardingFromJSON(m.Onboarding),
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
 	}
@@ -52,8 +53,28 @@ func userDomainToModel(u *domain.User) *UserModel {
 		Email:       email,
 		Role:        strings.ToLower(string(u.Role)),
 		Active:      u.Active,
+		Onboarding:  onboardingToJSON(u.Onboarding),
 		// CreatedAt and UpdatedAt are managed by GORM
 	}
+}
+
+func onboardingFromJSON(raw json.RawMessage) domain.UserOnboarding {
+	if len(raw) == 0 || string(raw) == "null" || string(raw) == "{}" {
+		return domain.DefaultUserOnboarding()
+	}
+	var o domain.UserOnboarding
+	if err := json.Unmarshal(raw, &o); err != nil {
+		return domain.DefaultUserOnboarding()
+	}
+	return o
+}
+
+func onboardingToJSON(o domain.UserOnboarding) json.RawMessage {
+	data, err := json.Marshal(o)
+	if err != nil {
+		data, _ = json.Marshal(domain.DefaultUserOnboarding())
+	}
+	return data
 }
 
 // categoryModelToDomain converts a GORM CategoryModel to domain.Category

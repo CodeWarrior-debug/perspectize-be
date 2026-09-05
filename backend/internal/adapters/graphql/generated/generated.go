@@ -85,16 +85,18 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateClaim              func(childComplexity int, input model.CreateClaimInput) int
-		CreateContentFromYouTube func(childComplexity int, input model.CreateContentFromYouTubeInput) int
-		CreatePerspective        func(childComplexity int, input model.CreatePerspectiveInput) int
-		CreateUser               func(childComplexity int, input model.CreateUserInput) int
-		DeletePerspective        func(childComplexity int, id string) int
-		DeleteUser               func(childComplexity int, id string) int
-		SetPrimaryCategory       func(childComplexity int, input model.SetPrimaryCategoryInput) int
-		UpdateContentSourceData  func(childComplexity int, contentID int) int
-		UpdatePerspective        func(childComplexity int, input model.UpdatePerspectiveInput) int
-		UpdateUser               func(childComplexity int, input model.UpdateUserInput) int
+		CreateClaim                     func(childComplexity int, input model.CreateClaimInput) int
+		CreateContentFromYouTube        func(childComplexity int, input model.CreateContentFromYouTubeInput) int
+		CreatePerspective               func(childComplexity int, input model.CreatePerspectiveInput) int
+		CreateUser                      func(childComplexity int, input model.CreateUserInput) int
+		DeletePerspective               func(childComplexity int, id string) int
+		DeleteUser                      func(childComplexity int, id string) int
+		MarkOnboardingSeen              func(childComplexity int, version int) int
+		SetOnboardingDisplayNextSession func(childComplexity int, displayNextSession bool) int
+		SetPrimaryCategory              func(childComplexity int, input model.SetPrimaryCategoryInput) int
+		UpdateContentSourceData         func(childComplexity int, contentID int) int
+		UpdatePerspective               func(childComplexity int, input model.UpdatePerspectiveInput) int
+		UpdateUser                      func(childComplexity int, input model.UpdateUserInput) int
 	}
 
 	PageInfo struct {
@@ -155,13 +157,20 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		Active    func(childComplexity int) int
-		CreatedAt func(childComplexity int) int
-		Email     func(childComplexity int) int
-		ID        func(childComplexity int) int
-		Role      func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
-		Username  func(childComplexity int) int
+		Active     func(childComplexity int) int
+		CreatedAt  func(childComplexity int) int
+		Email      func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Onboarding func(childComplexity int) int
+		Role       func(childComplexity int) int
+		UpdatedAt  func(childComplexity int) int
+		Username   func(childComplexity int) int
+	}
+
+	UserOnboarding struct {
+		CompletedAt        func(childComplexity int) int
+		DisplayNextSession func(childComplexity int) int
+		Version            func(childComplexity int) int
 	}
 
 	WikidataSearchResult struct {
@@ -185,6 +194,8 @@ type MutationResolver interface {
 	CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error)
 	UpdateUser(ctx context.Context, input model.UpdateUserInput) (*model.User, error)
 	DeleteUser(ctx context.Context, id string) (bool, error)
+	MarkOnboardingSeen(ctx context.Context, version int) (*model.UserOnboarding, error)
+	SetOnboardingDisplayNextSession(ctx context.Context, displayNextSession bool) (*model.UserOnboarding, error)
 	CreatePerspective(ctx context.Context, input model.CreatePerspectiveInput) (*model.Perspective, error)
 	UpdatePerspective(ctx context.Context, input model.UpdatePerspectiveInput) (*model.Perspective, error)
 	DeletePerspective(ctx context.Context, id string) (bool, error)
@@ -474,6 +485,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteUser(childComplexity, args["id"].(string)), true
+	case "Mutation.markOnboardingSeen":
+		if e.ComplexityRoot.Mutation.MarkOnboardingSeen == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_markOnboardingSeen_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.MarkOnboardingSeen(childComplexity, args["version"].(int)), true
+	case "Mutation.setOnboardingDisplayNextSession":
+		if e.ComplexityRoot.Mutation.SetOnboardingDisplayNextSession == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setOnboardingDisplayNextSession_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetOnboardingDisplayNextSession(childComplexity, args["displayNextSession"].(bool)), true
 	case "Mutation.setPrimaryCategory":
 		if e.ComplexityRoot.Mutation.SetPrimaryCategory == nil {
 			break
@@ -836,6 +869,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.User.ID(childComplexity), true
+	case "User.onboarding":
+		if e.ComplexityRoot.User.Onboarding == nil {
+			break
+		}
+
+		return e.ComplexityRoot.User.Onboarding(childComplexity), true
 	case "User.role":
 		if e.ComplexityRoot.User.Role == nil {
 			break
@@ -854,6 +893,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.User.Username(childComplexity), true
+
+	case "UserOnboarding.completedAt":
+		if e.ComplexityRoot.UserOnboarding.CompletedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UserOnboarding.CompletedAt(childComplexity), true
+	case "UserOnboarding.displayNextSession":
+		if e.ComplexityRoot.UserOnboarding.DisplayNextSession == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UserOnboarding.DisplayNextSession(childComplexity), true
+	case "UserOnboarding.version":
+		if e.ComplexityRoot.UserOnboarding.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UserOnboarding.Version(childComplexity), true
 
 	case "WikidataSearchResult.description":
 		if e.ComplexityRoot.WikidataSearchResult.Description == nil {
@@ -986,6 +1044,13 @@ enum UserRole {
   DEFAULT
 }
 
+# Thin first-run checklist coach state (see docs/onboarding-checklist-coach.md)
+type UserOnboarding {
+  version: Int!
+  displayNextSession: Boolean!
+  completedAt: String
+}
+
 # User type
 type User {
   id: ID!
@@ -993,6 +1058,7 @@ type User {
   email: String
   active: Boolean!
   role: UserRole!
+  onboarding: UserOnboarding!
   createdAt: String!
   updatedAt: String!
 }
@@ -1251,6 +1317,10 @@ type Mutation {
   updateUser(input: UpdateUserInput!): User! @auth
   deleteUser(id: ID!): Boolean! @auth
 
+  # Onboarding (authenticated owner only — no client userId)
+  markOnboardingSeen(version: Int!): UserOnboarding! @auth
+  setOnboardingDisplayNextSession(displayNextSession: Boolean!): UserOnboarding! @auth
+
   # Perspective mutations
   createPerspective(input: CreatePerspectiveInput!): Perspective! @auth
   updatePerspective(input: UpdatePerspectiveInput!): Perspective! @auth @owner(idField: "id")
@@ -1497,12 +1567,26 @@ func (ec *executionContext) childFields_User(ctx context.Context, field graphql.
 		return ec.fieldContext_User_active(ctx, field)
 	case "role":
 		return ec.fieldContext_User_role(ctx, field)
+	case "onboarding":
+		return ec.fieldContext_User_onboarding(ctx, field)
 	case "createdAt":
 		return ec.fieldContext_User_createdAt(ctx, field)
 	case "updatedAt":
 		return ec.fieldContext_User_updatedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+}
+
+func (ec *executionContext) childFields_UserOnboarding(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "version":
+		return ec.fieldContext_UserOnboarding_version(ctx, field)
+	case "displayNextSession":
+		return ec.fieldContext_UserOnboarding_displayNextSession(ctx, field)
+	case "completedAt":
+		return ec.fieldContext_UserOnboarding_completedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type UserOnboarding", field.Name)
 }
 
 func (ec *executionContext) childFields_WikidataSearchResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -1730,6 +1814,34 @@ func (ec *executionContext) field_Mutation_deleteUser_args(ctx context.Context, 
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_markOnboardingSeen_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "version",
+		func(ctx context.Context, v any) (int, error) {
+			return ec.unmarshalNInt2int(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["version"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setOnboardingDisplayNextSession_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "displayNextSession",
+		func(ctx context.Context, v any) (bool, error) {
+			return ec.unmarshalNBoolean2bool(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["displayNextSession"] = arg0
 	return args, nil
 }
 
@@ -3085,6 +3197,120 @@ func (ec *executionContext) fieldContext_Mutation_deleteUser(ctx context.Context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_markOnboardingSeen(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_markOnboardingSeen(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().MarkOnboardingSeen(ctx, fc.Args["version"].(int))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Auth == nil {
+					var zeroVal *model.UserOnboarding
+					return zeroVal, errors.New("directive auth is not implemented")
+				}
+				return ec.Directives.Auth(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		func(ctx context.Context, selections ast.SelectionSet, v *model.UserOnboarding) graphql.Marshaler {
+			return ec.marshalNUserOnboarding2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUserOnboarding(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_markOnboardingSeen(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_UserOnboarding(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_markOnboardingSeen_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_setOnboardingDisplayNextSession(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_setOnboardingDisplayNextSession(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SetOnboardingDisplayNextSession(ctx, fc.Args["displayNextSession"].(bool))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.Directives.Auth == nil {
+					var zeroVal *model.UserOnboarding
+					return zeroVal, errors.New("directive auth is not implemented")
+				}
+				return ec.Directives.Auth(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		func(ctx context.Context, selections ast.SelectionSet, v *model.UserOnboarding) graphql.Marshaler {
+			return ec.marshalNUserOnboarding2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUserOnboarding(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_setOnboardingDisplayNextSession(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_UserOnboarding(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_setOnboardingDisplayNextSession_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -4798,6 +5024,38 @@ func (ec *executionContext) fieldContext_User_role(_ context.Context, field grap
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type UserRole does not have child fields"))
 }
 
+func (ec *executionContext) _User_onboarding(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_User_onboarding(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Onboarding, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.UserOnboarding) graphql.Marshaler {
+			return ec.marshalNUserOnboarding2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUserOnboarding(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_User_onboarding(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_UserOnboarding(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _User_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4842,6 +5100,75 @@ func (ec *executionContext) _User_updatedAt(ctx context.Context, field graphql.C
 }
 func (ec *executionContext) fieldContext_User_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _UserOnboarding_version(ctx context.Context, field graphql.CollectedField, obj *model.UserOnboarding) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_UserOnboarding_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_UserOnboarding_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("UserOnboarding", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _UserOnboarding_displayNextSession(ctx context.Context, field graphql.CollectedField, obj *model.UserOnboarding) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_UserOnboarding_displayNextSession(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DisplayNextSession, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_UserOnboarding_displayNextSession(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("UserOnboarding", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _UserOnboarding_completedAt(ctx context.Context, field graphql.CollectedField, obj *model.UserOnboarding) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_UserOnboarding_completedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CompletedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_UserOnboarding_completedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("UserOnboarding", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _WikidataSearchResult_qid(ctx context.Context, field graphql.CollectedField, obj *model.WikidataSearchResult) (ret graphql.Marshaler) {
@@ -7108,6 +7435,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "markOnboardingSeen":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_markOnboardingSeen(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "setOnboardingDisplayNextSession":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_setOnboardingDisplayNextSession(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createPerspective":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createPerspective(ctx, field)
@@ -7788,6 +8129,11 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "onboarding":
+			out.Values[i] = ec._User_onboarding(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "createdAt":
 			out.Values[i] = ec._User_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -7797,6 +8143,55 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = ec._User_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var userOnboardingImplementors = []string{"UserOnboarding"}
+
+func (ec *executionContext) _UserOnboarding(ctx context.Context, sel ast.SelectionSet, obj *model.UserOnboarding) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, userOnboardingImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UserOnboarding")
+		case "version":
+			out.Values[i] = ec._UserOnboarding_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "displayNextSession":
+			out.Values[i] = ec._UserOnboarding_displayNextSession(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "completedAt":
+			out.Values[i] = ec._UserOnboarding_completedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -8560,6 +8955,20 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋCodeWarriorᚑdebug�
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUserOnboarding2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUserOnboarding(ctx context.Context, sel ast.SelectionSet, v model.UserOnboarding) graphql.Marshaler {
+	return ec._UserOnboarding(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUserOnboarding2ᚖgithubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋadaptersᚋgraphqlᚋmodelᚐUserOnboarding(ctx context.Context, sel ast.SelectionSet, v *model.UserOnboarding) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UserOnboarding(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUserRole2githubᚗcomᚋCodeWarriorᚑdebugᚋperspectizeᚋbackendᚋinternalᚋcoreᚋdomainᚐUserRole(ctx context.Context, v any) (domain.UserRole, error) {

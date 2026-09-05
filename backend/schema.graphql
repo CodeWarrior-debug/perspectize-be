@@ -11,6 +11,13 @@ enum UserRole {
   DEFAULT
 }
 
+# Thin first-run checklist coach state (see docs/onboarding-checklist-coach.md)
+type UserOnboarding {
+  version: Int!
+  displayNextSession: Boolean!
+  completedAt: String
+}
+
 # User type
 type User {
   id: ID!
@@ -18,6 +25,7 @@ type User {
   email: String
   active: Boolean!
   role: UserRole!
+  onboarding: UserOnboarding!
   createdAt: String!
   updatedAt: String!
 }
@@ -275,6 +283,10 @@ type Mutation {
   createUser(input: CreateUserInput!): User! @auth
   updateUser(input: UpdateUserInput!): User! @auth
   deleteUser(id: ID!): Boolean! @auth
+
+  # Onboarding (authenticated owner only — no client userId)
+  markOnboardingSeen(version: Int!): UserOnboarding! @auth
+  setOnboardingDisplayNextSession(displayNextSession: Boolean!): UserOnboarding! @auth
 
   # Perspective mutations
   createPerspective(input: CreatePerspectiveInput!): Perspective! @auth

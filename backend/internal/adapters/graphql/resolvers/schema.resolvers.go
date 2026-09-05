@@ -179,6 +179,54 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, err
 	return true, nil
 }
 
+// MarkOnboardingSeen is the resolver for the markOnboardingSeen field.
+func (r *mutationResolver) MarkOnboardingSeen(ctx context.Context, version int) (*model.UserOnboarding, error) {
+	authUser, err := auth.RequireAuth(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("access denied: authentication required")
+	}
+
+	onboarding, err := r.UserService.MarkOnboardingSeen(ctx, authUser.ID, version)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("user not found")
+		}
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		if errors.Is(err, domain.ErrSentinelUser) {
+			return nil, fmt.Errorf("cannot modify system user")
+		}
+		slog.Error("mark onboarding seen failed", "userID", authUser.ID, "error", err)
+		return nil, fmt.Errorf("failed to mark onboarding seen")
+	}
+	return onboardingDomainToModel(onboarding), nil
+}
+
+// SetOnboardingDisplayNextSession is the resolver for the setOnboardingDisplayNextSession field.
+func (r *mutationResolver) SetOnboardingDisplayNextSession(ctx context.Context, displayNextSession bool) (*model.UserOnboarding, error) {
+	authUser, err := auth.RequireAuth(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("access denied: authentication required")
+	}
+
+	onboarding, err := r.UserService.SetOnboardingDisplayNextSession(ctx, authUser.ID, displayNextSession)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("user not found")
+		}
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return nil, fmt.Errorf("invalid input: %w", err)
+		}
+		if errors.Is(err, domain.ErrSentinelUser) {
+			return nil, fmt.Errorf("cannot modify system user")
+		}
+		slog.Error("set onboarding display failed", "userID", authUser.ID, "error", err)
+		return nil, fmt.Errorf("failed to set onboarding display flag")
+	}
+	return onboardingDomainToModel(onboarding), nil
+}
+
 // CreatePerspective is the resolver for the createPerspective field.
 func (r *mutationResolver) CreatePerspective(ctx context.Context, input model.CreatePerspectiveInput) (*model.Perspective, error) {
 	// Use authenticated user when userID is not provided or zero

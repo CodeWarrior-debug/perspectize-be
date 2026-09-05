@@ -162,6 +162,7 @@ func (r *GormUserRepository) CreateFromClerk(ctx context.Context, clerkID string
 		Email:       emailPtr,
 		Role:        "default",
 		Active:      true,
+		Onboarding:  onboardingToJSON(domain.DefaultUserOnboarding()),
 	}
 	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
 		return nil, err
@@ -202,4 +203,24 @@ func (r *GormUserRepository) DeactivateByClerkID(ctx context.Context, clerkID st
 		return domain.ErrNotFound
 	}
 	return nil
+}
+
+// UpdateOnboarding replaces the onboarding JSONB for a user.
+func (r *GormUserRepository) UpdateOnboarding(ctx context.Context, userID int, onboarding domain.UserOnboarding) (*domain.User, error) {
+	raw := onboardingToJSON(onboarding)
+	result := r.db.WithContext(ctx).Model(&UserModel{}).
+		Where("id = ?", userID).
+		Update("onboarding", raw)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, domain.ErrNotFound
+	}
+
+	var updated UserModel
+	if err := r.db.WithContext(ctx).First(&updated, userID).Error; err != nil {
+		return nil, err
+	}
+	return userModelToDomain(&updated), nil
 }
