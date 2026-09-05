@@ -56,22 +56,54 @@ func userDomainToModel(u *domain.User) *UserModel {
 	}
 }
 
+// categoryModelToDomain converts a GORM CategoryModel to domain.Category
+func categoryModelToDomain(m *CategoryModel) *domain.Category {
+	if m == nil {
+		return nil
+	}
+	return &domain.Category{
+		ID:          m.ID,
+		WikidataQID: m.WikidataQID,
+		Label:       m.Label,
+		Description: m.Description,
+		EntityType:  m.EntityType,
+		CreatedAt:   m.CreatedAt,
+		UpdatedAt:   m.UpdatedAt,
+	}
+}
+
+// categoryDomainToModel converts a domain.Category to GORM CategoryModel
+func categoryDomainToModel(c *domain.Category) *CategoryModel {
+	if c == nil {
+		return nil
+	}
+	return &CategoryModel{
+		ID:          c.ID,
+		WikidataQID: c.WikidataQID,
+		Label:       c.Label,
+		Description: c.Description,
+		EntityType:  c.EntityType,
+		// CreatedAt and UpdatedAt are managed by GORM
+	}
+}
+
 // contentModelToDomain converts a GORM ContentModel to domain.Content
 func contentModelToDomain(m *ContentModel) *domain.Content {
 	if m == nil {
 		return nil
 	}
 	return &domain.Content{
-		ID:            m.ID,
-		Name:          m.Name,
-		URL:           m.URL,
-		ContentType:   domain.ContentType(strings.ToUpper(m.ContentType)),
-		AddedByUserID: m.AddedByUserID,
-		Length:        m.Length,
-		LengthUnits:   m.LengthUnits,
-		Response:      m.Response,
-		CreatedAt:     m.CreatedAt,
-		UpdatedAt:     m.UpdatedAt,
+		ID:                m.ID,
+		Name:              m.Name,
+		URL:               m.URL,
+		ContentType:       domain.ContentType(strings.ToUpper(m.ContentType)),
+		AddedByUserID:     m.AddedByUserID,
+		Length:            m.Length,
+		LengthUnits:       m.LengthUnits,
+		Response:          m.Response,
+		PrimaryCategoryID: m.PrimaryCategoryID,
+		CreatedAt:         m.CreatedAt,
+		UpdatedAt:         m.UpdatedAt,
 	}
 }
 
@@ -81,14 +113,15 @@ func contentDomainToModel(c *domain.Content) *ContentModel {
 		return nil
 	}
 	return &ContentModel{
-		ID:            c.ID,
-		Name:          c.Name,
-		URL:           c.URL,
-		ContentType:   strings.ToLower(string(c.ContentType)),
-		AddedByUserID: c.AddedByUserID,
-		Length:        c.Length,
-		LengthUnits:   c.LengthUnits,
-		Response:      c.Response,
+		ID:                c.ID,
+		Name:              c.Name,
+		URL:               c.URL,
+		ContentType:       strings.ToLower(string(c.ContentType)),
+		AddedByUserID:     c.AddedByUserID,
+		Length:            c.Length,
+		LengthUnits:       c.LengthUnits,
+		Response:          c.Response,
+		PrimaryCategoryID: c.PrimaryCategoryID,
 		// CreatedAt and UpdatedAt are managed by GORM
 	}
 }

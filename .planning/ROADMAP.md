@@ -209,6 +209,28 @@ Research spike to answer blocking questions before committing to categorization 
 
 Cross-phase impact: Unblocks Phase 13 (Content Categories), Phase 14 (AG Grid Power Features), and Phase 4B (perspective display with grouping). See `04-CONTEXT.md` and `13-context.md` for architecture decisions already captured.
 
+### Phase 03.5.1: Wikidata Integration and Category Attribution (INSERTED)
+
+**Goal:** Build a Wikidata-backed category system for content items — users manually search Wikidata entities via a typeahead in the AG Grid ActivityTable, select one as the content's primary category, with categories cached locally in a dedicated table
+**Requirements**: TBD (inserted urgent phase — no specific requirement IDs)
+**Depends on:** Phase 3.5
+**Success Criteria** (what must be TRUE):
+  1. User can see a "Category" column in the ActivityTable
+  2. User can click an empty category cell and search Wikidata entities via typeahead
+  3. User can select a Wikidata entity to assign as the content's primary category
+  4. User can see the assigned category label in the ActivityTable cell
+  5. User can change an existing category by clicking and selecting a different one
+  6. Categories persist across page refresh (stored in database)
+  7. Wikidata client sends User-Agent header per Wikidata policy
+  8. All backend and frontend tests pass
+**Plans:** 4/4 plans complete
+
+Plans:
+- [ ] 03.5.1-01-PLAN.md — Backend domain model, ports, migration 000014, Wikidata HTTP client adapter
+- [ ] 03.5.1-02-PLAN.md — GORM repository, CategoryService, GraphQL schema/resolvers, main.go wiring
+- [ ] 03.5.1-03-PLAN.md — Frontend query definitions, mutation hook, query keys, CategoryTypeahead component
+- [ ] 03.5.1-04-PLAN.md — AG Grid category column, cell renderer, popover integration, responsive tiers
+
 ### Phase 4: Add Perspective Flow
 **Goal**: Users can create perspectives on videos with ratings, Like, and Review text
 **Depends on**: Phase 3

@@ -13,6 +13,7 @@ type Resolver struct {
 	ContentService     portservices.ContentService
 	UserService        portservices.UserService
 	PerspectiveService portservices.PerspectiveService
+	CategoryService    portservices.CategoryService
 }
 
 // NewResolver creates a new resolver with dependencies
@@ -20,10 +21,12 @@ func NewResolver(
 	contentService portservices.ContentService,
 	userService portservices.UserService,
 	perspectiveService portservices.PerspectiveService,
+	categoryService portservices.CategoryService,
 ) *Resolver {
 	return &Resolver{
 		ContentService:     contentService,
 		UserService:        userService,
 		PerspectiveService: perspectiveService,
+		CategoryService:    categoryService,
 	}
 }

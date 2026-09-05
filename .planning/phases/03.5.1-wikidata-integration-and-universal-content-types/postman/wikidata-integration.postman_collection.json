@@ -1,0 +1,760 @@
+{
+  "info": {
+    "_postman_id": "37fb2090-6d28-43aa-be25-f27d0bbdb868",
+    "name": "Wikidata Integration (Phase 03.5.1)",
+    "description": "Exercises the Wikidata integration for Perspectize Phase 03.5.1 from two angles:\n\n1. **Raw Wikidata Action API** \u2014 the exact `wbsearchentities` call the backend `wikidata.Client` adapter makes (`backend/internal/adapters/wikidata/client.go` on branch `origin/claude/plan-attribution-phase-8fUmf`).\n2. **Perspectize GraphQL API** \u2014 the `wikidataSearch` query and `setPrimaryCategory` mutation that sit on top, against a local server.\n\n### Adapter facts encoded here\n- Base URL `https://www.wikidata.org/w/api.php`\n- `action=wbsearchentities` with `search`, `language` (default `en`), `format=json`, `type=item`, `limit` (default 10)\n- Headers `User-Agent: Perspectize/1.0 (https://github.com/CodeWarrior-debug/perspectize)` and `Accept: application/json` on every Wikidata request\n- Retries once/attempt (max 2, 1s/2s backoff) on HTTP 429 and 5xx\n- Maps `search[].{id,label,description}` \u2192 `{qid,label,description,entityType:\"item\"}`\n\n### Setup\nSet the collection variables (Variables tab) \u2014 at minimum `graphql_url` and `content_id` for Folder 2. Run Folder 0 to confirm access, then Folder 1, then Folder 2 (needs `cd backend && make run`).\n\nNo API key required.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "wikidata_action_api",
+      "value": "https://www.wikidata.org/w/api.php",
+      "type": "string"
+    },
+    {
+      "key": "user_agent",
+      "value": "Perspectize/1.0 (https://github.com/CodeWarrior-debug/perspectize)",
+      "type": "string"
+    },
+    {
+      "key": "search_query",
+      "value": "Kansas City Chiefs",
+      "type": "string"
+    },
+    {
+      "key": "language",
+      "value": "en",
+      "type": "string"
+    },
+    {
+      "key": "limit",
+      "value": "10",
+      "type": "string"
+    },
+    {
+      "key": "graphql_url",
+      "value": "http://localhost:8080/graphql",
+      "type": "string"
+    },
+    {
+      "key": "content_id",
+      "value": "1",
+      "type": "string",
+      "description": "Real Content row id to attach a primary category to (Folder 2b)."
+    },
+    {
+      "key": "chiefs_qid",
+      "value": "Q223522",
+      "type": "string",
+      "description": "Kansas City Chiefs \u2014 handy known QID for wbgetentities / mutation testing."
+    },
+    {
+      "key": "category_qid",
+      "value": "Q223522",
+      "type": "string",
+      "description": "QID passed to setPrimaryCategory; auto-set by request 2a's test script."
+    },
+    {
+      "key": "category_label",
+      "value": "Kansas City Chiefs",
+      "type": "string",
+      "description": "Label passed to setPrimaryCategory; auto-set by request 2a's test script."
+    },
+    {
+      "key": "last_qid",
+      "value": "",
+      "type": "string",
+      "description": "Scratch var: top QID from the most recent wbsearchentities call."
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Quickstart \u2014 Validate Access",
+      "description": "Smoke-test raw Wikidata Action API access before touching the Perspectize backend.\n\nNo API key is required. Wikidata rejects clients that do not send a descriptive `User-Agent`, so every request in this collection sends `{{user_agent}}` = `Perspectize/1.0 (https://github.com/CodeWarrior-debug/perspectize)`.\n\nIf both requests here return 200 with the documented shape, the backend `wikidata.Client` adapter will work too \u2014 it calls the exact same endpoint.",
+      "item": [
+        {
+          "name": "0a - wbsearchentities (search \u201cKansas City Chiefs\u201d)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "{{user_agent}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{wikidata_action_api}}?action=wbsearchentities&search=Kansas City Chiefs&language=en&format=json&type=item&limit=5",
+              "host": [
+                "{{wikidata_action_api}}"
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "wbsearchentities"
+                },
+                {
+                  "key": "search",
+                  "value": "Kansas City Chiefs"
+                },
+                {
+                  "key": "language",
+                  "value": "en"
+                },
+                {
+                  "key": "format",
+                  "value": "json"
+                },
+                {
+                  "key": "type",
+                  "value": "item"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "The entity-search call the backend adapter makes (`Client.Search` \u2192 `doSearch`).\n\nResponse shape:\n```json\n{\n  \"searchinfo\": { \"search\": \"Kansas City Chiefs\" },\n  \"search\": [\n    {\n      \"id\": \"Q223522\",\n      \"title\": \"Q223522\",\n      \"label\": \"Kansas City Chiefs\",\n      \"description\": \"National Football League franchise in Kansas City, Missouri\",\n      \"match\": { \"type\": \"label\", \"language\": \"en\", \"text\": \"Kansas City Chiefs\" }\n    }\n  ],\n  \"success\": 1\n}\n```\n\nThe adapter maps each element `search[].{id,label,description}` \u2192 `{qid,label,description,entityType:\"item\"}` (domain `WikidataSearchResult`)."
+          },
+          "response": [
+            {
+              "name": "200 OK \u2014 Kansas City Chiefs",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "User-Agent",
+                    "value": "Perspectize/1.0 (https://github.com/CodeWarrior-debug/perspectize)"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{wikidata_action_api}}?action=wbsearchentities&search=Kansas City Chiefs&language=en&format=json&type=item&limit=5",
+                  "host": [
+                    "{{wikidata_action_api}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "action",
+                      "value": "wbsearchentities"
+                    },
+                    {
+                      "key": "search",
+                      "value": "Kansas City Chiefs"
+                    },
+                    {
+                      "key": "language",
+                      "value": "en"
+                    },
+                    {
+                      "key": "format",
+                      "value": "json"
+                    },
+                    {
+                      "key": "type",
+                      "value": "item"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "5"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"searchinfo\": {\n    \"search\": \"Kansas City Chiefs\"\n  },\n  \"search\": [\n    {\n      \"id\": \"Q223522\",\n      \"title\": \"Q223522\",\n      \"pageid\": 223522,\n      \"concepturi\": \"http://www.wikidata.org/entity/Q223522\",\n      \"label\": \"Kansas City Chiefs\",\n      \"description\": \"National Football League franchise in Kansas City, Missouri\",\n      \"match\": {\n        \"type\": \"label\",\n        \"language\": \"en\",\n        \"text\": \"Kansas City Chiefs\"\n      }\n    }\n  ],\n  \"success\": 1\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "9ecd5e9d-2508-4d40-8342-d12e9c2b33f5",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"success flag set\", () => pm.expect(body.success).to.eql(1));",
+                  "pm.test(\"'search' array present\", () => pm.expect(body.search).to.be.an('array'));",
+                  "pm.test(\"has at least one result\", () => pm.expect(body.search.length).to.be.above(0));",
+                  "pm.test(\"first result has id + label (adapter needs both)\", () => {",
+                  "    const first = body.search[0];",
+                  "    pm.expect(first).to.have.property('id').that.match(/^Q\\d+$/);",
+                  "    pm.expect(first).to.have.property('label').that.is.a('string');",
+                  "});",
+                  "// Stash the top QID so later requests / the wbgetentities call can reuse it",
+                  "if (body.search && body.search.length) {",
+                  "    pm.collectionVariables.set('last_qid', body.search[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "0b - wbgetentities (detail for QID Q223522)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "{{user_agent}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{wikidata_action_api}}?action=wbgetentities&ids=Q223522&format=json&props=labels|descriptions|claims&languages=en",
+              "host": [
+                "{{wikidata_action_api}}"
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "wbgetentities"
+                },
+                {
+                  "key": "ids",
+                  "value": "Q223522"
+                },
+                {
+                  "key": "format",
+                  "value": "json"
+                },
+                {
+                  "key": "props",
+                  "value": "labels|descriptions|claims"
+                },
+                {
+                  "key": "languages",
+                  "value": "en"
+                }
+              ]
+            },
+            "description": "Not called by the backend adapter \u2014 included so you can inspect a full entity once search gives you a QID.\n\n`props=labels|descriptions|claims` keeps the payload small. `claims` (a.k.a. statements) is where `P31` (instance of) / `P279` (subclass of) live \u2014 useful when deciding what `entityType` / category a piece of content should get.\n\nResponse shape:\n```json\n{\n  \"entities\": {\n    \"Q223522\": {\n      \"id\": \"Q223522\",\n      \"labels\":       { \"en\": { \"language\": \"en\", \"value\": \"Kansas City Chiefs\" } },\n      \"descriptions\": { \"en\": { \"language\": \"en\", \"value\": \"National Football League franchise...\" } },\n      \"claims\": { \"P31\": [ { \"mainsnak\": { \"datavalue\": { \"value\": { \"id\": \"Q17156793\" } } } } ] }\n    }\n  },\n  \"success\": 1\n}\n```"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "fa63709f-40e4-4759-b5ce-8daafb211e27",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"success flag set\", () => pm.expect(body.success).to.eql(1));",
+                  "pm.test(\"entity Q223522 present\", () => pm.expect(body.entities).to.have.property('Q223522'));",
+                  "pm.test(\"entity has en label + description\", () => {",
+                  "    const e = body.entities.Q223522;",
+                  "    pm.expect(e.labels.en.value).to.be.a('string');",
+                  "    pm.expect(e.descriptions.en.value).to.be.a('string');",
+                  "});",
+                  "pm.test(\"claims include P31 (instance of)\", () => pm.expect(body.entities.Q223522.claims).to.have.property('P31'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Entity Search (as the backend calls it)",
+      "description": "`wbsearchentities` requests parameterised exactly like the Go adapter: `action=wbsearchentities`, `search={{search_query}}`, `language={{language}}`, `format=json`, `type=item`, `limit={{limit}}`.\n\nAdapter defaults if a field is blank/zero: `language` \u2192 `en`, `limit` \u2192 `10`. The adapter also retries once per attempt (max 2 retries, 1s then 2s backoff) on HTTP 429 and any 5xx.",
+      "item": [
+        {
+          "name": "1a - Happy path (search = {{search_query}})",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "{{user_agent}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{wikidata_action_api}}?action=wbsearchentities&search={{search_query}}&language={{language}}&format=json&type=item&limit={{limit}}",
+              "host": [
+                "{{wikidata_action_api}}"
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "wbsearchentities"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search_query}}"
+                },
+                {
+                  "key": "language",
+                  "value": "{{language}}"
+                },
+                {
+                  "key": "format",
+                  "value": "json"
+                },
+                {
+                  "key": "type",
+                  "value": "item"
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}"
+                }
+              ]
+            },
+            "description": "The canonical backend call. Change `{{search_query}}` at the collection level to test other terms.\n\nAssertions mirror what `wikidata.Client.doSearch` expects: HTTP 200, a top-level `search` array, and `id` + `label` on every element (the adapter reads `id`, `label`, `description` and hard-codes `entityType = \"item\"`)."
+          },
+          "response": [
+            {
+              "name": "200 OK \u2014 sample (search = Kansas City Chiefs)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "User-Agent",
+                    "value": "Perspectize/1.0 (https://github.com/CodeWarrior-debug/perspectize)"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{wikidata_action_api}}?action=wbsearchentities&search={{search_query}}&language={{language}}&format=json&type=item&limit={{limit}}",
+                  "host": [
+                    "{{wikidata_action_api}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "action",
+                      "value": "wbsearchentities"
+                    },
+                    {
+                      "key": "search",
+                      "value": "{{search_query}}"
+                    },
+                    {
+                      "key": "language",
+                      "value": "{{language}}"
+                    },
+                    {
+                      "key": "format",
+                      "value": "json"
+                    },
+                    {
+                      "key": "type",
+                      "value": "item"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "{{limit}}"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"searchinfo\": {\n    \"search\": \"Kansas City Chiefs\"\n  },\n  \"search\": [\n    {\n      \"id\": \"Q223522\",\n      \"title\": \"Q223522\",\n      \"label\": \"Kansas City Chiefs\",\n      \"description\": \"National Football League franchise in Kansas City, Missouri\",\n      \"match\": {\n        \"type\": \"label\",\n        \"language\": \"en\",\n        \"text\": \"Kansas City Chiefs\"\n      }\n    },\n    {\n      \"id\": \"Q5031699\",\n      \"title\": \"Q5031699\",\n      \"label\": \"Kansas City Chiefs Radio Network\",\n      \"description\": \"radio network\",\n      \"match\": {\n        \"type\": \"label\",\n        \"language\": \"en\",\n        \"text\": \"Kansas City Chiefs Radio Network\"\n      }\n    }\n  ],\n  \"success\": 1\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "3f7baed2-4f6a-41fb-b4bf-449626d097be",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"'search' array present\", () => pm.expect(body.search).to.be.an('array'));",
+                  "pm.test(\"has results for a real query\", () => pm.expect(body.search.length).to.be.above(0));",
+                  "pm.test(\"every result maps cleanly to WikidataSearchResult\", () => {",
+                  "    body.search.forEach((r) => {",
+                  "        pm.expect(r, 'id -> qid').to.have.property('id').that.match(/^Q\\d+$/);",
+                  "        pm.expect(r, 'label -> label').to.have.property('label').that.is.a('string');",
+                  "        // description is optional in the domain model (pointer / nullable)",
+                  "    });",
+                  "});",
+                  "pm.test(\"respects the limit param\", () => {",
+                  "    const limit = parseInt(pm.collectionVariables.get('limit'), 10) || 10;",
+                  "    pm.expect(body.search.length).to.be.at.most(limit);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1b - Edge case: gibberish query (expect empty results)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "{{user_agent}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{wikidata_action_api}}?action=wbsearchentities&search=zzqxwvpluglyqwomble12345&language={{language}}&format=json&type=item&limit={{limit}}",
+              "host": [
+                "{{wikidata_action_api}}"
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "wbsearchentities"
+                },
+                {
+                  "key": "search",
+                  "value": "zzqxwvpluglyqwomble12345"
+                },
+                {
+                  "key": "language",
+                  "value": "{{language}}"
+                },
+                {
+                  "key": "format",
+                  "value": "json"
+                },
+                {
+                  "key": "type",
+                  "value": "item"
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}"
+                }
+              ]
+            },
+            "description": "A query that matches nothing. Wikidata still returns HTTP 200 with `success: 1` and an empty `search` array \u2014 the adapter turns this into an empty `[]WikidataSearchResult`, not an error."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "6d7c7ff7-9b4d-4a29-8268-fecc2c49cb03",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200 (no-match is not an error)\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"success flag set\", () => pm.expect(body.success).to.eql(1));",
+                  "pm.test(\"'search' array present\", () => pm.expect(body.search).to.be.an('array'));",
+                  "pm.test(\"search is empty\", () => pm.expect(body.search.length).to.eql(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1c - Limit parameter (limit = 3)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "{{user_agent}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{wikidata_action_api}}?action=wbsearchentities&search=football club&language={{language}}&format=json&type=item&limit=3",
+              "host": [
+                "{{wikidata_action_api}}"
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "wbsearchentities"
+                },
+                {
+                  "key": "search",
+                  "value": "football club"
+                },
+                {
+                  "key": "language",
+                  "value": "{{language}}"
+                },
+                {
+                  "key": "format",
+                  "value": "json"
+                },
+                {
+                  "key": "type",
+                  "value": "item"
+                },
+                {
+                  "key": "limit",
+                  "value": "3"
+                }
+              ]
+            },
+            "description": "Shows the `limit` param clamping the result count. The adapter passes `strconv.Itoa(limit)`; a non-positive limit is replaced with the default of 10 before the request is built."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "0f9fecf8-cc40-4dbb-856e-0afdc46f136f",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"'search' array present\", () => pm.expect(body.search).to.be.an('array'));",
+                  "pm.test(\"at most 3 results\", () => pm.expect(body.search.length).to.be.at.most(3));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Perspectize GraphQL API",
+      "description": "The Perspectize GraphQL API that sits on top of the Wikidata adapter. Endpoint: `POST {{graphql_url}}` (default `http://localhost:8080/graphql`).\n\nConfirmed from `backend/cmd/server/main.go` on branch `origin/claude/plan-attribution-phase-8fUmf`: the chi router mounts the gqlgen handler with `r.Handle(\"/graphql\", srv)`, and `backend/config/config.example.json` sets `server.port = 8080`. (`backend/CLAUDE.md`: \u201cServer on :8080\u201d.) There is no `/query` route.\n\nStart the server first: `cd backend && make run`.",
+      "item": [
+        {
+          "name": "2a - wikidataSearch query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operationName\": \"WikidataSearch\",\n  \"query\": \"query WikidataSearch($query: String!, $language: String, $limit: Int) {\\n  wikidataSearch(query: $query, language: $language, limit: $limit) {\\n    qid\\n    label\\n    description\\n    entityType\\n  }\\n}\\n\",\n  \"variables\": {\n    \"query\": \"{{search_query}}\",\n    \"language\": \"{{language}}\",\n    \"limit\": \"{{limit}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{graphql_url}}",
+              "host": [
+                "{{graphql_url}}"
+              ]
+            },
+            "description": "`wikidataSearch(query, language, limit): [WikidataSearchResult!]!`.\n\nResolver calls `CategoryService` \u2192 `wikidata.Client.Search`, so the results are the same entities as Folder 1, reshaped to `{ qid, label, description, entityType }`.\n\nNote: `{{limit}}` is substituted as a string by Postman; the GraphQL `Int` coercion accepts it. Set the `limit` collection variable to a bare integer value."
+          },
+          "response": [
+            {
+              "name": "200 OK \u2014 sample",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"operationName\": \"WikidataSearch\",\n  \"query\": \"query WikidataSearch($query: String!, $language: String, $limit: Int) {\\n  wikidataSearch(query: $query, language: $language, limit: $limit) {\\n    qid\\n    label\\n    description\\n    entityType\\n  }\\n}\\n\",\n  \"variables\": {\n    \"query\": \"Kansas City Chiefs\",\n    \"language\": \"en\",\n    \"limit\": 5\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{graphql_url}}",
+                  "host": [
+                    "{{graphql_url}}"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"data\": {\n    \"wikidataSearch\": [\n      {\n        \"qid\": \"Q223522\",\n        \"label\": \"Kansas City Chiefs\",\n        \"description\": \"National Football League franchise in Kansas City, Missouri\",\n        \"entityType\": \"item\"\n      }\n    ]\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "21a5a282-5a1f-4760-9cda-66243f53d2ee",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"no GraphQL errors\", () => pm.expect(body.errors, JSON.stringify(body.errors)).to.be.undefined);",
+                  "pm.test(\"data.wikidataSearch is an array\", () => pm.expect(body.data.wikidataSearch).to.be.an('array'));",
+                  "pm.test(\"each hit has qid + label + entityType\", () => {",
+                  "    body.data.wikidataSearch.forEach((r) => {",
+                  "        pm.expect(r).to.have.property('qid').that.match(/^Q\\d+$/);",
+                  "        pm.expect(r).to.have.property('label').that.is.a('string');",
+                  "        pm.expect(r).to.have.property('entityType');",
+                  "    });",
+                  "});",
+                  "if (body.data && body.data.wikidataSearch && body.data.wikidataSearch.length) {",
+                  "    pm.collectionVariables.set('category_qid', body.data.wikidataSearch[0].qid);",
+                  "    pm.collectionVariables.set('category_label', body.data.wikidataSearch[0].label);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2b - setPrimaryCategory mutation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operationName\": \"SetPrimaryCategory\",\n  \"query\": \"mutation SetPrimaryCategory($input: SetPrimaryCategoryInput!) {\\n  setPrimaryCategory(input: $input) {\\n    id\\n    name\\n    primaryCategory {\\n      id\\n      wikidataQid\\n      label\\n      description\\n      entityType\\n      createdAt\\n      updatedAt\\n    }\\n  }\\n}\\n\",\n  \"variables\": {\n    \"input\": {\n      \"contentId\": \"{{content_id}}\",\n      \"qid\": \"{{category_qid}}\",\n      \"label\": \"{{category_label}}\",\n      \"description\": \"National Football League franchise in Kansas City, Missouri\",\n      \"entityType\": \"item\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{graphql_url}}",
+              "host": [
+                "{{graphql_url}}"
+              ]
+            },
+            "description": "`setPrimaryCategory(input: SetPrimaryCategoryInput!): Content!`.\n\n`SetPrimaryCategoryInput` = `{ contentId: IntID!, qid: String!, label: String!, description: String, entityType: String }`.\n\nUpserts a `Category` row from the Wikidata QID and links it as the content's `primaryCategory`. Returns the updated `Content`, whose `primaryCategory` is the full `Category` type (`id, wikidataQid, label, description, entityType, createdAt, updatedAt`).\n\nSet `{{content_id}}` to a real content row id first. `{{category_qid}}` / `{{category_label}}` are auto-populated by request 2a's test script, or set them yourself (e.g. `Q223522` / `Kansas City Chiefs`)."
+          },
+          "response": [
+            {
+              "name": "200 OK \u2014 sample",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"operationName\": \"SetPrimaryCategory\",\n  \"query\": \"mutation SetPrimaryCategory($input: SetPrimaryCategoryInput!) {\\n  setPrimaryCategory(input: $input) {\\n    id\\n    name\\n    primaryCategory {\\n      id\\n      wikidataQid\\n      label\\n      description\\n      entityType\\n      createdAt\\n      updatedAt\\n    }\\n  }\\n}\\n\",\n  \"variables\": {\n    \"input\": {\n      \"contentId\": 1,\n      \"qid\": \"Q223522\",\n      \"label\": \"Kansas City Chiefs\",\n      \"description\": \"National Football League franchise in Kansas City, Missouri\",\n      \"entityType\": \"item\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{graphql_url}}",
+                  "host": [
+                    "{{graphql_url}}"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"data\": {\n    \"setPrimaryCategory\": {\n      \"id\": \"1\",\n      \"name\": \"Chiefs hype video\",\n      \"primaryCategory\": {\n        \"id\": \"7\",\n        \"wikidataQid\": \"Q223522\",\n        \"label\": \"Kansas City Chiefs\",\n        \"description\": \"National Football League franchise in Kansas City, Missouri\",\n        \"entityType\": \"item\",\n        \"createdAt\": \"2026-09-03T12:00:00Z\",\n        \"updatedAt\": \"2026-09-03T12:00:00Z\"\n      }\n    }\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "7865591d-38fa-410f-9e48-7f6679df2844",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"no GraphQL errors\", () => pm.expect(body.errors, JSON.stringify(body.errors)).to.be.undefined);",
+                  "pm.test(\"data.setPrimaryCategory present\", () => pm.expect(body.data.setPrimaryCategory).to.be.an('object'));",
+                  "pm.test(\"primaryCategory echoes the QID we sent\", () => {",
+                  "    const cat = body.data.setPrimaryCategory.primaryCategory;",
+                  "    pm.expect(cat, 'primaryCategory').to.be.an('object');",
+                  "    pm.expect(cat.wikidataQid).to.eql(pm.collectionVariables.get('category_qid'));",
+                  "    pm.expect(cat.label).to.be.a('string');",
+                  "    pm.expect(cat).to.have.property('createdAt');",
+                  "    pm.expect(cat).to.have.property('updatedAt');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

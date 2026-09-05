@@ -411,6 +411,34 @@ export function perspectiveCellRenderer(params: {
 }
 
 /**
+ * AG Grid cell renderer for category column.
+ * Shows category label if assigned, or '+' icon for empty cells.
+ */
+export function categoryCellRenderer(params: {
+	data?: { primaryCategory: { label: string; description: string | null; wikidataQid: string } | null };
+}): HTMLElement {
+	const container = document.createElement('div');
+	// h-full w-full required for flexbox centering to fill entire cell (Decision 6 gotcha)
+	container.style.cssText = 'display:flex;align-items:center;height:100%;width:100%;cursor:pointer;';
+
+	const category = params.data?.primaryCategory;
+	if (category) {
+		const label = document.createElement('span');
+		label.textContent = category.label;
+		label.title = category.description ?? category.wikidataQid;
+		label.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+		container.appendChild(label);
+	} else {
+		const plus = document.createElement('span');
+		plus.textContent = '+';
+		plus.style.cssText = 'color:#a3a3a3;font-size:18px;';
+		container.appendChild(plus);
+	}
+
+	return container;
+}
+
+/**
  * AG Grid cell renderer for content name column.
  * Returns an anchor if URL exists, otherwise a span.
  */

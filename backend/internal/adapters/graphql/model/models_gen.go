@@ -16,25 +16,36 @@ type CategorizedRatingInput struct {
 	Rating   int    `json:"rating"`
 }
 
+type Category struct {
+	ID          string  `json:"id"`
+	WikidataQid string  `json:"wikidataQid"`
+	Label       string  `json:"label"`
+	Description *string `json:"description,omitempty"`
+	EntityType  *string `json:"entityType,omitempty"`
+	CreatedAt   string  `json:"createdAt"`
+	UpdatedAt   string  `json:"updatedAt"`
+}
+
 type Content struct {
-	ID            string         `json:"id"`
-	Name          string         `json:"name"`
-	URL           *string        `json:"url,omitempty"`
-	ContentType   string         `json:"contentType"`
-	AddedByUserID string         `json:"addedByUserID"`
-	AddedBy       *User          `json:"addedBy,omitempty"`
-	Length        *int           `json:"length,omitempty"`
-	LengthUnits   *string        `json:"lengthUnits,omitempty"`
-	ViewCount     *int           `json:"viewCount,omitempty"`
-	LikeCount     *int           `json:"likeCount,omitempty"`
-	CommentCount  *int           `json:"commentCount,omitempty"`
-	ChannelTitle  *string        `json:"channelTitle,omitempty"`
-	PublishedAt   *string        `json:"publishedAt,omitempty"`
-	Tags          []string       `json:"tags,omitempty"`
-	Description   *string        `json:"description,omitempty"`
-	Response      map[string]any `json:"response,omitempty"`
-	CreatedAt     string         `json:"createdAt"`
-	UpdatedAt     string         `json:"updatedAt"`
+	ID              string         `json:"id"`
+	Name            string         `json:"name"`
+	URL             *string        `json:"url,omitempty"`
+	ContentType     string         `json:"contentType"`
+	AddedByUserID   string         `json:"addedByUserID"`
+	AddedBy         *User          `json:"addedBy,omitempty"`
+	Length          *int           `json:"length,omitempty"`
+	LengthUnits     *string        `json:"lengthUnits,omitempty"`
+	ViewCount       *int           `json:"viewCount,omitempty"`
+	LikeCount       *int           `json:"likeCount,omitempty"`
+	CommentCount    *int           `json:"commentCount,omitempty"`
+	ChannelTitle    *string        `json:"channelTitle,omitempty"`
+	PublishedAt     *string        `json:"publishedAt,omitempty"`
+	Tags            []string       `json:"tags,omitempty"`
+	Description     *string        `json:"description,omitempty"`
+	Response        map[string]any `json:"response,omitempty"`
+	PrimaryCategory *Category      `json:"primaryCategory,omitempty"`
+	CreatedAt       string         `json:"createdAt"`
+	UpdatedAt       string         `json:"updatedAt"`
 }
 
 type ContentFilter struct {
@@ -155,6 +166,14 @@ type PerspectiveFilter struct {
 type Query struct {
 }
 
+type SetPrimaryCategoryInput struct {
+	ContentID   int     `json:"contentId"`
+	Qid         string  `json:"qid"`
+	Label       string  `json:"label"`
+	Description *string `json:"description,omitempty"`
+	EntityType  *string `json:"entityType,omitempty"`
+}
+
 type UpdatePerspectiveInput struct {
 	ID                    int                       `json:"id"`
 	ContentID             *int                      `json:"contentID,omitempty"`
@@ -190,4 +209,11 @@ type User struct {
 	Role      domain.UserRole `json:"role"`
 	CreatedAt string          `json:"createdAt"`
 	UpdatedAt string          `json:"updatedAt"`
+}
+
+type WikidataSearchResult struct {
+	Qid         string  `json:"qid"`
+	Label       string  `json:"label"`
+	Description *string `json:"description,omitempty"`
+	EntityType  *string `json:"entityType,omitempty"`
 }
