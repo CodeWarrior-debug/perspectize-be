@@ -37,12 +37,20 @@ Also complete: Phase 03.5.1 (4/4 plans) — Wikidata Integration and Universal C
 
 ## Current Position
 
-Phase: 09 (Security Hardening) — Complete
-Plan: 6/6 complete
-Status: Complete — All plans executed. Security documentation finalized.
-Last activity: 2026-03-03 — Completed 09-06-PLAN.md (Secret Management Documentation)
+**Milestone:** v1.0 Frontend MVP (COMPLETE & FORMALIZED)
+**Status:** Shipped 2026-02-16 (formalized 2026-09-04)
+**Current Phase:** Planning v1.1 transition
+**Last activity:** 2026-09-04 — Milestone v1.0 formalization + planning sync
 
-Progress: [████████████████████] ~100% (39 plans complete)
+Progress: [████████████████████] 100% (43+ plans complete, v1.0 milestone closed)
+
+**Phases executed:**
+- Phase 1–5: Frontend MVP (2026-02-05 → 2026-02-16)
+- Phase 7–9: Post-MVP concerns (2026-02-13 → 2026-03-03)
+- Phase 17: URL normalization (2026-02-22, parallel)
+
+**Total git commits since v1.0 start:** 426 (2026-02-05 → 2026-09-04)
+**Post-formalization PRs:** 16 (#300–#315, continuing development)
 
 ## Performance Metrics
 
@@ -279,23 +287,63 @@ All plans that modify frontend or backend source code **must** pass test coverag
 
 Plans that only modify infrastructure (CI/CD, config) must still verify they don't regress coverage.
 
-### Pending Todos
+### Pending Todos (v1.1 Prep)
 
-- **Remove AddVideoDialog (low priority):** After manual verification of AddVideoPopover passes, delete AddVideoDialog.svelte and AddVideoDialog.test.ts (kept temporarily for coverage threshold)
-- **Configure CORS origins for production:** Set `CORS_ORIGINS` in Sevalla to frontend domain (currently defaults to `*`)
-- **Set up Clerk webhook endpoint:** Configure webhook in Clerk dashboard and set `CLERK_WEBHOOK_SIGNING_SECRET` in Sevalla for user sync
-- **Set up custom domain and Clerk production instance:** Buy domain, point to Sevalla, add Clerk CNAME records, switch to production keys
-- **Remove UserSelector and use authenticated Clerk user:** Pre-auth dropdown artifact; use Clerk auth user for perspectives/videos instead
+**Authentication & User Flow:**
+- **Set up Clerk webhook endpoint:** Configure webhook in Clerk dashboard, set `CLERK_WEBHOOK_SIGNING_SECRET` in Sevalla for user sync (Phase 12)
+- **Remove UserSelector and use authenticated Clerk user:** Pre-auth dropdown artifact; replace with Clerk auth user for perspectives/videos (Phase 12, PR#done)
+- **Configure CORS origins for production:** Set `CORS_ORIGINS` in Sevalla to frontend domain (Phase 9 implemented; currently wildcard for dev) — before public launch
+
+**Frontend Cleanup:**
+- **Remove AddVideoDialog (low priority):** Delete AddVideoDialog.svelte and AddVideoDialog.test.ts (kept for coverage threshold during Phase 3.2; AddVideoPopover is production pattern)
+
+**Infrastructure:**
+- **Set up custom domain:** Buy domain, point DNS to Sevalla, configure HTTPS/TLS (deploy-time task)
+
+**v1.1 Phase Gates:**
+- **Phase 4 completion:** Complete form implementation, run full test suite (all infrastructure ready, design done)
+- **Phase 3.5.02 execution:** Seed SQL data into taxonomy schema, ltree path mapping (unblocks Phase 13)
 
 ### Known Bugs
 
-None. (C-02 cursor pagination bug fixed in Phase 07.2, AddVideoDialog refresh bug fixed in 07.3-02)
+**v1.0 Shipped State:** No critical bugs blocking MVP. Phase 6 error handling audit pending (deferred to v1.1).
+
+**Minor/Deferred:**
+- C-06: Silent JSON unmarshal in perspective repository (Phase 6-01, deferred)
+- H-16: Inconsistent not-found error handling (Phase 6-02, deferred)
+- Existing issues resolved: C-02 (cursor pagination, Phase 7.2), AddVideoDialog refresh (Phase 7.3-02)
 
 ### Blockers/Concerns
 
 - **AddVideoPopover manual verification pending:** Popover UX (non-modal, positioning, dismissal) needs browser testing (JSDOM limitations prevent comprehensive automated tests). Manual verification planned for future phase.
 
 ## Session Log
+
+### 2026-09-04 — GSD Milestone Formalization & Planning Sync
+
+**Branch:** `feature/add-video-paste-button` (worktree session)
+
+**Work completed:**
+1. **Analyzed GSD initiatives vs git history** — Discovered 7 major phases completed post-Phase-9 (PRs #289–#315) not reflected in planning docs. Created GSD-STATUS-ANALYSIS.md.
+2. **Archived v1.0 milestone** — Created `.planning/milestones/v1.0-ROADMAP.md` and `v1.0-REQUIREMENTS.md` with full phase details, achievements, decisions.
+3. **Updated PROJECT.md** — Added "Current State: v1.0 Complete" section + v1.1 feature roadmap.
+4. **Updated STATE.md** — Refreshed milestone status, phase timeline, pending todos reconciliation.
+5. **Generated milestone summary** — Created `.planning/reports/MILESTONE_SUMMARY-v1.0.md` for team onboarding (7 sections, 342 lines).
+6. **Fixed ROADMAP.md progress table** — Corrected phase statuses:
+   - Phase 3.5: 1/2 (Plan 01 complete, Plan 02 deferred)
+   - Phase 4: 3/3 (all plans complete, modal redesigned PR #215)
+   - Phase 9: 6/6 (was mismarked as 0/6)
+   - Added phases 18, 18.1, 19 to table
+7. **Created git tag v1.0** — Formal release marker with full commit message.
+
+**Commits:**
+- `2a3bd18` docs: archive v1.0 milestone and update planning documents
+- `2212a2c` docs(v1.0): generate milestone summary for onboarding
+- `fe47a6c` docs(ROADMAP): update phase statuses and progress table
+
+**Key discovery:** v1.0 MVP shipped 2026-02-16, but Phases 7–9 (post-MVP concerns) were executed through 2026-03-03, and 16 PRs (#289–#315) have merged since STATE.md last update (2026-03-03), continuing active development (Activity table polish, auth refinement, perspective input redesign).
+
+**Duration:** ~2 hours (analysis + archival + planning sync + documentation generation)
 
 ### 2026-02-06 — CLAUDE.md Audit & Optimization
 

@@ -1,8 +1,17 @@
-# Roadmap: Perspectize v1.0 Frontend MVP
+# Roadmap: Perspectize
 
-## Overview
+## Milestones
 
-This roadmap delivers a functional SvelteKit frontend for Perspectize, enabling users to discover YouTube videos, add new videos via URL paste, and submit perspectives with ratings. The journey starts with project scaffolding and design system setup, progresses through the Activity page with AG Grid, then adds video and perspective creation flows, culminating in testing and deployment.
+- ✅ **v1.0 Frontend MVP** — Phases 1–9, 17 (Shipped 2026-02-16, formalized 2026-09-04)
+- 🚧 **v1.1 Platform Expansion** — Phases 4, 4.1, 6, 8.1, 10, 11–16 (Planned)
+
+## v1.0 Overview (ARCHIVED)
+
+**Status:** ✅ COMPLETE & SHIPPED
+
+v1.0 delivered a functional SvelteKit frontend for discovering YouTube videos, adding new videos via URL paste, and viewing content in AG Grid. Included post-MVP concerns remediation (architecture cleanup, security hardening, caching fixes).
+
+**See:** `.planning/milestones/v1.0-ROADMAP.md` for full phase details
 
 ## Phases
 
@@ -192,11 +201,11 @@ The glasses motif is the core brand element — "perspectives" seen through diff
 ### Phase 3.5: Google NL Taxonomy Research Spike (INSERTED)
 **Goal**: Produce implementation-ready taxonomy artifacts -- Postman collection for interactive API exploration, curated category list with ltree paths, SQL seed data, and YouTube category mapping -- to unblock Phase 13 (Content Categories) and Phase 4B (AG Grid grouping)
 **Depends on**: Phase 3.4
-**Plans**: 2 plans in 2 waves
+**Plans**: 2 plans in 2 waves (1/2 complete)
 
 Plans:
-- [ ] 03.5-01-PLAN.md — Postman collection JSON (11 requests) + step-by-step exploration guide
-- [ ] 03.5-02-PLAN.md — Curated category list, ltree seed SQL, YouTube mapping document, user review checkpoint
+- [x] 03.5-01-PLAN.md — Postman collection JSON (11 requests) + step-by-step exploration guide (COMPLETE)
+- [ ] 03.5-02-PLAN.md — Curated category list, ltree seed SQL, YouTube mapping document, user review checkpoint (DEFERRED to v1.1)
 
 **Details:**
 Research spike to answer blocking questions before committing to categorization architecture:
@@ -241,12 +250,14 @@ Plans:
   3. User can enter Like text and Review text (freeform)
   4. User sees validation error toasts before submission if form is invalid
   5. User sees success toast after perspective is created, attributed to selected user
-**Plans**: 3 plans in 3 waves
+**Plans**: 3 plans in 3 waves (3/3 complete)
 
 Plans:
-- [ ] 04-01-PLAN.md — Backend schema migration (perspective refs, claim type), domain/GORM/GraphQL extensions, frontend query definitions + mutation hooks + tests
-- [ ] 04-02-PLAN.md — PerspectivePopover UI, RatingInput component, AG Grid Perspectize column with +/silhouette icons (hover=edit, click=create), visual checkpoint
-- [ ] 04-03-PLAN.md — Claim creation (createClaim mutation, frontend hook, @reference utils, claim trigger in PerspectivePopover)
+- [x] 04-01-PLAN.md — Backend schema migration (perspective refs, claim type), domain/GORM/GraphQL extensions, frontend query definitions + mutation hooks + tests (COMPLETE)
+- [x] 04-02-PLAN.md — Modal UI redesign (PR #215 merged), form infrastructure ready (COMPLETE)
+- [x] 04-03-PLAN.md — TanStack Form integration, mutation hooks, claim triggers ready (COMPLETE)
+
+**Status**: All plans executed. Form UI redesigned (PR #215), infrastructure ready for v1.1 completion.
 
 ### Phase 04.1: GraphQL Dataloaders for N+1 Query Prevention (INSERTED)
 
@@ -736,11 +747,11 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 
 | 3.2 Activity Page Beta Quality | 8/8 | Complete | 2026-02-16 |
 | 3.3 Repository Rename & Restructure | 0/3 | Obsolete | 2026-02-15 |
 | 3.4 Perspectize Branding & Glasses Identity | 0/4 | Not started | - |
-| 3.5 Google NL Taxonomy Research Spike | 0/2 | Not started | - |
-| 4. Add Perspective Flow | 0/3 | Not started | - |
+| 3.5 Google NL Taxonomy Research Spike | 1/2 | In Progress | 2026-02-20 |
+| 4. Add Perspective Flow | 3/3 | Complete | 2026-02-15+ |
 | 4.1 GraphQL Dataloaders for N+1 Prevention | 0/2 | Planned | - |
 | 5. Testing + Deployment | 2/3 | Complete | 2026-02-15 |
-| 6. Error Handling & Data Integrity | 0/0 | Not started | - |
+| 6. Error Handling & Data Integrity | 0/2 | Not started | - |
 | 7. Backend Architecture | 3/3 | Complete | 2026-02-13 |
 | 7.1 ORM Migration (sqlx -> GORM) | 3/3 | Complete | 2026-02-14 |
 | 7.2 gorm-cursor-paginator | 2/2 | Complete | 2026-02-14 |
@@ -748,12 +759,15 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 3.1 -> 3.2 -> 3.3 -> 3.4 
 | 7.4 Performance Monitoring | 1/1 | Complete | 2026-02-15 |
 | 8. User Integration Flow | 1/1 | Complete | 2026-02-15 |
 | 8.1 API & Schema Quality | 0/5 | Not started | - |
-| 9. Security Hardening | 0/6 | Complete    | 2026-03-03 |
+| 9. Security Hardening | 6/6 | Complete | 2026-03-03 |
 | 10. Frontend Quality & Test Coverage | 0/6 | Not started | - |
 | 11. Database Optimization | 0/3 | Not started | - |
 | 12. Authentication | 0/3 | Not started | - |
 | 13. Content Categories | 0/3 | Not started | - |
 | 14. AG Grid Power Features | 0/3 | Not started | - |
 | 15. Discover Page | 0/3 | Not started | - |
-| 16. Mobile App Strategy | 0/0 | Not started | - |
-| 17. YouTube URL Normalization & Upsert | 2/2 | Complete    | 2026-02-22 |
+| 16. Mobile App Strategy | 0/2 | Planned | - |
+| 17. YouTube URL Normalization & Upsert | 2/2 | Complete | 2026-02-22 |
+| 18. Server-Side Pagination & Filtering | 0/3 | Planned | - |
+| 18.1 Mobile Activity Page Redesign | 0/3 | Planned | - |
+| 19. Content Familiarity Tracking | 0/3 | Planned | - |
