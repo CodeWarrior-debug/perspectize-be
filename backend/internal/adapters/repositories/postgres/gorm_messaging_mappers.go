@@ -12,7 +12,7 @@ func messageModelToDomain(m *MessageModel) domain.Message {
 func messageDomainToModel(d *domain.Message) *MessageModel {
 	return &MessageModel{
 		ID: d.ID, ThreadID: int64(d.ThreadID), SenderID: int64(d.SenderID),
-		Seq: d.Seq, Body: d.Body, ClientNonce: d.ClientNonce, CreatedAt: d.CreatedAt,
+		Body: d.Body, ClientNonce: d.ClientNonce,
 	}
 }
 

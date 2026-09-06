@@ -15,9 +15,17 @@ func TestMessageMapperRoundTrip(t *testing.T) {
 		Body: "hello", ClientNonce: "n-1", CreatedAt: now,
 	}
 	m := messageDomainToModel(d)
+	// Domain->Model conversion should NOT set Seq or CreatedAt (assigned by DB)
 	assert.Equal(t, int64(7), m.ID)
 	assert.Equal(t, "hello", m.Body)
+	assert.Equal(t, int64(0), m.Seq)
+	assert.True(t, m.CreatedAt.IsZero())
 
+	// Simulate post-insert DB fetch: DB trigger assigns Seq, GORM autoCreateTime assigns CreatedAt
+	m.Seq = 42
+	m.CreatedAt = now
+
+	// Model->Domain roundtrip preserves all fields
 	back := messageModelToDomain(m)
 	assert.Equal(t, d.ThreadID, back.ThreadID)
 	assert.Equal(t, d.Seq, back.Seq)
