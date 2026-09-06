@@ -5,7 +5,7 @@ import {
 	type MarkOnboardingSeenResponse,
 	type MeResponse,
 	type UserOnboarding,
-} from '../users';
+} from './index';
 import { CURRENT_INTRO_VERSION } from '$lib/onboarding/config';
 import { setCoachForceOpen } from '$lib/onboarding/coachGate.svelte';
 

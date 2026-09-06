@@ -55,7 +55,7 @@ CLAUDE.local.md
 # Claude Code isolated worktrees (EnterWorktree tool, standardized location)
 .claude/worktrees/
 
-# Self-verify persistent Chrome profile (holds a logged-in session; never commit)
+# Self-verify browser profile (holds a logged-in session — never commit)
 .claude/sv-profile/
 
 # Private bug tracking (not for public exposure)
@@ -68,3 +68,6 @@ CLAUDE.local.md
 # graphify knowledge-graph artifacts (regenerable, not for commit)
 graphify-out/
 
+# Root `make start` bookkeeping
+logs/
+.dev/

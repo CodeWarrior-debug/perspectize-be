@@ -42,7 +42,7 @@ describe('useUpdateSourceData hook', () => {
 	beforeEach(async () => {
 		vi.clearAllMocks();
 		capturedMutationOptions = undefined;
-		const { useUpdateSourceData } = await import('$lib/queries/hooks/useUpdateSourceData');
+		const { useUpdateSourceData } = await import('$lib/queries/content/useUpdateSourceData');
 		useUpdateSourceData();
 	});
 
