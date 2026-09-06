@@ -236,6 +236,10 @@ func (m *mockCategoryRepository) GetByID(ctx context.Context, id int) (*domain.C
 	return nil, domain.ErrNotFound
 }
 
+func (m *mockCategoryRepository) GetByIDs(ctx context.Context, ids []int) ([]*domain.Category, error) {
+	return []*domain.Category{}, nil
+}
+
 // mockWikidataClient implements services.WikidataClient for testing
 type mockWikidataClient struct{}
 
