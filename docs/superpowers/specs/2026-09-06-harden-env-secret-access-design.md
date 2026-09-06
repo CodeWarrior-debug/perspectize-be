@@ -140,7 +140,7 @@ case a leaked artifact is a revocable session cookie for a throwaway identity.
 
 ### Component 4 — Remediate GitHub secret-scanning alert #1
 
-**Alert:** `whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw`, flagged as a Stripe Webhook
+**Alert:** GitHub secret-scanning alert #1 — a `whsec_…` literal flagged as a Stripe Webhook
 Signing Secret (Stripe/Svix/Clerk share the `whsec_` prefix). Public repo.
 Locations (repo tip): `backend/internal/adapters/auth/webhook_handler_test.go:22`
 and `docs/superpowers/plans/2026-09-05-postgres-auth-test-coverage-plan.md:3307`.
