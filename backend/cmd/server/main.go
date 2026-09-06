@@ -162,7 +162,8 @@ func main() {
 
 	// Messaging realtime plumbing: the hub fans events out in-process, the
 	// listener feeds it from Postgres NOTIFY, the presence tracker records who
-	// is connected (its connection lifecycle is wired in a follow-up task).
+	// is connected (its connection lifecycle is wired from the WebSocket
+	// InitFunc via realtime.RunPresenceSession).
 	hub := realtime.NewHub(messageRepo, threadRepo)
 	presence := realtime.NewPresenceTracker()
 	limiter := services.NewSlidingWindowLimiter(10, 10*time.Second)
@@ -193,8 +194,9 @@ func main() {
 	srv := handler.New(generated.NewExecutableSchema(gqlConfig))
 	srv.AddTransport(transport.Options{})
 	// WebSocket transport for GraphQL subscriptions. InitFunc authenticates the
-	// connection from the graphql-ws connection_init payload; it does AUTH ONLY
-	// — presence connect/disconnect lifecycle is wired in a follow-up task.
+	// connection from the graphql-ws connection_init payload, then starts a
+	// presence session that marks the user ONLINE for the life of the socket
+	// and OFFLINE a grace period after the last one closes.
 	srv.AddTransport(transport.Websocket{
 		// gorilla's default CheckOrigin is same-origin only, which would reject
 		// the browser app. Reuse the configured CORS allowlist instead.
@@ -230,6 +232,7 @@ func main() {
 				Email:    user.Email,
 				Role:     user.Role,
 			}
+			go realtime.RunPresenceSession(ctx, presence, hub, threadRepo, user.ID, realtime.DefaultPresenceConfig())
 			return auth.WithAuthenticatedUser(ctx, authUser), &initPayload, nil
 		},
 	})
