@@ -76,7 +76,7 @@ func (c *wsClient) Subscribe(ctx context.Context, id, query string, vars map[str
 
 // Next reads frames until it sees a "next" for the given id and returns its
 // payload.data. "ping" is answered and skipped; "error" and "complete" for the
-// id are surfaced as errors. A cancelled/expired ctx surfaces as an error.
+// id are surfaced as errors. A canceled/expired ctx surfaces as an error.
 func (c *wsClient) Next(ctx context.Context, id string) (json.RawMessage, error) {
 	for {
 		mt, raw, err := c.conn.Read(ctx)

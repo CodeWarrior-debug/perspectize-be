@@ -288,7 +288,7 @@ func inboxEventToModel(e domain.InboxEvent) *model.InboxEvent {
 }
 
 // toModelThreadEvent maps a domain thread event onto the GraphQL ThreadEvent
-// union. An unrecognised variant yields nil, which the caller drops.
+// union. An unrecognized variant yields nil, which the caller drops.
 func toModelThreadEvent(evt domain.ThreadEvent) model.ThreadEvent {
 	switch e := evt.(type) {
 	case domain.MessagePostedEvent:

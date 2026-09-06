@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// SlidingWindowLimiter implements rate limiting using a sliding window algorithm.
 type SlidingWindowLimiter struct {
 	max    int
 	window time.Duration
@@ -14,6 +15,7 @@ type SlidingWindowLimiter struct {
 	hits map[string][]time.Time
 }
 
+// NewSlidingWindowLimiter creates a rate limiter that allows at most max events within a window.
 func NewSlidingWindowLimiter(max int, window time.Duration) *SlidingWindowLimiter {
 	return &SlidingWindowLimiter{
 		max: max, window: window, NowFn: time.Now,
@@ -21,6 +23,7 @@ func NewSlidingWindowLimiter(max int, window time.Duration) *SlidingWindowLimite
 	}
 }
 
+// Allow returns true if the key is within the rate limit, false otherwise.
 func (l *SlidingWindowLimiter) Allow(key string) bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()

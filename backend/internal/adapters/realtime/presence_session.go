@@ -16,6 +16,7 @@ type PresenceConfig struct {
 	HeartbeatInterval time.Duration // Touch the tracker this often while connected
 }
 
+// DefaultPresenceConfig returns the default presence tracking configuration.
 func DefaultPresenceConfig() PresenceConfig {
 	return PresenceConfig{OfflineGrace: 15 * time.Second, HeartbeatInterval: 20 * time.Second}
 }

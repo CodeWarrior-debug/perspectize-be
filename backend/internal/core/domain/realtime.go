@@ -25,29 +25,41 @@ type EventEnvelope struct {
 	State       string `json:"state,omitempty"`
 }
 
+// ThreadEvent is a marker interface for events delivered on a thread's real-time event stream.
 type ThreadEvent interface{ isThreadEvent() }
 
+// MessagePostedEvent is delivered when a new message is persisted to a thread.
 type MessagePostedEvent struct{ Message Message }
+
+// ReadReceiptChangedEvent is delivered when a user's read receipt position changes.
 type ReadReceiptChangedEvent struct {
 	ThreadID    int
 	UserID      int
 	LastReadSeq int64
 }
+
+// TypingChangedEvent is delivered when a user's typing status changes.
 type TypingChangedEvent struct {
 	ThreadID int
 	UserID   int
 	Typing   bool
 }
+
+// ParticipantChangedEvent is delivered when a participant is added to or removed from the thread.
 type ParticipantChangedEvent struct {
 	ThreadID int
 	UserID   int
 	Change   string // "ADDED" | "REMOVED"
 }
+
+// PresenceChangedEvent is delivered when a participant's presence state changes.
 type PresenceChangedEvent struct {
 	ThreadID int
 	UserID   int
 	State    PresenceState
 }
+
+// StreamResetEvent signals that the event stream should be reset (e.g., on reconnect).
 type StreamResetEvent struct{ ThreadID int }
 
 func (MessagePostedEvent) isThreadEvent()      {}
@@ -57,6 +69,7 @@ func (ParticipantChangedEvent) isThreadEvent() {}
 func (PresenceChangedEvent) isThreadEvent()    {}
 func (StreamResetEvent) isThreadEvent()        {}
 
+// InboxEvent represents a summary of a thread in a user's inbox.
 type InboxEvent struct {
 	ThreadID      int
 	LastMessageAt time.Time

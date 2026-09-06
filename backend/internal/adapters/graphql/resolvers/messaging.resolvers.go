@@ -171,6 +171,8 @@ func (r *mutationResolver) SetTyping(ctx context.Context, threadID string, typin
 }
 
 // AddThreadParticipants is the resolver for the addThreadParticipants field.
+//
+//nolint:revive // parameter name generated from the GraphQL schema field
 func (r *mutationResolver) AddThreadParticipants(ctx context.Context, threadID string, userIds []string) (*model.MessageThread, error) {
 	actor, ok := auth.ForContext(ctx)
 	if !ok {

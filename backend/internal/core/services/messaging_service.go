@@ -13,6 +13,7 @@ import (
 
 const maxMessageBodyBytes = 8192
 
+// MessagingServiceImpl is the business-logic implementation of MessagingService.
 type MessagingServiceImpl struct {
 	threadRepo repositories.ThreadRepository
 	msgRepo    repositories.MessageRepository
@@ -22,6 +23,7 @@ type MessagingServiceImpl struct {
 
 var _ portservices.MessagingService = (*MessagingServiceImpl)(nil)
 
+// NewMessagingService constructs the messaging business-logic service.
 func NewMessagingService(
 	threadRepo repositories.ThreadRepository,
 	msgRepo repositories.MessageRepository,
@@ -31,6 +33,7 @@ func NewMessagingService(
 	return &MessagingServiceImpl{threadRepo, msgRepo, publisher, limiter}
 }
 
+// AssertParticipant verifies that the actor is an active participant in the thread.
 func (s *MessagingServiceImpl) AssertParticipant(ctx context.Context, actorUserID, threadID int) error {
 	thread, err := s.threadRepo.GetThread(ctx, threadID)
 	if err != nil {
@@ -42,6 +45,7 @@ func (s *MessagingServiceImpl) AssertParticipant(ctx context.Context, actorUserI
 	return nil
 }
 
+// SendMessage persists a new message to a thread from the actor.
 func (s *MessagingServiceImpl) SendMessage(ctx context.Context, actorUserID int, in portservices.SendMessageInput) (*domain.Message, error) {
 	if len(in.Body) == 0 || len([]byte(in.Body)) > maxMessageBodyBytes {
 		return nil, fmt.Errorf("%w: message body must be 1..%d bytes", domain.ErrInvalidInput, maxMessageBodyBytes)
@@ -63,6 +67,7 @@ func (s *MessagingServiceImpl) SendMessage(ctx context.Context, actorUserID int,
 	})
 }
 
+// MarkRead updates the actor's read receipt position in the thread.
 func (s *MessagingServiceImpl) MarkRead(ctx context.Context, actorUserID, threadID int, seq int64) (*domain.MessageThread, error) {
 	if err := s.AssertParticipant(ctx, actorUserID, threadID); err != nil {
 		return nil, err
@@ -79,6 +84,7 @@ func (s *MessagingServiceImpl) MarkRead(ctx context.Context, actorUserID, thread
 	return s.threadRepo.GetThread(ctx, threadID)
 }
 
+// SetTyping broadcasts the actor's typing status to the thread.
 func (s *MessagingServiceImpl) SetTyping(ctx context.Context, actorUserID, threadID int, typing bool) error {
 	if err := s.AssertParticipant(ctx, actorUserID, threadID); err != nil {
 		return err
@@ -91,6 +97,7 @@ func (s *MessagingServiceImpl) SetTyping(ctx context.Context, actorUserID, threa
 	})
 }
 
+// CreateThread creates a new message thread with the actor as the owner.
 func (s *MessagingServiceImpl) CreateThread(ctx context.Context, actorUserID int, participantUserIDs []int, title *string) (*domain.MessageThread, error) {
 	set := map[int]struct{}{actorUserID: {}}
 	for _, id := range participantUserIDs {
@@ -120,6 +127,7 @@ func (s *MessagingServiceImpl) CreateThread(ctx context.Context, actorUserID int
 	return s.threadRepo.CreateThread(ctx, actorUserID, title, ids)
 }
 
+// AddParticipants adds new users to an existing thread.
 func (s *MessagingServiceImpl) AddParticipants(ctx context.Context, actorUserID, threadID int, userIDs []int) (*domain.MessageThread, error) {
 	if err := s.AssertParticipant(ctx, actorUserID, threadID); err != nil {
 		return nil, err
@@ -138,6 +146,7 @@ func (s *MessagingServiceImpl) AddParticipants(ctx context.Context, actorUserID,
 	return s.threadRepo.GetThread(ctx, threadID)
 }
 
+// LeaveThread marks the actor as having left the thread.
 func (s *MessagingServiceImpl) LeaveThread(ctx context.Context, actorUserID, threadID int) error {
 	if err := s.AssertParticipant(ctx, actorUserID, threadID); err != nil {
 		return err
@@ -153,10 +162,12 @@ func (s *MessagingServiceImpl) LeaveThread(ctx context.Context, actorUserID, thr
 	})
 }
 
+// ListThreads returns the actor's threads, paginated by last message timestamp.
 func (s *MessagingServiceImpl) ListThreads(ctx context.Context, actorUserID int, limit int, beforeLastMessageAt *time.Time) ([]domain.MessageThread, error) {
 	return s.threadRepo.ListThreadsForUser(ctx, actorUserID, limit, beforeLastMessageAt)
 }
 
+// GetHistory returns past messages from the thread, paginated by message sequence.
 func (s *MessagingServiceImpl) GetHistory(ctx context.Context, actorUserID, threadID int, limit int, beforeSeq *int64) ([]domain.Message, error) {
 	if err := s.AssertParticipant(ctx, actorUserID, threadID); err != nil {
 		return nil, err
@@ -164,6 +175,7 @@ func (s *MessagingServiceImpl) GetHistory(ctx context.Context, actorUserID, thre
 	return s.msgRepo.ListHistory(ctx, threadID, limit, beforeSeq)
 }
 
+// ListSince returns messages since a given sequence number.
 func (s *MessagingServiceImpl) ListSince(ctx context.Context, actorUserID, threadID int, sinceSeq int64) ([]domain.Message, error) {
 	if err := s.AssertParticipant(ctx, actorUserID, threadID); err != nil {
 		return nil, err
@@ -171,6 +183,7 @@ func (s *MessagingServiceImpl) ListSince(ctx context.Context, actorUserID, threa
 	return s.msgRepo.ListSince(ctx, threadID, sinceSeq)
 }
 
+// GetThread returns the thread, including its participants.
 func (s *MessagingServiceImpl) GetThread(ctx context.Context, actorUserID, threadID int) (*domain.MessageThread, error) {
 	if err := s.AssertParticipant(ctx, actorUserID, threadID); err != nil {
 		return nil, err
@@ -178,6 +191,7 @@ func (s *MessagingServiceImpl) GetThread(ctx context.Context, actorUserID, threa
 	return s.threadRepo.GetThread(ctx, threadID)
 }
 
+// MaxSeq returns the highest message sequence number in the thread.
 func (s *MessagingServiceImpl) MaxSeq(ctx context.Context, actorUserID, threadID int) (int64, error) {
 	if err := s.AssertParticipant(ctx, actorUserID, threadID); err != nil {
 		return 0, err

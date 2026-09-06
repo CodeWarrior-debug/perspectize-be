@@ -31,7 +31,7 @@ func NewListener(dsn string, hub *Hub) *Listener {
 	return &Listener{dsn: dsn, hub: hub}
 }
 
-// Run blocks until ctx is cancelled. It repeatedly opens a dedicated
+// Run blocks until ctx is canceled. It repeatedly opens a dedicated
 // connection, LISTENs, and forwards notifications. On any connection-level
 // error (while ctx is still live) it logs, resets Hub subscribers, sleeps for
 // the current backoff, and retries. Backoff starts at 250ms, doubles, and is
@@ -65,14 +65,14 @@ func (l *Listener) Run(ctx context.Context) {
 }
 
 // listenOnce opens one dedicated connection, issues LISTEN, and loops on
-// WaitForNotification until an error occurs or ctx is cancelled. A malformed
+// WaitForNotification until an error occurs or ctx is canceled. A malformed
 // payload is logged and skipped rather than ending the loop.
 func (l *Listener) listenOnce(ctx context.Context, onReady func()) error {
 	conn, err := pgx.Connect(ctx, l.dsn)
 	if err != nil {
 		return err
 	}
-	defer conn.Close(context.Background())
+	defer func() { _ = conn.Close(context.Background()) }()
 
 	if _, err := conn.Exec(ctx, "LISTEN "+listenChannel); err != nil {
 		return err

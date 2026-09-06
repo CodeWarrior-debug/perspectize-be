@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// fakeMessaging is a hand-rolled portservices.MessagingService whose behaviour
+// fakeMessaging is a hand-rolled portservices.MessagingService whose behavior
 // each test overrides through the function fields it cares about. Unset fields
 // return zero values, which is enough for resolvers that do not call them.
 type fakeMessaging struct {
@@ -364,7 +364,7 @@ func TestThreadEventsSubscription_ReplaysThenStreamsAndStopsOnCancel(t *testing.
 		}
 	}, 2*time.Second, 10*time.Millisecond, "no live typing event")
 
-	// 3. Cancelling the operation context tears the goroutine down and closes
+	// 3. Canceling the operation context tears the goroutine down and closes
 	// the output channel — no leak, no send on a closed channel.
 	cancel()
 	require.Eventually(t, func() bool {
