@@ -32,14 +32,19 @@ func (s stubMsgRepo) ListSince(ctx context.Context, t int, s2 int64) ([]domain.M
 }
 func (s stubMsgRepo) MaxSeq(ctx context.Context, t int) (int64, error) { return 0, nil }
 
-// stubThreadRepo is a no-op ThreadRepository (RULING R2 — stored on Hub, unused by current methods).
-type stubThreadRepo struct{}
+// stubThreadRepo is a ThreadRepository whose GetThread returns a caller-supplied
+// thread; the Hub's inbox fan-out uses it to resolve participants.
+type stubThreadRepo struct{ thread *domain.MessageThread }
 
 func (stubThreadRepo) CreateThread(ctx context.Context, createdBy int, title *string, participantUserIDs []int) (*domain.MessageThread, error) {
 	return nil, nil
 }
-func (stubThreadRepo) GetThread(ctx context.Context, threadID int) (*domain.MessageThread, error) {
-	return nil, nil
+func (s stubThreadRepo) GetThread(ctx context.Context, threadID int) (*domain.MessageThread, error) {
+	if s.thread == nil {
+		return nil, nil
+	}
+	t := *s.thread
+	return &t, nil
 }
 func (stubThreadRepo) FindDirectThread(ctx context.Context, userA, userB int) (*domain.MessageThread, error) {
 	return nil, nil
@@ -65,6 +70,96 @@ var (
 
 func newHub(msg domain.Message) *realtime.Hub {
 	return realtime.NewHub(stubMsgRepo{msg: msg}, stubThreadRepo{})
+}
+
+func TestHub_InboxFanout(t *testing.T) {
+	now := time.Now().UTC().Truncate(time.Second)
+	thread := &domain.MessageThread{
+		ID:            1,
+		LastMessageAt: now,
+		Participants: []domain.ThreadParticipant{
+			{ThreadID: 1, UserID: 11, LastReadSeq: 2},
+			{ThreadID: 1, UserID: 12, LastReadSeq: 5},
+			// A departed participant must not receive inbox events.
+			{ThreadID: 1, UserID: 13, LastReadSeq: 0, LeftAt: &now},
+		},
+	}
+	hub := realtime.NewHub(
+		stubMsgRepo{msg: domain.Message{ID: 10, ThreadID: 1, Seq: 5, Body: "hi", CreatedAt: now}},
+		stubThreadRepo{thread: thread},
+	)
+
+	inbox11, unsub11 := hub.SubscribeInbox(11)
+	defer unsub11()
+	inbox12, unsub12 := hub.SubscribeInbox(12)
+	defer unsub12()
+	inbox13, unsub13 := hub.SubscribeInbox(13)
+	defer unsub13()
+
+	// The per-thread ThreadEvent fan-out must be unaffected.
+	threadCh, unsubThread := hub.Subscribe(1)
+	defer unsubThread()
+
+	hub.PublishEnvelope(context.Background(), domain.EventEnvelope{
+		Type: "MESSAGE_POSTED", ThreadID: 1, Seq: 5, MessageID: 10,
+	})
+
+	select {
+	case evt := <-threadCh:
+		_, ok := evt.(domain.MessagePostedEvent)
+		assert.True(t, ok, "thread fan-out still delivers MessagePostedEvent")
+	case <-time.After(time.Second):
+		t.Fatal("no thread event")
+	}
+
+	select {
+	case e := <-inbox11:
+		assert.Equal(t, 1, e.ThreadID)
+		assert.Equal(t, int64(5), e.LatestSeq)
+		assert.Equal(t, 3, e.UnreadCount, "seq 5 minus lastRead 2")
+		assert.Equal(t, now, e.LastMessageAt)
+	case <-time.After(time.Second):
+		t.Fatal("participant 11 got no inbox event")
+	}
+
+	select {
+	case e := <-inbox12:
+		assert.Equal(t, 0, e.UnreadCount, "caught-up participant has no unread")
+	case <-time.After(time.Second):
+		t.Fatal("participant 12 got no inbox event")
+	}
+
+	select {
+	case e := <-inbox13:
+		t.Fatalf("departed participant received an inbox event: %+v", e)
+	case <-time.After(50 * time.Millisecond):
+	}
+}
+
+func TestHub_InboxUnsubscribeClosesChannel(t *testing.T) {
+	hub := newHub(domain.Message{})
+	ch, unsub := hub.SubscribeInbox(42)
+	unsub()
+	_, open := <-ch
+	assert.False(t, open, "inbox channel closed on unsubscribe")
+	assert.NotPanics(t, unsub, "unsubscribe is idempotent")
+}
+
+func TestHub_InboxFanoutToleratesMissingThread(t *testing.T) {
+	// stubThreadRepo with no thread returns (nil, nil): the fan-out must skip
+	// rather than panic, and the thread fan-out must still happen.
+	hub := newHub(domain.Message{ID: 1, ThreadID: 7, Seq: 1})
+	ch, unsub := hub.Subscribe(7)
+	defer unsub()
+
+	assert.NotPanics(t, func() {
+		hub.PublishEnvelope(context.Background(), domain.EventEnvelope{Type: "MESSAGE_POSTED", ThreadID: 7, MessageID: 1})
+	})
+	select {
+	case <-ch:
+	case <-time.After(time.Second):
+		t.Fatal("thread fan-out did not happen")
+	}
 }
 
 func TestHub_FanOutMessagePosted(t *testing.T) {

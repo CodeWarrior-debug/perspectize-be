@@ -36,6 +36,9 @@ type MessagingService interface {
 	ListSince(ctx context.Context, actorUserID, threadID int, sinceSeq int64) ([]domain.Message, error)
 	SetTyping(ctx context.Context, actorUserID, threadID int, typing bool) error
 	AssertParticipant(ctx context.Context, actorUserID, threadID int) error
+	// GetThread returns a single thread the actor participates in. Enforces
+	// participation first. Needed by the T11 messageThread query resolver.
+	GetThread(ctx context.Context, actorUserID, threadID int) (*domain.MessageThread, error)
 	// MaxSeq returns the highest message seq in the thread. Enforces
 	// participation first. Needed by T11 GraphQL field resolvers.
 	MaxSeq(ctx context.Context, actorUserID, threadID int) (int64, error)

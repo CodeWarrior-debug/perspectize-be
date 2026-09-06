@@ -171,6 +171,13 @@ func (s *MessagingServiceImpl) ListSince(ctx context.Context, actorUserID, threa
 	return s.msgRepo.ListSince(ctx, threadID, sinceSeq)
 }
 
+func (s *MessagingServiceImpl) GetThread(ctx context.Context, actorUserID, threadID int) (*domain.MessageThread, error) {
+	if err := s.AssertParticipant(ctx, actorUserID, threadID); err != nil {
+		return nil, err
+	}
+	return s.threadRepo.GetThread(ctx, threadID)
+}
+
 func (s *MessagingServiceImpl) MaxSeq(ctx context.Context, actorUserID, threadID int) (int64, error) {
 	if err := s.AssertParticipant(ctx, actorUserID, threadID); err != nil {
 		return 0, err

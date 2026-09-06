@@ -8,6 +8,7 @@ import (
 	"context"
 	"log/slog"
 	"sync"
+	"time"
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/repositories"
@@ -20,19 +21,22 @@ const subBufferSize = 64
 
 // Hub is the in-memory realtime fan-out core. It is safe for concurrent use.
 type Hub struct {
-	mu     sync.RWMutex
-	subs   map[int]map[int]chan domain.ThreadEvent // threadID -> subID -> channel
-	nextID int
+	mu       sync.RWMutex
+	subs     map[int]map[int]chan domain.ThreadEvent // threadID -> subID -> channel
+	inbox    map[int]map[int]chan domain.InboxEvent  // userID -> subID -> channel
+	nextID   int
+	nextInID int
 
 	msgRepo    repositories.MessageRepository
-	threadRepo repositories.ThreadRepository // stored for a later task (SubscribeInbox); unused here
+	threadRepo repositories.ThreadRepository // used by the inbox fan-out to resolve participants
 }
 
-// NewHub constructs a Hub. threadRepo is retained for future inbox subscription
-// support and is not used by any current method.
+// NewHub constructs a Hub. threadRepo is used by the MESSAGE_POSTED inbox
+// fan-out to resolve a thread's participants.
 func NewHub(msgRepo repositories.MessageRepository, threadRepo repositories.ThreadRepository) *Hub {
 	return &Hub{
 		subs:       make(map[int]map[int]chan domain.ThreadEvent),
+		inbox:      make(map[int]map[int]chan domain.InboxEvent),
 		msgRepo:    msgRepo,
 		threadRepo: threadRepo,
 	}
@@ -82,6 +86,103 @@ func (h *Hub) remove(threadID, id int) {
 	close(ch)
 }
 
+// SubscribeInbox registers a new per-user inbox subscriber. It returns a
+// receive-only channel of InboxEvents and an idempotent unsubscribe function.
+// Inbox events are emitted for every thread the user participates in whenever a
+// message is posted there.
+func (h *Hub) SubscribeInbox(userID int) (<-chan domain.InboxEvent, func()) {
+	h.mu.Lock()
+	h.nextInID++
+	id := h.nextInID
+	ch := make(chan domain.InboxEvent, subBufferSize)
+	if h.inbox[userID] == nil {
+		h.inbox[userID] = make(map[int]chan domain.InboxEvent)
+	}
+	h.inbox[userID][id] = ch
+	h.mu.Unlock()
+
+	var once sync.Once
+	unsub := func() {
+		once.Do(func() { h.removeInbox(userID, id) })
+	}
+	return ch, unsub
+}
+
+// removeInbox deletes an inbox subscriber and closes its channel. It is a no-op
+// if the subscriber is already gone.
+func (h *Hub) removeInbox(userID, id int) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	m := h.inbox[userID]
+	if m == nil {
+		return
+	}
+	ch, ok := m[id]
+	if !ok {
+		return
+	}
+	delete(m, id)
+	if len(m) == 0 {
+		delete(h.inbox, userID)
+	}
+	close(ch)
+}
+
+// broadcastInbox delivers evt to every inbox subscriber of userID. It mirrors
+// Broadcast's locking discipline: non-blocking sends under the read lock, slow
+// subscribers dropped afterwards, so no send can race a channel close.
+func (h *Hub) broadcastInbox(userID int, evt domain.InboxEvent) {
+	var slow []int
+
+	h.mu.RLock()
+	for id, ch := range h.inbox[userID] {
+		select {
+		case ch <- evt:
+		default:
+			slow = append(slow, id)
+		}
+	}
+	h.mu.RUnlock()
+
+	for _, id := range slow {
+		h.removeInbox(userID, id)
+	}
+}
+
+// fanOutInbox resolves the thread's active participants and pushes one
+// InboxEvent per participant. Failures are logged and skipped — the per-thread
+// ThreadEvent fan-out has already happened and must not be undone by this.
+func (h *Hub) fanOutInbox(ctx context.Context, threadID int, seq int64, at time.Time) {
+	if h.threadRepo == nil {
+		return
+	}
+	thread, err := h.threadRepo.GetThread(ctx, threadID)
+	if err != nil || thread == nil {
+		slog.Warn("realtime hub: inbox fan-out could not load thread",
+			"thread_id", threadID, "err", err)
+		return
+	}
+	lastMessageAt := thread.LastMessageAt
+	if lastMessageAt.IsZero() {
+		lastMessageAt = at
+	}
+	for _, p := range thread.Participants {
+		if p.LeftAt != nil {
+			continue
+		}
+		unread := seq - p.LastReadSeq
+		if unread < 0 {
+			unread = 0
+		}
+		h.broadcastInbox(p.UserID, domain.InboxEvent{
+			ThreadID:      threadID,
+			LastMessageAt: lastMessageAt,
+			LatestSeq:     seq,
+			UnreadCount:   int(unread),
+		})
+	}
+}
+
 // Broadcast performs the low-level fan-out to all subscribers of threadID.
 //
 // The non-blocking sends happen while holding the read lock. Channel closes
@@ -120,6 +221,7 @@ func (h *Hub) PublishEnvelope(ctx context.Context, env domain.EventEnvelope) {
 			return
 		}
 		h.Broadcast(env.ThreadID, domain.MessagePostedEvent{Message: *m})
+		h.fanOutInbox(ctx, env.ThreadID, m.Seq, m.CreatedAt)
 	case "READ_RECEIPT_CHANGED":
 		h.Broadcast(env.ThreadID, domain.ReadReceiptChangedEvent{
 			ThreadID:    env.ThreadID,

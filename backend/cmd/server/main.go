@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -20,11 +21,13 @@ import (
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/directives"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/generated"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/resolvers"
+	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/realtime"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/repositories/postgres"
 	apimw "github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/web/middleware"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/wikidata"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/youtube"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/config"
+	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/services"
 	"github.com/CodeWarrior-debug/perspectize/backend/pkg/database"
 	gqltiming "github.com/CodeWarrior-debug/perspectize/backend/pkg/graphql"
@@ -34,6 +37,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 	"github.com/vektah/gqlparser/v2/ast"
 	"go.opentelemetry.io/otel"
@@ -147,6 +151,8 @@ func main() {
 	userRepo := postgres.NewGormUserRepository(db)
 	perspectiveRepo := postgres.NewGormPerspectiveRepository(db)
 	categoryRepo := postgres.NewGormCategoryRepository(db)
+	threadRepo := postgres.NewGormThreadRepository(db)
+	messageRepo := postgres.NewGormMessageRepository(db)
 
 	// Initialize services
 	contentService := services.NewContentService(contentRepo, youtubeClient)
@@ -154,8 +160,28 @@ func main() {
 	perspectiveService := services.NewPerspectiveService(perspectiveRepo, userRepo)
 	categoryService := services.NewCategoryService(categoryRepo, contentRepo, wikidataClient)
 
+	// Messaging realtime plumbing: the hub fans events out in-process, the
+	// listener feeds it from Postgres NOTIFY, the presence tracker records who
+	// is connected (its connection lifecycle is wired in a follow-up task).
+	hub := realtime.NewHub(messageRepo, threadRepo)
+	presence := realtime.NewPresenceTracker()
+	limiter := services.NewSlidingWindowLimiter(10, 10*time.Second)
+	messagingService := services.NewMessagingService(threadRepo, messageRepo, hub, limiter)
+
+	listener := realtime.NewListener(dsn, hub)
+	listenerCtx, stopListener := context.WithCancel(context.Background())
+	go listener.Run(listenerCtx)
+	defer stopListener()
+
+	// Shared Clerk token verifier — reused by HTTP middleware and the
+	// WebSocket InitFunc so both transports resolve identities identically.
+	tokenVerifier := auth.NewClerkTokenVerifier()
+
 	// Initialize GraphQL with directive wiring
-	resolver := resolvers.NewResolver(contentService, userService, perspectiveService, categoryService)
+	resolver := resolvers.NewResolver(
+		contentService, userService, perspectiveService, categoryService,
+		messagingService, hub, presence,
+	)
 	directiveRoot := directives.NewDirectiveRoot(contentService, perspectiveService)
 	gqlConfig := generated.Config{
 		Resolvers: resolver,
@@ -166,6 +192,47 @@ func main() {
 	}
 	srv := handler.New(generated.NewExecutableSchema(gqlConfig))
 	srv.AddTransport(transport.Options{})
+	// WebSocket transport for GraphQL subscriptions. InitFunc authenticates the
+	// connection from the graphql-ws connection_init payload; it does AUTH ONLY
+	// — presence connect/disconnect lifecycle is wired in a follow-up task.
+	srv.AddTransport(transport.Websocket{
+		// gorilla's default CheckOrigin is same-origin only, which would reject
+		// the browser app. Reuse the configured CORS allowlist instead.
+		Upgrader: websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+			CheckOrigin:     originAllowed(secCfg.CORSOrigins),
+		},
+		KeepAlivePingInterval: 10 * time.Second,
+		InitFunc: func(ctx context.Context, initPayload transport.InitPayload) (context.Context, *transport.InitPayload, error) {
+			token := initPayload.Authorization()
+			if token == "" {
+				if v, ok := initPayload["authToken"].(string); ok {
+					token = v
+				}
+			}
+			token = strings.TrimPrefix(token, "Bearer ")
+			if token == "" {
+				return ctx, nil, fmt.Errorf("unauthenticated websocket: missing token")
+			}
+			identity, err := tokenVerifier.Verify(ctx, token)
+			if err != nil || identity.ClerkID == "" {
+				return ctx, nil, fmt.Errorf("unauthenticated websocket: invalid token")
+			}
+			user, err := userRepo.GetByClerkID(ctx, identity.ClerkID)
+			if err != nil || user == nil {
+				return ctx, nil, fmt.Errorf("unauthenticated websocket: unknown user")
+			}
+			authUser := &domain.AuthenticatedUser{
+				ID:       user.ID,
+				ClerkID:  identity.ClerkID,
+				Username: user.Username,
+				Email:    user.Email,
+				Role:     user.Role,
+			}
+			return auth.WithAuthenticatedUser(ctx, authUser), &initPayload, nil
+		},
+	})
 	srv.AddTransport(transport.GET{})
 	srv.AddTransport(transport.POST{})
 	srv.AddTransport(transport.MultipartForm{})
@@ -197,7 +264,7 @@ func main() {
 	}))
 	r.Use(apimw.SecureHeaders())       // M-14: security headers (HSTS, X-Content-Type-Options, X-Frame-Options)
 	r.Use(apimw.ContentTypeValidation) // M-15: CSRF protection via Content-Type
-	r.Use(auth.Middleware(userRepo, auth.NewClerkTokenVerifier()))
+	r.Use(auth.Middleware(userRepo, tokenVerifier))
 	r.Use(perfmw.RequestTimer) // structured request timing (replaces chi Logger)
 	r.Use(perfmw.Recoverer)    // structured panic recovery (JSON via slog)
 
@@ -230,8 +297,10 @@ func main() {
 		w.Write([]byte("ready"))
 	})
 
-	// GraphQL
-	r.Handle("/graphql", srv)
+	// GraphQL. The wrapper clears the per-request I/O deadlines for WebSocket
+	// upgrades so long-lived subscriptions are not killed by the server's
+	// Read/WriteTimeout.
+	r.Handle("/graphql", clearDeadlinesForWebsocket(srv))
 	if os.Getenv("APP_ENV") != "production" {
 		r.Handle("/", playground.Handler("GraphQL Playground", "/graphql"))
 		r.Get("/debug/db-stats", database.StatsHandler(sqlDB))
@@ -267,6 +336,46 @@ func main() {
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Failed to start server: %v", err)
 	}
+}
+
+// originAllowed builds a gorilla CheckOrigin function backed by the configured
+// CORS allowlist. Requests with no Origin header (non-browser clients such as
+// CLI tools and server-to-server callers) are allowed; the InitFunc still
+// requires a valid token before any data flows.
+func originAllowed(allowedOrigins []string) func(*http.Request) bool {
+	return func(r *http.Request) bool {
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			return true
+		}
+		for _, allowed := range allowedOrigins {
+			if allowed == "*" || strings.EqualFold(allowed, origin) {
+				return true
+			}
+		}
+		slog.Warn("rejected websocket upgrade from disallowed origin", "origin", origin)
+		return false
+	}
+}
+
+// clearDeadlinesForWebsocket removes the connection deadlines that
+// http.Server stamps from ReadTimeout/WriteTimeout before the handler runs.
+// Those deadlines survive the WebSocket hijack and would otherwise terminate
+// every subscription after WriteTimeout elapses. Plain HTTP requests are
+// untouched and keep their timeouts.
+func clearDeadlinesForWebsocket(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.EqualFold(r.Header.Get("Upgrade"), "websocket") {
+			rc := http.NewResponseController(w)
+			if err := rc.SetReadDeadline(time.Time{}); err != nil {
+				slog.Warn("could not clear websocket read deadline", "error", err)
+			}
+			if err := rc.SetWriteDeadline(time.Time{}); err != nil {
+				slog.Warn("could not clear websocket write deadline", "error", err)
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // initTracer sets up an OTel TracerProvider with an OTLP HTTP exporter.
