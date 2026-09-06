@@ -55,19 +55,7 @@ Also test any frontend GraphQL queries (`src/lib/queries/*.ts`) against the live
 
 > `fill` **appends** to a non-empty input rather than replacing it. Clear the field first via `evaluate_script` (native value setter + dispatch `input`) before filling.
 
-## 4. GSD Plan Verification
-
-For each plan's `must_haves`:
-
-| Check | Command |
-|-------|---------|
-| `truths` | Run actual command, verify output |
-| `artifacts.path` | `test -f {path} && echo "exists"` |
-| `artifacts.contains` | `grep -q "{pattern}" {path}` |
-| `artifacts.min_lines` | `wc -l < {path}` >= N |
-| `key_links.pattern` | `grep -q "{pattern}" {from}` |
-
-## 5. Evidence Capture
+## 4. Evidence Capture
 
 Save screenshots to `/Users/jamesjordan/Downloads/screenshots/` with naming convention:
 - **Prefix:** `sv-` (Self-Verify) — supersedes the old `ccsv-` prefix; `ccsv-` may still appear in older screenshots but new captures use `sv-`

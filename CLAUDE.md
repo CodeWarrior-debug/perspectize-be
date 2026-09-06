@@ -139,13 +139,10 @@ defer db.Close()
 2. **Backend tests**: `go test ./...` in `backend/` — all must pass
 3. **Frontend tests**: `pnpm run test:run` in `frontend/` — all must pass
 4. **Stale references**: If renaming/moving files or paths, grep the entire repo for old names
-5. **Plan must_haves**: If executing a GSD plan, verify each `must_haves.truths` item
 
 Run the relevant subset (e.g., backend-only changes skip step 3). Report results explicitly — don't just say "tests pass", show the output summary.
 
 **Browser verification is local-only.** Driving the running app via the Chrome DevTools MCP (`.docs/VERIFICATION.md` §3) needs `.claude/.env` and `.claude/sv-profile/` — both gitignored and hand-provisioned per machine. Cloud / CI / fresh-machine sessions must **not** attempt the Clerk sign-in; run only the headless checklist (build, backend tests, frontend tests) and hand UI-behavior checks back to a local session.
-
-**GSD verification is not self-verification.** The GSD verifier checks must_haves against codebase structure. It does NOT run builds or tests. Always run the full checklist (build, backend tests, frontend tests) before creating a PR, even after GSD verification passes.
 
 See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow, and [.docs/PR_SCREENSHOTS.md](.docs/PR_SCREENSHOTS.md) for uploading `sv-` screenshots to a release and linking them in the PR.
 
