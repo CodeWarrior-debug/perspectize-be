@@ -53,6 +53,8 @@ Also test any frontend GraphQL queries (`src/lib/queries/*.ts`) against the live
 | Console | `mcp__chrome-devtools__list_console_messages` | Check for JS errors |
 | Interact | `mcp__chrome-devtools__click` | Test buttons, toasts, navigation |
 
+> `fill` **appends** to a non-empty input rather than replacing it. Clear the field first via `evaluate_script` (native value setter + dispatch `input`) before filling.
+
 ## 4. GSD Plan Verification
 
 For each plan's `must_haves`:
