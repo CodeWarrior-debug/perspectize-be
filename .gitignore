@@ -61,3 +61,6 @@ CLAUDE.local.md
 # graphify knowledge-graph artifacts (regenerable, not for commit)
 graphify-out/
 
+# Root `make start` bookkeeping
+logs/
+.dev/
