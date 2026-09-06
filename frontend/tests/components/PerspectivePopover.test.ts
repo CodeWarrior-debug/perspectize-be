@@ -9,14 +9,14 @@ const mocks = vi.hoisted(() => ({
 	mockOnClose: vi.fn(),
 }));
 
-vi.mock('$lib/queries/hooks/useCreatePerspective', () => ({
+vi.mock('$lib/queries/perspectives/useCreatePerspective', () => ({
 	useCreatePerspective: vi.fn(() => ({
 		mutate: mocks.mockCreateMutate,
 		isPending: false,
 	})),
 }));
 
-vi.mock('$lib/queries/hooks/useUpdatePerspective', () => ({
+vi.mock('$lib/queries/perspectives/useUpdatePerspective', () => ({
 	useUpdatePerspective: vi.fn(() => ({
 		mutate: mocks.mockUpdateMutate,
 		isPending: false,

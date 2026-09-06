@@ -22,8 +22,8 @@
 	import AddFieldSearch from '$lib/components/AddFieldSearch.svelte';
 	import { sanitizeHtml } from '$lib/utils/sanitize';
 	import type { FieldDef } from '$lib/components/AddFieldSearch.svelte';
-	import { useCreatePerspective } from '$lib/queries/hooks/useCreatePerspective';
-	import { useUpdatePerspective } from '$lib/queries/hooks/useUpdatePerspective';
+	import { useCreatePerspective } from '$lib/queries/perspectives/useCreatePerspective';
+	import { useUpdatePerspective } from '$lib/queries/perspectives/useUpdatePerspective';
 	import type { PerspectiveItem } from '$lib/queries/perspectives';
 
 	/**

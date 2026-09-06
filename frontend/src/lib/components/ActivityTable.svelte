@@ -61,7 +61,7 @@
 		computePrevPage,
 		togglableColIds,
 	} from '$lib/utils/grid-config';
-	import { useMe } from '$lib/queries/hooks/useMe.svelte';
+	import { useMe } from '$lib/queries/users/useMe.svelte';
 	import ColumnPickerDialog from '$lib/components/ColumnPickerDialog.svelte';
 	import SlidersHorizontalIcon from '@lucide/svelte/icons/sliders-horizontal';
 	import { TagsTooltip } from '$lib/components/TagsTooltip';
@@ -73,7 +73,7 @@
 	import ActivityCardList from '$lib/components/ActivityCardList.svelte';
 	import { activityItemCellRenderer } from '$lib/utils/activityItemCellRenderer';
 	import CategoryTypeahead from '$lib/components/CategoryTypeahead.svelte';
-	import { useSetPrimaryCategory } from '$lib/queries/hooks/useSetPrimaryCategory';
+	import { useSetPrimaryCategory } from '$lib/queries/categories/useSetPrimaryCategory';
 	import type { WikidataSearchResult } from '$lib/queries/categories';
 
 	// Popover state for Perspectize column

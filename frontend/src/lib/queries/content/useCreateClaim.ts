@@ -1,7 +1,7 @@
 import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 import { toast } from 'svelte-sonner';
 import { graphqlRequest } from '../client';
-import { CREATE_CLAIM, type CreateClaimInput, type CreateClaimResponse } from '../claims';
+import { CREATE_CLAIM, type CreateClaimInput, type CreateClaimResponse } from './claims';
 import { queryKeys } from '../keys';
 
 export function useCreateClaim() {
