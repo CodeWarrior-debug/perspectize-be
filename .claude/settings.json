@@ -112,10 +112,6 @@
       }
     ]
   },
-  "statusLine": {
-    "type": "command",
-    "command": "node .claude/hooks/gsd-statusline.js"
-  },
   "enabledPlugins": {
     "hookify@claude-plugins-official": false,
     "claude-md-management@claude-plugins-official": true,
