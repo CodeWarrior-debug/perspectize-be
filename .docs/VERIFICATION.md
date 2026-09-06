@@ -2,6 +2,32 @@
 
 Before marking any work complete, run interactive verification.
 
+## 0. Authenticated session (one-time setup)
+
+Self-verify drives Chrome through a persistent, pre-authenticated profile so it
+can exercise logged-in flows (add a video, set a primary category) without the
+agent ever handling a credential.
+
+**One-time, done by a human:**
+
+```bash
+.claude/scripts/sv-chrome.sh http://localhost:5173   # or the staging URL
+# → sign in as the dedicated self-verify test user, then close Chrome
+```
+
+The session persists in `.claude/sv-profile/` (gitignored; the agent cannot read
+it). Re-run this only when the Clerk session expires.
+
+**Wiring the chrome-devtools MCP to this browser:** `sv-chrome.sh` exposes remote
+debugging on `:9222`. Point the MCP at the running browser rather than letting it
+spawn its own — the attach flag varies by MCP version (`--browser-url` /
+`--browserUrl http://127.0.0.1:9222`, or set the MCP's own `--user-data-dir` to
+`.claude/sv-profile`). Verify against your installed version.
+
+**Agent rule:** assume the session is live. If you hit a signed-out state, STOP
+and ask the human to re-run the one-time login — never attempt to authenticate
+or enter credentials yourself.
+
 ## 1. Start Services
 
 The database is hosted on Sevalla (cloud PostgreSQL) — no Docker or local database setup needed.
