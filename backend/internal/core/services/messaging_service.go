@@ -39,6 +39,11 @@ func (s *MessagingServiceImpl) AssertParticipant(ctx context.Context, actorUserI
 	if err != nil {
 		return err
 	}
+	if thread == nil {
+		// A repository that reports "missing" as (nil, nil) must not reach
+		// IsActiveParticipant — that is a value receiver and would panic.
+		return fmt.Errorf("%w: thread %d", domain.ErrNotFound, threadID)
+	}
 	if !thread.IsActiveParticipant(actorUserID) {
 		return fmt.Errorf("%w: not a participant of thread %d", domain.ErrForbidden, threadID)
 	}
@@ -71,6 +76,16 @@ func (s *MessagingServiceImpl) SendMessage(ctx context.Context, actorUserID int,
 func (s *MessagingServiceImpl) MarkRead(ctx context.Context, actorUserID, threadID int, seq int64) (*domain.MessageThread, error) {
 	if err := s.AssertParticipant(ctx, actorUserID, threadID); err != nil {
 		return nil, err
+	}
+	// Clamp to the thread's highest seq: an arbitrary client-supplied value
+	// would otherwise pin last_read_seq past the end of the thread and poison
+	// every derived read receipt and unread count.
+	maxSeq, err := s.msgRepo.MaxSeq(ctx, threadID)
+	if err != nil {
+		return nil, err
+	}
+	if seq > maxSeq {
+		seq = maxSeq
 	}
 	if err := s.threadRepo.SetLastRead(ctx, threadID, actorUserID, seq); err != nil {
 		return nil, err
@@ -197,4 +212,20 @@ func (s *MessagingServiceImpl) MaxSeq(ctx context.Context, actorUserID, threadID
 		return 0, err
 	}
 	return s.msgRepo.MaxSeq(ctx, threadID)
+}
+
+// ThreadMaxSeq returns the highest message sequence number in the thread
+// WITHOUT re-checking participation. It is the trusted variant used by GraphQL
+// field resolvers on a thread the query has already authorized; callers that
+// have not authorized the thread must use MaxSeq.
+func (s *MessagingServiceImpl) ThreadMaxSeq(ctx context.Context, threadID int) (int64, error) {
+	return s.msgRepo.MaxSeq(ctx, threadID)
+}
+
+// UnreadCount returns the number of messages in the thread newer than sinceSeq,
+// WITHOUT re-checking participation — same trusted-caller contract as
+// ThreadMaxSeq. Counting rows keeps the number right even when pruning has left
+// gaps in the sequence.
+func (s *MessagingServiceImpl) UnreadCount(ctx context.Context, threadID int, sinceSeq int64) (int, error) {
+	return s.msgRepo.CountSince(ctx, threadID, sinceSeq)
 }

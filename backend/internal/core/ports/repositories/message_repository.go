@@ -13,4 +13,8 @@ type MessageRepository interface {
 	ListHistory(ctx context.Context, threadID int, limit int, beforeSeq *int64) ([]domain.Message, error)
 	ListSince(ctx context.Context, threadID int, sinceSeq int64) ([]domain.Message, error)
 	MaxSeq(ctx context.Context, threadID int) (int64, error)
+	// CountSince returns how many messages in the thread have seq strictly
+	// greater than sinceSeq. Counting rows (rather than subtracting seqs) stays
+	// correct when pruning has left gaps in the sequence.
+	CountSince(ctx context.Context, threadID int, sinceSeq int64) (int, error)
 }

@@ -54,7 +54,7 @@ func TestListener_DeliversNotifyToHub(t *testing.T) {
 		require.NoError(t, db.Exec("DELETE FROM users WHERE id IN ?", []int{a.ID, b.ID}).Error)
 	})
 
-	hub := realtime.NewHub(msgRepo, threadRepo)
+	hub := realtime.NewHub(msgRepo, threadRepo, nil)
 	listener := realtime.NewListener(dsn, hub)
 
 	runCtx, cancel := context.WithCancel(context.Background())
@@ -64,7 +64,7 @@ func TestListener_DeliversNotifyToHub(t *testing.T) {
 	// Give the dedicated LISTEN connection time to establish before we notify.
 	time.Sleep(500 * time.Millisecond)
 
-	ch, unsub := hub.Subscribe(thread.ID)
+	ch, unsub := hub.Subscribe(thread.ID, 1)
 	t.Cleanup(unsub)
 
 	const want = "hello over LISTEN"

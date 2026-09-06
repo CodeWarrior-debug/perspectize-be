@@ -164,7 +164,15 @@ func main() {
 	// listener feeds it from Postgres NOTIFY, the presence tracker records who
 	// is connected (its connection lifecycle is wired from the WebSocket
 	// InitFunc via realtime.RunPresenceSession).
-	hub := realtime.NewHub(messageRepo, threadRepo)
+	// The notifier lets the hub publish ephemeral events over pg_notify so every
+	// instance (this one included, via its own Listener) delivers them.
+	notifier, err := realtime.NewPgNotifier(context.Background(), dsn)
+	if err != nil {
+		log.Fatalf("Failed to create realtime notifier: %v", err)
+	}
+	defer notifier.Close()
+
+	hub := realtime.NewHub(messageRepo, threadRepo, notifier)
 	presence := realtime.NewPresenceTracker()
 	limiter := services.NewSlidingWindowLimiter(10, 10*time.Second)
 	messagingService := services.NewMessagingService(threadRepo, messageRepo, hub, limiter)
@@ -368,7 +376,7 @@ func originAllowed(allowedOrigins []string) func(*http.Request) bool {
 // untouched and keep their timeouts.
 func clearDeadlinesForWebsocket(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.EqualFold(r.Header.Get("Upgrade"), "websocket") {
+		if isWebsocketHandshake(r) {
 			rc := http.NewResponseController(w)
 			if err := rc.SetReadDeadline(time.Time{}); err != nil {
 				slog.Warn("could not clear websocket read deadline", "error", err)
@@ -379,6 +387,18 @@ func clearDeadlinesForWebsocket(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// isWebsocketHandshake reports whether r is a genuine RFC 6455 upgrade request.
+// All three conditions are required: a lone spoofed `Upgrade: websocket` header
+// on a POST would otherwise strip that request's deadlines and give an attacker
+// an unbounded-duration /graphql call. A real handshake is always a GET with
+// `Connection: Upgrade` and a client-generated Sec-WebSocket-Key.
+func isWebsocketHandshake(r *http.Request) bool {
+	return r.Method == http.MethodGet &&
+		strings.EqualFold(r.Header.Get("Upgrade"), "websocket") &&
+		strings.Contains(strings.ToLower(r.Header.Get("Connection")), "upgrade") &&
+		r.Header.Get("Sec-WebSocket-Key") != ""
 }
 
 // initTracer sets up an OTel TracerProvider with an OTLP HTTP exporter.

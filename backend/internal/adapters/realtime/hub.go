@@ -6,6 +6,8 @@ package realtime
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log/slog"
 	"sync"
 	"time"
@@ -19,43 +21,65 @@ import (
 // this far behind is dropped.
 const subBufferSize = 64
 
+// Notifier publishes a serialized EventEnvelope onto the cross-process
+// thread_events channel. PgNotifier is the production implementation; a nil
+// Notifier makes the Hub fall back to purely in-process delivery.
+type Notifier interface {
+	Notify(ctx context.Context, payload string) error
+}
+
+// threadSub is one registered thread subscriber: its delivery channel plus the
+// user it belongs to, so the hub can drop every stream owned by a user who has
+// left the thread.
+type threadSub struct {
+	ch     chan domain.ThreadEvent
+	userID int
+}
+
 // Hub is the in-memory realtime fan-out core. It is safe for concurrent use.
 type Hub struct {
 	mu       sync.RWMutex
-	subs     map[int]map[int]chan domain.ThreadEvent // threadID -> subID -> channel
-	inbox    map[int]map[int]chan domain.InboxEvent  // userID -> subID -> channel
+	subs     map[int]map[int]*threadSub             // threadID -> subID -> subscriber
+	inbox    map[int]map[int]chan domain.InboxEvent // userID -> subID -> channel
 	nextID   int
 	nextInID int
 
 	msgRepo    repositories.MessageRepository
 	threadRepo repositories.ThreadRepository // used by the inbox fan-out to resolve participants
+	notifier   Notifier                      // optional; nil means in-process-only ephemerals
 }
 
 // NewHub constructs a Hub. threadRepo is used by the MESSAGE_POSTED inbox
-// fan-out to resolve a thread's participants.
-func NewHub(msgRepo repositories.MessageRepository, threadRepo repositories.ThreadRepository) *Hub {
+// fan-out to resolve a thread's participants. notifier, when non-nil, is used
+// by PublishEphemeral to emit events over Postgres NOTIFY so every instance
+// (including this one, via its own Listener) receives them; pass nil for
+// in-process-only delivery.
+func NewHub(msgRepo repositories.MessageRepository, threadRepo repositories.ThreadRepository, notifier Notifier) *Hub {
 	return &Hub{
-		subs:       make(map[int]map[int]chan domain.ThreadEvent),
+		subs:       make(map[int]map[int]*threadSub),
 		inbox:      make(map[int]map[int]chan domain.InboxEvent),
 		msgRepo:    msgRepo,
 		threadRepo: threadRepo,
+		notifier:   notifier,
 	}
 }
 
 var _ portservices.EventPublisher = (*Hub)(nil)
 
-// Subscribe registers a new subscriber for threadID. It returns a receive-only
-// channel of events and an unsubscribe function. The unsubscribe function is
-// idempotent: it removes the subscriber and closes the channel exactly once.
-func (h *Hub) Subscribe(threadID int) (<-chan domain.ThreadEvent, func()) {
+// Subscribe registers a new subscriber for threadID on behalf of userID. It
+// returns a receive-only channel of events and an unsubscribe function. The
+// unsubscribe function is idempotent: it removes the subscriber and closes the
+// channel exactly once. userID is recorded so DropSubscriber can end the stream
+// when that user leaves or is removed from the thread.
+func (h *Hub) Subscribe(threadID, userID int) (<-chan domain.ThreadEvent, func()) {
 	h.mu.Lock()
 	h.nextID++
 	id := h.nextID
 	ch := make(chan domain.ThreadEvent, subBufferSize)
 	if h.subs[threadID] == nil {
-		h.subs[threadID] = make(map[int]chan domain.ThreadEvent)
+		h.subs[threadID] = make(map[int]*threadSub)
 	}
-	h.subs[threadID][id] = ch
+	h.subs[threadID][id] = &threadSub{ch: ch, userID: userID}
 	h.mu.Unlock()
 
 	var once sync.Once
@@ -75,7 +99,7 @@ func (h *Hub) remove(threadID, id int) {
 	if m == nil {
 		return
 	}
-	ch, ok := m[id]
+	sub, ok := m[id]
 	if !ok {
 		return
 	}
@@ -83,7 +107,31 @@ func (h *Hub) remove(threadID, id int) {
 	if len(m) == 0 {
 		delete(h.subs, threadID)
 	}
-	close(ch)
+	close(sub.ch)
+}
+
+// DropSubscriber closes and removes every subscription userID holds on
+// threadID. It is idempotent and closes channels under the write lock, exactly
+// like remove, so it can never race a Broadcast mid-send. Used when a
+// participant leaves or is removed so their live stream ends instead of
+// continuing to receive the thread's events.
+func (h *Hub) DropSubscriber(threadID, userID int) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	m := h.subs[threadID]
+	if m == nil {
+		return
+	}
+	for id, sub := range m {
+		if sub.userID != userID {
+			continue
+		}
+		delete(m, id)
+		close(sub.ch)
+	}
+	if len(m) == 0 {
+		delete(h.subs, threadID)
+	}
 }
 
 // SubscribeInbox registers a new per-user inbox subscriber. It returns a
@@ -156,6 +204,14 @@ func (h *Hub) fanOutInbox(ctx context.Context, threadID int, seq int64, at time.
 	if h.threadRepo == nil {
 		return
 	}
+	// No local inbox subscribers: nothing this process could deliver, so skip
+	// the participant lookup entirely.
+	h.mu.RLock()
+	inboxSubs := len(h.inbox)
+	h.mu.RUnlock()
+	if inboxSubs == 0 {
+		return
+	}
 	thread, err := h.threadRepo.GetThread(ctx, threadID)
 	if err != nil || thread == nil {
 		slog.Warn("realtime hub: inbox fan-out could not load thread",
@@ -195,9 +251,9 @@ func (h *Hub) Broadcast(threadID int, evt domain.ThreadEvent) {
 	var slow []int
 
 	h.mu.RLock()
-	for id, ch := range h.subs[threadID] {
+	for id, sub := range h.subs[threadID] {
 		select {
-		case ch <- evt:
+		case sub.ch <- evt:
 		default:
 			slow = append(slow, id)
 		}
@@ -214,6 +270,15 @@ func (h *Hub) Broadcast(threadID int, evt domain.ThreadEvent) {
 func (h *Hub) PublishEnvelope(ctx context.Context, env domain.EventEnvelope) {
 	switch env.Type {
 	case "MESSAGE_POSTED":
+		// Every instance receives every NOTIFY; drop the ones this process has
+		// no local consumer for before spending any query on them.
+		h.mu.RLock()
+		threadSubs, inboxSubs := len(h.subs[env.ThreadID]), len(h.inbox)
+		h.mu.RUnlock()
+		if threadSubs == 0 && inboxSubs == 0 {
+			return
+		}
+
 		m, err := h.msgRepo.GetByID(ctx, env.MessageID)
 		if err != nil {
 			slog.Error("realtime hub: load message for MESSAGE_POSTED failed",
@@ -240,6 +305,12 @@ func (h *Hub) PublishEnvelope(ctx context.Context, env domain.EventEnvelope) {
 			UserID:   env.UserID,
 			Change:   env.Change,
 		})
+		if env.Change == "REMOVED" {
+			// Broadcast first so the departing client still sees its own
+			// REMOVED notice; the close then ends its stream. Buffered events
+			// stay readable after the close, so nothing already sent is lost.
+			h.DropSubscriber(env.ThreadID, env.UserID)
+		}
 	case "PRESENCE_CHANGED":
 		h.Broadcast(env.ThreadID, domain.PresenceChangedEvent{
 			ThreadID: env.ThreadID,
@@ -253,11 +324,25 @@ func (h *Hub) PublishEnvelope(ctx context.Context, env domain.EventEnvelope) {
 	}
 }
 
-// PublishEphemeral satisfies portservices.EventPublisher. In-process it is just
-// a PublishEnvelope; cross-process delivery is layered on in a later task.
+// PublishEphemeral satisfies portservices.EventPublisher.
+//
+// With a Notifier configured the envelope is sent over Postgres NOTIFY, so
+// every instance — including this one, whose Listener consumes the same
+// notification — delivers it. PublishEnvelope is deliberately NOT also called
+// here: that would double-deliver locally.
+//
+// Without a Notifier (unit tests, or any process with no Listener) it falls
+// back to in-process fan-out.
 func (h *Hub) PublishEphemeral(ctx context.Context, env domain.EventEnvelope) error {
-	h.PublishEnvelope(ctx, env)
-	return nil
+	if h.notifier == nil {
+		h.PublishEnvelope(ctx, env)
+		return nil
+	}
+	payload, err := json.Marshal(env)
+	if err != nil {
+		return fmt.Errorf("marshal %s envelope: %w", env.Type, err)
+	}
+	return h.notifier.Notify(ctx, string(payload))
 }
 
 // ResetAll sends a StreamResetEvent to every subscriber of every thread. Used

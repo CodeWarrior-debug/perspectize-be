@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/coder/websocket"
 	"github.com/stretchr/testify/require"
@@ -144,6 +145,57 @@ func TestE2E_CrossInstanceFanout(t *testing.T) {
 	require.Equal(t, "MessagePosted", ev.ThreadEvents.Typename)
 	require.Equal(t, "cross-instance", ev.ThreadEvents.Message.Body)
 	require.Equal(t, "1", ev.ThreadEvents.Message.Seq)
+
+	// Ephemerals must cross processes too: A marks read on srv1, and B — whose
+	// subscription lives on srv2's hub — sees the receipt. Only a real pg_notify
+	// round trip can deliver this.
+	_, err := srv1.messaging.MarkRead(context.Background(), a, thread, 1)
+	require.NoError(t, err)
+
+	rr := nextThreadEvent(t, subB, "1")
+	require.Equal(t, "ReadReceiptChanged", rr.ThreadEvents.Typename)
+	require.Equal(t, fmt.Sprint(a), rr.ThreadEvents.UserID)
+	require.Equal(t, "1", rr.ThreadEvents.LastReadSeq)
+}
+
+// TestE2E_LeaveEndsSubscription: B is subscribed to a thread and leaves it. The
+// hub must close B's stream (the client sees `complete`), and a later message
+// from A must not reach B.
+func TestE2E_LeaveEndsSubscription(t *testing.T) {
+	srv := newServer(t)
+	a := mkUser(t, srv, "lv_a")
+	b := mkUser(t, srv, "lv_b")
+	c := mkUser(t, srv, "lv_c")
+	// Three participants so the thread still has two members after B leaves.
+	thread := mustCreateThread(t, srv, a, []int{b, c})
+
+	subB := dialWS(t, srv.url, b)
+	subB.Subscribe(context.Background(), "1", threadEventsQuery, subVars(thread, nil))
+	waitSubscribed(t, srv, subB, "1", thread)
+
+	require.NoError(t, srv.messaging.LeaveThread(context.Background(), b, thread))
+
+	// The stream ends: read frames until the transport reports the operation
+	// complete (a trailing ParticipantChanged / StreamReset may precede it).
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+	var endErr error
+	for {
+		_, err := subB.Next(ctx, "1")
+		if err != nil {
+			endErr = err
+			break
+		}
+	}
+	require.Error(t, endErr, "departed participant's stream must end")
+	require.Contains(t, endErr.Error(), "complete", "stream ended with a complete frame, got: %v", endErr)
+
+	// And nothing sent afterwards reaches B.
+	mustSendMessage(t, srv, a, thread, "after b left", "lv-1")
+	quiet, quietCancel := context.WithTimeout(context.Background(), time.Second)
+	defer quietCancel()
+	_, err := subB.Next(quiet, "1")
+	require.Error(t, err, "no further events may be delivered to a departed participant")
 }
 
 // TestE2E_IdempotentSend: a repeated clientNonce returns the original message

@@ -83,6 +83,7 @@ type mockMessageRepo struct {
 	listHistoryFn func(ctx context.Context, threadID int, limit int, beforeSeq *int64) ([]domain.Message, error)
 	listSinceFn   func(ctx context.Context, threadID int, sinceSeq int64) ([]domain.Message, error)
 	maxSeqFn      func(ctx context.Context, threadID int) (int64, error)
+	countSinceFn  func(ctx context.Context, threadID int, sinceSeq int64) (int, error)
 }
 
 func (m *mockMessageRepo) Insert(ctx context.Context, msg *domain.Message) (*domain.Message, error) {
@@ -118,6 +119,13 @@ func (m *mockMessageRepo) ListSince(ctx context.Context, threadID int, sinceSeq 
 func (m *mockMessageRepo) MaxSeq(ctx context.Context, threadID int) (int64, error) {
 	if m.maxSeqFn != nil {
 		return m.maxSeqFn(ctx, threadID)
+	}
+	return 0, nil
+}
+
+func (m *mockMessageRepo) CountSince(ctx context.Context, threadID int, sinceSeq int64) (int, error) {
+	if m.countSinceFn != nil {
+		return m.countSinceFn(ctx, threadID, sinceSeq)
 	}
 	return 0, nil
 }
@@ -253,7 +261,8 @@ func TestMarkRead_MovesPointerAndPublishes(t *testing.T) {
 		},
 	}
 	pub := &mockPublisher{}
-	svc := services.NewMessagingService(threadRepo, &mockMessageRepo{}, pub, newLimiter(100))
+	msgRepo := &mockMessageRepo{maxSeqFn: func(context.Context, int) (int64, error) { return 100, nil }}
+	svc := services.NewMessagingService(threadRepo, msgRepo, pub, newLimiter(100))
 
 	_, err := svc.MarkRead(context.Background(), 1, 7, 42)
 
@@ -264,6 +273,29 @@ func TestMarkRead_MovesPointerAndPublishes(t *testing.T) {
 	assert.Equal(t, "READ_RECEIPT_CHANGED", pub.calls[0].Type)
 	assert.Equal(t, 1, pub.calls[0].UserID)
 	assert.Equal(t, int64(42), pub.calls[0].LastReadSeq)
+}
+
+func TestMarkRead_ClampsSeqToThreadMax(t *testing.T) {
+	var setLastReadSeq int64
+	threadRepo := &mockThreadRepo{
+		getThreadFn: func(ctx context.Context, threadID int) (*domain.MessageThread, error) {
+			return threadWithParticipants(7, 1, 2), nil
+		},
+		setLastReadFn: func(ctx context.Context, threadID, userID int, seq int64) error {
+			setLastReadSeq = seq
+			return nil
+		},
+	}
+	pub := &mockPublisher{}
+	msgRepo := &mockMessageRepo{maxSeqFn: func(context.Context, int) (int64, error) { return 9, nil }}
+	svc := services.NewMessagingService(threadRepo, msgRepo, pub, newLimiter(100))
+
+	_, err := svc.MarkRead(context.Background(), 1, 7, 999_999)
+
+	require.NoError(t, err)
+	assert.Equal(t, int64(9), setLastReadSeq, "seq clamped to the thread's max")
+	require.Len(t, pub.calls, 1)
+	assert.Equal(t, int64(9), pub.calls[0].LastReadSeq, "published receipt uses the clamped seq")
 }
 
 // --- SetTyping ---

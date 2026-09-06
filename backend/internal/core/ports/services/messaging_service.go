@@ -42,4 +42,14 @@ type MessagingService interface {
 	// MaxSeq returns the highest message seq in the thread. Enforces
 	// participation first. Needed by T11 GraphQL field resolvers.
 	MaxSeq(ctx context.Context, actorUserID, threadID int) (int64, error)
+	// ThreadMaxSeq is the trusted-post-authorization variant of MaxSeq: it does
+	// NOT re-check participation and must only be called for a thread the
+	// caller already authorized (e.g. a field resolver on a thread returned by
+	// messageThreads / messageThread). Skipping the re-check is what keeps a
+	// thread-list page from issuing a participant lookup per field.
+	ThreadMaxSeq(ctx context.Context, threadID int) (int64, error)
+	// UnreadCount returns how many messages in the thread are newer than
+	// sinceSeq. Like ThreadMaxSeq it performs no authorization and is only for
+	// already-authorized threads.
+	UnreadCount(ctx context.Context, threadID int, sinceSeq int64) (int, error)
 }

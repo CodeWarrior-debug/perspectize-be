@@ -1,6 +1,7 @@
 package resolvers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -244,13 +245,29 @@ func messageThreadToModel(t *domain.MessageThread) *model.MessageThread {
 		return nil
 	}
 	src := *t
-	return &model.MessageThread{
+	out := &model.MessageThread{
 		ID:            strconv.Itoa(t.ID),
 		Title:         t.Title,
 		LastMessageAt: t.LastMessageAt.Format(time.RFC3339),
 		CreatedAt:     t.CreatedAt.Format(time.RFC3339),
 		Src:           &src,
 	}
+	// Share per-thread lookups (latestSeq) across this thread's field resolvers.
+	out.EnableMemo()
+	return out
+}
+
+// latestSeqOf resolves a thread's highest message seq once per projected thread
+// object, using the trusted (no re-authorization) service call: the query that
+// produced the object already checked participation.
+func (r *Resolver) latestSeqOf(ctx context.Context, obj *model.MessageThread) (int64, error) {
+	return obj.ResolveLatestSeq(func() (int64, error) {
+		tid, err := parseIntID("id", obj.ID)
+		if err != nil {
+			return 0, err
+		}
+		return r.Messaging.ThreadMaxSeq(ctx, tid)
+	})
 }
 
 // threadParticipantToModel projects a domain participant row onto its GraphQL

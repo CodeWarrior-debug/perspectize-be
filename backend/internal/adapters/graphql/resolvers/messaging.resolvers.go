@@ -49,16 +49,15 @@ func (r *messageThreadResolver) Participants(ctx context.Context, obj *model.Mes
 }
 
 // LatestSeq is the resolver for the latestSeq field.
+//
+// obj was produced by messageThreads / messageThread, both of which already
+// authorized the actor for this thread, so this uses the trusted ThreadMaxSeq
+// (no repeated participant lookup) and memoizes the result on obj.
 func (r *messageThreadResolver) LatestSeq(ctx context.Context, obj *model.MessageThread) (int, error) {
-	actor, ok := auth.ForContext(ctx)
-	if !ok {
+	if _, ok := auth.ForContext(ctx); !ok {
 		return 0, domain.ErrForbidden
 	}
-	tid, err := parseIntID("id", obj.ID)
-	if err != nil {
-		return 0, err
-	}
-	seq, err := r.Messaging.MaxSeq(ctx, actor.ID, tid)
+	seq, err := r.latestSeqOf(ctx, obj)
 	if err != nil {
 		return 0, err
 	}
@@ -75,6 +74,11 @@ func (r *messageThreadResolver) MyLastReadSeq(ctx context.Context, obj *model.Me
 }
 
 // UnreadCount is the resolver for the unreadCount field.
+//
+// Counts the rows newer than the actor's read pointer rather than subtracting
+// seqs, so pruned gaps do not inflate the count. Like latestSeq it relies on
+// the authorization the parent query already performed, so it costs exactly one
+// query per thread.
 func (r *messageThreadResolver) UnreadCount(ctx context.Context, obj *model.MessageThread) (int, error) {
 	actor, ok := auth.ForContext(ctx)
 	if !ok {
@@ -84,15 +88,7 @@ func (r *messageThreadResolver) UnreadCount(ctx context.Context, obj *model.Mess
 	if err != nil {
 		return 0, err
 	}
-	latest, err := r.Messaging.MaxSeq(ctx, actor.ID, tid)
-	if err != nil {
-		return 0, err
-	}
-	unread := latest - lastReadSeqFor(obj.Src, actor.ID)
-	if unread < 0 {
-		unread = 0
-	}
-	return int(unread), nil
+	return r.Messaging.UnreadCount(ctx, tid, lastReadSeqFor(obj.Src, actor.ID))
 }
 
 // CreateMessageThread is the resolver for the createMessageThread field.
@@ -314,7 +310,10 @@ func (r *subscriptionResolver) ThreadEvents(ctx context.Context, threadID string
 	}
 
 	out := make(chan model.ThreadEvent, subscriptionBuffer)
-	domainCh, unsub := r.Hub.Subscribe(tid)
+	// The hub keeps the actor's id with the subscription so it can end this
+	// stream if the actor later leaves or is removed from the thread — the
+	// subscribe-time AssertParticipant above only covers the first moment.
+	domainCh, unsub := r.Hub.Subscribe(tid, actor.ID)
 
 	go func() {
 		// out is written only by this goroutine and closed only here, so a send
@@ -327,6 +326,18 @@ func (r *subscriptionResolver) ThreadEvents(ctx context.Context, threadID string
 		if sinceSeq != nil {
 			msgs, err := r.Messaging.ListSince(ctx, actor.ID, tid, int64(*sinceSeq))
 			if err == nil {
+				// If the oldest still-available message is newer than the
+				// client's next expected seq, retention pruned the messages in
+				// between. Replaying straight into the survivors would look
+				// continuous but silently skip history, so tell the client to
+				// refetch via threadMessages first.
+				if *sinceSeq > 0 && len(msgs) > 0 && msgs[0].Seq > int64(*sinceSeq)+1 {
+					select {
+					case out <- model.StreamReset{ThreadID: threadID}:
+					case <-ctx.Done():
+						return
+					}
+				}
 				for _, m := range msgs {
 					select {
 					case out <- model.MessagePosted{Message: messageToModel(m)}:

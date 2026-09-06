@@ -77,7 +77,11 @@ func newServer(t *testing.T) *testServer {
 	contentRepo := postgres.NewGormContentRepository(db)
 	perspectiveRepo := postgres.NewGormPerspectiveRepository(db)
 
-	ts.hub = realtime.NewHub(ts.messageRepo, ts.threadRepo)
+	notifier, err := realtime.NewPgNotifier(context.Background(), dsn)
+	require.NoError(t, err, "create notifier")
+	t.Cleanup(notifier.Close)
+
+	ts.hub = realtime.NewHub(ts.messageRepo, ts.threadRepo, notifier)
 	presence := realtime.NewPresenceTracker()
 	limiter := services.NewSlidingWindowLimiter(10, 10*time.Second)
 	ts.messaging = services.NewMessagingService(ts.threadRepo, ts.messageRepo, ts.hub, limiter)

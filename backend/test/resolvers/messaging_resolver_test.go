@@ -25,6 +25,8 @@ type fakeMessaging struct {
 	sendFn              func(ctx context.Context, actor int, in portservices.SendMessageInput) (*domain.Message, error)
 	getThreadFn         func(ctx context.Context, actor, threadID int) (*domain.MessageThread, error)
 	maxSeqFn            func(ctx context.Context, actor, threadID int) (int64, error)
+	threadMaxSeqFn      func(ctx context.Context, threadID int) (int64, error)
+	unreadCountFn       func(ctx context.Context, threadID int, sinceSeq int64) (int, error)
 	listSinceFn         func(ctx context.Context, actor, threadID int, sinceSeq int64) ([]domain.Message, error)
 	getHistoryFn        func(ctx context.Context, actor, threadID, limit int, beforeSeq *int64) ([]domain.Message, error)
 	assertParticipantFn func(ctx context.Context, actor, threadID int) error
@@ -96,6 +98,20 @@ func (f *fakeMessaging) MaxSeq(ctx context.Context, actor, threadID int) (int64,
 	return f.maxSeqFn(ctx, actor, threadID)
 }
 
+func (f *fakeMessaging) ThreadMaxSeq(ctx context.Context, threadID int) (int64, error) {
+	if f.threadMaxSeqFn == nil {
+		return 0, nil
+	}
+	return f.threadMaxSeqFn(ctx, threadID)
+}
+
+func (f *fakeMessaging) UnreadCount(ctx context.Context, threadID int, sinceSeq int64) (int, error) {
+	if f.unreadCountFn == nil {
+		return 0, nil
+	}
+	return f.unreadCountFn(ctx, threadID, sinceSeq)
+}
+
 // inboxStubMsgRepo / inboxStubThreadRepo are the minimum repository surface the
 // Hub touches when fanning a MESSAGE_POSTED envelope out to per-user inboxes.
 type inboxStubMsgRepo struct{ msg domain.Message }
@@ -114,6 +130,9 @@ func (s inboxStubMsgRepo) ListSince(ctx context.Context, threadID int, sinceSeq 
 	return nil, nil
 }
 func (s inboxStubMsgRepo) MaxSeq(ctx context.Context, threadID int) (int64, error) { return 0, nil }
+func (s inboxStubMsgRepo) CountSince(ctx context.Context, threadID int, sinceSeq int64) (int, error) {
+	return 0, nil
+}
 
 type inboxStubThreadRepo struct{ thread domain.MessageThread }
 
@@ -205,9 +224,24 @@ func TestMessageThreadResolver_ReadPointers(t *testing.T) {
 			{ThreadID: 5, UserID: 2, LastReadSeq: 1, Role: domain.ThreadRoleMember},
 		},
 	}
+	// latestSeq/unreadCount resolve through the trusted, no-re-auth variants:
+	// the parent messageThread query already authorized the actor.
+	maxSeqCalls := 0
 	fake := &fakeMessaging{
 		getThreadFn: func(context.Context, int, int) (*domain.MessageThread, error) { return thread, nil },
-		maxSeqFn:    func(context.Context, int, int) (int64, error) { return 10, nil },
+		maxSeqFn: func(context.Context, int, int) (int64, error) {
+			t.Fatal("field resolvers must not re-authorize via MaxSeq")
+			return 0, nil
+		},
+		threadMaxSeqFn: func(context.Context, int) (int64, error) {
+			maxSeqCalls++
+			return 10, nil
+		},
+		unreadCountFn: func(_ context.Context, threadID int, sinceSeq int64) (int, error) {
+			assert.Equal(t, 5, threadID)
+			assert.Equal(t, int64(7), sinceSeq, "counts from the actor's read pointer")
+			return 3, nil
+		},
 	}
 	r := &resolvers.Resolver{Messaging: fake}
 	ctx := authedCtx(1)
@@ -228,6 +262,12 @@ func TestMessageThreadResolver_ReadPointers(t *testing.T) {
 	unread, err := r.MessageThread().UnreadCount(ctx, got)
 	require.NoError(t, err)
 	assert.Equal(t, 3, unread)
+
+	// latestSeq is memoized on the thread object: a second read does not re-query.
+	again, err := r.MessageThread().LatestSeq(ctx, got)
+	require.NoError(t, err)
+	assert.Equal(t, 10, again)
+	assert.Equal(t, 1, maxSeqCalls, "latestSeq queried once per thread")
 
 	parts, err := r.MessageThread().Participants(ctx, got)
 	require.NoError(t, err)
@@ -333,7 +373,7 @@ func TestThreadEventsSubscription_ReplaysThenStreamsAndStopsOnCancel(t *testing.
 			return []domain.Message{{ID: 40, ThreadID: 2, SenderID: 1, Seq: 4, Body: "replayed"}}, nil
 		},
 	}
-	hub := realtime.NewHub(nil, nil)
+	hub := realtime.NewHub(nil, nil, nil)
 	r := &resolvers.Resolver{Messaging: fake, Hub: hub}
 
 	ctx, cancel := context.WithCancel(authedCtx(1))
@@ -377,8 +417,70 @@ func TestThreadEventsSubscription_ReplaysThenStreamsAndStopsOnCancel(t *testing.
 	}, 2*time.Second, 10*time.Millisecond, "subscription channel not closed after cancel")
 }
 
+func TestThreadEventsSubscription_PrunedGapEmitsStreamResetBeforeReplay(t *testing.T) {
+	// The client asks for everything after seq 3, but retention has pruned 4-6:
+	// the oldest surviving message is 7. Replaying straight into it would look
+	// continuous, so a StreamReset must precede the replay.
+	fake := &fakeMessaging{
+		listSinceFn: func(_ context.Context, _, _ int, sinceSeq int64) ([]domain.Message, error) {
+			assert.Equal(t, int64(3), sinceSeq)
+			return []domain.Message{{ID: 70, ThreadID: 2, SenderID: 1, Seq: 7, Body: "survivor"}}, nil
+		},
+	}
+	r := &resolvers.Resolver{Messaging: fake, Hub: realtime.NewHub(nil, nil, nil)}
+
+	ctx, cancel := context.WithCancel(authedCtx(1))
+	defer cancel()
+	since := 3
+	ch, err := r.Subscription().ThreadEvents(ctx, "2", &since)
+	require.NoError(t, err)
+
+	select {
+	case evt := <-ch:
+		sr, ok := evt.(model.StreamReset)
+		require.Truef(t, ok, "expected StreamReset first, got %T", evt)
+		assert.Equal(t, "2", sr.ThreadID)
+	case <-time.After(2 * time.Second):
+		t.Fatal("no StreamReset before the replay")
+	}
+
+	select {
+	case evt := <-ch:
+		mp, ok := evt.(model.MessagePosted)
+		require.Truef(t, ok, "expected the replayed message, got %T", evt)
+		assert.Equal(t, "survivor", mp.Message.Body)
+	case <-time.After(2 * time.Second):
+		t.Fatal("no replayed message after the StreamReset")
+	}
+}
+
+func TestThreadEventsSubscription_ContiguousReplayHasNoStreamReset(t *testing.T) {
+	// seq 4 directly follows the client's cursor of 3: no gap, no reset.
+	fake := &fakeMessaging{
+		listSinceFn: func(_ context.Context, _, _ int, _ int64) ([]domain.Message, error) {
+			return []domain.Message{{ID: 40, ThreadID: 2, SenderID: 1, Seq: 4, Body: "next"}}, nil
+		},
+	}
+	r := &resolvers.Resolver{Messaging: fake, Hub: realtime.NewHub(nil, nil, nil)}
+
+	ctx, cancel := context.WithCancel(authedCtx(1))
+	defer cancel()
+	since := 3
+	ch, err := r.Subscription().ThreadEvents(ctx, "2", &since)
+	require.NoError(t, err)
+
+	select {
+	case evt := <-ch:
+		mp, ok := evt.(model.MessagePosted)
+		require.Truef(t, ok, "expected MessagePosted with no preceding reset, got %T", evt)
+		assert.Equal(t, "next", mp.Message.Body)
+	case <-time.After(2 * time.Second):
+		t.Fatal("no replayed event")
+	}
+}
+
 func TestThreadEventsSubscription_HubDropEmitsStreamReset(t *testing.T) {
-	hub := realtime.NewHub(nil, nil)
+	hub := realtime.NewHub(nil, nil, nil)
 	r := &resolvers.Resolver{Messaging: &fakeMessaging{}, Hub: hub}
 
 	ch, err := r.Subscription().ThreadEvents(authedCtx(1), "2", nil)
@@ -410,7 +512,7 @@ func TestThreadEventsSubscription_NonParticipantRejected(t *testing.T) {
 	fake := &fakeMessaging{assertParticipantFn: func(context.Context, int, int) error {
 		return fmt.Errorf("%w: not a participant", domain.ErrForbidden)
 	}}
-	r := &resolvers.Resolver{Messaging: fake, Hub: realtime.NewHub(nil, nil)}
+	r := &resolvers.Resolver{Messaging: fake, Hub: realtime.NewHub(nil, nil, nil)}
 
 	_, err := r.Subscription().ThreadEvents(authedCtx(1), "2", nil)
 
@@ -429,6 +531,7 @@ func TestInboxEventsSubscription_DeliversAndClosesOnCancel(t *testing.T) {
 				{ThreadID: 3, UserID: 12, LastReadSeq: 9},
 			},
 		}},
+		nil,
 	)
 	r := &resolvers.Resolver{Messaging: &fakeMessaging{}, Hub: hub}
 
@@ -463,7 +566,7 @@ func TestInboxEventsSubscription_DeliversAndClosesOnCancel(t *testing.T) {
 }
 
 func TestInboxEventsSubscription_UnauthenticatedIsForbidden(t *testing.T) {
-	r := &resolvers.Resolver{Messaging: &fakeMessaging{}, Hub: realtime.NewHub(nil, nil)}
+	r := &resolvers.Resolver{Messaging: &fakeMessaging{}, Hub: realtime.NewHub(nil, nil, nil)}
 
 	_, err := r.Subscription().InboxEvents(context.Background())
 

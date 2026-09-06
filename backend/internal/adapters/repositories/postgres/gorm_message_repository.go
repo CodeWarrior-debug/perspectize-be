@@ -122,6 +122,20 @@ func (r *GormMessageRepository) MaxSeq(ctx context.Context, threadID int) (int64
 	return n, nil
 }
 
+// CountSince returns the number of messages in a thread newer than sinceSeq.
+// It counts rows rather than subtracting sequence numbers so pruned gaps do not
+// inflate the result.
+func (r *GormMessageRepository) CountSince(ctx context.Context, threadID int, sinceSeq int64) (int, error) {
+	var n int64
+	if err := r.db.WithContext(ctx).
+		Model(&MessageModel{}).
+		Where("thread_id = ? AND seq > ?", threadID, sinceSeq).
+		Count(&n).Error; err != nil {
+		return 0, fmt.Errorf("failed to count messages since seq: %w", err)
+	}
+	return int(n), nil
+}
+
 func messageModelsToDomain(rows []MessageModel) []domain.Message {
 	out := make([]domain.Message, len(rows))
 	for i := range rows {
