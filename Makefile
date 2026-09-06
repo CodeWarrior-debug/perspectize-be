@@ -27,7 +27,7 @@ start:
 	@if lsof -ti tcp:$(BACKEND_PORT) >/dev/null 2>&1; then \
 		echo "backend: already listening on :$(BACKEND_PORT), skipping"; \
 	else \
-		( cd backend && nohup go tool air > ../$(LOG_DIR)/backend.log 2>&1 & echo $$! > ../$(PID_DIR)/backend.pid ); \
+		nohup sh -c 'cd backend && exec go tool air' > $(LOG_DIR)/backend.log 2>&1 & echo $$! > $(PID_DIR)/backend.pid; \
 		echo "backend: started (pid $$(cat $(PID_DIR)/backend.pid)), log $(LOG_DIR)/backend.log"; \
 	fi
 	@if lsof -ti tcp:$(FRONTEND_PORT) >/dev/null 2>&1; then \
