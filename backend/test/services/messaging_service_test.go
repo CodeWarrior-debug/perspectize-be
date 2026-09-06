@@ -340,6 +340,27 @@ func TestCreateThread_GroupCreatesNew(t *testing.T) {
 	assert.ElementsMatch(t, []int{1, 2, 3}, gotIDs)
 }
 
+func TestCreateThread_FindDirectThreadError_Propagates(t *testing.T) {
+	createCalled := false
+	dbErr := errors.New("db down")
+	threadRepo := &mockThreadRepo{
+		findDirectThreadFn: func(ctx context.Context, userA, userB int) (*domain.MessageThread, error) {
+			return nil, dbErr
+		},
+		createThreadFn: func(ctx context.Context, createdBy int, title *string, participantUserIDs []int) (*domain.MessageThread, error) {
+			createCalled = true
+			return &domain.MessageThread{ID: 999}, nil
+		},
+	}
+	svc := services.NewMessagingService(threadRepo, &mockMessageRepo{}, &mockPublisher{}, newLimiter(100))
+
+	_, err := svc.CreateThread(context.Background(), 1, []int{1, 2}, nil)
+
+	require.Error(t, err)
+	assert.ErrorIs(t, err, dbErr)
+	assert.False(t, createCalled, "CreateThread must not be called when FindDirectThread errors")
+}
+
 // --- LeaveThread ---
 
 func TestLeaveThread_PublishesParticipantRemoved(t *testing.T) {

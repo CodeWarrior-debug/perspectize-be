@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -107,9 +108,14 @@ func (s *MessagingServiceImpl) CreateThread(ctx context.Context, actorUserID int
 		if other == actorUserID {
 			other = ids[1]
 		}
-		if existing, err := s.threadRepo.FindDirectThread(ctx, actorUserID, other); err == nil {
+		existing, err := s.threadRepo.FindDirectThread(ctx, actorUserID, other)
+		if err == nil {
 			return existing, nil
 		}
+		if !errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("find direct thread: %w", err)
+		}
+		// fall through to create
 	}
 	return s.threadRepo.CreateThread(ctx, actorUserID, title, ids)
 }
