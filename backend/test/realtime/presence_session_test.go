@@ -3,7 +3,6 @@ package realtime_test
 import (
 	"context"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -84,27 +83,28 @@ func (presenceStubThreadRepo) SetLastRead(_ context.Context, _, _ int, _ int64) 
 
 var _ repositories.ThreadRepository = presenceStubThreadRepo{}
 
-// newSkewableTracker returns a tracker whose clock can be advanced race-free by
-// adding to skew (nanoseconds). The grace-window OFFLINE re-check calls
-// tracker.IsOnline, which stays true for presenceTTL (45s) after the last
-// activity regardless of refcount; advancing the clock past that window (after
-// the final Disconnect has stamped its lastSeen) lets the re-check observe the
-// user as offline. The real time.AfterFunc / time.Ticker timers inside
-// RunPresenceSession are untouched.
-func newSkewableTracker(skew *atomic.Int64) *realtime.PresenceTracker {
-	tr := realtime.NewPresenceTracker()
-	tr.NowFn = func() time.Time { return time.Now().Add(time.Duration(skew.Load())) }
-	return tr
-}
-
 var testCfg = realtime.PresenceConfig{
 	OfflineGrace:      40 * time.Millisecond,
 	HeartbeatInterval: 10 * time.Millisecond,
 }
 
+func TestPresenceTracker_RefCount(t *testing.T) {
+	tr := realtime.NewPresenceTracker()
+
+	assert.Equal(t, 0, tr.RefCount(99), "unknown user has zero refs")
+
+	tr.Connect(99)
+	assert.Equal(t, 1, tr.RefCount(99))
+	tr.Connect(99)
+	assert.Equal(t, 2, tr.RefCount(99))
+	tr.Disconnect(99)
+	assert.Equal(t, 1, tr.RefCount(99))
+	tr.Disconnect(99)
+	assert.Equal(t, 0, tr.RefCount(99), "all connections closed")
+}
+
 func TestPresenceSession_OnlineThenOfflineAfterGrace(t *testing.T) {
-	var skew atomic.Int64
-	tracker := newSkewableTracker(&skew)
+	tracker := realtime.NewPresenceTracker()
 	notifier := &stubNotifier{}
 	repo := presenceStubThreadRepo{ids: []int{7}}
 
@@ -119,9 +119,7 @@ func TestPresenceSession_OnlineThenOfflineAfterGrace(t *testing.T) {
 	}
 
 	cancel()
-	time.Sleep(20 * time.Millisecond) // let the ctx.Done branch run Disconnect
-	skew.Add(int64(2 * time.Minute))  // age the last activity past presenceTTL
-	time.Sleep(120 * time.Millisecond)
+	time.Sleep(120 * time.Millisecond) // ~3x the grace window
 
 	offline := notifier.withState("OFFLINE")
 	assert.Len(t, offline, 1, "exactly one OFFLINE after the grace window")
@@ -131,8 +129,7 @@ func TestPresenceSession_OnlineThenOfflineAfterGrace(t *testing.T) {
 }
 
 func TestPresenceSession_ReconnectWithinGraceSuppressesOffline(t *testing.T) {
-	var skew atomic.Int64
-	tracker := newSkewableTracker(&skew)
+	tracker := realtime.NewPresenceTracker()
 	notifier := &stubNotifier{}
 	repo := presenceStubThreadRepo{ids: []int{7}}
 
@@ -144,17 +141,15 @@ func TestPresenceSession_ReconnectWithinGraceSuppressesOffline(t *testing.T) {
 
 	cancel()
 	time.Sleep(15 * time.Millisecond)
-	// A second connection arrives inside the grace window: refcount back to 1.
+	// A second connection arrives inside the grace window: RefCount back to 1.
 	tracker.Connect(42)
-	skew.Add(int64(2 * time.Minute)) // even with an aged clock, refs>0 => IsOnline
 	time.Sleep(120 * time.Millisecond)
 
 	assert.Equal(t, 0, notifier.count("OFFLINE"), "reconnect within grace suppresses OFFLINE")
 }
 
 func TestPresenceSession_SecondConnectionKeepsUserOnline(t *testing.T) {
-	var skew atomic.Int64
-	tracker := newSkewableTracker(&skew)
+	tracker := realtime.NewPresenceTracker()
 	notifier := &stubNotifier{}
 	repo := presenceStubThreadRepo{ids: []int{7}}
 
@@ -169,22 +164,17 @@ func TestPresenceSession_SecondConnectionKeepsUserOnline(t *testing.T) {
 
 	// Close connection A: not the last connection, so no OFFLINE is scheduled.
 	cancelA()
-	time.Sleep(20 * time.Millisecond)
-	skew.Add(int64(2 * time.Minute))
 	time.Sleep(120 * time.Millisecond)
 	assert.Equal(t, 0, notifier.count("OFFLINE"), "B still holds a connection")
 
 	// Close connection B: the last one. OFFLINE fires after the grace window.
 	cancelB()
-	time.Sleep(20 * time.Millisecond)
-	skew.Add(int64(2 * time.Minute))
 	time.Sleep(120 * time.Millisecond)
 	assert.Equal(t, 1, notifier.count("OFFLINE"), "exactly one OFFLINE after the last connection closes")
 }
 
 func TestPresenceSession_HeartbeatKeepsLastSeenFresh(t *testing.T) {
-	var skew atomic.Int64
-	tracker := newSkewableTracker(&skew)
+	tracker := realtime.NewPresenceTracker()
 	notifier := &stubNotifier{}
 	repo := presenceStubThreadRepo{ids: []int{7}}
 

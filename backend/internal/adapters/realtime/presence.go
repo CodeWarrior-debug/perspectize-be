@@ -81,6 +81,18 @@ func (p *PresenceTracker) Touch(userID int) {
 	e.lastSeen = p.NowFn()
 }
 
+// RefCount reports the number of live connections currently held for userID
+// (0 if unknown). Used by the presence session to decide, after the offline
+// grace period, whether the user has genuinely gone away.
+func (p *PresenceTracker) RefCount(userID int) int {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if e, ok := p.entries[userID]; ok {
+		return e.refs
+	}
+	return 0
+}
+
 // IsOnline reports whether userID has a live connection or was active within
 // the last presenceTTL.
 func (p *PresenceTracker) IsOnline(userID int) bool {

@@ -35,10 +35,10 @@ type presenceNotifier interface {
 //     connection, publish PRESENCE_CHANGED / ONLINE to each of the user's threads.
 //   - While connected: every cfg.HeartbeatInterval, PresenceTracker.Touch(userID).
 //   - On ctx.Done(): PresenceTracker.Disconnect(userID); if that was the last
-//     connection, after cfg.OfflineGrace re-check PresenceTracker.IsOnline(userID)
-//     and, if still not online, publish PRESENCE_CHANGED / OFFLINE to the user's
-//     threads. A reconnect during the grace window bumps the refcount so
-//     IsOnline is true and no OFFLINE is published.
+//     connection, after cfg.OfflineGrace re-check PresenceTracker.RefCount(userID)
+//     and, if it is still zero, publish PRESENCE_CHANGED / OFFLINE to the user's
+//     threads. A reconnect during the grace window bumps the refcount so no
+//     OFFLINE is published.
 func RunPresenceSession(
 	ctx context.Context,
 	tracker *PresenceTracker,
@@ -64,7 +64,7 @@ func RunPresenceSession(
 			// Detached grace check — use context.Background(), the connection
 			// ctx is already dead. userID is captured by value.
 			time.AfterFunc(cfg.OfflineGrace, func() {
-				if tracker.IsOnline(userID) {
+				if tracker.RefCount(userID) > 0 {
 					return
 				}
 				publishPresence(context.Background(), notifier, threadRepo, userID, domain.PresenceOffline)
