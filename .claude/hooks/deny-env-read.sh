@@ -22,7 +22,7 @@ command=$(echo "$input" | jq -r '.tool_input.command // empty')
 # Extract every path-like token that ends in `.env` or `.env.<suffix>`.
 env_refs=$(echo "$command" \
   | grep -oiE '([./a-z0-9_~-]*/)?\.env([.][a-z0-9_-]+)?' \
-  | grep -ivE '\.env\.(example|test|sample)$')
+  | grep -ivE '\.env\.(example|test)$')
 
 # No reference to a protected .env file -> nothing to do.
 [ -z "$env_refs" ] && exit 0
@@ -39,7 +39,7 @@ while IFS= read -r seg; do
   seg="${seg#"${seg%%[![:space:]]*}"}"   # ltrim
   [ -z "$seg" ] && continue
   echo "$seg" | grep -oiE '([./a-z0-9_~-]*/)?\.env([.][a-z0-9_-]+)?' \
-    | grep -qivE '\.env\.(example|test|sample)$' || continue   # no protected ref here
+    | grep -qivE '\.env\.(example|test)$' || continue   # no protected ref here
 
   # `cp SRC .env` / `mv SRC .env` are OK only when the protected .env is the
   # DESTINATION (last token) — i.e. writing a fresh env file, not reading one.
@@ -47,7 +47,7 @@ while IFS= read -r seg; do
   if echo "$seg" | grep -qiE '^(cp|mv|install)[[:space:]]'; then
     head=$(echo "$seg" | sed -E 's/[[:space:]]+([./a-z0-9_~-]*\/)?\.env([.][a-z0-9_-]+)?[[:space:]]*$//')
     if ! echo "$head" | grep -oiE '([./a-z0-9_~-]*/)?\.env([.][a-z0-9_-]+)?' \
-         | grep -qivE '\.env\.(example|test|sample)$'; then
+         | grep -qivE '\.env\.(example|test)$'; then
       continue
     fi
   fi

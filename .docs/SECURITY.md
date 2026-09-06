@@ -66,8 +66,8 @@ openssl rand -base64 32
 Claude Code (and any agent working in this repo) must never see real secret
 values. Enforcement:
 
-- **`.env*` files are unreadable**, except `.env.example` / `.env.test` /
-  `.env.sample`, which contain variable names and comments only.
+- **`.env*` files are unreadable**, except `.env.example` / `.env.test`, which
+  contain variable names and comments only.
   - Read tool: `permissions.deny` rules in `.claude/settings.json`.
   - Bash: `.claude/hooks/deny-env-read.sh` (PreToolUse) blocks any command that
     references a protected `.env` file unless it is a safe metadata/lifecycle op
