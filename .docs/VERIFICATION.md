@@ -37,6 +37,13 @@ Also test any frontend GraphQL queries (`src/lib/queries/*.ts`) against the live
 
 ## 3. Verify Frontend (Chrome DevTools MCP)
 
+> **Local-only step — do not attempt in cloud / CI / fresh-machine sessions.**
+> Driving the running app requires two gitignored, machine-local artifacts:
+> - `.claude/.env` — `SV_TEST_USER_EMAIL` / `SV_TEST_USER_PASSWORD` / `SV_TEST_USER_OTP` for the dedicated Clerk dev-instance test user (values are hand-provisioned per machine; never commit or paste them).
+> - `.claude/sv-profile/` — the persisted Chrome profile the MCP attaches to.
+>
+> If either is missing, or there is no real Chrome / display, **skip this section entirely** and run only the headless checklist (`go build ./...`, `go test ./...`, `pnpm run test:run`). Do not try to sign in to Clerk — the instance and creds are scoped to a single local operator. Hand any UI-behavior verification back to a local session.
+
 | Step | MCP Tool | Purpose |
 |------|----------|---------|
 | Navigate | `mcp__chrome-devtools__navigate_page` | Load frontend URL |
@@ -46,19 +53,9 @@ Also test any frontend GraphQL queries (`src/lib/queries/*.ts`) against the live
 | Console | `mcp__chrome-devtools__list_console_messages` | Check for JS errors |
 | Interact | `mcp__chrome-devtools__click` | Test buttons, toasts, navigation |
 
-## 4. GSD Plan Verification
+> `fill` **appends** to a non-empty input rather than replacing it. Clear the field first via `evaluate_script` (native value setter + dispatch `input`) before filling.
 
-For each plan's `must_haves`:
-
-| Check | Command |
-|-------|---------|
-| `truths` | Run actual command, verify output |
-| `artifacts.path` | `test -f {path} && echo "exists"` |
-| `artifacts.contains` | `grep -q "{pattern}" {path}` |
-| `artifacts.min_lines` | `wc -l < {path}` >= N |
-| `key_links.pattern` | `grep -q "{pattern}" {from}` |
-
-## 5. Evidence Capture
+## 4. Evidence Capture
 
 Save screenshots to `/Users/jamesjordan/Downloads/screenshots/` with naming convention:
 - **Prefix:** `sv-` (Self-Verify) — supersedes the old `ccsv-` prefix; `ccsv-` may still appear in older screenshots but new captures use `sv-`

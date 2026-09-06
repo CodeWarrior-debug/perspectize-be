@@ -139,11 +139,10 @@ defer db.Close()
 2. **Backend tests**: `go test ./...` in `backend/` — all must pass
 3. **Frontend tests**: `pnpm run test:run` in `frontend/` — all must pass
 4. **Stale references**: If renaming/moving files or paths, grep the entire repo for old names
-5. **Plan must_haves**: If executing a GSD plan, verify each `must_haves.truths` item
 
 Run the relevant subset (e.g., backend-only changes skip step 3). Report results explicitly — don't just say "tests pass", show the output summary.
 
-**GSD verification is not self-verification.** The GSD verifier checks must_haves against codebase structure. It does NOT run builds or tests. Always run the full checklist (build, backend tests, frontend tests) before creating a PR, even after GSD verification passes.
+**Browser verification is local-only.** Driving the running app via the Chrome DevTools MCP (`.docs/VERIFICATION.md` §3) needs `.claude/.env` and `.claude/sv-profile/` — both gitignored and hand-provisioned per machine. Cloud / CI / fresh-machine sessions must **not** attempt the Clerk sign-in; run only the headless checklist (build, backend tests, frontend tests) and hand UI-behavior checks back to a local session.
 
 See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow, and [.docs/PR_SCREENSHOTS.md](.docs/PR_SCREENSHOTS.md) for uploading `sv-` screenshots to a release and linking them in the PR.
 
@@ -177,6 +176,7 @@ See [.docs/VERIFICATION.md](.docs/VERIFICATION.md) for evidence capture workflow
 
 **Native PreToolUse hooks (`.claude/hooks/*.sh`, wired in `.claude/settings.json`; hookify plugin retired):**
 - **Pre-PR:** `require-session-reflection-before-pr.sh` denies `gh pr create` until the `/revise-claude-md` command (from the `claude-md-management` plugin) has been run. It can't detect completion, so use `gh api` to create the PR after running the command. Example: `gh api repos/CodeWarrior-debug/perspectize/pulls -f title="..." -f body="..." -f head="branch" -f base="main"`
+  - `/revise-claude-md` (also the Skill entry `claude-md-management:revise-claude-md` once the plugin is loaded). If it won't resolve — Skill says "Unknown skill" and typing it shows nothing — the plugin marketplace cache is stale: run `/reload-plugins` (and `/plugin` to refresh), then retry.
 - **Pre-commit tests:** `require-tests.sh` injects a non-blocking reminder on `git commit` to verify test coverage for new/modified frontend `src/` files. Config, styles, docs, and test files are exempt.
 - **Pre-commit prettier:** `prettier-precommit.sh` injects a non-blocking reminder on `git commit` to run `pnpm exec prettier --write` on staged frontend files.
 - **Matching is anchored on command position** (start of string or after a shell separator), not a raw substring search — a trigger phrase (e.g. `gh pr create`) appearing inside a quoted commit message or PR body elsewhere on the line does not fire the hook.

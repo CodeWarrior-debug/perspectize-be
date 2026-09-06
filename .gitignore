@@ -51,6 +51,9 @@ CLAUDE.local.md
 # Claude Code isolated worktrees (EnterWorktree tool, standardized location)
 .claude/worktrees/
 
+# Self-verify browser profile (holds a logged-in session — never commit)
+.claude/sv-profile/
+
 # Private bug tracking (not for public exposure)
 .planning/phases/bugs/
 .planning/codebase/CONCERNS.md
