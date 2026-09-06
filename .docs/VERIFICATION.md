@@ -37,6 +37,13 @@ Also test any frontend GraphQL queries (`src/lib/queries/*.ts`) against the live
 
 ## 3. Verify Frontend (Chrome DevTools MCP)
 
+> **Local-only step — do not attempt in cloud / CI / fresh-machine sessions.**
+> Driving the running app requires two gitignored, machine-local artifacts:
+> - `.claude/.env` — `SV_TEST_USER_EMAIL` / `SV_TEST_USER_PASSWORD` / `SV_TEST_USER_OTP` for the dedicated Clerk dev-instance test user (values are hand-provisioned per machine; never commit or paste them).
+> - `.claude/sv-profile/` — the persisted Chrome profile the MCP attaches to.
+>
+> If either is missing, or there is no real Chrome / display, **skip this section entirely** and run only the headless checklist (`go build ./...`, `go test ./...`, `pnpm run test:run`). Do not try to sign in to Clerk — the instance and creds are scoped to a single local operator. Hand any UI-behavior verification back to a local session.
+
 | Step | MCP Tool | Purpose |
 |------|----------|---------|
 | Navigate | `mcp__chrome-devtools__navigate_page` | Load frontend URL |
