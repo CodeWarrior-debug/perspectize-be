@@ -138,7 +138,46 @@ case a leaked artifact is a revocable session cookie for a throwaway identity.
 - **Agent rule:** assume the session is live. On hitting a signed-out state, stop
   and ask the human to re-run the one-time login — never attempt to authenticate.
 
-### Component 4 — Documentation
+### Component 4 — Remediate GitHub secret-scanning alert #1
+
+**Alert:** `whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw`, flagged as a Stripe Webhook
+Signing Secret (Stripe/Svix/Clerk share the `whsec_` prefix). Public repo.
+Locations (repo tip): `backend/internal/adapters/auth/webhook_handler_test.go:22`
+and `docs/superpowers/plans/2026-09-05-postgres-auth-test-coverage-plan.md:3307`.
+
+**Assessment:** not a real credential. It is a hand-crafted "`whsec_` + 32 chars
+of valid base64" fixture whose only purpose is to let `svixwebhook.NewWebhook`
+build/verify signatures inside `webhook_handler_test.go`. No Stripe/Clerk/Svix
+service was ever configured with it, so **no rotation is required**.
+
+**Fix — remove the literal, generate at runtime:**
+
+- In `webhook_handler_test.go`, replace the `const testWebhookSecret = "whsec_…"`
+  with a `var testWebhookSecret = newTestWebhookSecret()` where
+  `newTestWebhookSecret()` returns `"whsec_" + base64.StdEncoding.EncodeToString`
+  of 24 `crypto/rand` bytes. Add `crypto/rand` + `encoding/base64` imports.
+  Update the comment to explain it is generated so no secret-shaped literal lives
+  in the repo. All 20+ call sites keep working unchanged (same identifier).
+- In `2026-09-05-postgres-auth-test-coverage-plan.md`, update the code snippet at
+  line ~3305–3307 to match (generated secret, no literal).
+- `go test ./internal/adapters/auth/...` must stay green (svix signs+verifies
+  with the generated value).
+
+**Close the alert:** after the fix is committed, resolve alert #1 via
+`gh api --method PATCH repos/CodeWarrior-debug/perspectize/secret-scanning/alerts/1
+-f state=resolved -f resolution=used_in_tests -f resolution_comment="Synthetic
+svix test fixture, never a real secret; replaced with a runtime-generated value
+in <PR>."` **No git history rewrite** — the string is not a real secret, and
+force-rewriting a public repo's merged history is disproportionate. The alert
+resolution + tip removal is sufficient.
+
+**Prevent recurrence:** enable **push protection** for secret scanning on the
+repo (`gh api --method PATCH repos/CodeWarrior-debug/perspectize -F
+security_and_analysis='{"secret_scanning_push_protection":{"status":"enabled"}}'`),
+and note in `.docs/SECURITY.md` that secret-shaped test fixtures must be generated
+at runtime, never hard-coded.
+
+### Component 5 — Documentation
 
 - **`.docs/SECURITY.md`**: new section "Local secret access for AI agents" —
   the deny rules, the `deny-env-read.sh` hook, `.env.example` as the only
