@@ -1,0 +1,173 @@
+package services
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
+	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/repositories"
+	portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
+)
+
+const maxMessageBodyBytes = 8192
+
+type MessagingServiceImpl struct {
+	threadRepo repositories.ThreadRepository
+	msgRepo    repositories.MessageRepository
+	publisher  portservices.EventPublisher
+	limiter    *SlidingWindowLimiter
+}
+
+var _ portservices.MessagingService = (*MessagingServiceImpl)(nil)
+
+func NewMessagingService(
+	threadRepo repositories.ThreadRepository,
+	msgRepo repositories.MessageRepository,
+	publisher portservices.EventPublisher,
+	limiter *SlidingWindowLimiter,
+) *MessagingServiceImpl {
+	return &MessagingServiceImpl{threadRepo, msgRepo, publisher, limiter}
+}
+
+func (s *MessagingServiceImpl) AssertParticipant(ctx context.Context, actorUserID, threadID int) error {
+	thread, err := s.threadRepo.GetThread(ctx, threadID)
+	if err != nil {
+		return err
+	}
+	if !thread.IsActiveParticipant(actorUserID) {
+		return fmt.Errorf("%w: not a participant of thread %d", domain.ErrForbidden, threadID)
+	}
+	return nil
+}
+
+func (s *MessagingServiceImpl) SendMessage(ctx context.Context, actorUserID int, in portservices.SendMessageInput) (*domain.Message, error) {
+	if len(in.Body) == 0 || len([]byte(in.Body)) > maxMessageBodyBytes {
+		return nil, fmt.Errorf("%w: message body must be 1..%d bytes", domain.ErrInvalidInput, maxMessageBodyBytes)
+	}
+	if in.ClientNonce == "" {
+		return nil, fmt.Errorf("%w: clientNonce required", domain.ErrInvalidInput)
+	}
+	if err := s.AssertParticipant(ctx, actorUserID, in.ThreadID); err != nil {
+		return nil, err
+	}
+	if !s.limiter.Allow(fmt.Sprintf("send:%d", actorUserID)) {
+		return nil, fmt.Errorf("%w: too many messages", domain.ErrRateLimited)
+	}
+	return s.msgRepo.Insert(ctx, &domain.Message{
+		ThreadID:    in.ThreadID,
+		SenderID:    actorUserID,
+		Body:        in.Body,
+		ClientNonce: in.ClientNonce,
+	})
+}
+
+func (s *MessagingServiceImpl) MarkRead(ctx context.Context, actorUserID, threadID int, seq int64) (*domain.MessageThread, error) {
+	if err := s.AssertParticipant(ctx, actorUserID, threadID); err != nil {
+		return nil, err
+	}
+	if err := s.threadRepo.SetLastRead(ctx, threadID, actorUserID, seq); err != nil {
+		return nil, err
+	}
+	_ = s.publisher.PublishEphemeral(ctx, domain.EventEnvelope{
+		Type:        "READ_RECEIPT_CHANGED",
+		ThreadID:    threadID,
+		UserID:      actorUserID,
+		LastReadSeq: seq,
+	})
+	return s.threadRepo.GetThread(ctx, threadID)
+}
+
+func (s *MessagingServiceImpl) SetTyping(ctx context.Context, actorUserID, threadID int, typing bool) error {
+	if err := s.AssertParticipant(ctx, actorUserID, threadID); err != nil {
+		return err
+	}
+	return s.publisher.PublishEphemeral(ctx, domain.EventEnvelope{
+		Type:     "TYPING_CHANGED",
+		ThreadID: threadID,
+		UserID:   actorUserID,
+		Typing:   typing,
+	})
+}
+
+func (s *MessagingServiceImpl) CreateThread(ctx context.Context, actorUserID int, participantUserIDs []int, title *string) (*domain.MessageThread, error) {
+	set := map[int]struct{}{actorUserID: {}}
+	for _, id := range participantUserIDs {
+		set[id] = struct{}{}
+	}
+	ids := make([]int, 0, len(set))
+	for id := range set {
+		ids = append(ids, id)
+	}
+	if len(ids) < 2 {
+		return nil, fmt.Errorf("%w: a thread needs at least two participants", domain.ErrInvalidInput)
+	}
+	if len(ids) == 2 && title == nil {
+		other := ids[0]
+		if other == actorUserID {
+			other = ids[1]
+		}
+		if existing, err := s.threadRepo.FindDirectThread(ctx, actorUserID, other); err == nil {
+			return existing, nil
+		}
+	}
+	return s.threadRepo.CreateThread(ctx, actorUserID, title, ids)
+}
+
+func (s *MessagingServiceImpl) AddParticipants(ctx context.Context, actorUserID, threadID int, userIDs []int) (*domain.MessageThread, error) {
+	if err := s.AssertParticipant(ctx, actorUserID, threadID); err != nil {
+		return nil, err
+	}
+	if err := s.threadRepo.AddParticipants(ctx, threadID, userIDs); err != nil {
+		return nil, err
+	}
+	for _, uid := range userIDs {
+		_ = s.publisher.PublishEphemeral(ctx, domain.EventEnvelope{
+			Type:     "PARTICIPANT_CHANGED",
+			ThreadID: threadID,
+			UserID:   uid,
+			Change:   "ADDED",
+		})
+	}
+	return s.threadRepo.GetThread(ctx, threadID)
+}
+
+func (s *MessagingServiceImpl) LeaveThread(ctx context.Context, actorUserID, threadID int) error {
+	if err := s.AssertParticipant(ctx, actorUserID, threadID); err != nil {
+		return err
+	}
+	if err := s.threadRepo.SetLeft(ctx, threadID, actorUserID, time.Now()); err != nil {
+		return err
+	}
+	return s.publisher.PublishEphemeral(ctx, domain.EventEnvelope{
+		Type:     "PARTICIPANT_CHANGED",
+		ThreadID: threadID,
+		UserID:   actorUserID,
+		Change:   "REMOVED",
+	})
+}
+
+func (s *MessagingServiceImpl) ListThreads(ctx context.Context, actorUserID int, limit int, beforeLastMessageAt *time.Time) ([]domain.MessageThread, error) {
+	return s.threadRepo.ListThreadsForUser(ctx, actorUserID, limit, beforeLastMessageAt)
+}
+
+func (s *MessagingServiceImpl) GetHistory(ctx context.Context, actorUserID, threadID int, limit int, beforeSeq *int64) ([]domain.Message, error) {
+	if err := s.AssertParticipant(ctx, actorUserID, threadID); err != nil {
+		return nil, err
+	}
+	return s.msgRepo.ListHistory(ctx, threadID, limit, beforeSeq)
+}
+
+func (s *MessagingServiceImpl) ListSince(ctx context.Context, actorUserID, threadID int, sinceSeq int64) ([]domain.Message, error) {
+	if err := s.AssertParticipant(ctx, actorUserID, threadID); err != nil {
+		return nil, err
+	}
+	return s.msgRepo.ListSince(ctx, threadID, sinceSeq)
+}
+
+func (s *MessagingServiceImpl) MaxSeq(ctx context.Context, actorUserID, threadID int) (int64, error) {
+	if err := s.AssertParticipant(ctx, actorUserID, threadID); err != nil {
+		return 0, err
+	}
+	return s.msgRepo.MaxSeq(ctx, threadID)
+}
