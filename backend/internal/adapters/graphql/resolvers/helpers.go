@@ -54,6 +54,9 @@ func domainToModel(c *domain.Content) *model.Content {
 		LengthUnits:   c.LengthUnits,
 		CreatedAt:     c.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		UpdatedAt:     c.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		// Non-schema field — lets contentResolver.PrimaryCategory batch-load the
+		// category by FK via dataloader instead of re-fetching the content row.
+		PrimaryCategoryID: c.PrimaryCategoryID,
 	}
 
 	// Parse the raw response JSON into a map for GraphQL

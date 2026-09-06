@@ -12,35 +12,43 @@ import (
 	"strconv"
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/auth"
+	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/dataloader"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/graphql/model"
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/core/domain"
 	portservices "github.com/CodeWarrior-debug/perspectize/backend/internal/core/ports/services"
 )
 
 // PrimaryCategory is the resolver for the primaryCategory field.
+//
+// The primary_category_id FK is already loaded by the content list/detail query
+// and carried on model.Content.PrimaryCategoryID (a non-schema field), so this
+// resolver never re-fetches the content row. The category itself is fetched via
+// a per-request dataloader that batches every row's lookup on a page into one
+// `WHERE id IN (...)` query. If the dataloader middleware is not installed
+// (e.g. a direct resolver unit test), it falls back to a single-row service call.
 func (r *contentResolver) PrimaryCategory(ctx context.Context, obj *model.Content) (*model.Category, error) {
-	// Parse content ID to look up PrimaryCategoryID from domain
-	contentID, err := strconv.Atoi(obj.ID)
+	if obj.PrimaryCategoryID == nil {
+		return nil, nil
+	}
+	categoryID := *obj.PrimaryCategoryID
+
+	if loaders := dataloader.For(ctx); loaders != nil {
+		category, err := loaders.CategoryByID.Load(ctx, categoryID)
+		if err != nil {
+			if dataloader.IsNotFound(err) {
+				return nil, nil
+			}
+			slog.Error("resolving primary category via dataloader failed", "contentID", obj.ID, "categoryID", categoryID, "error", err)
+			return nil, nil
+		}
+		return categoryDomainToModel(category), nil
+	}
+
+	category, err := r.CategoryService.GetCategoryByID(ctx, categoryID)
 	if err != nil {
+		slog.Error("resolving primary category failed", "contentID", obj.ID, "categoryID", categoryID, "error", err)
 		return nil, nil
 	}
-
-	// Fetch the content to get PrimaryCategoryID
-	content, err := r.ContentService.GetByID(ctx, contentID)
-	if err != nil {
-		return nil, nil
-	}
-
-	if content.PrimaryCategoryID == nil {
-		return nil, nil
-	}
-
-	category, err := r.CategoryService.GetCategoryByID(ctx, *content.PrimaryCategoryID)
-	if err != nil {
-		slog.Error("resolving primary category failed", "contentID", contentID, "categoryID", *content.PrimaryCategoryID, "error", err)
-		return nil, nil
-	}
-
 	return categoryDomainToModel(category), nil
 }
 

@@ -27,25 +27,26 @@ type Category struct {
 }
 
 type Content struct {
-	ID              string         `json:"id"`
-	Name            string         `json:"name"`
-	URL             *string        `json:"url,omitempty"`
-	ContentType     string         `json:"contentType"`
-	AddedByUserID   string         `json:"addedByUserID"`
-	AddedBy         *User          `json:"addedBy,omitempty"`
-	Length          *int           `json:"length,omitempty"`
-	LengthUnits     *string        `json:"lengthUnits,omitempty"`
-	ViewCount       *int           `json:"viewCount,omitempty"`
-	LikeCount       *int           `json:"likeCount,omitempty"`
-	CommentCount    *int           `json:"commentCount,omitempty"`
-	ChannelTitle    *string        `json:"channelTitle,omitempty"`
-	PublishedAt     *string        `json:"publishedAt,omitempty"`
-	Tags            []string       `json:"tags,omitempty"`
-	Description     *string        `json:"description,omitempty"`
-	Response        map[string]any `json:"response,omitempty"`
-	PrimaryCategory *Category      `json:"primaryCategory,omitempty"`
-	CreatedAt       string         `json:"createdAt"`
-	UpdatedAt       string         `json:"updatedAt"`
+	ID                string         `json:"id"`
+	Name              string         `json:"name"`
+	URL               *string        `json:"url,omitempty"`
+	ContentType       string         `json:"contentType"`
+	AddedByUserID     string         `json:"addedByUserID"`
+	AddedBy           *User          `json:"addedBy,omitempty"`
+	Length            *int           `json:"length,omitempty"`
+	LengthUnits       *string        `json:"lengthUnits,omitempty"`
+	ViewCount         *int           `json:"viewCount,omitempty"`
+	LikeCount         *int           `json:"likeCount,omitempty"`
+	CommentCount      *int           `json:"commentCount,omitempty"`
+	ChannelTitle      *string        `json:"channelTitle,omitempty"`
+	PublishedAt       *string        `json:"publishedAt,omitempty"`
+	Tags              []string       `json:"tags,omitempty"`
+	Description       *string        `json:"description,omitempty"`
+	Response          map[string]any `json:"response,omitempty"`
+	PrimaryCategory   *Category      `json:"primaryCategory,omitempty"`
+	CreatedAt         string         `json:"createdAt"`
+	UpdatedAt         string         `json:"updatedAt"`
+	PrimaryCategoryID *int           `json:"-"`
 }
 
 type ContentFilter struct {
