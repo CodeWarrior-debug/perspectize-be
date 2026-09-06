@@ -306,10 +306,18 @@ func toModelThreadEvent(evt domain.ThreadEvent) model.ThreadEvent {
 			Typing:   e.Typing,
 		}
 	case domain.ParticipantChangedEvent:
+		// e.Change is a bare string on the envelope; an unexpected value would
+		// marshal to a GraphQL-invalid enum, so drop the event instead.
+		kind := model.ParticipantChangeKind(e.Change)
+		if !kind.IsValid() {
+			slog.Warn("graphql: dropping participant event with invalid change kind",
+				"change", e.Change, "thread_id", e.ThreadID)
+			return nil
+		}
 		return model.ParticipantChanged{
 			ThreadID: strconv.Itoa(e.ThreadID),
 			UserID:   strconv.Itoa(e.UserID),
-			Change:   model.ParticipantChangeKind(e.Change),
+			Change:   kind,
 		}
 	case domain.PresenceChangedEvent:
 		return model.PresenceChanged{

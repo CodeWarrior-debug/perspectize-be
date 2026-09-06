@@ -3,6 +3,7 @@ package resolvers_test
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -25,6 +26,7 @@ type fakeMessaging struct {
 	getThreadFn         func(ctx context.Context, actor, threadID int) (*domain.MessageThread, error)
 	maxSeqFn            func(ctx context.Context, actor, threadID int) (int64, error)
 	listSinceFn         func(ctx context.Context, actor, threadID int, sinceSeq int64) ([]domain.Message, error)
+	getHistoryFn        func(ctx context.Context, actor, threadID, limit int, beforeSeq *int64) ([]domain.Message, error)
 	assertParticipantFn func(ctx context.Context, actor, threadID int) error
 }
 
@@ -56,7 +58,10 @@ func (f *fakeMessaging) ListThreads(ctx context.Context, actor, limit int, befor
 }
 
 func (f *fakeMessaging) GetHistory(ctx context.Context, actor, threadID, limit int, beforeSeq *int64) ([]domain.Message, error) {
-	return nil, nil
+	if f.getHistoryFn == nil {
+		return nil, nil
+	}
+	return f.getHistoryFn(ctx, actor, threadID, limit, beforeSeq)
 }
 
 func (f *fakeMessaging) ListSince(ctx context.Context, actor, threadID int, sinceSeq int64) ([]domain.Message, error) {
@@ -229,6 +234,96 @@ func TestMessageThreadResolver_ReadPointers(t *testing.T) {
 	require.Len(t, parts, 2)
 	assert.Equal(t, domain.ThreadRoleOwner, parts[0].Role)
 	assert.Equal(t, 1, parts[0].SrcUserID)
+}
+
+// history is a descending-by-seq message log, mirroring how the repository
+// pages backwards from the newest message.
+func historyPage(all []domain.Message, limit int, beforeSeq *int64) []domain.Message {
+	out := make([]domain.Message, 0, limit)
+	for _, m := range all {
+		if beforeSeq != nil && m.Seq >= *beforeSeq {
+			continue
+		}
+		out = append(out, m)
+		if len(out) == limit {
+			break
+		}
+	}
+	return out
+}
+
+func TestThreadMessages_EndCursorRoundTripsAsBefore(t *testing.T) {
+	// Newest first: seqs 10..5.
+	all := []domain.Message{
+		{ID: 110, ThreadID: 2, SenderID: 1, Seq: 10, Body: "m10"},
+		{ID: 109, ThreadID: 2, SenderID: 1, Seq: 9, Body: "m9"},
+		{ID: 108, ThreadID: 2, SenderID: 1, Seq: 8, Body: "m8"},
+		{ID: 107, ThreadID: 2, SenderID: 1, Seq: 7, Body: "m7"},
+		{ID: 106, ThreadID: 2, SenderID: 1, Seq: 6, Body: "m6"},
+		{ID: 105, ThreadID: 2, SenderID: 1, Seq: 5, Body: "m5"},
+	}
+	var sawBefore []*int64
+	fake := &fakeMessaging{
+		getHistoryFn: func(_ context.Context, _, _, limit int, beforeSeq *int64) ([]domain.Message, error) {
+			sawBefore = append(sawBefore, beforeSeq)
+			return historyPage(all, limit, beforeSeq), nil
+		},
+	}
+	r := &resolvers.Resolver{Messaging: fake}
+	ctx := authedCtx(1)
+	first := 3
+
+	page1, err := r.Query().ThreadMessages(ctx, "2", &first, nil)
+	require.NoError(t, err)
+	require.Len(t, page1.Items, 3)
+	assert.Nil(t, sawBefore[0], "first page has no cursor")
+	assert.Equal(t, []string{"m10", "m9", "m8"}, bodiesOf(page1.Items))
+
+	// Cursors must be seqs — the same space as the `before: IntID` argument —
+	// not message IDs (which here are 110/108 and would page from the wrong spot).
+	require.NotNil(t, page1.PageInfo.StartCursor)
+	require.NotNil(t, page1.PageInfo.EndCursor)
+	assert.Equal(t, "10", *page1.PageInfo.StartCursor)
+	assert.Equal(t, "8", *page1.PageInfo.EndCursor)
+	assert.True(t, page1.PageInfo.HasPreviousPage, "a full page implies older messages")
+
+	// Feed endCursor straight back in as `before`.
+	cursor, err := strconv.Atoi(*page1.PageInfo.EndCursor)
+	require.NoError(t, err)
+	page2, err := r.Query().ThreadMessages(ctx, "2", &first, &cursor)
+	require.NoError(t, err)
+
+	require.Len(t, sawBefore, 2)
+	require.NotNil(t, sawBefore[1])
+	assert.Equal(t, int64(8), *sawBefore[1], "resolver forwards the previous page's last seq")
+
+	// Strictly older, no overlap and no gap: 7, 6, 5 directly follow 10, 9, 8.
+	assert.Equal(t, []string{"m7", "m6", "m5"}, bodiesOf(page2.Items))
+	assert.Equal(t, "7", *page2.PageInfo.StartCursor)
+	assert.Equal(t, "5", *page2.PageInfo.EndCursor)
+}
+
+func TestThreadMessages_EmptyPageHasNoCursors(t *testing.T) {
+	fake := &fakeMessaging{getHistoryFn: func(context.Context, int, int, int, *int64) ([]domain.Message, error) {
+		return nil, nil
+	}}
+	r := &resolvers.Resolver{Messaging: fake}
+
+	page, err := r.Query().ThreadMessages(authedCtx(1), "2", nil, nil)
+
+	require.NoError(t, err)
+	assert.Empty(t, page.Items)
+	assert.Nil(t, page.PageInfo.StartCursor)
+	assert.Nil(t, page.PageInfo.EndCursor)
+	assert.False(t, page.PageInfo.HasPreviousPage)
+}
+
+func bodiesOf(items []*model.Message) []string {
+	out := make([]string, 0, len(items))
+	for _, m := range items {
+		out = append(out, m.Body)
+	}
+	return out
 }
 
 func TestThreadEventsSubscription_ReplaysThenStreamsAndStopsOnCancel(t *testing.T) {

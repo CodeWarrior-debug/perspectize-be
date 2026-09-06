@@ -8,6 +8,7 @@ package resolvers
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/CodeWarrior-debug/perspectize/backend/internal/adapters/auth"
@@ -284,8 +285,12 @@ func (r *queryResolver) ThreadMessages(ctx context.Context, threadID string, fir
 		HasPreviousPage: len(msgs) == limit,
 	}
 	if len(items) > 0 {
-		start := items[0].ID
-		end := items[len(items)-1].ID
+		// Cursors are seqs, not message IDs: `before` is an IntID seq, so
+		// endCursor must be feedable straight back into it. Both are numeric
+		// strings, so emitting IDs here would page from the wrong position
+		// without any visible error.
+		start := strconv.Itoa(items[0].Seq)
+		end := strconv.Itoa(items[len(items)-1].Seq)
 		page.StartCursor = &start
 		page.EndCursor = &end
 	}
