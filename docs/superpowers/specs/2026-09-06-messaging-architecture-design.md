@@ -21,7 +21,9 @@ introduced.
 
 - 1:1 and arbitrary-size group threads.
 - Sub-second delivery to online participants.
-- Durable history, hard-capped at the newest 1,000 messages per thread.
+- Durable history, retention-bounded to roughly the newest 1,000 messages per
+  thread (bounded above — pruning runs periodically, not on every insert, so a
+  thread may briefly hold a few dozen more).
 - Read receipts (per-participant last-read pointer).
 - Typing indicators (ephemeral).
 - Presence: online/offline per user.
@@ -43,8 +45,10 @@ introduced.
   already exists in the hub.
 - Message edit/delete UI, reactions, threaded replies, full-text search.
 - Moderation / reporting tooling.
-- A run of a real 1,000-connection load test (a load script is delivered; the
-  target environment is chosen separately).
+- The 1,000-connection load test — **both the load script and its run are
+  deferred to a follow-up.** The backend implementation plan descoped delivery
+  of the script; it is tracked as a separate perf task with no dependency on the
+  messaging backend merge.
 
 ## Context
 
@@ -240,8 +244,12 @@ A row is created when a thread is created.
 
 1. **`BEFORE INSERT` on `messages`** — atomically claim the next sequence:
    `UPDATE thread_sequences SET next_seq = next_seq + 1 WHERE thread_id = NEW.thread_id RETURNING next_seq - 1`
-   and assign it to `NEW.seq`. Guarantees gapless, monotonic per-thread ordering
-   under concurrency.
+   and assign it to `NEW.seq`. Guarantees strictly increasing, monotonic
+   per-thread ordering under concurrency. `seq` is not guaranteed gapless: an
+   idempotent-send retry that hits the `client_nonce` conflict consumes a
+   sequence value before `ON CONFLICT DO NOTHING` discards the row, so isolated
+   values may be skipped. Replay and paging use `seq >`, never a count, so gaps
+   are immaterial to ordering and completeness.
 
 2. **`AFTER INSERT` on `messages`** — publish and enforce retention:
    - `pg_notify('thread_events', json_build_object('type','MESSAGE_POSTED','thread_id',NEW.thread_id,'seq',NEW.seq,'message_id',NEW.id)::text)`
@@ -482,11 +490,12 @@ extend type Subscription {
 - Single authenticated user: send a message, see it render, reload the page, see
   it persisted.
 
-### Load script (delivered, not run in CI)
+### Load script (deferred — follow-up task)
 
-- Go harness that opens N WebSocket subscription clients across M threads,
+- A Go harness that opens N WebSocket subscription clients across M threads,
   drives a message rate, and reports delivery success rate and p95 latency.
-  Pointed at an environment chosen separately.
+  Neither the script nor its run is part of this backend milestone; both are a
+  separate perf task (see Non-Goals).
 
 ### Verification checklist (before PR)
 
