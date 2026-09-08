@@ -33,6 +33,10 @@ $RECYCLE.BIN/
 
 # Logs
 *.log
+logs/
+
+# Root `make start` detached-process bookkeeping
+.dev/
 
 # Vim
 *.swp
